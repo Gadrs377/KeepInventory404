@@ -1,6 +1,6 @@
 // Descobre o que é um código de barras. Primeiro no armário, depois no Open Food Facts.
 
-import { getProduct } from './store.js';
+import { productsByBarcode } from './store.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 const FIELDS = 'product_name,product_name_pt,generic_name_pt,brands,quantity,image_front_small_url';
@@ -9,10 +9,16 @@ export function isValidCode(code) {
   return /^\d{8,14}$/.test(code) || /^SEM-\d+$/.test(code);
 }
 
-// Resolve com { status: 'local' | 'found' | 'notfound' | 'offline', product?, info? }
+// Resolve com { status: 'local', products } quando o código já está no armário
+// (um ou mais produtos), ou com o resultado de lookupRemote.
 export async function lookup(code) {
-  const local = await getProduct(code);
-  if (local) return { status: 'local', product: local };
+  const local = code.startsWith('SEM-') ? [] : await productsByBarcode(code);
+  if (local.length) return { status: 'local', products: local };
+  return lookupRemote(code);
+}
+
+// Resolve com { status: 'found' | 'notfound' | 'offline', info? }
+export async function lookupRemote(code) {
   if (code.startsWith('SEM-')) return { status: 'notfound' };
   if (!navigator.onLine) return { status: 'offline' };
 

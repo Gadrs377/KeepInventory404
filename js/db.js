@@ -1,7 +1,10 @@
 // Acesso ao IndexedDB. Só este arquivo conhece o banco; o resto do app usa store.js.
 
 const DB_NAME = 'keepinventory';
-const DB_VERSION = 1;
+// v1: produtos identificados pelo código de barras.
+// v2: `code` vira o identificador do produto e `barcodes` guarda os códigos
+//     de barras dele. Um mesmo código pode estar em mais de um produto.
+const DB_VERSION = 2;
 
 let dbPromise;
 
@@ -9,10 +12,24 @@ export function openDb() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (event) => {
       const db = req.result;
+      const upgrade = req.transaction;
       if (!db.objectStoreNames.contains('products')) {
         db.createObjectStore('products', { keyPath: 'code' });
+      }
+      if (event.oldVersion < 2) {
+        const products = upgrade.objectStore('products');
+        products.createIndex('barcodes', 'barcodes', { multiEntry: true });
+        products.openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          const p = cursor.value;
+          if (!Array.isArray(p.barcodes)) {
+            cursor.update({ ...p, barcodes: p.code.startsWith('SEM-') ? [] : [p.code] });
+          }
+          cursor.continue();
+        };
       }
       if (!db.objectStoreNames.contains('movements')) {
         const mv = db.createObjectStore('movements', { keyPath: 'id', autoIncrement: true });
@@ -23,7 +40,12 @@ export function openDb() {
         db.createObjectStore('meta', { keyPath: 'key' });
       }
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      const db = req.result;
+      // Outra aba abriu uma versão nova do banco: libera para ela migrar.
+      db.onversionchange = () => { db.close(); location.reload(); };
+      resolve(db);
+    };
     req.onerror = () => reject(req.error);
   });
   return dbPromise;

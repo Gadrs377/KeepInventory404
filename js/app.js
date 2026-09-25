@@ -7,6 +7,7 @@ import mountRevisao from './views/revisao.js';
 import mountProduto from './views/produto.js';
 import mountDados from './views/dados.js';
 import { closeSheet, hideStaleToast, $ } from './ui.js';
+import { unlockAudio } from './sound.js';
 
 const ROUTES = [
   [/^\/?$/, mountArmario],
@@ -50,6 +51,7 @@ async function route() {
   window.scrollTo(0, 0);
 }
 
+unlockAudio();
 window.addEventListener('hashchange', route);
 route();
 

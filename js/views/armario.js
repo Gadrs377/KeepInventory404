@@ -14,26 +14,28 @@ export default function mountArmario(root) {
           <h1 class="page-title">Armário</h1>
           <p class="home-summary" data-summary>&nbsp;</p>
         </div>
-        <a class="icon-btn" href="#/dados" aria-label="Dados e backup">${icon('menu')}</a>
+        <div class="home-actions">
+          <a class="btn btn-quiet btn-sm" href="#/inventario">${icon('count')}Contar</a>
+          <a class="icon-btn" href="#/dados" aria-label="Dados e backup">${icon('menu')}</a>
+        </div>
       </header>
       <div class="home-tools">
         <label class="search">
           ${icon('search')}
           <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}" autocomplete="off">
         </label>
-        <div class="chips" role="radiogroup" aria-label="Filtro"></div>
+        <div class="tabs" role="tablist" aria-label="Filtro"></div>
       </div>
       <div class="draft-note" hidden></div>
       <main class="shelf" aria-live="polite"></main>
-      <nav class="modebar" aria-label="Modos">
+      <nav class="modebar" aria-label="Registrar">
         <a class="mode-btn mode-entrada" href="#/entrada">${icon('in')}<span>Entrada</span></a>
         <a class="mode-btn mode-saida" href="#/saida">${icon('out')}<span>Saída</span></a>
-        <a class="mode-btn mode-contagem" href="#/inventario">${icon('count')}<span>Inventário</span></a>
       </nav>
     </div>`;
 
   const shelf = $('.shelf', root);
-  const chips = $('.chips', root);
+  const tabs = $('.tabs', root);
   const summary = $('[data-summary]', root);
   const search = $('input[type=search]', root);
   const draftNote = $('.draft-note', root);
@@ -54,15 +56,16 @@ export default function mountArmario(root) {
       : 'Nada guardado ainda';
 
     const counts = { todos: products.length, acabando: low, zerados: zero };
-    chips.innerHTML = FILTERS.map((f) => `
-      <button type="button" class="chip" role="radio" aria-checked="${savedFilter === f.id}" data-filter="${f.id}">
-        ${f.label}${f.id !== 'todos' && counts[f.id] ? ` <span class="chip-n">${counts[f.id]}</span>` : ''}
+    tabs.innerHTML = FILTERS.map((f) => `
+      <button type="button" class="tab" role="tab" aria-selected="${savedFilter === f.id}" data-filter="${f.id}">
+        ${f.label}${f.id !== 'todos' && counts[f.id] ? ` <span class="tab-n">${counts[f.id]}</span>` : ''}
       </button>`).join('');
 
     if (!products.length) {
       shelf.innerHTML = `
         <div class="empty-state">
-          <p>Seu armário ainda está vazio. Toque em Entrada e aponte a câmera para o código de barras do primeiro produto.</p>
+          <p class="empty-lead">Comece pela Entrada.</p>
+          <p>Toque em Entrada, aponte a câmera para o código de barras de um pacote do armário e confirme a quantidade. Ele aparece aqui com o número de unidades.</p>
         </div>`;
       return;
     }
@@ -97,12 +100,12 @@ export default function mountArmario(root) {
     const n = draft ? Object.keys(draft.counts).length : 0;
     draftNote.hidden = !n;
     if (n) {
-      draftNote.innerHTML = `<a href="#/inventario">Há uma contagem em andamento com ${plural(n, 'produto', 'produtos')}. Continuar contagem</a>`;
+      draftNote.innerHTML = `<span>Contagem em andamento, ${plural(n, 'produto contado', 'produtos contados')}.</span><a class="btn btn-quiet btn-sm" href="#/inventario">Continuar</a>`;
     }
     render();
   }
 
-  chips.addEventListener('click', (e) => {
+  tabs.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-filter]');
     if (!btn) return;
     savedFilter = btn.dataset.filter;

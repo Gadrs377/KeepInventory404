@@ -11,6 +11,9 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
   e aplica a correção de uma vez.
 - **Armário:** lista com a quantidade de cada item, busca e filtros de
   "acabando" e "zerados".
+- Bip de caixa de mercado a cada leitura (dá para desligar em Dados).
+- Se um código de barras estiver em mais de um produto, o app pergunta qual
+  deles você está segurando.
 - Produto desconhecido é buscado no [Open Food Facts](https://world.openfoodfacts.org);
   se não estiver lá, você digita o nome uma vez e o app lembra.
 - Funciona sem internet depois da primeira abertura (só a busca de produto novo
@@ -50,4 +53,8 @@ endereço precisa de HTTPS.
 - Leitura de código de barras: [barcode-detector](https://github.com/Sec-ant/barcode-detector)
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).
-- Fonte: [Archivo](https://fonts.google.com/specimen/Archivo) (OFL).
+- Fontes: [Archivo](https://fonts.google.com/specimen/Archivo) e
+  [Atkinson Hyperlegible Next](https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next) (OFL).
+- Ícones: [Phosphor](https://phosphoricons.com) (MIT).
+- Auditoria visual: skill [unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill)
+  (MIT), em `.claude/skills/no-ai-slop/`.

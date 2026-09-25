@@ -16,7 +16,7 @@ coerente com os três.
 | Modo de entrada | Tela de leitura em modo **Entrada**: cada leitura soma unidades ao estoque |
 | Modo de saída (dar baixa) | Mesma tela em modo **Saída**: cada leitura subtrai unidades |
 | Modo de inventário | **Inventário**: contagem física que, ao final, corrige o estoque |
-| Ler código de barras pela câmera | `BarcodeDetector` nativo, com polyfill ZXing em WebAssembly |
+| Ler código de barras pela câmera | `BarcodeDetector` nativo, com polyfill ZXing em WebAssembly, e bip de caixa a cada leitura |
 | Descobrir o que é o produto | Consulta ao Open Food Facts; se não achar, cadastro manual |
 | Informar quantidade ao cadastrar | Seletor de quantidade em toda entrada, saída e contagem |
 | Usar pelo celular | PWA publicado no GitHub Pages, instalável na tela inicial |
@@ -62,11 +62,12 @@ validade por lote, lista de compras. Ver a seção 9.
 
 ## 3. Modelo de dados (IndexedDB `keepinventory`, versão 1)
 
-### `products` (chave: `code`)
+### `products` (chave: `code`; índice `barcodes`, multiEntry)
 
 | Campo | Tipo | Observação |
 | --- | --- | --- |
-| `code` | string | Código de barras (EAN-13, EAN-8, UPC). Itens sem código usam `SEM-<timestamp>` |
+| `code` | string | Identificador do produto. O primeiro produto de um código de barras usa o próprio código; os seguintes usam `<código>~<sufixo>`. Itens sem código usam `SEM-<timestamp>` |
+| `barcodes` | string[] | Códigos de barras deste produto. Um mesmo código pode aparecer em vários produtos |
 | `name` | string | Nome exibido. Vem do Open Food Facts ou é digitado |
 | `brand` | string | Marca, opcional |
 | `size` | string | Conteúdo da embalagem, ex. `395 g` |
@@ -75,6 +76,10 @@ validade por lote, lista de compras. Ver a seção 9.
 | `minQty` | inteiro ≥ 0 | Abaixo ou igual a isso o item aparece como "acabando". 0 desliga o aviso |
 | `source` | `off` \| `manual` | De onde veio o cadastro |
 | `createdAt`, `updatedAt` | número (ms) | |
+
+Versão 2 do banco. A migração da versão 1 cria o índice `barcodes` e preenche
+`barcodes = [code]` em cada produto existente, sem mexer em quantidades nem no
+histórico.
 
 ### `movements` (chave: `id` autoincremento; índices `code`, `at`)
 
@@ -110,8 +115,9 @@ contagem continua de onde parou.
 
 ## 5. Busca do produto (`lookup.js`)
 
-1. Procura o código em `products`. Se existe, usa os dados locais e **não**
-   consulta a internet.
+1. Procura o código no índice `barcodes`. Se algum produto tem esse código, usa
+   os dados locais e **não** consulta a internet. Pode voltar mais de um
+   produto (seção 5.1).
 2. Se não existe, chama
    `GET https://world.openfoodfacts.org/api/v2/product/{code}?fields=product_name,product_name_pt,brands,quantity,image_front_small_url`
    com tempo limite de 8 segundos.
@@ -119,6 +125,29 @@ contagem continua de onde parou.
 4. Não achou, deu erro ou está offline: a folha de cadastro abre com o campo de
    nome vazio e em foco. O código fica guardado para as próximas leituras.
    Se o problema foi rede, a folha mostra **Buscar de novo**.
+
+### 5.1 Um código, vários produtos
+
+Acontece de verdade: fabricante que reusa o mesmo código em sabores diferentes,
+marca pequena com código genérico, ou a pessoa que quer separar duas coisas que
+vieram com o mesmo código. Regras:
+
+| Situação na leitura | O que a folha mostra |
+| --- | --- |
+| Nenhum produto com o código | Busca no Open Food Facts e cadastro (como antes) |
+| Um produto | A folha do produto, com o link **Não é este? Cadastrar outro produto com este código** (entrada e contagem) |
+| Dois ou mais | **Qual destes?**: lista com foto, nome, tamanho e etiqueta de estoque de cada um, ordenada por quem tem mais no armário, e o botão **Outro produto com este código** |
+| Saída com vários | A mesma lista; produtos com estoque 0 aparecem apagados e não podem ser escolhidos |
+
+O produto novo criado assim recebe um identificador próprio e o mesmo código em
+`barcodes`. Os dados do Open Food Facts não são reaproveitados, porque
+descrevem o primeiro produto; a folha pede um nome que diferencie os dois (por
+exemplo o sabor).
+
+Caso inverso, ainda não implementado: vários códigos para o mesmo produto (as
+etiquetas de balança do mercado, que começam com 2 e mudam com o peso). O campo
+`barcodes` já é uma lista, então basta uma ação "Vincular a um produto
+existente" na folha de produto novo.
 
 O Open Food Facts é aberto e colaborativo, tem boa cobertura de produtos
 brasileiros e aceita chamadas do navegador (CORS liberado).
@@ -132,8 +161,14 @@ brasileiros e aceita chamadas do navegador (CORS liberado).
   poupar bateria.
 - **Confirmação dupla:** um código só é aceito depois de lido igual em duas
   leituras seguidas. Evita números errados de leituras parciais.
-- **Pausa ao ler:** ao aceitar um código, o leitor pausa, vibra (quando o
-  aparelho permite) e abre a folha do produto. Volta a ler quando a folha fecha.
+- **Pausa ao ler:** ao aceitar um código, o leitor pausa, toca o bip, vibra
+  (quando o aparelho permite) e abre a folha do produto. Volta a ler quando a
+  folha fecha.
+- **Bip (`sound.js`):** gerado com Web Audio, sem arquivo de som: tom de
+  2.700 Hz por 110 ms, como o leitor do caixa. Um bip grave duplo indica erro
+  (saída de produto que não está no armário ou que está zerado). O iPhone só
+  libera áudio depois do primeiro toque na tela, então o áudio é destravado no
+  primeiro toque. Pode ser desligado em Dados.
 - **Mesmo código de novo:** a embalagem que acabou de ser registrada é ignorada
   enquanto continuar na frente da câmera. Ela só é lida de novo depois de sair
   do visor por 0,8 s. Para registrar várias unidades iguais, use o seletor de
@@ -157,7 +192,8 @@ Armário ─[Entrada]→ Leitor (verde) ─código→ busca ─→ Folha do prod
 ### Saída
 
 ```
-Armário ─[Saída]→ Leitor (beterraba) ─código→ produto existe e qty > 0?
+Armário ─[Saída]→ Leitor (beterraba) ─código→ (vários produtos? escolher um)
+          → produto existe e qty > 0?
           ├ sim → Folha: quantidade (1..qty) ─[Dar baixa em N]→ removeStock
           ├ existe, qty 0 → Folha avisa "Não tem nenhum no armário"
           └ não existe → Folha avisa "Esse produto não está cadastrado" + [Cadastrar como entrada]
@@ -185,10 +221,13 @@ js/store.js             Regras de estoque
 js/lookup.js            Open Food Facts
 js/scanner.js           Câmera e decodificação
 js/ui.js                Folha, aviso, seletor de quantidade, escape de HTML
+js/icons.js             Ícones Phosphor (MIT)
+js/sound.js             Bip de leitura e de erro
 js/views/*.js           Uma tela por arquivo
 vendor/barcode-detector Polyfill ZXing (MIT) e o .wasm
 icons/                  Ícones do PWA
 docs/                   Este documento, interfaces e design system
+.claude/skills/         Skill no-ai-slop usada na auditoria visual
 .github/workflows/      Publicação no GitHub Pages
 ```
 

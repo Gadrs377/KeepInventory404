@@ -1,5 +1,7 @@
 // Componentes compartilhados: escape de HTML, etiqueta, folha, aviso, seletor e confirmação.
 
+import { ICONS } from './icons.js';
+
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -17,12 +19,12 @@ export function tagState(p) {
   return '';
 }
 
+// Foto da embalagem por cima de um ícone de pacote; se a foto falhar, sobra o ícone.
 export function thumb(p, size = 'sm') {
-  if (p && p.image) {
-    return `<img class="thumb thumb-${size}" src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'thumb thumb-${size} thumb-empty'}))">`;
-  }
-  const letter = p && p.name ? esc(p.name.trim().charAt(0).toLocaleUpperCase('pt-BR')) : '';
-  return `<span class="thumb thumb-${size} thumb-empty" aria-hidden="true">${letter}</span>`;
+  const img = p && p.image
+    ? `<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : '';
+  return `<span class="thumb thumb-${size}" aria-hidden="true">${icon('package')}${img}</span>`;
 }
 
 export function subtitle(p) {
@@ -33,24 +35,10 @@ export function vibrate(ms = 40) {
   try { navigator.vibrate && navigator.vibrate(ms); } catch { /* sem vibração */ }
 }
 
-// ---------- Ícones (SVG inline, traço de 2px) ----------
-
-const ICONS = {
-  close: '<path d="M6 6l12 12M18 6L6 18"/>',
-  back: '<path d="M15 5l-7 7 7 7"/>',
-  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  minus: '<path d="M5 12h14"/>',
-  torch: '<path d="M8 3h8l-1 6H9L8 3zM9 9h6v4l-1.5 8h-3L9 13V9z"/>',
-  keyboard: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
-  search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
-  in: '<path d="M12 4v12M6 10l6 6 6-6M5 20h14"/>',
-  out: '<path d="M12 20V8M6 14l6-6 6 6M5 4h14"/>',
-  count: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11l2 2 4-4M9 17h6"/>',
-};
+// ---------- Ícones (Phosphor, ver icons.js) ----------
 
 export function icon(name, cls = '') {
-  return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+  return `<svg class="icon ${cls}" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 }
 
 // ---------- Aviso (toast) ----------
@@ -61,7 +49,7 @@ export function toast(message, { action, onAction, mode = '', duration = 5000 } 
   const host = $('#toast');
   clearTimeout(toastTimer);
   toastAt = Date.now();
-  host.className = `toast ${mode ? `mode-${mode}` : ''}`;
+  host.className = `toast ${mode ? `mode-${mode} has-mode` : ''}`;
   host.innerHTML = `<span class="toast-text">${esc(message)}</span>${action ? `<button type="button" class="toast-action">${esc(action)}</button>` : ''}`;
   host.hidden = false;
   if (action) {
@@ -216,7 +204,7 @@ export function confirmSheet({ title, text, confirm, cancel = 'Cancelar', danger
         ${text ? `<p class="sheet-text">${esc(text)}</p>` : ''}
         <div class="sheet-actions">
           <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-yes>${esc(confirm)}</button>
-          <button type="button" class="btn btn-ghost" data-no>${esc(cancel)}</button>
+          <button type="button" class="btn btn-quiet" data-no>${esc(cancel)}</button>
         </div>`;
       $('[data-yes]', body).addEventListener('click', () => close(true));
       $('[data-no]', body).addEventListener('click', () => close(false));

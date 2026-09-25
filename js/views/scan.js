@@ -1,4 +1,4 @@
-// Leitor em modo Entrada ou Saída.
+// Leitor em modo Entrada ou Saída. O que foi registrado aparece como um cupom.
 
 import { mountCamera } from './camera.js';
 import { showProductSheet } from './productSheet.js';
@@ -7,8 +7,8 @@ import { warmUp } from '../scanner.js';
 import { $, esc, icon, toast, plural } from '../ui.js';
 
 const COPY = {
-  entrada: { title: 'Entrada', hint: 'Aponte para o código de barras do que está guardando', session: 'Nesta entrada', sign: '+' },
-  saida: { title: 'Saída', hint: 'Aponte para o código de barras do que está tirando', session: 'Nesta saída', sign: '−' },
+  entrada: { title: 'Entrada', hint: 'Aponte para o código de barras do que está guardando', sign: '+', empty: 'Os produtos que você guardar aparecem aqui.' },
+  saida: { title: 'Saída', hint: 'Aponte para o código de barras do que está tirando', sign: '−', empty: 'Os produtos que você tirar aparecem aqui.' },
 };
 
 export default function mountScan(root, { mode, code: initialCode }) {
@@ -26,30 +26,37 @@ export default function mountScan(root, { mode, code: initialCode }) {
         <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
       </header>
       <div class="cam-host"></div>
-      <section class="session" aria-live="polite">
-        <p class="session-summary"></p>
-        <ul class="session-list"></ul>
-        <a class="btn btn-primary" href="#/" data-done>Concluir</a>
+      <section class="receipt" aria-live="polite" aria-label="Registros desta ${copy.title.toLowerCase()}">
+        <ul class="receipt-lines"></ul>
+        <p class="receipt-total"></p>
       </section>
+      <footer class="footer-bar">
+        <a class="btn btn-primary btn-lg" href="#/">Concluir</a>
+      </footer>
     </div>`;
 
-  const summary = $('.session-summary', root);
-  const list = $('.session-list', root);
+  const lines = $('.receipt-lines', root);
+  const total = $('.receipt-total', root);
 
   function renderSession() {
     if (!session.length) {
-      summary.textContent = 'Nada registrado ainda.';
-      list.innerHTML = '';
+      lines.innerHTML = `<li class="receipt-empty">${copy.empty}</li>`;
+      total.hidden = true;
       return;
     }
     const units = session.reduce((a, s) => a + s.n, 0);
-    summary.textContent = `${copy.session}: ${plural(session.length, 'registro', 'registros')}, ${plural(units, 'unidade', 'unidades')}`;
-    list.innerHTML = session.slice().reverse().slice(0, 6).map((s) => `
-      <li><span class="session-name">${esc(s.product.name)}</span><span class="session-n">${copy.sign}${s.n}</span></li>`).join('');
+    lines.innerHTML = session.slice().reverse().map((s) => `
+      <li class="receipt-line">
+        <span class="receipt-name">${esc(s.product.name)}</span>
+        <span class="receipt-dots" aria-hidden="true"></span>
+        <span class="receipt-n">${copy.sign}${s.n}</span>
+      </li>`).join('');
+    total.hidden = false;
+    total.innerHTML = `<span>${plural(session.length, 'produto', 'produtos')}</span><span class="receipt-n">${copy.sign}${units}</span>`;
   }
 
-  async function handleCode(code) {
-    const r = await showProductSheet({ mode, code });
+  async function handleCode(barcode) {
+    const r = await showProductSheet({ mode, barcode });
     if (!r) return;
     if (r.kind === 'switch') {
       location.hash = `#/entrada/${encodeURIComponent(r.code)}`;

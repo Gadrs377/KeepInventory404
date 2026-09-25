@@ -22,7 +22,8 @@ export default async function mountProduto(root, { code }) {
     return;
   }
   const history = await movementsFor(code, 30);
-  const niceCode = code.startsWith('SEM-') ? 'Produto sem código' : code;
+  const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
+  const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
 
   root.innerHTML = `
     <div class="screen screen-product">

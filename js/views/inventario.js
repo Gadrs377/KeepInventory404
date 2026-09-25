@@ -61,8 +61,8 @@ export default function mountInventario(root) {
       ${products.length && !pending.length ? '<p class="empty">Tudo contado. Toque em Revisar para ver as diferenças.</p>' : ''}`;
   }
 
-  async function count(code) {
-    const r = await showProductSheet({ mode: 'contagem', code });
+  async function count(target) {
+    const r = await showProductSheet({ mode: 'contagem', ...target });
     if (r) {
       toast(`${r.product.name}: ${r.n} contados.`, { mode: 'contagem', duration: 2500 });
       refresh();
@@ -71,7 +71,7 @@ export default function mountInventario(root) {
 
   lists.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-code]');
-    if (btn) count(btn.dataset.code);
+    if (btn) count({ productId: btn.dataset.code });
   });
 
   review.addEventListener('click', (e) => {
@@ -109,7 +109,7 @@ export default function mountInventario(root) {
 
   const off = onChange(refresh);
   startCount().then(refresh);
-  const cam = mountCamera($('.cam-host', root), { onCode: count, compact: true });
+  const cam = mountCamera($('.cam-host', root), { onCode: (barcode) => count({ barcode }), compact: true });
 
   return () => {
     alive = false;

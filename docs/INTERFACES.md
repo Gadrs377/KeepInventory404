@@ -11,7 +11,7 @@ regras de `store.js` descritas no [system design](SYSTEM_DESIGN.md).
           ┌────────►│   Armário    │◄──────────┐
           │         │     #/       │           │
           │         └──┬───┬───┬───┘           │
-          │   Entrada  │   │   │ Inventário    │ Aplicar
+          │   Entrada  │   │   │ Contar        │ Aplicar
           │            ▼   │   ▼               │
           │   ┌─────────┐  │  ┌────────────┐  ┌┴───────────┐
           │   │ Leitor  │  │  │  Contagem  │─►│  Revisão   │
@@ -29,8 +29,8 @@ regras de `store.js` descritas no [system design](SYSTEM_DESIGN.md).
                               └──────────┘
 ```
 
-As folhas (produto lido, digitar código) abrem por cima da tela atual e não
-mudam o endereço.
+As folhas (produto lido, escolha entre produtos, digitar código) abrem por cima
+da tela atual e não mudam o endereço.
 
 ---
 
@@ -40,33 +40,35 @@ Tela inicial. Responde "quanto tem de cada coisa?".
 
 ```
 ┌─────────────────────────────────┐
-│ Armário                     [≡] │  título; ≡ abre Dados
+│ Armário           [Contar]  [≡] │  Contar abre o inventário; ≡ abre Dados
 │ 23 produtos, 4 acabando         │  resumo
 │ ┌─────────────────────────────┐ │
 │ │ Buscar no armário           │ │
 │ └─────────────────────────────┘ │
-│ (Todos) (Acabando 4) (Zerados 1)│  filtros
+│ Todos   Acabando 4   Zerados 1  │  abas, a ativa sublinhada
+│ ‾‾‾‾‾                           │
 ├─────────────────────────────────┤
 │ [img] Leite condensado     ┌──┐ │
 │       Moça, 395 g          │ 3│ │  etiqueta escura
 ├────────────────────────────└──┘─┤
 │ [img] Arroz branco         ┌──┐ │
-│       Tio João, 5 kg       │ 1│ │  etiqueta mostarda (acabando)
+│       Tio João, 5 kg       │ 1│ │  etiqueta amarela (acabando)
 ├────────────────────────────└──┘─┤
 │ [img] Feijão preto         ┌╌╌┐ │
 │       Kicaldo, 1 kg        ╎ 0╎ │  etiqueta tracejada (zerado)
 │                            └╌╌┘ │
 ├─────────────────────────────────┤
-│ ┌────────┐┌────────┐┌─────────┐ │
-│ │Entrada ││ Saída  ││Inventár.│ │  barra de modos fixa
-│ └────────┘└────────┘└─────────┘ │
+│ ┌──────────────┐┌─────────────┐ │
+│ │  ↓ Entrada   ││   ↑ Saída   │ │  as duas ações do dia a dia
+│ └──────────────┘└─────────────┘ │
 └─────────────────────────────────┘
 ```
 
+- O inventário é feito de vez em quando, então fica no topo como ação
+  secundária (**Contar**) e não disputa espaço com Entrada e Saída.
 - Ordem: acabando primeiro, depois alfabética.
 - Busca filtra por nome, marca ou código enquanto digita.
-- Vazio: "Seu armário ainda está vazio. Toque em Entrada e aponte a câmera para
-  o código de barras."
+- Vazio: "Comece pela Entrada." e uma frase com o passo a passo.
 
 ## 2. Leitor `#/entrada` e `#/saida`
 
@@ -79,17 +81,19 @@ Mesma tela, duas cores. A faixa do modo ocupa o topo inteiro.
 ├─────────────────────────────────┤
 │                                 │
 │        vídeo da câmera          │
-│    ┌───────────────────────┐    │
-│    │   janela de mira      │    │  pisca na cor do modo ao ler
-│    └───────────────────────┘    │
+│    ┌─                     ─┐    │
+│    ───── linha vermelha ──────   │  mira com a linha do leitor do caixa;
+│    └─                     ─┘    │  ao ler: bip, vibração e a linha pisca
 │                                 │
 ├─────────────────────────────────┤
 │ [Lanterna]      [Digitar código]│
 ├─────────────────────────────────┤
-│ Nesta entrada: 3 registros, 7 u │  resumo da sessão
-│ Leite condensado +2             │  últimos registros
-│ Arroz branco +1                 │
-│            [Concluir]           │  volta ao Armário
+│ Leite condensado ........... +2 │  cupom: um item por linha
+│ Arroz branco ............... +1 │
+│ ═══════════════════════════════ │
+│ 2 produtos                   +3 │  total
+├─────────────────────────────────┤
+│ [          Concluir           ] │  volta ao Armário
 └─────────────────────────────────┘
 ```
 
@@ -118,13 +122,44 @@ Variações:
 | --- | --- |
 | Produto novo, achado na internet | Mostra "Novo no armário". Nome vem preenchido e pode ser editado |
 | Produto novo, não achado | "Não encontramos esse código. Digite o nome para cadastrar." Campo nome em foco; botão só habilita com nome |
-| Buscando na internet | Esqueleto da foto e do nome com "Buscando produto…" |
-| Saída, estoque 0 | "Não tem nenhum no armário." Botão principal vira Fechar |
-| Saída, produto não cadastrado | "Esse produto não está no armário." Botão "Cadastrar como entrada" leva ao modo Entrada com a folha aberta |
+| Buscando na internet | Ícone de pacote e "Buscando produto" |
+| Sem internet | Mensagem e botão "Buscar de novo" |
+| Saída, estoque 0 | Bip de erro. "Não tem nenhum no armário." Botão principal vira Fechar |
+| Saída, produto não cadastrado | Bip de erro. "Esse produto não está no armário." Botão "Cadastrar como entrada" leva ao modo Entrada com a folha aberta |
+| Código com um produto (entrada ou contagem) | Link no fim: "Não é este? Cadastrar outro produto com este código" |
+| Código com vários produtos | Abre antes a folha **Qual destes?** (abaixo) |
 | Saída | Seletor vai de 1 até o estoque atual; botão "Dar baixa em N" |
 
 Depois de confirmar: a folha fecha, aparece o aviso "Adicionado 2. Leite
 condensado agora tem 5" com **Desfazer**, e o leitor volta a ler.
+
+### Folha "Qual destes?" (um código, vários produtos)
+
+```
+┌─────────────────────────────────┐
+│ Qual destes?                 ✕  │
+│ O código 7891000100103 está em  │
+│ 2 produtos do armário.          │
+├─────────────────────────────────┤
+│ [img] Leite condensado     ┌──┐ │
+│       Moça, 395 g          │ 3│ │  quem tem mais estoque vem primeiro
+├────────────────────────────└──┘─┤
+│ [img] Leite cond. desnatado┌──┐ │
+│                            │ 1│ │
+├────────────────────────────└──┘─┤
+│ [ Outro produto com este código]│  cadastra mais um com o mesmo código
+└─────────────────────────────────┘
+```
+
+- Tocar numa linha abre a folha normal daquele produto.
+- Em Saída, linhas com estoque 0 ficam apagadas; tocar nelas dá bip de erro e
+  avisa "Nenhum no armário. Escolha outro." O botão "Outro produto" não
+  aparece, porque não dá para tirar o que não foi cadastrado.
+- "Outro produto com este código" abre o cadastro com o texto "Outro produto
+  com o mesmo código de barras. Dê um nome que diferencie os dois, por exemplo
+  o sabor."
+- Na contagem funciona igual: a folha "Quantos tem?" abre para o produto
+  escolhido.
 
 ### Folha Digitar código
 
@@ -143,7 +178,7 @@ Contagem física do armário. Serve para corrigir diferenças acumuladas.
 
 ```
 ┌─────────────────────────────────┐
-│█ Inventário                 ✕ █│  faixa azul caneta
+│█ Inventário                 ✕ █│  faixa azul
 │█ 12 de 23 produtos contados   █│
 ├─────────────────────────────────┤
 │    [ vídeo da câmera menor ]    │
@@ -163,7 +198,7 @@ Contagem física do armário. Serve para corrigir diferenças acumuladas.
 - A folha é a mesma do leitor, com o título "Quantos tem?", seletor começando
   na quantidade do sistema (ou na já contada) e botão **Salvar contagem**.
 - Ler um código novo durante o inventário cadastra o produto com a quantidade
-  contada.
+  contada. Se o código estiver em vários produtos, abre antes "Qual destes?".
 - O ✕ pergunta: "Guardar a contagem para continuar depois?" (Guardar /
   Descartar).
 
@@ -197,7 +232,7 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 │ [foto grande]                   │
 │ Leite condensado          ┌───┐ │
 │ Moça, 395 g               │ 5 │ │  etiqueta grande
-│ 7891000100103             └───┘ │
+│ Código 7891000100103      └───┘ │
 ├─────────────────────────────────┤
 │ Nome          [Leite condensado]│
 │ Marca         [Moça            ]│
@@ -225,6 +260,7 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 │ [ Baixar backup ]               │  .json
 │ [ Restaurar backup ]            │  substitui tudo, pede confirmação
 │ [ Baixar planilha ]             │  .csv para abrir no Excel/Sheets
+│ Bip ao ler um código      (●)   │  liga e desliga o som
 │ Histórico completo (últimos 100)│
 │ Instalar: menu do navegador →   │
 │ Adicionar à tela inicial        │
@@ -234,8 +270,9 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 
 | Regra | Aplicação |
 | --- | --- |
-| A cor diz o modo | Verde só aparece em entrada, beterraba em saída, azul em contagem, mostarda em estoque baixo |
-| Uma folha para tudo | Entrada, saída e contagem usam a mesma folha de produto, mudando título, limites do seletor e botão |
+| A cor diz o modo | Verde só aparece em entrada, beterraba em saída, azul em contagem, amarelo em estoque baixo |
+| Uma folha para tudo | Entrada, saída e contagem usam a mesma folha de produto, mudando título, limites do seletor e botão. A escolha entre produtos do mesmo código também é a mesma nos três modos |
+| O som confirma | Bip agudo em toda leitura pela câmera; bip grave duplo quando o código não pode ser usado |
 | O número é a etiqueta | Onde houver quantidade de estoque, ela aparece no componente etiqueta |
 | Sempre dá para voltar atrás | Todo registro mostra Desfazer; exclusão e restauração pedem confirmação |
 | Rodapé para o polegar | Ações principais ficam na metade de baixo da tela |

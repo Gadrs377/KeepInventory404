@@ -17,14 +17,32 @@ export async function getProduct(code) {
   return get('products', code);
 }
 
+// Todos os produtos que têm este código de barras (normalmente um, às vezes vários).
+export async function productsByBarcode(barcode) {
+  return tx('products', 'readonly', (s) => promisify(s.products.index('barcodes').getAll(barcode)));
+}
+
+// Identificador para um produto novo. O primeiro produto de um código usa o
+// próprio código (compatível com a v1); os seguintes ganham um sufixo.
+export async function newProductId(barcode) {
+  if (!(await getProduct(barcode))) return barcode;
+  return `${barcode}~${Date.now().toString(36)}`;
+}
+
 export function isLow(p) {
   return p.minQty > 0 && p.qty > 0 && p.qty <= p.minQty;
+}
+
+function defaultBarcodes(code) {
+  if (code.startsWith('SEM-')) return [];
+  return [code.split('~')[0]];
 }
 
 function newProduct(code, info = {}) {
   const now = Date.now();
   return {
     code,
+    barcodes: Array.isArray(info.barcodes) ? info.barcodes : defaultBarcodes(code),
     name: (info.name || '').trim() || 'Produto sem nome',
     brand: (info.brand || '').trim(),
     size: (info.size || '').trim(),
@@ -222,7 +240,8 @@ export async function importData(data) {
     await promisify(s.meta.delete('countDraft'));
     for (const p of data.products) {
       if (typeof p.code !== 'string') continue;
-      s.products.put({ ...newProduct(p.code, p), ...p, qty: clampInt(p.qty), minQty: clampInt(p.minQty) });
+      const base = newProduct(p.code, p);
+      s.products.put({ ...base, ...p, barcodes: base.barcodes, qty: clampInt(p.qty), minQty: clampInt(p.minQty) });
     }
     for (const m of data.movements) s.movements.put(m);
   });

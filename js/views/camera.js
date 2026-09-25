@@ -3,6 +3,7 @@
 import { createScanner, cameraSupported } from '../scanner.js';
 import { isValidCode } from '../lookup.js';
 import { $, icon, openSheet, vibrate } from '../ui.js';
+import { beep } from '../sound.js';
 
 const ERRORS = {
   denied: 'O app não tem permissão para usar a câmera. Libere a câmera para este site nas configurações do navegador, ou digite o código.',
@@ -19,12 +20,12 @@ export function mountCamera(host, { onCode, compact = false }) {
   host.innerHTML = `
     <div class="viewfinder ${compact ? 'is-compact' : ''}">
       <video muted playsinline aria-label="Imagem da câmera"></video>
-      <div class="aim" aria-hidden="true"></div>
+      <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
     </div>
     <div class="cam-tools">
-      <button type="button" class="btn btn-ghost btn-sm" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
-      <button type="button" class="btn btn-ghost btn-sm" data-manual>${icon('keyboard')}Digitar código</button>
+      <button type="button" class="btn btn-quiet btn-sm" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
+      <button type="button" class="btn btn-quiet btn-sm" data-manual>${icon('keyboard')}Digitar código</button>
     </div>`;
 
   const video = $('video', host);
@@ -53,6 +54,7 @@ export function mountCamera(host, { onCode, compact = false }) {
       aim.classList.remove('is-hit');
       void aim.offsetWidth;
       aim.classList.add('is-hit');
+      beep('ok');
       vibrate(40);
       handle(code);
     },

@@ -2,6 +2,7 @@
 
 import { exportData, importData, listProducts, recentMovements } from '../store.js';
 import { $, esc, icon, toast, when, confirmSheet } from '../ui.js';
+import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
 
 export default async function mountDados(root) {
   const [products, movements] = await Promise.all([listProducts(), recentMovements(60)]);
@@ -26,9 +27,17 @@ export default async function mountDados(root) {
         <p class="lead">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
         <div class="stack-sm">
           <button type="button" class="btn btn-primary" data-export>Baixar backup</button>
-          <label class="btn btn-ghost file-btn">Restaurar backup<input type="file" accept="application/json,.json" data-import hidden></label>
-          <button type="button" class="btn btn-ghost" data-csv>Baixar planilha</button>
+          <label class="btn btn-quiet file-btn">Restaurar backup<input type="file" accept="application/json,.json" data-import hidden></label>
+          <button type="button" class="btn btn-quiet" data-csv>Baixar planilha</button>
         </div>
+
+        <section>
+          <h2 class="list-title">Som</h2>
+          <label class="switch-row">
+            <span>Bip ao ler um código</span>
+            <input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}>
+          </label>
+        </section>
 
         <section>
           <h2 class="list-title">Instalar no celular</h2>
@@ -46,6 +55,11 @@ export default async function mountDados(root) {
         </section>
       </main>
     </div>`;
+
+  $('[data-sound]', root).addEventListener('change', (e) => {
+    setSoundEnabled(e.target.checked);
+    if (e.target.checked) beep('ok');
+  });
 
   $('[data-export]', root).addEventListener('click', async () => {
     const data = await exportData();
