@@ -12,6 +12,8 @@
 //   GET /lookup?ean=789...      -> produto pelo código de barras (primeira loja que achar)
 //   GET /search?q=moça 395      -> lista de produtos pelo nome
 //   GET /diag                   -> testa cada loja a partir da Cloudflare
+//   POST /identify              -> lê a embalagem numa foto (IA grátis da Cloudflare)
+//                                  e devolve marca, produto, tamanho e um texto de busca
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais.
 export const LOOKUP_STORES = [
@@ -38,6 +40,15 @@ export const SEARCH_STORES = [
   'www.drogariasaopaulo.com.br',
 ];
 
+// Modelos de visão do Workers AI (cota grátis diária). O primeiro é o padrão;
+// os outros só podem ser escolhidos para comparação (?model=).
+export const VISION_MODELS = [
+  '@cf/meta/llama-4-scout-17b-16e-instruct',
+  '@cf/google/gemma-3-12b-it',
+  '@cf/mistralai/mistral-small-3.1-24b-instruct',
+];
+const MAX_IMAGE_CHARS = 1_500_000; // ~1,1 MB de JPEG em base64
+
 const UA = 'Mozilla/5.0 (compatible; KeepInventory404/1.0; inventario domestico pessoal)';
 const STORE_TIMEOUT = 5000;
 const DAY = 86400;
@@ -49,7 +60,8 @@ export default {
     const allowed = allowedOrigin(origin, env);
 
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), allowed);
-    if (request.method !== 'GET') return withCors(json({ error: 'Método não permitido' }, 405), allowed);
+    const isIdentify = url.pathname === '/identify';
+    if (request.method !== (isIdentify ? 'POST' : 'GET')) return withCors(json({ error: 'Método não permitido' }, 405), allowed);
     // Chamadas de navegador vindas de outro site são recusadas.
     if (origin && !allowed) return json({ error: 'Origem não autorizada' }, 403);
 
@@ -70,6 +82,16 @@ export default {
         }
         case '/diag':
           return withCors(json(await diag()), allowed);
+        case '/identify': {
+          if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
+          const body = await request.json().catch(() => null);
+          const image = body && typeof body.image === 'string' ? body.image : '';
+          if (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > MAX_IMAGE_CHARS) {
+            return withCors(json({ error: 'Envie uma foto JPEG, PNG ou WebP de até 1 MB' }, 400), allowed);
+          }
+          const model = VISION_MODELS.includes(url.searchParams.get('model')) ? url.searchParams.get('model') : VISION_MODELS[0];
+          return withCors(json(await identify(env.AI, image, model)), allowed);
+        }
         default:
           return withCors(json({ error: 'Rota não encontrada' }, 404), allowed);
       }
@@ -141,6 +163,52 @@ export async function diag() {
     storesOk: rows.filter((r) => r.hits > 0).length,
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
   };
+}
+
+const IDENTIFY_PROMPT = `Você vê a foto de uma embalagem de produto de supermercado ou farmácia do Brasil.
+Leia o que está escrito na embalagem e responda SOMENTE um JSON, sem texto antes ou depois:
+{"marca": "", "produto": "", "variante": "", "tamanho": "", "busca": ""}
+- marca: a marca como está na embalagem (ex.: "Nescau", "Ypê", "Camil").
+- produto: o tipo de produto em português (ex.: "achocolatado em pó", "detergente", "feijão carioca").
+- variante: sabor, fragrância ou versão, se aparecer (ex.: "coco", "lavanda", "zero açúcar").
+- tamanho: peso ou volume com unidade, se aparecer (ex.: "400g", "500ml", "1kg").
+- busca: 2 a 5 palavras para achar esse produto numa loja online, começando pela marca (ex.: "nescau achocolatado 400g").
+Se não conseguir ler algum campo, deixe "". Não invente marca.`;
+
+export async function identify(ai, image, model) {
+  const t0 = Date.now();
+  const res = await ai.run(model, {
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: IDENTIFY_PROMPT },
+        { type: 'image_url', image_url: { url: image } },
+      ],
+    }],
+    max_tokens: 200,
+    temperature: 0.1,
+  });
+  const text = typeof res === 'string' ? res : (res && (res.response ?? (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content))) || '';
+  const raw = typeof text === 'string' ? text : JSON.stringify(text);
+  const parsed = parseJsonLoose(raw);
+  const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const out = {
+    brand: clean(parsed.marca),
+    product: clean(parsed.produto),
+    variant: clean(parsed.variante),
+    size: clean(parsed.tamanho),
+    query: clean(parsed.busca) || [parsed.marca, parsed.produto, parsed.tamanho].map(clean).filter(Boolean).join(' '),
+    model,
+    ms: Date.now() - t0,
+  };
+  if (res && res.usage) out.usage = res.usage;
+  return out;
+}
+
+function parseJsonLoose(text) {
+  const m = String(text).match(/\{[\s\S]*\}/);
+  if (!m) return {};
+  try { return JSON.parse(m[0]); } catch { return {}; }
 }
 
 // ---------- Auxiliares ----------
@@ -228,7 +296,8 @@ function withCors(res, origin) {
   if (origin) {
     h.set('Access-Control-Allow-Origin', origin);
     h.set('Vary', 'Origin');
-    h.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    h.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    h.set('Access-Control-Allow-Headers', 'Content-Type');
   }
   return new Response(res.body, { status: res.status, headers: h });
 }

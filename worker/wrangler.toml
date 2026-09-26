@@ -5,3 +5,7 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGINS = "https://gadrs377.github.io,http://localhost:8080"
+
+# IA grátis da Cloudflare (Workers AI), usada em /identify.
+[ai]
+binding = "AI"
