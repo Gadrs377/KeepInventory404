@@ -34,7 +34,9 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - Se um código de barras estiver em mais de um produto, o app pergunta qual
   deles você está segurando.
 - Produto desconhecido é buscado ao mesmo tempo em lojas online brasileiras
-  (13 supermercados e farmácias) e no [Open Food Facts](https://world.openfoodfacts.org).
+  (17 supermercados e farmácias) e no [Open Food Facts](https://world.openfoodfacts.org);
+  se ninguém conhece, em catálogos de código de barras (CadastroProduto e,
+  com chave, Cosmos e Kodebar). A foto com IA fica só para o último caso.
   Se ninguém achar, o campo de nome sugere produtos das lojas enquanto você digita.
   Uma vez cadastrado, o app lembra.
 - Funciona sem internet depois da primeira abertura (só a busca de produto novo
@@ -66,6 +68,15 @@ consultar direto. Ele é publicado sozinho pelo GitHub Actions
 (`.github/workflows/worker.yml`) com os segredos `CLOUDFLARE_API_TOKEN` e
 `CLOUDFLARE_ACCOUNT_ID`. Teste local: `cd worker && node test/local.mjs`.
 Diagnóstico das lojas: `https://keepinventory-api.gabriel-gadrs377.workers.dev/diag`.
+
+Quando nenhuma loja conhece o código, o repassador consulta catálogos de código
+de barras (medição em [system design, seção 5.4](docs/SYSTEM_DESIGN.md)). O
+CadastroProduto funciona sem nada. Dois catálogos ficam melhores com uma chave
+grátis, guardada como segredo do repositório (Settings → Secrets and variables
+→ Actions); o workflow passa para o Worker na próxima publicação:
+
+- `COSMOS_TOKEN`: crie a conta em [cosmos.bluesoft.com.br](https://cosmos.bluesoft.com.br/api) (25 consultas por dia).
+- `KODEBAR_KEY`: crie a conta em [kodebar.korvensistemas.com.br](https://kodebar.korvensistemas.com.br/) (50 consultas por dia).
 
 ## Base de remédios (pasta `data/remedios/`)
 

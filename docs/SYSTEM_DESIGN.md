@@ -158,7 +158,7 @@ itens soltos ficam no `localStorage` deste celular.
    - **Open Food Facts**:
      `GET https://world.openfoodfacts.org/api/v2/product/{code}?fields=product_name,product_name_pt,brands,quantity,image_front_small_url`,
      usado se as lojas não acharem.
-   Cada consulta tem tempo limite (9 s e 8 s).
+   Cada consulta tem tempo limite (12 s e 8 s).
 3. Não achou: a folha de cadastro abre com o campo **Nome do produto**, que
    também busca nas lojas enquanto a pessoa digita (a partir de 3 letras,
    350 ms depois de parar). Tocar numa sugestão preenche nome, marca, tamanho,
@@ -182,7 +182,7 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
 
 | Rota | O que faz | Cache |
 | --- | --- | --- |
-| `GET /lookup?ean=` | Consulta 14 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais | 7 dias (não encontrado: 1 dia) |
+| `GET /lookup?ean=` | Consulta 17 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais. Nenhuma achou: os catálogos de código de barras (seção 5.4) | 7 dias (não encontrado: 1 dia) |
 | `GET /search?q=` | Busca por nome no Zaffari, em 3 supermercados e em 1 farmácia (Zaffari primeiro), intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
 | `POST /identify` | Recebe a foto da embalagem (JPEG até 1 MB), a IA da Cloudflare (Llama 4 Scout) lê marca, produto, variante e tamanho, e o Worker busca em cascata (busca sugerida, marca + produto + variante, marca + produto, marca) até juntar 6 sugestões | a busca usa o cache da `/search` |
 | `GET /diag` | Testa cada loja a partir da Cloudflare | sem cache |
@@ -235,6 +235,45 @@ estáticos, publicados junto com o app:
 - **Bula:** link para o Bulário Eletrônico da Anvisa pelo nome do remédio.
 - **Atualização:** `.github/workflows/remedios.yml`, todo dia 12, faz o commit
   se a tabela mudou e dispara a publicação do site.
+
+### 5.4 Catálogos de código de barras (quando nenhuma loja conhece)
+
+Objetivo: resolver quase tudo só pelo código, e deixar a foto com IA para o
+que não tem código nem nome conhecido. Pesquisa de 09/2026, medida com 195
+códigos reais de uma rede que o app não consulta (Hortifruti), de 80 tipos de
+produto; 39 deles são marca própria da rede, que só a própria loja conhece.
+
+| Etapa | Achou (todos) | Achou (sem marca própria) |
+| --- | --- | --- |
+| Antes: 14 lojas + Open Food Facts | 154/195 (79%) | 133/156 (85%) |
+| + Zona Sul, GBarbosa e Bretas | 166/195 (85%) | 143/156 (92%) |
+| + CadastroProduto | 172/195 (88%) | 147/156 (94%) |
+
+O que ficou de fora: polpas de fruta, kombucha e massas frescas de marcas
+regionais. O que o app já conhece não é consultado de novo.
+
+Cascata no Worker (`lookup`): lojas → se nenhuma achou, em paralelo,
+**CadastroProduto** (página pública com JSON-LD, 945 mil produtos, sem chave)
+e, se o Worker tiver a chave, **Cosmos** (`COSMOS_TOKEN`) e **Kodebar**
+(`KODEBAR_KEY`). O Open Food Facts continua sendo consultado pelo celular.
+Catálogo devolve nome em maiúsculas de cupom; o Worker passa para letra de
+frase e devolve sem foto nem categoria.
+
+Fontes avaliadas:
+
+| Fonte | Como acessa | Resultado |
+| --- | --- | --- |
+| Lojas VTEX (17) | Busca pública por EAN | A melhor: nome completo, foto, categoria. 3 novas acrescentadas |
+| Open Food Facts | API aberta | 94/195 sozinho; só comida (36 mil produtos do Brasil) |
+| Open Beauty / Products Facts | API aberta | 0 e 3 de 195: quase sem produto brasileiro |
+| CadastroProduto | Página pública por código | 25/59 sozinho; +6 que ninguém tinha. Limita consultas seguidas (uso doméstico passa longe). Base completa em CSV: R$ 299, não compensa (cobre menos que as lojas) |
+| Cosmos (Bluesoft) | API com chave grátis, 25 consultas/dia | Maior catálogo brasileiro de GTIN. Não medido (precisa de conta) |
+| Kodebar | API com chave grátis, 50 consultas/dia | Base de PDVs reais. Não medido (precisa de conta) |
+| DotCompany | API com chave, créditos | 1,9 mi de itens, R$ 0,04 por consulta |
+| Verified by GS1 Brasil | Site com login e captcha | Oficial, mas não serve para consulta automática |
+| Menor Preço (Nota Paraná) | API do app oficial | Para quem não é o app, devolve dados falsos (proteção). Descartado |
+| Mercado Livre | API | Exige conta de desenvolvedor e token do usuário. Descartado |
+| UPCitemdb, Open EAN/GTIN DB | API aberta | Quase sem produto brasileiro, limite baixo |
 
 ### 5.1 Um código, vários produtos
 

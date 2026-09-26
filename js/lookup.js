@@ -82,7 +82,8 @@ async function lookupOff(code) {
 
 async function lookupStores(code) {
   try {
-    const data = await apiGet(`/lookup?ean=${encodeURIComponent(code)}`, 9000);
+    // Lojas (até 5 s) e, se nenhuma achar, catálogos de código de barras (até 5 s).
+    const data = await apiGet(`/lookup?ean=${encodeURIComponent(code)}`, 12000);
     if (!data.found || !data.product || !data.product.name) return { status: 'notfound' };
     return { status: 'found', info: fromStore(data.product) };
   } catch {

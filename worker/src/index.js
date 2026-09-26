@@ -32,6 +32,11 @@ export const LOOKUP_STORES = [
   'www.drogal.com.br',
   'www.paguemenos.com.br',
   'www.epocacosmeticos.com.br',
+  // Acrescentados em 09/2026: acharam 12 de 41 produtos que as outras não tinham
+  // (marcas pequenas, cervejas artesanais, frios fracionados).
+  'www.zonasul.com.br',
+  'www.gbarbosa.com.br',
+  'www.bretas.com.br',
 ];
 
 // Busca por nome: o Zaffari primeiro (as sugestões dele aparecem no topo),
@@ -77,7 +82,7 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          return withCors(await cached(ctx, `lookup:${ean}`, 7 * DAY, () => lookup(ean)), allowed);
+          return withCors(await cached(ctx, `lookup:${ean}`, 7 * DAY, () => lookup(ean, env)), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
@@ -118,7 +123,24 @@ export default {
 
 // ---------- Consultas ----------
 
-export async function lookup(ean) {
+// Código de barras: primeiro as lojas (nome completo, foto e categoria). Se
+// nenhuma conhece, os catálogos de código de barras (seção 5.4 do system design):
+// CadastroProduto (página pública, 945 mil produtos) e, quando o Worker tem a
+// chave, Cosmos (Bluesoft, 25 consultas grátis por dia) e Kodebar (50 por dia).
+export async function lookup(ean, env = {}) {
+  const found = await lookupStores(ean);
+  if (found.found) return found;
+  const catalogs = [lookupCadastroProduto(ean)];
+  if (env.COSMOS_TOKEN) catalogs.push(lookupCosmos(ean, env.COSMOS_TOKEN));
+  if (env.KODEBAR_KEY) catalogs.push(lookupKodebar(ean, env.KODEBAR_KEY));
+  try {
+    return { found: true, product: await Promise.any(catalogs) };
+  } catch {
+    return { found: false };
+  }
+}
+
+async function lookupStores(ean) {
   const tries = LOOKUP_STORES.map((host) =>
     storeJson(host, `/api/catalog_system/pub/products/search?fq=alternateIds_Ean:${ean}`).then((data) => {
       const p = Array.isArray(data) && data[0];
@@ -248,6 +270,71 @@ function parseJsonLoose(text) {
   const m = String(text).match(/\{[\s\S]*\}/);
   if (!m) return {};
   try { return JSON.parse(m[0]); } catch { return {}; }
+}
+
+// ---------- Catálogos de código de barras ----------
+// Não têm foto boa nem categoria de loja: devolvem nome, marca e tamanho, que
+// é o que o app precisa. Os nomes vêm em maiúsculas de cupom ("ARROZ TIPO 1
+// CAMIL 1KG") e ficam com letra de frase.
+
+async function fetchText(url, headers = {}, timeout = STORE_TIMEOUT) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': UA, ...headers }, signal: ctrl.signal, redirect: 'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function catalogProduct(name, brand, ean, source) {
+  const clean = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!clean) throw new Error('sem nome');
+  const niceBrand = titleCase(String(brand || '').trim());
+  return { name: sentenceCase(clean, niceBrand), brand: niceBrand, size: sizeOf(clean), ean, image: '', category: '', store: source };
+}
+
+// Página pública do produto (dados em JSON-LD, schema.org/Product).
+export async function lookupCadastroProduto(ean) {
+  const html = await fetchText(`https://cadastroproduto.com.br/produto/${ean}`);
+  const block = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((m) => { try { return JSON.parse(m[1]); } catch { return null; } })
+    .flat()
+    .find((x) => x && x['@type'] === 'Product' && String(x.gtin13 || x.gtin || '') === ean);
+  if (!block) throw new Error('não encontrado');
+  return catalogProduct(decodeEntities(block.name), block.brand && decodeEntities(block.brand.name), ean, 'cadastroproduto.com.br');
+}
+
+export async function lookupCosmos(ean, token) {
+  const data = JSON.parse(await fetchText(`https://api.cosmos.bluesoft.com.br/gtins/${ean}.json`, { 'X-Cosmos-Token': token, Accept: 'application/json' }));
+  return catalogProduct(data.description, data.brand && data.brand.name, ean, 'cosmos.bluesoft.com.br');
+}
+
+export async function lookupKodebar(ean, key) {
+  const data = JSON.parse(await fetchText(`https://kodebar.korvensistemas.com.br/gtin/lookup?gtin=${ean}`, { 'X-API-Key': key, Accept: 'application/json' }));
+  return catalogProduct(data.nome, data.marca, ean, 'kodebar');
+}
+
+function decodeEntities(s) {
+  return String(s || '').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+}
+
+// "ARROZ AGULHINHA TIPO 1 CAMIL 1KG" -> "Arroz agulhinha tipo 1 Camil 1kg": letra de
+// frase, com a marca (quando veio) de volta com iniciais maiúsculas.
+export function sentenceCase(s, brand = '') {
+  if (s !== s.toUpperCase()) return s;
+  let low = s.toLocaleLowerCase('pt-BR');
+  low = low.charAt(0).toLocaleUpperCase('pt-BR') + low.slice(1);
+  if (!brand) return low;
+  const i = low.toLocaleLowerCase('pt-BR').indexOf(brand.toLocaleLowerCase('pt-BR'));
+  return i < 0 ? low : low.slice(0, i) + brand + low.slice(i + brand.length);
+}
+
+function titleCase(s) {
+  if (s !== s.toUpperCase()) return s;
+  return s.toLocaleLowerCase('pt-BR').replace(/(^|\s)(\p{L})/gu, (_, a, b) => a + b.toLocaleUpperCase('pt-BR'));
 }
 
 // ---------- Auxiliares ----------

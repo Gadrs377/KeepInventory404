@@ -86,7 +86,8 @@ async function start(ctx, productId) {
 // ---------- Produto sem código de barras (entrada e contagem) ----------
 // A caixa já foi para o lixo, ou o produto nunca teve código (pão, fruta, feira).
 // Três caminhos, do mais comum para o menos: já está no armário (compra de
-// novo), fotografar a embalagem (a IA lê marca e produto) ou escrever o nome.
+// novo), escrever o nome (com sugestões das lojas) ou, por último, fotografar
+// a embalagem (a IA lê marca e produto). A foto é o último recurso.
 
 function noCodeChoice(ctx) {
   const { body } = ctx;
@@ -99,17 +100,17 @@ function noCodeChoice(ctx) {
         <span class="group-label">Já está no armário<span class="group-sub">Escolha na lista; só soma a quantidade</span></span>
         ${icon('chevron', 'group-chevron')}
       </button></li>
+      <li><button type="button" class="group-row" data-way="name">
+        <span class="group-icon">${icon('keyboard')}</span>
+        <span class="group-label">Escrever o nome<span class="group-sub">O app sugere o produto das lojas enquanto você digita</span></span>
+        ${icon('chevron', 'group-chevron')}
+      </button></li>
       <li><label class="group-row file-btn" data-way="photo">
         <span class="group-icon">${icon('camera')}</span>
-        <span class="group-label">Fotografar a embalagem<span class="group-sub">O app lê a marca e o produto na foto</span></span>
+        <span class="group-label">Fotografar a embalagem<span class="group-sub">Só se não souber o nome: o app lê a embalagem</span></span>
         ${icon('chevron', 'group-chevron')}
         <input type="file" accept="image/*" capture="environment" class="sr-only" data-way-photo>
       </label></li>
-      <li><button type="button" class="group-row" data-way="name">
-        <span class="group-icon">${icon('keyboard')}</span>
-        <span class="group-label">Escrever o nome<span class="group-sub">Para pão, fruta e o que não tem embalagem</span></span>
-        ${icon('chevron', 'group-chevron')}
-      </button></li>
     </ul>`;
   $('[data-way="local"]', body).addEventListener('click', () => searchLocal(ctx, { all: true, title: 'Qual produto do armário?' }));
   $('[data-way="name"]', body).addEventListener('click', () => newForm(ctx, { status: 'nocode' }));
