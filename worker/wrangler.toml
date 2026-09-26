@@ -1,0 +1,7 @@
+name = "keepinventory-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://gadrs377.github.io,http://localhost:8080"
