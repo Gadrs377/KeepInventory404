@@ -19,13 +19,11 @@ import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, th
 const COPY = {
   entrada: {
     title: 'Entrada', sign: '+',
-    hint: 'Aponte para o código de barras',
-    fastHint: 'Cada leitura guarda 1. Produto novo fica para o fim.',
+    fastNotice: 'Rápido: cada leitura guarda 1',
   },
   saida: {
     title: 'Saída', sign: '−',
-    hint: 'Aponte para o código de barras',
-    fastHint: 'Cada leitura tira 1. Produto que não está no armário fica para o fim.',
+    fastNotice: 'Rápido: cada leitura tira 1',
   },
 };
 
@@ -69,7 +67,6 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
           <span class="fast-pill" aria-hidden="true">${icon('bolt')}<span>Rápido</span></span>
           <span class="sr-only">Modo rápido</span>
         </label>
-        <p class="band-hint" data-hint></p>
       </header>
       <main>
         <div class="cam-host"></div>
@@ -96,16 +93,15 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   const screen = $('.screen-scan', root);
   const lines = $('.receipt-lines', root);
   const total = $('.receipt-total', root);
-  const hint = $('[data-hint]', root);
   const fastInput = $('[data-fast]', root);
   const pendingBox = $('.pending', root);
   const pendingList = $('.pending-list', root);
 
-  // "Aponte para o código" é óbvio numa tela de câmera: a linha só aparece
-  // para explicar o modo rápido.
-  function renderHint() {
-    hint.textContent = fast ? COPY[mode].fastHint : '';
-    hint.hidden = !fast;
+  // Nada de texto fixo explicando o modo: quando o modo rápido está ligado, um
+  // aviso curto aparece por cima da câmera e some (ao abrir, trocar de modo ou
+  // ligar o Rápido). O que o app não conhece aparece em "Para resolver" na hora.
+  function fastNotice() {
+    if (fast) cam.notice(COPY[mode].fastNotice);
   }
 
   // Troca de modo sem desmontar a tela: a câmera continua ligada.
@@ -117,7 +113,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     fastInput.checked = fast;
     const radio = $(`input[name=scan-mode][value="${mode}"]`, root);
     if (radio) { radio.checked = true; glideTo($('.mode-switch', root), radio.closest('label')); }
-    renderHint();
+    fastNotice();
     renderQuick();
     history.replaceState(null, '', `#/${mode}`);
     try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
@@ -328,8 +324,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   fastInput.addEventListener('change', () => {
     fast = fastInput.checked;
     saveFast(mode, fast);
-    renderHint();
-    toast(fast ? `Modo rápido ligado. Cada leitura ${mode === 'saida' ? 'tira' : 'guarda'} 1.` : 'Modo rápido desligado. O app pergunta a quantidade.', { duration: 2500 });
+    cam.notice(fast ? COPY[mode].fastNotice : 'Rápido desligado: o app pergunta quantos');
   });
 
   $('[data-finish]', root).addEventListener('click', async () => {
@@ -405,7 +400,6 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   });
   $('[data-quick-search]', root).addEventListener('click', () => cam.handle(`SEM-${Date.now()}`));
 
-  renderHint();
   renderSession();
   // Nota fiscal lida (ou link colado): a compra inteira entra de uma vez.
   async function handleNota(p) {
@@ -417,6 +411,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
 
   const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota });
   if (initialCode) cam.handle(initialCode);
+  else fastNotice();
   // Veio de "Importar nota fiscal" (Mais): abre já no modo nota.
   try {
     if (sessionStorage.getItem('ki.qr')) { sessionStorage.removeItem('ki.qr'); cam.setQrMode(true); }

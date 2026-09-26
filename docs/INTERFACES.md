@@ -703,3 +703,17 @@ de "Tudo" e no filtro Remédios.
   Código de barras de produto é ignorado nesse modo.
 - "Colar o link da nota" só aparece se não ler em 6 s.
 - Mais → Importar nota fiscal abre o leitor já no modo nota.
+
+## Versão 3.17: leitor sem texto fixo
+
+Critério da Apple: o controle se explica sozinho; texto de instrução não fica
+parado na tela.
+
+- A faixa do leitor tem uma linha só: fechar, Entrada/Saída e Rápido. Saiu a
+  frase fixa que explicava o modo rápido.
+- Com o Rápido ligado, um aviso curto aparece por cima da câmera ("Rápido:
+  cada leitura tira 1") ao abrir, ao trocar de modo e ao ligar o botão, e some
+  em 2 s. Ao desligar: "Rápido desligado: o app pergunta quantos".
+- O que o app não conhece não precisa de aviso antes: aparece em "Para
+  resolver" na hora.
+

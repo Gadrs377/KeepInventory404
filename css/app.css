@@ -1343,7 +1343,6 @@ html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
 .band-slim .mode-switch { justify-self: center; align-self: center; }
 .band-slim .mode-opt span { min-height: 42px; font-size: 18px; padding-inline: 10px 14px; }
 .band-slim .mode-opt .icon { width: 20px; height: 20px; }
-.band-slim .band-hint { grid-column: 1 / -1; padding-inline: 12px 0; font-size: 15px; animation: fade-in 300ms var(--ease); }
 .fast-toggle { position: relative; cursor: pointer; }
 .fast-pill {
   display: inline-flex; align-items: center; gap: 4px;
@@ -1883,3 +1882,18 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 }
 .cam-paste { top: auto; bottom: 70px; }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .cam-qr-note { background: #161817; } }
+
+/* Aviso curto sobre a câmera (modo rápido): aparece, fica 2 s e some */
+.cam-notice {
+  position: absolute; z-index: 3; top: 10px; left: 50%; translate: -50% -6px;
+  width: max-content; max-width: calc(100% - 20px);
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
+  font-size: 15px; font-weight: 600; text-align: center;
+  opacity: 0; transition: opacity 220ms var(--ease), translate 320ms var(--spring);
+  pointer-events: none;
+}
+.cam-notice.is-on { opacity: 1; translate: -50% 0; }
+.viewfinder.is-qr .cam-notice { display: none; }
+@media (prefers-reduced-motion: reduce) { .cam-notice { transition: none; } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .cam-notice { background: #161817; } }

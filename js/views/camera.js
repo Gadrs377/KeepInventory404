@@ -23,6 +23,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
       <video muted playsinline aria-label="Imagem da câmera"></video>
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
+      <p class="cam-notice" role="status" hidden></p>
       <p class="cam-loading" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Abrindo a câmera</p>
       <button type="button" class="cam-hint" data-byname hidden>Não lê ou não tem código? <strong>Ver outras formas</strong></button>
       ${onNota ? '<p class="cam-qr-note" hidden>Aponte para o QR Code no fim do cupom</p><button type="button" class="cam-hint cam-paste" data-paste hidden>Não lê? <strong>Colar o link da nota</strong></button>' : ''}
@@ -182,9 +183,24 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
     setTimeout(() => pop.remove(), 1600);
   }
 
+  // Aviso curto por cima da imagem, que some sozinho (como os da câmera do
+  // iPhone): diz o que um botão acabou de mudar, sem texto fixo na tela.
+  const noticeEl = $('.cam-notice', host);
+  let noticeTimer = 0;
+  function notice(text) {
+    clearTimeout(noticeTimer);
+    noticeEl.textContent = text;
+    noticeEl.hidden = false;
+    noticeEl.classList.remove('is-on');
+    void noticeEl.offsetWidth;
+    noticeEl.classList.add('is-on');
+    noticeTimer = setTimeout(() => { noticeEl.classList.remove('is-on'); noticeTimer = setTimeout(() => { noticeEl.hidden = true; }, 250); }, 2200);
+  }
+
   return {
     handle,
     flash,
+    notice,
     setQrMode,
     pause() {
       paused = true;
