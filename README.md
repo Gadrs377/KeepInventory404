@@ -83,6 +83,8 @@ endereço precisa de HTTPS.
   [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (better-ui,
   better-layout, better-writing, better-interface e outras),
   [make-interfaces-feel-better](https://github.com/jakubkrehel/make-interfaces-feel-better),
-  [liquid-glass](https://github.com/Armitanemati/liquid-glass-claude-skill) e
-  [unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill).
+  [liquid-glass](https://github.com/Armitanemati/liquid-glass-claude-skill),
+  [unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill) e
+  [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+  (biblioteca de regras de UX e de componentes, ver `.claude/skills/ui-ux-pro-max/ORIGEM.md`).
   Relatório da revisão em [docs/REVISAO_INTERFACE.md](docs/REVISAO_INTERFACE.md).
