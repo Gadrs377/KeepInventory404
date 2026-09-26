@@ -433,3 +433,19 @@ Mudanças guiadas por "como a Apple faria" e pelas skills better-layout e liquid
 - **Leitor:** a linha "Aponte para o código de barras" só aparece com o modo rápido
   ligado (para explicá-lo).
 
+## Versão 3.5: barra de abas e princípios da Apple
+
+- **Barra de abas** (como no iPhone e no WhatsApp): Armário, Compras, Cupons e
+  Mais numa cápsula de vidro embaixo; a aba ativa tem o ícone cheio. Separado, à
+  direita, um botão redondo com o código de barras abre o leitor no último modo
+  usado (Entrada ou Saída), na cor desse modo. Substitui a barra Entrada/Saída e
+  os ícones do topo do Armário.
+- **Títulos grandes** iguais nas quatro telas principais; Compras e Cupons deixaram
+  de ter seta de voltar (são abas).
+- **Só símbolo:** Lanterna e Digitar código na câmera, Compartilhar lista e
+  Compartilhar cupom (no topo), "+" de acrescentar item. Todos com nome para leitor
+  de tela.
+- **Saída mais rápida:** um código que não está no armário abre a folha na hora,
+  sem esperar a busca na internet (não serve para a saída).
+- **Mais:** sem Cupons e Lista de compras (viraram abas); ficam Contar, Backup e Som.
+

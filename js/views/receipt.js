@@ -25,6 +25,7 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
     render(body, close) {
       body.innerHTML = `
         <h2 class="sheet-title">${isNew ? 'Pronto' : 'Cupom'}</h2>
+        <button type="button" class="icon-btn sheet-share" data-share aria-label="Compartilhar cupom">${icon('share')}</button>
         <div class="receipt-stage">
           <div class="printer-slot" aria-hidden="true"></div>
           <div class="ticket-clip">
@@ -52,7 +53,6 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
         </div>
         <div class="sheet-actions">
           <button type="button" class="btn btn-primary btn-lg" data-done>${isNew ? `${icon('back')}Voltar ao armário` : 'Fechar'}</button>
-          <button type="button" class="btn btn-quiet" data-share>${icon('share')}Compartilhar cupom</button>
         </div>`;
 
       // O cupom desce da impressora (CSS); o celular vibra de leve como o papel saindo.

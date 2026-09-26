@@ -24,8 +24,8 @@ export function mountCamera(host, { onCode, compact = false }) {
       <p class="cam-msg" hidden></p>
       <button type="button" class="cam-hint" data-byname hidden>Não está lendo? <strong>Buscar pelo nome</strong></button>
       <div class="cam-tools">
-        <button type="button" class="cam-tool" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
-        <button type="button" class="cam-tool" data-manual>${icon('keyboard')}Digitar código</button>
+        <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
+        <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
       </div>
     </div>`;
 

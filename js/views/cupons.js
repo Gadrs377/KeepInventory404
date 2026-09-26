@@ -2,7 +2,7 @@
 
 import { listReceipts } from '../store.js';
 import { showReceipt } from './receipt.js';
-import { $, esc, icon, when } from '../ui.js';
+import { $, esc, icon, when, tabBar } from '../ui.js';
 
 const INFO = {
   entrada: { title: 'Entrada', icon: 'in' },
@@ -14,10 +14,9 @@ const INFO = {
 export default async function mountCupons(root) {
   const list = await listReceipts();
   root.innerHTML = `
-    <div class="screen screen-cupons">
-      <header class="topbar glass-regular">
-        <a class="icon-btn" href="#/dados" aria-label="Voltar para Mais">${icon('back')}</a>
-        <h1 class="topbar-title">Cupons</h1>
+    <div class="screen screen-cupons has-tabbar">
+      <header class="home-head">
+        <h1 class="page-title">Cupons</h1>
       </header>
       <main class="content">
         ${list.length ? `<ul class="rows cupons">${list.map((r, i) => {
@@ -36,9 +35,10 @@ export default async function mountCupons(root) {
         }).join('')}</ul>`
         : `<div class="empty-state">
             <p class="empty-lead">Nenhum cupom ainda.</p>
-            <p>Os cupons aparecem aqui quando você toca em Concluir numa entrada, numa saída ou depois de aplicar uma contagem.</p>
+            <p>Os cupons aparecem aqui quando você toca em Concluir no leitor ou depois de aplicar uma contagem.</p>
           </div>`}
       </main>
+      ${tabBar('cupons')}
     </div>`;
 
   const rows = $('.cupons', root);

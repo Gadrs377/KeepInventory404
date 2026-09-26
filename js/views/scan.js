@@ -44,6 +44,7 @@ function saveFast(mode, on) {
 export default function mountScan(root, { mode: initialMode, code: initialCode }) {
   let mode = initialMode;
   let fast = loadFast(mode);
+  try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
   // Uma linha por produto e modo: { mode, product, n }, a mais recente no fim.
   const session = new Map();
   // Leituras que esperam o fim: { mode, barcode, reads, reason }
@@ -112,6 +113,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     if (radio) radio.checked = true;
     renderHint();
     history.replaceState(null, '', `#/${mode}`);
+    try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
     vibrate(10);
   }
 

@@ -73,6 +73,34 @@ export function icon(name, cls = '') {
   return `<svg class="icon ${cls}" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 }
 
+// ---------- Barra de abas (como no iPhone/WhatsApp) ----------
+// Quatro abas numa cápsula de vidro e, separado, o botão de ler código, que
+// abre o leitor no último modo usado. Aba ativa: ícone cheio e texto forte.
+
+const TABS = [
+  { id: 'armario', href: '#/', label: 'Armário', icon: 'package', active: 'packageFill' },
+  { id: 'compras', href: '#/compras', label: 'Compras', icon: 'cart', active: 'cartFill' },
+  { id: 'cupons', href: '#/cupons', label: 'Cupons', icon: 'receipt', active: 'receiptFill' },
+  { id: 'mais', href: '#/dados', label: 'Mais', icon: 'menu', active: 'menuFill' },
+];
+
+export function lastScanMode() {
+  try { return localStorage.getItem('ki.lastMode') === 'saida' ? 'saida' : 'entrada'; } catch { return 'entrada'; }
+}
+
+export function tabBar(current) {
+  return `
+    <div class="tabbar-wrap">
+      <nav class="tabbar glass-regular" aria-label="Seções">
+        ${TABS.map((t) => `
+          <a class="tab-item" href="${t.href}" ${t.id === current ? 'aria-current="page"' : ''}>
+            ${icon(t.id === current ? t.active : t.icon)}<span>${t.label}</span>
+          </a>`).join('')}
+      </nav>
+      <a class="scan-fab glass-regular mode-${lastScanMode()}" href="#/${lastScanMode()}" aria-label="Ler código de barras (${lastScanMode() === 'saida' ? 'Saída' : 'Entrada'})">${icon('barcode')}</a>
+    </div>`;
+}
+
 // ---------- Aviso (toast) ----------
 // Aviso com ação (Desfazer) fica até ser dispensado, trocado por outro ou até
 // mudar de tela. Aviso sem ação some sozinho. O anúncio para leitores de tela

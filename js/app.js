@@ -60,7 +60,7 @@ unlockAudio();
 // Material que acende a partir do toque (liquid glass): o ponto vai para
 // --press-x/--press-y e o CSS desenha o brilho enquanto o botão está pressionado.
 document.addEventListener('pointerdown', (e) => {
-  const el = e.target.closest('.mode-btn, .floating-bar .btn, .mode-opt span');
+  const el = e.target.closest('.scan-fab, .floating-bar .btn, .mode-opt span');
   if (!el) return;
   const r = el.getBoundingClientRect();
   el.style.setProperty('--press-x', `${e.clientX - r.left}px`);

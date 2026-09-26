@@ -6,7 +6,7 @@ import { listProducts, listLots, recentMovements, onChange } from '../store.js';
 import { AREAS } from '../areas.js';
 import { consumptionByProduct, shoppingSuggestions } from '../consumo.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast } from '../ui.js';
+import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar } from '../ui.js';
 
 const KEY = 'ki.shop';
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
@@ -31,10 +31,10 @@ export default function mountCompras(root) {
   let expiring = [];
 
   root.innerHTML = `
-    <div class="screen screen-shop has-floating-bar">
-      <header class="topbar glass-regular">
-        <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
-        <h1 class="topbar-title">Compras</h1>
+    <div class="screen screen-shop has-tabbar">
+      <header class="home-head">
+        <h1 class="page-title">Compras</h1>
+        <button type="button" class="icon-btn" data-share aria-label="Compartilhar lista">${icon('share')}</button>
       </header>
       <main class="content">
         <p class="lead" data-lead>&nbsp;</p>
@@ -44,7 +44,7 @@ export default function mountCompras(root) {
           <label class="field-label" for="shop-extra">Acrescentar à lista</label>
           <div class="shop-add-row">
             <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
-            <button type="submit" class="btn btn-quiet">${icon('plus')}Acrescentar</button>
+            <button type="submit" class="btn btn-quiet btn-icon" aria-label="Acrescentar à lista">${icon('plus')}</button>
           </div>
         </form>
 
@@ -66,9 +66,7 @@ export default function mountCompras(root) {
           </div>
         </section>
       </main>
-      <footer class="floating-bar glass-regular">
-        <button type="button" class="btn btn-primary btn-lg" data-share>${icon('share')}Compartilhar lista</button>
-      </footer>
+      ${tabBar('compras')}
     </div>`;
 
   const lists = $('.shop-lists', root);

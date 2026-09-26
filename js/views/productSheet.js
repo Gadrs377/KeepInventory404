@@ -61,6 +61,13 @@ async function start(ctx, productId) {
     return p ? productForm(ctx, p, { fromList: true }) : ctx.close(null);
   }
   if (ctx.barcode.startsWith('SEM-') && ctx.mode === 'saida') return searchLocal(ctx);
+  // Na saída só interessa o que já está no armário: não espera a internet.
+  if (ctx.mode === 'saida') {
+    const local = await productsByBarcode(ctx.barcode);
+    if (!ctx.body.isConnected) return;
+    if (!local.length) return notInCupboard(ctx);
+    return local.length === 1 ? productForm(ctx, local[0], {}) : chooser(ctx, local);
+  }
   const result = await lookup(ctx.barcode);
   if (!ctx.body.isConnected) return;
 
@@ -253,13 +260,13 @@ function notInCupboard(ctx) {
         <span class="group-icon is-entrada">${icon('plus')}</span>
         <span class="group-label">Esqueci de cadastrar<span class="group-sub">Cadastre agora com quantos ainda tem no armário</span></span>
         ${icon('chevron', 'group-chevron')}</button></li>
-      <li><button type="button" class="group-row" data-retry>
+      <li><button type="button" class="group-row" data-reread>
         <span class="group-icon">${icon('barcode')}</span>
         <span class="group-label">Leu errado<span class="group-sub">Fecha e volta a ler; aponte para o código do produto, não o da caixa</span></span>
         ${icon('chevron', 'group-chevron')}</button></li>
     </ul>`;
   $('[data-switch]', body).addEventListener('click', () => close({ kind: 'switch', code: barcode }));
-  $('[data-retry]', body).addEventListener('click', () => close(null));
+  $('[data-reread]', body).addEventListener('click', () => close(null));
   $('[data-link]', body).addEventListener('click', () => linkToProduct(ctx));
 }
 

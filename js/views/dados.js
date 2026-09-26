@@ -1,7 +1,7 @@
 // Backup, restauração, planilha e histórico geral.
 
 import { exportData, importData, listProducts, recentMovements } from '../store.js';
-import { $, esc, icon, toast, when, confirmSheet, download } from '../ui.js';
+import { $, esc, icon, toast, when, confirmSheet, download, tabBar } from '../ui.js';
 import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
 
 export default async function mountDados(root) {
@@ -18,16 +18,13 @@ export default async function mountDados(root) {
   }[m.type] || m.type);
 
   root.innerHTML = `
-    <div class="screen screen-data">
-      <header class="topbar glass-regular">
-        <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
-        <h1 class="topbar-title">Mais</h1>
+    <div class="screen screen-data has-tabbar">
+      <header class="home-head">
+        <h1 class="page-title">Mais</h1>
       </header>
       <main class="content stack">
-        <ul class="group" aria-label="Outras telas">
+        <ul class="group" aria-label="Contagem">
           <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
-          <li><a class="group-row" href="#/cupons"><span class="group-icon">${icon('receipt')}</span><span class="group-label">Cupons das últimas sessões</span>${icon('chevron', 'group-chevron')}</a></li>
-          <li><a class="group-row" href="#/compras"><span class="group-icon">${icon('cart')}</span><span class="group-label">Lista de compras</span>${icon('chevron', 'group-chevron')}</a></li>
         </ul>
 
         <h2 class="list-title">Backup</h2>
@@ -58,6 +55,7 @@ export default async function mountDados(root) {
             </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
         </section>
       </main>
+      ${tabBar('mais')}
     </div>`;
 
   $('[data-sound]', root).addEventListener('change', (e) => {

@@ -633,7 +633,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .toast {
   /* Abaixo da folha (20): uma folha nova cobre o aviso; o Desfazer volta quando ela fecha. */
   position: fixed; z-index: 15;
-  inset-inline: 12px; bottom: calc(100px + var(--safe-bottom));
+  inset-inline: 12px; bottom: calc(92px + var(--safe-bottom));
   display: flex; align-items: center; gap: 8px;
   padding: 8px 8px 8px 16px; min-height: 60px;
   background: var(--ink); color: var(--paper);
@@ -975,14 +975,14 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 }
 
 /* Luz que nasce do ponto do toque nos botões de vidro */
-.mode-btn, .floating-bar .btn, .mode-opt span { position: relative; overflow: hidden; isolation: isolate; }
-.mode-btn::after, .floating-bar .btn::after, .mode-opt span::after {
+.scan-fab, .floating-bar .btn, .mode-opt span { position: relative; overflow: hidden; isolation: isolate; }
+.scan-fab::after, .floating-bar .btn::after, .mode-opt span::after {
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: radial-gradient(circle at var(--press-x, 50%) var(--press-y, 50%), rgba(255, 255, 255, 0.34), transparent 65%);
   opacity: 0; scale: 0.6;
   transition-property: opacity, scale; transition-duration: 300ms; transition-timing-function: var(--ease);
 }
-.mode-btn:active::after, .floating-bar .btn:active::after, .mode-opt span:active::after { opacity: 1; scale: 1; transition-duration: 120ms; }
+.scan-fab:active::after, .floating-bar .btn:active::after, .mode-opt span:active::after { opacity: 1; scale: 1; transition-duration: 120ms; }
 
 /* Folha "não está no armário": opções como linhas agrupadas */
 .choice-group { background: color-mix(in oklab, var(--ink) 6%, transparent); }
@@ -991,6 +991,74 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 .group-sub { font-weight: 400; font-size: 15px; color: var(--ink-2); text-wrap: pretty; }
 .group-icon.is-entrada { background: var(--entrada); color: var(--on-mode); }
 .choice-group .group-row { min-height: 72px; padding-block: 12px; }
+
+/* ---------- Barra de abas (versão 3.5) ----------
+   Como o iPhone: cápsula de vidro regular flutuando embaixo, 4 abas com ícone e
+   rótulo curto; aba ativa com o ícone cheio. O botão de ler código fica separado
+   (como a busca no iOS 26), redondo e tingido, e abre o leitor no último modo.
+   É a única barra de vidro embaixo; a camada de cima é a busca do Armário. */
+.has-tabbar { padding-bottom: calc(100px + var(--safe-bottom)); }
+.tabbar-wrap {
+  position: fixed; z-index: 5;
+  inset-inline: 12px; bottom: calc(10px + var(--safe-bottom));
+  display: flex; align-items: center; gap: 10px;
+  pointer-events: none;
+}
+.tabbar, .scan-fab { pointer-events: auto; }
+/* Rótulos de 12 px sobre uma lista que passa por baixo: vidro bem grosso (94%)
+   com desfoque de 28 px, senão o texto da lista aparece entre as letras das abas
+   (e continua legível mesmo onde o desfoque não roda). */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tabbar.glass-regular {
+    background: color-mix(in oklab, var(--paper) 94%, transparent);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+  }
+}
+.tabbar {
+  flex: 1; min-width: 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+  padding: 4px; border-radius: 999px;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 56px; padding-inline: 4px; border-radius: 999px;
+  color: var(--ink-2); text-decoration: none;
+  font-size: 12px; font-weight: 700; line-height: 1.1;
+  transition-property: scale, background-color; transition-duration: 150ms; transition-timing-function: var(--ease);
+}
+.tab-item .icon { width: 24px; height: 24px; }
+.tab-item[aria-current="page"] { color: var(--ink); background: color-mix(in oklab, var(--ink) 8%, transparent); }
+.tab-item:active { scale: 0.96; }
+.tab-item:focus-visible { outline-offset: -3px; }
+.scan-fab {
+  flex: none; width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center; text-decoration: none;
+  color: var(--on-mode);
+  transition-property: scale; transition-duration: 150ms; transition-timing-function: var(--ease);
+}
+.scan-fab.glass-regular { background: color-mix(in oklab, var(--mode) 90%, transparent); }
+.scan-fab .icon { width: 28px; height: 28px; }
+.scan-fab:active { scale: 0.96; }
+.scan-fab { --focus: var(--ink); }
+@media (min-width: 720px) {
+  .tabbar-wrap { inset-inline: auto; left: 50%; width: 560px; transform: translateX(-50%); }
+}
+@media (forced-colors: active) {
+  .tab-item[aria-current="page"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+}
+
+/* Títulos grandes iguais nas telas principais (Armário, Compras, Cupons, Mais) */
+.home-head .page-title { font-size: 48px; font-stretch: 62%; }
+.home-head { align-items: center; }
+.screen-shop .content, .screen-cupons .content, .screen-data .content { padding-top: 12px; }
+
+/* Botões só com símbolo */
+.btn-icon { width: 52px; padding: 0; flex: none; }
+.cam-tool { padding-inline: 0; width: 52px; justify-content: center; }
+.cam-tool .icon { width: 22px; height: 22px; }
+.sheet-share { position: absolute; top: 10px; right: 62px; }
+.sheet:has(.sheet-share) .sheet-title { padding-inline-end: 110px; }
 
 /* ---------- Telas largas ---------- */
 

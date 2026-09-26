@@ -4,7 +4,7 @@
 import { listProducts, listLots, getCountDraft, isLow, onChange, removeStock, undoMovement } from '../store.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -12,13 +12,9 @@ let savedQuery = '';
 
 export default function mountArmario(root) {
   root.innerHTML = `
-    <div class="screen screen-home has-floating-bar">
+    <div class="screen screen-home has-tabbar">
       <header class="home-head">
         <h1 class="page-title">Armário</h1>
-        <div class="home-actions">
-          <a class="icon-btn" href="#/compras" aria-label="Lista de compras">${icon('cart')}</a>
-          <a class="icon-btn" href="#/dados" aria-label="Mais: contagem, cupons e backup">${icon('menu')}</a>
-        </div>
       </header>
       <div class="home-tools glass-thick">
         <label class="search">
@@ -30,10 +26,7 @@ export default function mountArmario(root) {
       </div>
       <div class="draft-note" hidden></div>
       <main class="shelf" aria-live="polite"></main>
-      <nav class="modebar floating-bar glass-regular" aria-label="Registrar">
-        <a class="mode-btn mode-entrada" href="#/entrada">${icon('in')}<span>Entrada</span></a>
-        <a class="mode-btn mode-saida" href="#/saida">${icon('out')}<span>Saída</span></a>
-      </nav>
+      ${tabBar('armario')}
     </div>`;
 
   const shelf = $('.shelf', root);
