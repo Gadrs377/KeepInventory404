@@ -1,10 +1,11 @@
 // Tela inicial: o que tem no armário e quanto, por ambiente da casa.
 // Cada linha tem um "−" que dá baixa de 1 na hora, sem câmera, com Desfazer.
 
-import { listProducts, listLots, getCountDraft, isLow, onChange, removeStock, undoMovement } from '../store.js';
+import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, removeStock, undoMovement } from '../store.js';
+import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -43,6 +44,9 @@ export default function mountArmario(root) {
   // pessoa busca, filtra ou troca de ambiente.
   let keepOrder = false;
   let lastOrder = new Map();
+  // Quantidade da última vez que a lista foi desenhada: o número que mudou
+  // rola para cima ou para baixo, como os contadores do iPhone.
+  let lastQty = new Map();
 
   const expiresSoon = (p, days = WATCH_DAYS) => p.qty > 0 && nextExpiry.has(p.code) && daysUntil(nextExpiry.get(p.code)) <= days;
   const FILTERS = [
@@ -77,8 +81,8 @@ export default function mountArmario(root) {
     if (!products.length) {
       shelf.innerHTML = `
         <div class="empty-state">
-          <p class="empty-lead">Comece pela Entrada.</p>
-          <p>Toque em Entrada, aponte a câmera para o código de barras de um pacote do armário e confirme a quantidade. Ele aparece aqui com o número de unidades.</p>
+          <p class="empty-lead">Comece pelo leitor.</p>
+          <p>Toque no botão do código de barras, embaixo à direita, e aponte a câmera para um pacote do armário. Ele aparece aqui com o número de unidades.</p>
         </div>`;
       return;
     }
@@ -96,6 +100,7 @@ export default function mountArmario(root) {
       visible.sort((a, b) => at(a) - at(b));
     }
     lastOrder = new Map(visible.map((p, i) => [p.code, i]));
+    const moved = (p) => (lastQty.has(p.code) && lastQty.get(p.code) !== p.qty ? (p.qty > lastQty.get(p.code) ? 'is-up' : 'is-down') : '');
 
     shelf.innerHTML = visible.length
       ? `<ul class="rows">${visible.map((p) => `
@@ -106,7 +111,7 @@ export default function mountArmario(root) {
                 <span class="row-name">${esc(p.name)}</span>
                 <span class="row-sub">${rowSub(p)}</span>
               </span>
-              ${tag(p.qty, tagState(p))}
+              ${tag(p.qty, `${tagState(p)} ${moved(p)}`)}
             </a>
             ${p.qty > 0
               ? `<button type="button" class="row-minus" data-minus="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}</button>`
@@ -116,6 +121,8 @@ export default function mountArmario(root) {
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
         </div>`;
+
+    lastQty = new Map(products.map((p) => [p.code, p.qty]));
 
     if (refocus) {
       const again = shelf.querySelector(`[data-minus="${CSS.escape(refocus)}"]`);
@@ -153,13 +160,13 @@ export default function mountArmario(root) {
 
   // Baixa de 1 direto da lista. A ordem das linhas não muda na hora, para o
   // dedo não acertar outro produto num segundo toque.
-  async function minusOne(code, btn) {
-    btn.disabled = true;
+  async function minusOne(code, btn, delta = -1) {
+    if (btn) btn.disabled = true;
     try {
-      const { product, movement } = await removeStock(code, 1);
+      const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
       vibrate(15);
-      toast(`−1 ${product.name}. Agora tem ${product.qty}.`, {
-        mode: 'saida',
+      toast(`${delta < 0 ? '−1' : '+1'} ${product.name}. Agora tem ${product.qty}.`, {
+        mode: delta < 0 ? 'saida' : 'entrada',
         action: 'Desfazer',
         onAction: async () => {
           try {
@@ -171,7 +178,7 @@ export default function mountArmario(root) {
         },
       });
     } catch (err) {
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
       toast(err.message, { duration: 3000 });
     }
   }
@@ -209,6 +216,47 @@ export default function mountArmario(root) {
     keepOrder = false;
     render();
   });
+
+  // Toque longo (ou botão direito) numa linha: menu rápido, como no iPhone.
+  function rowMenu(row) {
+    const code = decodeURIComponent(row.getAttribute('href').split('/').pop());
+    const p = products.find((x) => x.code === code);
+    if (!p) return;
+    vibrate(10);
+    row.classList.add('is-lifted');
+    keepOrder = true;
+    openMenu(row, [
+      { label: 'Tirar 1', icon: 'minus', onSelect: () => { if (p.qty > 0) minusOne(code, null, -1); else toast(`${p.name} já está zerado.`, { duration: 2500 }); } },
+      { label: 'Pôr 1', icon: 'plus', onSelect: () => minusOne(code, null, 1) },
+      { label: 'Pôr na lista de compras', icon: 'cart', onSelect: () => toast(addToShopList(p.name) ? `${p.name} está na lista de compras.` : `${p.name} já estava na lista.`, { duration: 2500 }) },
+      { label: 'Ver produto', icon: 'chevron', onSelect: () => { location.hash = row.getAttribute('href'); } },
+    ], { label: p.name }).then(() => row.classList.remove('is-lifted'));
+  }
+  let press = null;
+  let suppressClick = false;
+  shelf.addEventListener('pointerdown', (e) => {
+    suppressClick = false;
+    const row = e.target.closest('a.row');
+    if (!row || e.pointerType === 'mouse') return;
+    press = { row, x: e.clientX, y: e.clientY, timer: setTimeout(() => { suppressClick = true; press = null; rowMenu(row); }, 480) };
+  });
+  const cancelPress = (e) => {
+    if (!press) return;
+    if (e.type === 'pointermove' && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 8) return;
+    clearTimeout(press.timer);
+    press = null;
+  };
+  ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => shelf.addEventListener(t, cancelPress));
+  shelf.addEventListener('contextmenu', (e) => {
+    const row = e.target.closest('a.row');
+    if (!row) return;
+    e.preventDefault();
+    if (suppressClick) return; // o toque longo já abriu o menu
+    rowMenu(row);
+  });
+  shelf.addEventListener('click', (e) => {
+    if (suppressClick) { e.preventDefault(); e.stopImmediatePropagation(); suppressClick = false; }
+  }, true);
 
   const off = onChange(load);
   load();

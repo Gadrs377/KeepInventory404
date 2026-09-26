@@ -38,6 +38,7 @@ export default async function mountProduto(root, { code }) {
     <div class="screen screen-product">
       <header class="topbar glass-regular">
         <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
+        <button type="button" class="icon-btn topbar-end" data-edit aria-label="Editar detalhes">${icon('pencil')}</button>
       </header>
       <main class="content">
         <section class="product-hero">
@@ -60,30 +61,6 @@ export default async function mountProduto(root, { code }) {
           <p class="field-note">Use só para corrigir a contagem. Entradas e saídas do dia a dia vão pelo leitor ou pelo "−" do armário.</p>
         </section>
 
-        <form class="stack product-form" novalidate>
-          <h2 class="list-title">Detalhes</h2>
-          <label class="field"><span class="field-label">Nome</span>
-            <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
-          <div class="field-row">
-            <label class="field"><span class="field-label">Marca</span>
-              <input class="input" name="brand" maxlength="40" value="${esc(p.brand)}" autocomplete="off"></label>
-            <label class="field"><span class="field-label">Tamanho</span>
-              <input class="input" name="size" maxlength="20" value="${esc(p.size)}" autocomplete="off" placeholder="Ex.: 1 kg"></label>
-          </div>
-          <fieldset class="segmented">
-            <legend class="field-label">Onde fica</legend>
-            <div class="segmented-track">
-              ${AREAS.map((a) => `
-                <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === (p.area || 'cozinha') ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
-            </div>
-          </fieldset>
-          <div class="field">
-            <span class="field-label">Avisar quando tiver esta quantidade ou menos</span>
-            <div class="stepper-host stepper-sm" data-min></div>
-          </div>
-          <button type="submit" class="btn btn-primary">${icon('check')}Salvar detalhes</button>
-        </form>
-
         <section aria-labelledby="lots-title">
           <h2 class="list-title" id="lots-title">Validade</h2>
           <div data-lots></div>
@@ -92,6 +69,7 @@ export default async function mountProduto(root, { code }) {
         <section>
           <h2 class="list-title">Consumo</h2>
           <p class="sheet-text">${esc(usage)}</p>
+          <p class="field-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando. Toque no lápis, no topo, para definir.'}</p>
         </section>
 
         <section>
@@ -104,11 +82,9 @@ export default async function mountProduto(root, { code }) {
             </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
         </section>
 
-        <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
       </main>
     </div>`;
 
-  const minStep = stepper($('[data-min]', root), { value: p.minQty, min: 0, max: 999, label: 'Avisar com' });
   // Correção de estoque separada dos detalhes: só grava quando a pessoa confirma.
   let currentQty = p.qty;
   const fixBtn = $('[data-fix]', root);
@@ -146,21 +122,26 @@ export default async function mountProduto(root, { code }) {
     }
   });
 
-  $('form', root).addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const val = (n) => $(`[name=${n}]`, root).value;
-    try {
-      await updateProduct(code, {
-        name: val('name'),
-        brand: val('brand'),
-        size: val('size'),
-        minQty: minStep.value,
-        area: $('input[name=area]:checked', root)?.value,
+  // Detalhes numa folha "Editar", como nos Contatos do iPhone: a página fica
+  // para consultar, e o que é raro (renomear, apagar) sai do caminho.
+  $('[data-edit]', root).addEventListener('click', async () => {
+    const cur = (await getProduct(code)) || p;
+    const r = await editSheet(cur);
+    if (r === 'delete') {
+      const ok = await confirmSheet({
+        title: `Remover ${cur.name}?`,
+        text: 'O produto e todo o histórico dele saem do armário. Isso não pode ser desfeito.',
+        confirm: 'Remover produto',
+        danger: true,
       });
-      toast('Detalhes salvos.', { duration: 2500 });
+      if (!ok) return;
+      await deleteProduct(code);
+      toast(`${cur.name} removido.`, { duration: 3000 });
       location.hash = '#/';
-    } catch (err) {
-      toast(err.message);
+    } else if (r) {
+      toast('Detalhes salvos.', { duration: 2500 });
+      // Desenha a página de novo pelo roteador (limpa os ouvintes da versão antiga).
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     }
   });
 
@@ -220,19 +201,6 @@ export default async function mountProduto(root, { code }) {
   const off = onChange(() => renderLots());
   renderLots();
 
-  $('[data-delete]', root).addEventListener('click', async () => {
-    const ok = await confirmSheet({
-      title: `Remover ${p.name}?`,
-      text: 'O produto e todo o histórico dele saem do armário. Isso não pode ser desfeito.',
-      confirm: 'Remover produto',
-      danger: true,
-    });
-    if (!ok) return;
-    await deleteProduct(code);
-    toast(`${p.name} removido.`, { duration: 3000 });
-    location.hash = '#/';
-  });
-
   return off;
 }
 
@@ -283,6 +251,62 @@ function lotSheet(p, free) {
         } catch (err) {
           note.classList.add('is-error');
           note.textContent = err.message;
+        }
+      });
+    },
+  });
+}
+
+function editSheet(p) {
+  return openSheet({
+    label: 'Editar detalhes',
+    render(body, close) {
+      body.innerHTML = `
+        <h2 class="sheet-title">Editar</h2>
+        <form class="stack" novalidate>
+          <label class="field"><span class="field-label">Nome</span>
+            <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
+          <div class="field-row">
+            <label class="field"><span class="field-label">Marca</span>
+              <input class="input" name="brand" maxlength="40" value="${esc(p.brand)}" autocomplete="off"></label>
+            <label class="field"><span class="field-label">Tamanho</span>
+              <input class="input" name="size" maxlength="20" value="${esc(p.size)}" autocomplete="off" placeholder="Ex.: 1 kg"></label>
+          </div>
+          <fieldset class="segmented">
+            <legend class="field-label">Onde fica</legend>
+            <div class="segmented-track">
+              ${AREAS.map((a) => `
+                <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === (p.area || 'cozinha') ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
+            </div>
+          </fieldset>
+          <div class="field">
+            <span class="field-label">Avisar quando tiver esta quantidade ou menos</span>
+            <div class="stepper-host stepper-sm" data-min></div>
+          </div>
+          <p class="field-error" role="alert" hidden></p>
+          <div class="sheet-actions">
+            <button type="submit" class="btn btn-primary">${icon('check')}Salvar</button>
+            <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
+          </div>
+        </form>`;
+      const minStep = stepper($('[data-min]', body), { value: p.minQty, min: 0, max: 999, label: 'Avisar com' });
+      const err = $('.field-error', body);
+      $('[data-delete]', body).addEventListener('click', () => close('delete'));
+      $('form', body).addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const val = (n) => $(`[name=${n}]`, body).value;
+        try {
+          await updateProduct(p.code, {
+            name: val('name'),
+            brand: val('brand'),
+            size: val('size'),
+            minQty: minStep.value,
+            area: $('input[name=area]:checked', body)?.value,
+          });
+          close('saved');
+        } catch (e2) {
+          err.hidden = false;
+          err.textContent = e2.message;
         }
       });
     },

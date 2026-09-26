@@ -76,8 +76,8 @@ endereço precisa de HTTPS.
 - Leitura de código de barras: [barcode-detector](https://github.com/Sec-ant/barcode-detector)
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).
-- Fontes: [Archivo](https://fonts.google.com/specimen/Archivo) e
-  [Atkinson Hyperlegible Next](https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next) (OFL).
+- Fontes: [Urbanist](https://fonts.google.com/specimen/Urbanist) e
+  [Schibsted Grotesk](https://fonts.google.com/specimen/Schibsted+Grotesk) (OFL).
 - Ícones: [Phosphor](https://phosphoricons.com) (MIT).
 - Skills de design em `.claude/skills/` (todas MIT):
   [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (better-ui,

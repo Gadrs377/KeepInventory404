@@ -1,27 +1,15 @@
 // Lista de compras: o app sugere pelo mínimo de cada produto e pelo ritmo de
 // consumo, a pessoa marca o que já pegou e pode acrescentar itens soltos.
 // Também monta a pergunta para o Claude (lista da semana e receitas com o que vence).
+// O que é de vez em quando (frequência, Claude) fica no menu "…" do topo.
 
-import { listProducts, listLots, recentMovements, onChange } from '../store.js';
+import { listLots, onChange } from '../store.js';
 import { AREAS } from '../areas.js';
-import { consumptionByProduct, shoppingSuggestions } from '../consumo.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar } from '../ui.js';
+import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
+import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet } from '../ui.js';
 
-const KEY = 'ki.shop';
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
-
-function loadState() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { every: Number(s.every) || 7, checked: s.checked || {}, extra: Array.isArray(s.extra) ? s.extra : [] };
-  } catch {
-    return { every: 7, checked: {}, extra: [] };
-  }
-}
-function saveState(state) {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* sem armazenamento */ }
-}
 
 export default function mountCompras(root) {
   const state = loadState();
@@ -34,7 +22,10 @@ export default function mountCompras(root) {
     <div class="screen screen-shop has-tabbar">
       <header class="home-head">
         <h1 class="page-title">Compras</h1>
-        <button type="button" class="icon-btn" data-share aria-label="Compartilhar lista">${icon('share')}</button>
+        <div class="head-actions">
+          <button type="button" class="icon-btn" data-share aria-label="Compartilhar lista">${icon('share')}</button>
+          <button type="button" class="icon-btn" data-more aria-haspopup="menu" aria-label="Mais opções da lista">${icon('more')}</button>
+        </div>
       </header>
       <main class="content">
         <p class="lead" data-lead>&nbsp;</p>
@@ -48,47 +39,48 @@ export default function mountCompras(root) {
           </div>
         </form>
 
-        <section class="shop-every">
-          <h2 class="list-title">Vocês fazem compras a cada</h2>
-          <div class="every-row">
-            <div class="stepper-host stepper-sm" data-every></div>
-            <span>dias</span>
-          </div>
-          <p class="sheet-text">A sugestão cobre o que vai acabar até a próxima compra, mais o mínimo de cada produto.</p>
-        </section>
-
-        <section>
-          <h2 class="list-title">Perguntar ao Claude</h2>
-          <p class="sheet-text">Abre uma conversa nova no Claude com o armário e a lista já escritos. Nada é enviado sem você tocar em Enviar lá.</p>
-          <div class="stack-sm">
-            <a class="btn btn-quiet" data-ask="lista" target="_blank" rel="noopener">${icon('chat')}Revisar a lista com o Claude</a>
-            <a class="btn btn-quiet" data-ask="receitas" target="_blank" rel="noopener" hidden>${icon('chat')}Pedir receitas com o que vence</a>
-          </div>
-        </section>
       </main>
       ${tabBar('compras')}
     </div>`;
 
   const lists = $('.shop-lists', root);
   const lead = $('[data-lead]', root);
-  const askList = $('[data-ask="lista"]', root);
-  const askRecipes = $('[data-ask="receitas"]', root);
 
-  stepper($('[data-every]', root), {
-    value: state.every, min: 1, max: 60, label: 'Dias entre compras',
-    onChange: (n) => {
-      if (n === state.every) return;
+  // Frequência das compras: numa folha, porque muda quase nunca.
+  function everySheet() {
+    return openSheet({
+      label: 'Frequência das compras',
+      render(body, close) {
+        body.innerHTML = `
+          <h2 class="sheet-title">Vocês fazem compras a cada</h2>
+          <div class="every-row"><div class="stepper-host stepper-sm"></div><span>dias</span></div>
+          <p class="sheet-text">A sugestão cobre o que vai acabar até a próxima compra, mais o mínimo de cada produto.</p>
+          <div class="sheet-actions"><button type="button" class="btn btn-primary" data-ok>Pronto</button></div>`;
+        const step = stepper($('.stepper-host', body), { value: state.every, min: 1, max: 60, label: 'Dias entre compras' });
+        $('[data-ok]', body).addEventListener('click', () => close(step.value));
+      },
+    }).then((n) => {
+      if (!n || n === state.every) return;
       state.every = n;
       saveState(state);
       load();
-    },
+    });
+  }
+
+  $('[data-more]', root).addEventListener('click', (e) => {
+    const items = [
+      { label: `Compras a cada ${plural(state.every, 'dia', 'dias')}`, icon: 'calendar', onSelect: everySheet },
+      { label: 'Revisar a lista com o Claude', icon: 'chat', onSelect: () => window.open(claudeUrl(listPrompt()), '_blank', 'noopener') },
+    ];
+    if (expiring.length) items.push({ label: 'Receitas com o que vence', icon: 'pot', onSelect: () => window.open(claudeUrl(recipesPrompt()), '_blank', 'noopener') });
+    openMenu(e.currentTarget, items, { label: 'Opções da lista' });
   });
 
   function render() {
     const open = items.filter((i) => !state.checked[i.product.code]).length + state.extra.filter((x) => !x.checked).length;
     const all = items.length + state.extra.length;
     lead.textContent = all
-      ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}.` : 'Tudo marcado. Boas compras.')
+      ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}, pensando em ${plural(state.every, 'dia', 'dias')}.` : 'Tudo marcado. Boas compras.')
       : 'Nada para comprar agora. Quando algo chegar no mínimo ou for acabar antes da próxima compra, aparece aqui.';
 
     const groups = AREAS.map((a) => ({ ...a, rows: items.filter((i) => (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
@@ -123,9 +115,6 @@ export default function mountCompras(root) {
     const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
     if (done) lists.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>${icon('check')}Limpar marcados</button>`);
 
-    askList.href = claudeUrl(listPrompt());
-    askRecipes.hidden = !expiring.length;
-    if (expiring.length) askRecipes.href = claudeUrl(recipesPrompt());
   }
 
   function listText() {
@@ -172,10 +161,10 @@ export default function mountCompras(root) {
   }
 
   async function load() {
-    const [list, moves, lots] = await Promise.all([listProducts(), recentMovements(5000), listLots()]);
+    const [{ products: list, items: suggested }, lots] = await Promise.all([shopSuggestions(state.every), listLots()]);
     if (!alive) return;
     products = list.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-    items = shoppingSuggestions(list, consumptionByProduct(list, moves), state.every);
+    items = suggested;
     // Marcações de produtos que saíram da lista (já foram repostos) não valem mais.
     for (const code of Object.keys(state.checked)) if (!items.some((i) => i.product.code === code)) delete state.checked[code];
     saveState(state);

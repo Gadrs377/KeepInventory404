@@ -12,7 +12,7 @@ export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 // Etiqueta de gôndola. O texto oculto dá o sentido do número para leitores de tela.
 export function tag(qty, state = '', srLabel = 'No armário') {
   const sr = srLabel ? `<span class="sr-only">${esc(srLabel)}: </span>` : '';
-  return `<span class="tag ${state}">${sr}${qty}</span>`;
+  return `<span class="tag ${state}">${sr}<span class="tag-n">${qty}</span></span>`;
 }
 
 // Texto do estado do estoque, para não depender só da cor da etiqueta.
@@ -118,6 +118,10 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
     ${action ? `<button type="button" class="toast-action">${esc(action)}</button>
       <button type="button" class="toast-close" aria-label="Fechar aviso">${icon('close')}</button>` : ''}`;
   host.hidden = false;
+  // Entra com mola, como os avisos do sistema; reinicia a cada aviso novo.
+  host.classList.remove('is-in');
+  void host.offsetWidth;
+  host.classList.add('is-in');
   const live = $('#toast-live');
   if (live) live.textContent = message;
   if (action) {
@@ -199,13 +203,13 @@ export function closeSheet(value = null) {
   const sheet = $('.sheet', root);
   if (sheet && sheet.classList.contains('is-open')) {
     const ghost = document.createElement('div');
-    ghost.className = 'sheet-ghost';
+    ghost.className = `sheet-ghost${sheet.dataset.flung ? ' is-flung' : ''}`;
     ghost.setAttribute('aria-hidden', 'true');
     ghost.inert = true;
     while (root.firstChild) ghost.appendChild(root.firstChild);
     document.body.appendChild(ghost);
     requestAnimationFrame(() => ghost.classList.add('is-leaving'));
-    setTimeout(() => ghost.remove(), 200);
+    setTimeout(() => ghost.remove(), sheet.dataset.flung ? 320 : 200);
   }
   root.hidden = true;
   root.innerHTML = '';
@@ -222,31 +226,148 @@ export function sheetIsOpen() {
   return !!openSheetState;
 }
 
+// Arrastar para fechar, como no iPhone: pela alça ou por qualquer ponto da
+// folha quando ela já está no topo da rolagem. Fecha se passar de um terço da
+// altura ou se o gesto for rápido; senão volta com mola.
 function enableDrag(sheet) {
-  const grip = $('.sheet-grip', sheet);
-  let startY = null;
+  const SKIP = 'input, textarea, select, .stepper, .segmented, .ticket-clip';
+  let start = null; // { y, x, t, fromGrip }
+  let dragging = false;
   let dy = 0;
-  const onMove = (e) => {
-    if (startY === null) return;
-    dy = Math.max(0, e.clientY - startY);
-    sheet.style.transform = `translateY(${dy}px)`;
-  };
-  const onUp = () => {
-    if (startY === null) return;
-    startY = null;
-    sheet.classList.remove('is-dragging');
-    sheet.style.transform = '';
-    if (dy > 90) closeSheet(null);
-    dy = 0;
-  };
-  grip.addEventListener('pointerdown', (e) => {
-    startY = e.clientY;
-    sheet.classList.add('is-dragging');
-    grip.setPointerCapture(e.pointerId);
+  let last = [];
+  const reset = () => { start = null; dragging = false; dy = 0; last = []; };
+
+  sheet.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    const fromGrip = !!e.target.closest('.sheet-grip');
+    if (!fromGrip && (e.pointerType === 'mouse' || e.target.closest(SKIP))) return;
+    start = { y: e.clientY, x: e.clientX, fromGrip, id: e.pointerId };
+    last = [{ y: e.clientY, t: e.timeStamp }];
   });
-  grip.addEventListener('pointermove', onMove);
-  grip.addEventListener('pointerup', onUp);
-  grip.addEventListener('pointercancel', onUp);
+  sheet.addEventListener('pointermove', (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const d = e.clientY - start.y;
+    if (!dragging) {
+      const down = d > 8 && Math.abs(e.clientX - start.x) < d;
+      if (!down || (!start.fromGrip && sheet.scrollTop > 0)) {
+        if (Math.abs(d) > 8 || Math.abs(e.clientX - start.x) > 8) reset();
+        return;
+      }
+      dragging = true;
+      sheet.classList.add('is-dragging');
+      try { sheet.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
+    }
+    dy = Math.max(0, d);
+    sheet.style.transform = `translateY(${dy}px)`;
+    last.push({ y: e.clientY, t: e.timeStamp });
+    if (last.length > 5) last.shift();
+  });
+  const end = () => {
+    if (!start) return;
+    if (!dragging) { reset(); return; }
+    const a = last[0];
+    const b = last[last.length - 1];
+    const v = b && a && b.t > a.t ? (b.y - a.y) / (b.t - a.t) : 0; // px/ms
+    sheet.classList.remove('is-dragging');
+    if (dy > sheet.offsetHeight / 3 || (v > 0.5 && dy > 40)) {
+      sheet.dataset.flung = '1';
+      closeSheet(null);
+    } else {
+      sheet.style.transform = '';
+    }
+    reset();
+  };
+  sheet.addEventListener('pointerup', end);
+  sheet.addEventListener('pointercancel', end);
+  // Puxando para baixo com a folha no topo, o navegador não rola nem cancela o
+  // gesto; para cima, a folha rola normalmente.
+  let touchY = 0;
+  sheet.addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
+  sheet.addEventListener('touchmove', (e) => {
+    if (!start) return;
+    const down = e.touches[0].clientY > touchY;
+    if (dragging || (down && (start.fromGrip || sheet.scrollTop <= 0))) e.preventDefault();
+  }, { passive: false });
+}
+
+// ---------- Menu (como o menu suspenso do iPhone) ----------
+
+/**
+ * Abre um menu preso a `anchor`. items: [{ label, icon, danger, onSelect }].
+ * Resolve quando fecha. Setas mudam o item, Esc fecha, o foco volta ao botão.
+ */
+export function openMenu(anchor, items, { label = 'Opções' } = {}) {
+  closeMenu();
+  const host = document.createElement('div');
+  host.className = 'menu-root';
+  host.innerHTML = `
+    <div class="menu-scrim"></div>
+    <div class="menu glass-thick" role="menu" aria-label="${esc(label)}">
+      ${items.map((it, i) => `
+        <button type="button" class="menu-item ${it.danger ? 'is-danger' : ''}" role="menuitem" data-i="${i}">
+          <span>${esc(it.label)}</span>${it.icon ? icon(it.icon) : ''}
+        </button>`).join('')}
+    </div>`;
+  document.body.append(host);
+  const menuEl = $('.menu', host);
+  const r = anchor.getBoundingClientRect();
+  const w = Math.min(280, window.innerWidth - 24);
+  menuEl.style.width = `${w}px`;
+  const h = menuEl.offsetHeight;
+  const left = Math.min(window.innerWidth - w - 12, Math.max(12, r.right - w));
+  const below = r.bottom + 8 + h < window.innerHeight - 12;
+  menuEl.style.left = `${left}px`;
+  menuEl.style.top = `${below ? r.bottom + 8 : Math.max(12, r.top - 8 - h)}px`;
+  menuEl.style.transformOrigin = `${Math.round(r.left + r.width / 2 - left)}px ${below ? 0 : h}px`;
+  anchor.setAttribute('aria-expanded', 'true');
+  const buttons = $$('.menu-item', host);
+
+  return new Promise((resolve) => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); done(null); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const at = buttons.indexOf(document.activeElement);
+        const next = (at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+        buttons[next].focus();
+      }
+      if (e.key === 'Tab') done(null);
+    };
+    const onScroll = () => done(null);
+    function done(i) {
+      if (!host.isConnected) return;
+      document.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('scroll', onScroll, true);
+      anchor.removeAttribute('aria-expanded');
+      host.classList.add('is-leaving');
+      host.inert = true;
+      setTimeout(() => host.remove(), 160);
+      openMenuState = null;
+      if (i !== null) {
+        vibrate(8);
+        if (anchor.isConnected) anchor.focus({ preventScroll: true });
+        items[i].onSelect && items[i].onSelect();
+      } else if (anchor.isConnected) anchor.focus({ preventScroll: true });
+      resolve(i);
+    }
+    openMenuState = { done };
+    $('.menu-scrim', host).addEventListener('pointerdown', (e) => { e.preventDefault(); done(null); });
+    menuEl.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-i]');
+      if (b) done(Number(b.dataset.i));
+    });
+    document.addEventListener('keydown', onKey, true);
+    setTimeout(() => window.addEventListener('scroll', onScroll, true), 50);
+    requestAnimationFrame(() => {
+      host.classList.add('is-open');
+      buttons[0] && buttons[0].focus({ preventScroll: true });
+    });
+  });
+}
+
+let openMenuState = null;
+export function closeMenu() {
+  if (openMenuState) openMenuState.done(null);
 }
 
 // ---------- Seletor de quantidade ----------

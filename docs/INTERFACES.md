@@ -449,3 +449,39 @@ Mudanças guiadas por "como a Apple faria" e pelas skills better-layout e liquid
   sem esperar a busca na internet (não serve para a saída).
 - **Mais:** sem Cupons e Lista de compras (viraram abas); ficam Contar, Backup e Som.
 
+
+## Versão 3.6: movimento, menus e fontes novas
+
+Revisão pensando em como a Apple faria, com QA de todos os fluxos (câmera
+simulada com um vídeo de código de barras e lojas falsas, 32 verificações).
+
+**Fontes.** Urbanist nos títulos, nomes e números; Schibsted Grotesk nos textos.
+
+**Movimento com mola.** As animações usam molas físicas (`--spring`,
+`--spring-bouncy`, escritas com `linear()`), não curvas fixas:
+- Troca de tela com View Transitions: as abas trocam no lugar; o produto entra
+  pela direita e a lista recua; o leitor sobe de baixo como tela modal. A barra
+  de abas fica parada.
+- Folha: abre com mola e pode ser arrastada para baixo de qualquer ponto quando
+  está no topo da rolagem. Fecha por distância (um terço) ou velocidade, e sai
+  continuando o gesto.
+- O número da etiqueta rola para baixo no −1 e para cima no +1.
+- O aviso entra com mola, a caixa das compras desenha o visto e o número da aba
+  Compras aparece com um pulinho.
+- Com "reduzir movimento" ligado, nada disso roda.
+
+**Menus em vez de telas cheias.**
+- Segurar uma linha do Armário (ou botão direito) abre um menu: Tirar 1, Pôr 1,
+  Pôr na lista de compras, Ver produto.
+- Compras: frequência e Perguntar ao Claude saíram da página e foram para o
+  menu "…" do topo. A página ficou só com a lista.
+- Produto: os detalhes (nome, marca, tamanho, ambiente, aviso) ficam numa folha
+  "Editar" aberta pelo lápis, com Remover no fim, como nos Contatos. A página
+  fica para consultar: quantidade, validade, consumo e histórico.
+
+**Detalhes.**
+- Número na aba Compras com o que falta comprar.
+- Cupons agrupados por dia (Hoje, Ontem, data), como a Carteira.
+- Nome do produto em linha própria, sem quebrar no meio da palavra.
+- Texto do início vazio fala do botão do leitor (o botão Entrada não existe mais).
+- Corrigido um bloco quebrado de CSS de alto contraste do Windows.

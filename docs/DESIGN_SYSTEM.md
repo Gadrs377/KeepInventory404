@@ -75,12 +75,14 @@ Duas famílias com papéis bem diferentes:
 
 | Papel | Fonte | Onde |
 | --- | --- | --- |
-| Números e títulos | **Archivo**, largura 62 a 75, peso 800 | Etiquetas, seletor de quantidade, títulos de tela, totais do cupom |
-| Texto e interface | **Atkinson Hyperlegible Next**, 400 e 700 | Nomes de produto, botões, mensagens, campos |
+| Títulos, nomes e números | **Urbanist**, 700 a 800 | Títulos de tela, nomes de produto, etiquetas, seletor de quantidade, totais do cupom |
+| Texto e interface | **Schibsted Grotesk**, 400 a 700 | Descrições, botões, mensagens, campos, textos longos |
 
-A Atkinson foi desenhada pelo Braille Institute para ser lida de relance, com
-letras que não se confundem (1, l e I; 0 e O). É exatamente a situação de quem
-lê um nome de produto em pé na cozinha.
+Versão 3.6: escolhidas pelo casal entre seis opções (ver `docs/fontes-opcoes.png`).
+A Urbanist é geométrica e redonda, com charme sem ser a fonte padrão de todo app;
+os algarismos têm largura igual, então as etiquetas não "dançam". A Schibsted
+Grotesk vem de jornal: firme e confortável em frase longa. Substituem a Archivo
+e a Atkinson Hyperlegible Next.
 
 Escala: título 34 px, nome de produto 18 px, texto 17 px, metadados 15 px,
 etiqueta 34 px (lista) a 64 px (produto), seletor 96 px. Peso de texto 400,
@@ -148,7 +150,7 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | **Abas de ambiente** (`.tabs`) | Tudo, Cozinha, Limpeza, Beleza. Sublinhado no ativo. Em 320 px diminuem para caber inteiras |
 | **Filtros de estado** (`.chip`) | Acabando, Zerados, Vencendo, com contagem. Só aparecem quando têm algo. Marcador quadrado na linguagem da etiqueta (amarelo, tracejado, calendário). Pressionado fica preto |
 | **Seletor segmentado** (`.segmented`) | Onde fica: três rádios nativos num trilho de 4 px; o escolhido fica preto. Raio interno 10 = 14 − 4 |
-| **Validade** (`.lot`) | Data em Archivo condensado; amarela quando vence em até 7 dias, como a etiqueta de acabando |
+| **Validade** (`.lot`) | Data em Urbanist; amarela quando vence em até 7 dias, como a etiqueta de acabando |
 | **Lista de compras** (`.shop-item`) | Caixa de marcar de 28 px dentro de uma linha inteira tocável, nome completo, quantidade sugerida condensada à direita. Marcado fica riscado |
 | **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), acima da barra flutuante. Com **Desfazer**, fica até ser fechado, trocado ou até mudar de tela; sem ação, some em 4 s. Fica atrás das folhas |
 
@@ -199,7 +201,7 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | Três botões iguais lado a lado para ações de peso diferente | Entrada e Saída grandes; inventário vira ação secundária |
 | Raios variados e grandes (12 a 20 px) em tudo | Raio único de 4 px. **Na v3**, escala de raios concêntricos tokenizada (seção 5) |
 | Inicial do nome num quadrado quando falta foto | Ícone de pacote |
-| Mesma família no título e no corpo | Archivo para números e títulos, Atkinson para texto |
+| Mesma família no título e no corpo | Urbanist para títulos e números, Schibsted Grotesk para texto |
 | Reticências tipográficas em textos | Texto direto |
 
 ## 11. Revisão da versão 3.1

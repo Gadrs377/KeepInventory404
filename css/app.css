@@ -41,12 +41,18 @@
   --glass-shadow: 0 10px 32px rgba(22, 24, 23, 0.14);
   --img-outline: oklch(0 0 0 / 0.1);
 
-  --font-ui: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-num: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  /* Schibsted Grotesk nos textos (firme, de jornal, boa em frase longa);
+     Urbanist nos títulos, nomes e números (geométrica, redonda, com charme). */
+  --font-ui: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-num: 'Urbanist', 'Schibsted Grotesk', system-ui, sans-serif;
   --gutter: 16px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Molas como as do iPhone, geradas de uma mola física (amortecimento 0,86 e
+     0,72). Navegador sem linear() cai na curva --ease. */
+  --spring: var(--ease);
+  --spring-bouncy: var(--ease);
   --bar-space: calc(96px + var(--safe-bottom));
   color-scheme: light;
 }
@@ -71,6 +77,13 @@
     --glass-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
     --img-outline: oklch(1 0 0 / 0.1);
     color-scheme: dark;
+  }
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, 0.043 3.6%, 0.142 7.1%, 0.267 10.7%, 0.396 14.3%, 0.518 17.9%, 0.626 21.4%, 0.717 25%, 0.792 28.6%, 0.851 32.1%, 0.897 35.7%, 0.932 39.3%, 0.957 42.9%, 0.975 46.4%, 0.987 50%, 0.995 53.6%, 1 57.1%, 1.003 60.7%, 1.005 67.9%, 1.003 82.1%, 1);
+    --spring-bouncy: linear(0, 0.061 4.2%, 0.202 8.3%, 0.373 12.5%, 0.541 16.7%, 0.689 20.8%, 0.81 25%, 0.9 29.2%, 0.963 33.3%, 1.004 37.5%, 1.026 41.7%, 1.038 50%, 1.029 58.3%, 1.016 66.7%, 1.006 75%, 1.001 83.3%, 0.999 91.7%, 1);
   }
 }
 
@@ -124,11 +137,9 @@ button { cursor: pointer; }
 
 .page-title, .band-title, .topbar-title, .sheet-title {
   font-family: var(--font-num);
-  font-stretch: 75%;
   font-weight: 800;
   line-height: 1.1;
-  letter-spacing: -0.01em;
-  word-spacing: 0.07em;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 .page-title { font-size: 34px; }
@@ -140,7 +151,7 @@ button { cursor: pointer; }
 /* Histórico de cupons */
 .cupons { border-top: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1); }
 .cupom-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-thumb); background: var(--mode); color: var(--on-mode); }
-.cupom-total { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.cupom-total { flex: none; font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
 .lead { font-size: 18px; text-wrap: pretty; }
 .sheet-text, .empty, .empty-state p, .empty-filter p { color: var(--ink); text-wrap: pretty; }
 .empty { padding-block: 16px; }
@@ -176,7 +187,7 @@ button { cursor: pointer; }
 }
 .band > .icon-btn:first-child { margin-inline-start: -8px; }
 .band-text { display: flex; flex-direction: column; gap: 2px; flex: 1; padding-top: 4px; }
-.band-title { font-size: 40px; font-stretch: 62%; }
+.band-title { font-size: 40px; }
 .band-hint { font-size: 16px; text-wrap: pretty; }
 
 /* ---------- Material: liquid glass ----------
@@ -259,7 +270,6 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   font-family: var(--font-num);
   font-size: 34px; line-height: 1;
   font-weight: 800;
-  font-stretch: 62%;
   font-variant-numeric: tabular-nums;
 }
 .tag.is-low { background: var(--acabando); color: #161817; }
@@ -274,8 +284,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   padding-block: calc(20px + var(--safe-top)) 0;
   padding-inline: var(--gutter) 8px;
 }
-.screen-home .page-title { font-size: 48px; font-stretch: 62%; }
-.home-actions { display: flex; align-items: center; gap: 4px; padding-top: 6px; }
+.screen-home .page-title { font-size: 48px; }
 .screen-home .home-head { align-items: center; }
 
 /* Linha do armário: o link abre o produto; o "−" ao lado dá baixa de 1 */
@@ -327,7 +336,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .shelf { padding-bottom: 16px; }
 .shelf .empty { padding: 24px var(--gutter); }
 .empty-state { padding: 32px var(--gutter); display: flex; flex-direction: column; gap: 8px; }
-.empty-lead { font-family: var(--font-num); font-stretch: 75%; font-weight: 800; font-size: 28px; line-height: 1.1; word-spacing: 0.07em; }
+.empty-lead { font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1.1; }
 .empty-filter { padding: 24px var(--gutter); display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 
 /* Linhas: prateleira contínua separada por fio */
@@ -339,7 +348,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 }
 .row:active { background: var(--shelf); }
 .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.row-name { font-weight: 700; font-size: 18px; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.row-name { font-family: var(--font-num); font-weight: 700; font-size: 18px; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .row-sub { font-size: 15px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .thumb {
@@ -357,19 +366,6 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .thumb-lg { width: 104px; height: 104px; border-radius: 16px; }
 .thumb .icon { width: 50%; height: 50%; color: var(--ink-2); opacity: 0.45; }
 
-/* Rodapé do Armário: Entrada e Saída numa barra de vidro flutuante */
-.modebar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.mode-btn {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  min-height: 64px; border-radius: var(--r-in-bar);
-  background: color-mix(in oklab, var(--mode) 90%, transparent); color: var(--on-mode);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  text-decoration: none;
-  font-family: var(--font-num); font-stretch: 75%; font-weight: 800; font-size: 26px; word-spacing: 0.07em;
-  transition-property: scale; transition-duration: 150ms; transition-timing-function: var(--ease);
-}
-.mode-btn .icon { width: 26px; height: 26px; }
-.mode-btn:active { scale: 0.96; }
 
 /* ---------- Leitor ---------- */
 
@@ -450,7 +446,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .receipt-line { display: flex; align-items: baseline; gap: 6px; padding-block: 5px; }
 .receipt-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; }
 .receipt-dots { flex: 1 1 24px; min-width: 24px; border-bottom: 2px dotted var(--line); transform: translateY(-4px); }
-.receipt-n { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 24px; line-height: 1; }
+.receipt-n { flex: none; font-family: var(--font-num); font-weight: 800; font-size: 24px; line-height: 1; }
 .receipt-empty { color: var(--ink-2); }
 /* Linha da sessão tocável: abre a edição antes de concluir */
 .receipt-edit {
@@ -476,7 +472,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .diff { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px var(--gutter); border-bottom: 1px solid var(--line); }
 .diff-name { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .diff-qty { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.diff-delta { font-family: var(--font-num); font-weight: 800; font-size: 26px; font-stretch: 62%; min-width: 44px; text-align: end; font-variant-numeric: tabular-nums; }
+.diff-delta { font-family: var(--font-num); font-weight: 800; font-size: 26px; min-width: 44px; text-align: end; font-variant-numeric: tabular-nums; }
 .diff-delta.is-up { color: var(--entrada); }
 .diff-delta.is-down { color: var(--saida); }
 
@@ -486,17 +482,16 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 
 /* ---------- Produto ---------- */
 
-.product-hero { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: start; padding-block: 8px 20px; }
-.product-hero .page-title { font-size: 30px; line-height: 1.15; overflow-wrap: anywhere; }
+.product-hero { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "foto etiqueta" "info info"; gap: 16px; align-items: end; padding-block: 8px 20px; }
+.product-hero > .thumb { grid-area: foto; }
+.product-hero > .tag { grid-area: etiqueta; justify-self: end; }
+.product-hero > .product-meta { grid-area: info; }
+.product-hero .page-title { font-size: 32px; line-height: 1.12; overflow-wrap: break-word; }
 /* Correção de estoque: seletor e botão lado a lado, o botão só aparece quando muda */
 .stock-fix-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .stock-fix-row .stepper-host { width: 200px; }
 .stock-fix .field-note { margin-top: 8px; }
 .product-code { font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-@media (max-width: 380px) {
-  .product-hero { grid-template-columns: auto 1fr; }
-  .product-hero .tag { grid-column: 1 / -1; justify-self: start; }
-}
 
 .product-head { display: flex; gap: 14px; align-items: flex-start; padding-inline-end: 44px; }
 .product-head.is-loading .product-name { color: var(--ink-2); }
@@ -580,7 +575,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .stepper-value {
   width: 100%; min-width: 0; border: 0; background: none; text-align: center;
   font-family: var(--font-num); font-size: 96px; line-height: 1; height: 100px;
-  font-weight: 800; font-stretch: 62%;
+  font-weight: 800;
   font-variant-numeric: tabular-nums; color: var(--ink);
   border-radius: var(--r-control);
 }
@@ -601,7 +596,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   padding: 4px var(--gutter) calc(20px + var(--safe-bottom));
   transform: translateY(100%);
-  transition-property: transform, opacity; transition-duration: 220ms; transition-timing-function: var(--ease);
+  transition-property: transform, opacity; transition-duration: 520ms; transition-timing-function: var(--spring);
 }
 .sheet:focus { outline: none; }
 /* Arrastando pela alça: a folha segue o dedo sem atraso */
@@ -670,7 +665,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .mode-opt span {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 48px; padding-inline: 12px 16px; border-radius: 14px;
-  font-family: var(--font-num); font-stretch: 75%; font-weight: 800; font-size: 26px; line-height: 1;
+  font-family: var(--font-num); font-weight: 800; font-size: 26px; line-height: 1;
   color: var(--on-mode);
   transition-property: background-color, color; transition-duration: 150ms; transition-timing-function: var(--ease);
 }
@@ -775,8 +770,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 /* Ao fechar, o conteúdo vai para a cópia que some: o papel não pode "imprimir" de novo */
 .sheet-ghost .ticket { animation: none; }
 .ticket-head { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed var(--line); }
-.ticket-title { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 34px; line-height: 1; color: var(--mode); text-transform: uppercase; letter-spacing: 0.04em; }
-.ticket-meta { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
+.ticket-title { font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1; color: var(--mode); text-transform: uppercase; letter-spacing: 0.04em; }
+.ticket-meta { margin-top: 4px; font-size: 14px; color: var(--ink-2); font-variant-numeric: normal; }
 .ticket-lines { padding-block: 10px; }
 .ticket-line { padding-block: 5px; }
 /* Pontilhado e valor acompanham a última linha do nome, como no cupom de verdade */
@@ -784,7 +779,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .ticket-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; font-size: 16px; line-height: 1.3; text-wrap: pretty; }
 .ticket-sub { display: block; font-size: 13px; color: var(--ink-2); }
 .ticket-dots { flex: 1 1 20px; min-width: 20px; border-bottom: 2px dotted var(--line); transform: translateY(-4px); }
-.ticket-n { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 24px; line-height: 1; }
+.ticket-n { flex: none; font-family: var(--font-num); font-weight: 800; font-size: 24px; line-height: 1; }
 .ticket-total {
   display: flex; justify-content: space-between; align-items: baseline;
   padding-top: 8px; border-top: 3px double var(--ink); font-weight: 700;
@@ -874,7 +869,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .lots { border-top: 1px solid var(--line); }
 .lot { display: flex; align-items: center; gap: 12px; padding-block: 8px; border-bottom: 1px solid var(--line); }
 .lot-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.lot-date { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.lot-date { font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .lot.is-soon .lot-date { padding-inline: 6px; border-radius: var(--r-tag); background: var(--acabando); color: #161817; }
 .lot-sub { font-size: 15px; color: var(--ink-2); }
 .lots + .sheet-text { margin-top: 8px; }
@@ -894,7 +889,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .shop-item:active { background: var(--shelf); }
 .shop-item.is-done .row-name { text-decoration: line-through; color: var(--ink-2); }
 .shop-item.is-done .thumb, .shop-item.is-done .shop-qty { opacity: 0.45; }
-.shop-qty { flex: none; min-width: 44px; text-align: end; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+.shop-qty { flex: none; min-width: 44px; text-align: end; font-family: var(--font-num); font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
 .check {
   appearance: none; -webkit-appearance: none; flex: none;
   width: 28px; height: 28px; margin: 0;
@@ -1049,7 +1044,7 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 }
 
 /* Títulos grandes iguais nas telas principais (Armário, Compras, Cupons, Mais) */
-.home-head .page-title { font-size: 48px; font-stretch: 62%; }
+.home-head .page-title { font-size: 48px; }
 .home-head { align-items: center; }
 .screen-shop .content, .screen-cupons .content, .screen-data .content { padding-top: 12px; }
 
@@ -1087,19 +1082,137 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
   .segment input:checked + span, .chip[aria-pressed="true"], .check:checked, .switch:checked {
     forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight;
   }
-  .printer-slot, @media (max-width: 359px) {
-  .receipt-stage { padding-inline: 8px; }
-  .ticket-clip { padding-inline: 8px; }
-  .ticket { padding-inline: 14px; }
-}
-.ticket-barcode { forced-color-adjust: none; background-color: CanvasText; }
-  @media (max-width: 359px) {
-  .receipt-stage { padding-inline: 8px; }
-  .ticket-clip { padding-inline: 8px; }
-  .ticket { padding-inline: 14px; }
-}
-.ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }
+  .printer-slot, .ticket-barcode { forced-color-adjust: none; }
+  .ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }
   .cam-hint { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
 }
 .chip-vencendo.is-urgent[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .chip-vencendo.is-urgent[aria-pressed="true"]::before { background: var(--paper); }
+
+
+/* ---------- Versão 3.6: movimento e detalhes como no iPhone ---------- */
+
+/* Números: Urbanist tem algarismos de largura igual, a coluna não "dança" */
+.tag, .stepper-value, .shop-qty, .cupom-total, .ticket-n, .receipt-n, .diff-delta, .lot-date { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.tag { font-size: 30px; }
+.tag-lg { font-size: 56px; }
+.mode-opt span { font-size: 21px; }
+.empty-lead { letter-spacing: -0.02em; }
+
+/* Folha arremessada para baixo: continua o gesto e sai pela borda */
+.sheet-ghost.is-flung .sheet { transform: translateY(100%) !important; opacity: 1; transition: transform 300ms cubic-bezier(0.3, 0.6, 0.4, 1); }
+.sheet-ghost.is-flung .sheet-backdrop { transition-duration: 300ms; }
+.sheet-backdrop { animation: fade-in 300ms var(--ease); }
+@keyframes fade-in { from { opacity: 0; } }
+
+/* Aviso entra com mola, de baixo */
+.toast.is-in { animation: toast-in 520ms var(--spring-bouncy); }
+@keyframes toast-in { from { opacity: 0; translate: 0 24px; scale: 0.94; } }
+
+/* Número da etiqueta rola quando muda (como os contadores do iPhone) */
+.tag { overflow: hidden; }
+.tag-n { display: block; }
+.tag.is-down .tag-n { animation: roll-down 420ms var(--spring); }
+.tag.is-up .tag-n { animation: roll-up 420ms var(--spring); }
+@keyframes roll-down { from { translate: 0 -70%; opacity: 0; filter: blur(2px); } }
+@keyframes roll-up { from { translate: 0 70%; opacity: 0; filter: blur(2px); } }
+
+/* Caixa de marcar das compras: o visto se desenha e a caixa dá um pulinho */
+.check { transition-property: background-color, scale; transition-duration: 200ms; transition-timing-function: var(--spring-bouncy); }
+.check:active { scale: 0.88; }
+.check:checked::after { animation: check-in 320ms var(--spring-bouncy); }
+@keyframes check-in { from { scale: 0.3; opacity: 0; } }
+.shop-item .row-name { transition: color 200ms var(--ease); }
+
+/* Botões do topo lado a lado (compartilhar e mais) */
+.head-actions { display: flex; align-items: center; gap: 0; margin-inline-end: -4px; }
+.topbar-end { margin-inline-start: auto; }
+
+/* Número na aba Compras, como o contador vermelho do iPhone */
+.tab-item { position: relative; }
+.tab-badge {
+  position: absolute; top: 4px; left: calc(50% + 6px);
+  min-width: 20px; height: 20px; padding-inline: 5px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--danger); color: #FFFFFF;
+  font-family: var(--font-num); font-size: 12px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--paper);
+  animation: badge-in 420ms var(--spring-bouncy);
+}
+@keyframes badge-in { from { scale: 0.2; } }
+@media (prefers-color-scheme: dark) { .tab-badge { background: #E5484D; } }
+
+/* Linha do Armário: segurar abre o menu rápido. Sem o menu de link do sistema. */
+.rows .row { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.row { transition-property: scale, background-color, box-shadow; transition-duration: 300ms; transition-timing-function: var(--spring); }
+.row.is-lifted { scale: 1.02; background: var(--paper); box-shadow: 0 12px 32px rgba(22, 24, 23, 0.18); border-radius: var(--r-control); position: relative; z-index: 2; }
+
+/* ---------- Menu suspenso (como o do iPhone) ----------
+   Vidro grosso por cima do conteúdo, cresce a partir do botão com mola. */
+.menu-root { position: fixed; inset: 0; z-index: 30; }
+.menu-scrim { position: absolute; inset: 0; }
+.menu {
+  position: absolute; overflow: hidden;
+  border-radius: var(--r-control);
+  padding-block: 4px;
+  opacity: 0; scale: 0.4;
+  transition-property: opacity, scale; transition-duration: 460ms, 460ms; transition-timing-function: var(--ease), var(--spring-bouncy);
+}
+.menu.glass-thick { box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 1px var(--glass-edge), 0 18px 48px rgba(22, 24, 23, 0.24); }
+.menu-root.is-open .menu { opacity: 1; scale: 1; }
+.menu-root.is-leaving .menu { opacity: 0; scale: 0.9; transition-duration: 150ms; transition-timing-function: ease-out; }
+.menu-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 48px; padding: 10px 16px;
+  border: 0; background: none; color: var(--ink); text-align: start;
+  font-size: 17px;
+}
+.menu-item + .menu-item { box-shadow: inset 0 1px 0 var(--line); }
+.menu-item .icon { width: 20px; height: 20px; }
+.menu-item:active, .menu-item:focus-visible { background: color-mix(in oklab, var(--ink) 8%, transparent); outline: none; }
+.menu-item.is-danger { color: var(--danger); }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .menu.glass-thick { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (forced-colors: active) {
+  .menu { border: 1px solid CanvasText; }
+  .menu-item:focus-visible { outline: 2px solid Highlight; }
+}
+
+/* ---------- Transição entre telas (View Transitions) ----------
+   Abas: troca no lugar, rápida. Detalhe: entra pela direita e a tela de trás
+   recua um terço, escurecendo. Leitor: sobe de baixo, como tela modal.
+   A barra de abas não participa: fica parada. */
+.tabbar-wrap { view-transition-name: tabbar; }
+::view-transition-group(tabbar) { animation-duration: 0s; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; animation-timing-function: var(--ease); }
+html[data-nav="push"]::view-transition-old(root),
+html[data-nav="pop"]::view-transition-old(root),
+html[data-nav="up"]::view-transition-old(root),
+html[data-nav="down"]::view-transition-old(root),
+html[data-nav="push"]::view-transition-new(root),
+html[data-nav="pop"]::view-transition-new(root),
+html[data-nav="up"]::view-transition-new(root),
+html[data-nav="down"]::view-transition-new(root) { mix-blend-mode: normal; animation-duration: 480ms; animation-timing-function: var(--spring); }
+html[data-nav="push"]::view-transition-new(root) { animation-name: vt-in-right; }
+html[data-nav="push"]::view-transition-old(root) { animation-name: vt-recede-left; }
+html[data-nav="pop"]::view-transition-old(root) { animation-name: vt-out-right; z-index: 2; }
+html[data-nav="pop"]::view-transition-new(root) { animation-name: vt-return-left; }
+html[data-nav="up"]::view-transition-new(root) { animation-name: vt-in-up; }
+html[data-nav="up"]::view-transition-old(root) { animation-name: vt-dim; }
+html[data-nav="down"]::view-transition-old(root) { animation-name: vt-out-down; z-index: 2; animation-duration: 380ms; }
+html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
+@keyframes vt-in-right { from { translate: 100% 0; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12); } }
+@keyframes vt-recede-left { to { translate: -30% 0; filter: brightness(0.9); } }
+@keyframes vt-out-right { to { translate: 100% 0; } }
+@keyframes vt-return-left { from { translate: -30% 0; filter: brightness(0.9); } }
+@keyframes vt-in-up { from { translate: 0 100%; } }
+@keyframes vt-dim { to { filter: brightness(0.85); } }
+@keyframes vt-out-down { to { translate: 0 100%; } }
+@keyframes vt-undim { from { filter: brightness(0.85); } }
+
+/* Em 320 px, nomes em Urbanist um pouco menores para não sobrar "L" sozinho na segunda linha */
+@media (max-width: 359px) {
+  .row-name { font-size: 16px; }
+  .home-head .page-title { font-size: 42px; }
+}
