@@ -492,6 +492,13 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .pick-row:active { background: color-mix(in oklab, var(--ink) 6%, transparent); }
 .pick-row[aria-disabled="true"] .row-name, .pick-row[aria-disabled="true"] .thumb { opacity: 0.5; }
 
+/* Sugestões das lojas no campo de nome */
+.suggest { margin-top: 4px; }
+.suggest-row { min-height: 64px; padding-block: 8px; }
+.suggest-row .row-name { font-size: 16px; }
+.suggest-status { font-size: 15px; color: var(--ink-2); min-height: 0; }
+.suggest-status:empty { display: none; }
+
 /* ---------- Formulários ---------- */
 
 .stack { display: flex; flex-direction: column; gap: 14px; }

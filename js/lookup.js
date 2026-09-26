@@ -1,6 +1,8 @@
-// Descobre o que é um código de barras. Primeiro no armário, depois no Open Food Facts.
+// Descobre o que é um código de barras. Primeiro no armário, depois no Open
+// Food Facts e nas lojas online brasileiras (pelo repassador em worker/).
 
 import { productsByBarcode } from './store.js';
+import { API_URL } from './config.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 const FIELDS = 'product_name,product_name_pt,generic_name_pt,brands,quantity,image_front_small_url';
@@ -18,10 +20,22 @@ export async function lookup(code) {
 }
 
 // Resolve com { status: 'found' | 'notfound' | 'offline', info? }
+// Consulta Open Food Facts e as lojas (pelo repassador) ao mesmo tempo. As lojas
+// têm nomes completos em português e cobrem limpeza e beleza, então têm preferência.
 export async function lookupRemote(code) {
   if (code.startsWith('SEM-')) return { status: 'notfound' };
   if (!navigator.onLine) return { status: 'offline' };
+  // As duas consultas começam juntas; quem achar primeiro com dados de loja ganha.
+  const offPromise = lookupOff(code);
+  const store = await lookupStores(code);
+  if (store.status === 'found') return { status: 'found', info: store.info };
+  const off = await offPromise;
+  if (off.status === 'found') return off;
+  if (store.status === 'offline' && off.status === 'offline') return { status: 'offline' };
+  return { status: 'notfound' };
+}
 
+async function lookupOff(code) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
@@ -45,6 +59,50 @@ export async function lookupRemote(code) {
     return { status: 'offline' };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function lookupStores(code) {
+  try {
+    const data = await apiGet(`/lookup?ean=${encodeURIComponent(code)}`, 9000);
+    if (!data.found || !data.product || !data.product.name) return { status: 'notfound' };
+    return { status: 'found', info: fromStore(data.product) };
+  } catch {
+    return { status: 'offline' };
+  }
+}
+
+// Busca por nome nas lojas. Resolve com a lista de produtos (pode ser vazia).
+// Lança erro se o repassador estiver fora do ar.
+export async function searchStores(query, signal) {
+  const data = await apiGet(`/search?q=${encodeURIComponent(query)}`, 9000, signal);
+  return (data.results || []).filter((p) => p && p.name).map(fromStore);
+}
+
+function fromStore(p) {
+  return {
+    name: String(p.name || '').trim(),
+    brand: String(p.brand || '').trim(),
+    size: String(p.size || '').trim(),
+    image: safeImage(p.image),
+    category: String(p.category || ''),
+    ean: /^\d{8,14}$/.test(p.ean || '') ? p.ean : '',
+    source: 'loja',
+  };
+}
+
+async function apiGet(path, timeout, outerSignal) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  const onAbort = () => ctrl.abort();
+  if (outerSignal) outerSignal.addEventListener('abort', onAbort, { once: true });
+  try {
+    const res = await fetch(`${API_URL}${path}`, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+    if (outerSignal) outerSignal.removeEventListener('abort', onAbort);
   }
 }
 

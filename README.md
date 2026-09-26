@@ -14,8 +14,10 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - Bip de caixa de mercado a cada leitura (dá para desligar em Dados).
 - Se um código de barras estiver em mais de um produto, o app pergunta qual
   deles você está segurando.
-- Produto desconhecido é buscado no [Open Food Facts](https://world.openfoodfacts.org);
-  se não estiver lá, você digita o nome uma vez e o app lembra.
+- Produto desconhecido é buscado ao mesmo tempo em lojas online brasileiras
+  (13 supermercados e farmácias) e no [Open Food Facts](https://world.openfoodfacts.org).
+  Se ninguém achar, o campo de nome sugere produtos das lojas enquanto você digita.
+  Uma vez cadastrado, o app lembra.
 - Funciona sem internet depois da primeira abertura (só a busca de produto novo
   precisa de rede). Backup em arquivo e exportação para planilha.
 
@@ -36,6 +38,14 @@ quando, e **Restaurar backup** para passar para outro aparelho.
 - [System design](docs/SYSTEM_DESIGN.md): arquitetura, dados, regras de estoque e fluxos.
 - [Interfaces](docs/INTERFACES.md): plano de cada tela e como elas se ligam.
 - [Design system](docs/DESIGN_SYSTEM.md): cores, tipografia, componentes e escrita.
+
+## Repassador (pasta `worker/`)
+
+Um Cloudflare Worker grátis consulta as lojas, que não deixam o navegador
+consultar direto. Ele é publicado sozinho pelo GitHub Actions
+(`.github/workflows/worker.yml`) com os segredos `CLOUDFLARE_API_TOKEN` e
+`CLOUDFLARE_ACCOUNT_ID`. Teste local: `cd worker && node test/local.mjs`.
+Diagnóstico das lojas: `https://keepinventory-api.gabriel-gadrs377.workers.dev/diag`.
 
 ## Rodar no computador
 

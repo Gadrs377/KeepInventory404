@@ -2,7 +2,7 @@
 // Arquivos do app: rede primeiro (pega atualizações), cache se estiver offline.
 // Fontes e fotos de produto: cache primeiro. API do Open Food Facts: só rede.
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 
@@ -12,6 +12,7 @@ const APP_FILES = [
   './manifest.webmanifest',
   './css/app.css',
   './js/app.js',
+  './js/config.js',
   './js/db.js',
   './js/store.js',
   './js/lookup.js',
@@ -59,7 +60,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || url.hostname.endsWith('openfoodfacts.org')) {
+  // Fotos de produto das lojas (VTEX) também vão para o cache.
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || url.hostname.endsWith('openfoodfacts.org')
+    || url.hostname.endsWith('vteximg.com.br') || url.hostname.endsWith('vtexassets.com')) {
     event.respondWith(cacheFirst(request));
   }
 });

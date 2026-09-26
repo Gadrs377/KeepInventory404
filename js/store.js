@@ -47,6 +47,7 @@ function newProduct(code, info = {}) {
     brand: (info.brand || '').trim(),
     size: (info.size || '').trim(),
     image: info.image || '',
+    category: (info.category || '').trim(),
     qty: 0,
     minQty: clampInt(info.minQty ?? 1),
     source: info.source || 'manual',

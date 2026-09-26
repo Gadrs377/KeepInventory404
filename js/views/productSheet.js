@@ -6,8 +6,8 @@
 // próprio etiquetada com o mesmo número). Nesse caso a folha primeiro pergunta
 // qual deles está na mão, e sempre deixa cadastrar mais um com o mesmo código.
 
-import { lookup, lookupRemote } from '../lookup.js';
-import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId } from '../store.js';
+import { lookup, lookupRemote, searchStores } from '../lookup.js';
+import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode } from '../store.js';
 import { beep } from '../sound.js';
 import { $, $$, esc, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote } from '../ui.js';
 
@@ -19,8 +19,9 @@ const ACTION = {
 
 const NEW_MSG = {
   found: 'Novo no armário. Confira o nome antes de salvar.',
-  notfound: 'Não encontramos esse código. Digite o nome do produto para cadastrar.',
+  notfound: 'Não encontramos esse código. Digite o nome e escolha o produto nas sugestões.',
   offline: 'Sem internet para buscar esse código. Digite o nome do produto para cadastrar.',
+  nocode: 'Digite o nome e escolha o produto nas sugestões. Se ele tiver código de barras, o app passa a reconhecê-lo.',
   other: 'Outro produto com o mesmo código de barras. Dê um nome que diferencie os dois, por exemplo o sabor.',
 };
 
@@ -61,7 +62,7 @@ async function start(ctx, productId) {
     return chooser(ctx, result.products);
   }
   if (ctx.mode === 'saida') return notInCupboard(ctx);
-  return newForm(ctx, result);
+  return newForm(ctx, ctx.barcode.startsWith('SEM-') ? { status: 'nocode' } : result);
 }
 
 function loading({ body }, code) {
@@ -184,10 +185,13 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
 }
 
 // ---------- Produto novo ----------
+// O campo "Nome do produto" também busca nas lojas enquanto a pessoa digita:
+// tocar numa sugestão preenche nome, marca, tamanho e foto.
 
 async function newForm(ctx, result) {
-  const { body, mode, barcode } = ctx;
-  const info = result.info || {};
+  const { body, mode } = ctx;
+  let barcode = ctx.barcode;
+  let info = result.info || {};
   const limits = {
     entrada: { min: 1, max: 999, value: 1 },
     contagem: { min: 0, max: 999, value: 1 },
@@ -195,13 +199,16 @@ async function newForm(ctx, result) {
 
   body.innerHTML = `
     <form class="stack" novalidate>
-      ${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}
-      <p class="sheet-text">${esc(NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
+      <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
+      <p class="sheet-text" data-msg>${esc(NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
       <div class="field">
         <label class="field-label" for="new-name">Nome do produto</label>
-        <input class="input" id="new-name" name="name" autocomplete="off" maxlength="80" value="${esc(info.name || '')}" placeholder="Ex.: Feijão preto" aria-describedby="new-name-error">
+        <input class="input" id="new-name" name="name" type="search" enterkeyhint="done" autocomplete="off" maxlength="80"
+          value="${esc(info.name || '')}" placeholder="Ex.: feijão camil" aria-describedby="new-name-error new-name-status">
         <p class="field-error" id="new-name-error" hidden></p>
+        <p class="suggest-status" id="new-name-status" aria-live="polite"></p>
+        <ul class="pick suggest" hidden></ul>
       </div>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
@@ -210,15 +217,83 @@ async function newForm(ctx, result) {
 
   const submit = $('[type=submit]', body);
   const nameInput = $('input[name=name]', body);
+  const nameError = $('#new-name-error', body);
+  const status = $('#new-name-status', body);
+  const list = $('.suggest', body);
+  const headHost = $('[data-head]', body);
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
     onChange: (n) => { submit.textContent = ACTION[mode](n); },
   });
-  const nameError = $('#new-name-error', body);
+
+  let suggestions = [];
+  let timer = 0;
+  let ctrl = null;
+
+  function showSuggestions(items, query) {
+    suggestions = items;
+    list.hidden = !items.length;
+    list.innerHTML = items.map((p, i) => `
+      <li>
+        <button type="button" class="pick-row suggest-row" data-i="${i}">
+          ${thumb(p)}
+          <span class="row-main">
+            <span class="row-name">${esc(p.name)}</span>
+            <span class="row-sub">${subtitle(p) || '&nbsp;'}</span>
+          </span>
+        </button>
+      </li>`).join('');
+    status.textContent = items.length
+      ? `${plural(items.length, 'sugestão', 'sugestões')} das lojas. Toque na certa ou continue digitando.`
+      : `Nada encontrado para “${query}”. Pode salvar só com o nome.`;
+  }
+
+  async function runSearch(query) {
+    if (ctrl) ctrl.abort();
+    ctrl = new AbortController();
+    status.textContent = 'Procurando nas lojas';
+    try {
+      const items = await searchStores(query, ctrl.signal);
+      if (body.isConnected && nameInput.value.trim() === query) showSuggestions(items, query);
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      if (body.isConnected) { list.hidden = true; status.textContent = 'Sem conexão com as lojas agora. Pode salvar só com o nome.'; }
+    }
+  }
+
   nameInput.addEventListener('input', () => {
-    if (nameInput.value.trim()) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
+    const q = nameInput.value.trim();
+    if (q) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
+    clearTimeout(timer);
+    if (q.length < 3) { if (ctrl) ctrl.abort(); list.hidden = true; status.textContent = ''; return; }
+    timer = setTimeout(() => runSearch(q), 350);
   });
+
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-i]');
+    if (!btn) return;
+    const p = suggestions[Number(btn.dataset.i)];
+    if (!p) return;
+    // Produto sem código: a sugestão traz o código de barras de verdade.
+    if (barcode.startsWith('SEM-') && p.ean) {
+      const existing = await productsByBarcode(p.ean);
+      if (existing.length) {
+        ctx.barcode = p.ean;
+        return existing.length === 1 ? productForm(ctx, existing[0], {}) : chooser(ctx, existing);
+      }
+      barcode = p.ean;
+    }
+    info = { ...p };
+    result = { status: 'found', info };
+    nameInput.value = p.name;
+    list.hidden = true;
+    status.textContent = '';
+    headHost.innerHTML = head({ ...p, code: barcode }, null);
+    $('[data-msg]', body).textContent = 'Confira o nome antes de salvar.';
+    submit.focus({ preventScroll: true });
+  });
+
   if (!nameInput.value) setTimeout(() => nameInput.focus(), 250);
 
   const retry = $('[data-retry]', body);
@@ -240,11 +315,12 @@ async function newForm(ctx, result) {
       return undefined;
     }
     const id = barcode.startsWith('SEM-') ? barcode : await newProductId(barcode);
+    const { ean, ...rest } = info;
     const newInfo = {
-      ...(result.status === 'other' ? {} : info),
+      ...(result.status === 'other' ? {} : rest),
       name: nameInput.value.trim(),
       barcodes: barcode.startsWith('SEM-') ? [] : [barcode],
-      source: result.status === 'found' ? 'off' : 'manual',
+      source: result.status === 'found' ? (info.source || 'off') : 'manual',
     };
     if (mode === 'entrada') return { kind: 'entrada', ...(await addStock(id, n, newInfo)), n };
     const product = await ensureProduct(id, newInfo);

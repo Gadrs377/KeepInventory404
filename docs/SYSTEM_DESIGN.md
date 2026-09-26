@@ -60,7 +60,7 @@ validade por lote, lista de compras. Ver a seção 9.
 - **Funciona offline**, exceto a consulta de produtos novos. Sem internet, o
   app oferece cadastro manual do nome.
 
-## 3. Modelo de dados (IndexedDB `keepinventory`, versão 1)
+## 3. Modelo de dados (IndexedDB `keepinventory`, versão 2)
 
 ### `products` (chave: `code`; índice `barcodes`, multiEntry)
 
@@ -72,9 +72,10 @@ validade por lote, lista de compras. Ver a seção 9.
 | `brand` | string | Marca, opcional |
 | `size` | string | Conteúdo da embalagem, ex. `395 g` |
 | `image` | string | URL da foto pequena da embalagem, opcional |
+| `category` | string | Categoria da loja, ex. `/Limpeza/Para Casa/Desinfetante/`. Opcional; base para os ambientes |
 | `qty` | inteiro ≥ 0 | Unidades no armário. Nunca negativo |
 | `minQty` | inteiro ≥ 0 | Abaixo ou igual a isso o item aparece como "acabando". 0 desliga o aviso |
-| `source` | `off` \| `manual` | De onde veio o cadastro |
+| `source` | `off` \| `loja` \| `manual` | De onde veio o cadastro |
 | `createdAt`, `updatedAt` | número (ms) | |
 
 Versão 2 do banco. A migração da versão 1 cria o índice `barcodes` e preenche
@@ -118,13 +119,49 @@ contagem continua de onde parou.
 1. Procura o código no índice `barcodes`. Se algum produto tem esse código, usa
    os dados locais e **não** consulta a internet. Pode voltar mais de um
    produto (seção 5.1).
-2. Se não existe, chama
-   `GET https://world.openfoodfacts.org/api/v2/product/{code}?fields=product_name,product_name_pt,brands,quantity,image_front_small_url`
-   com tempo limite de 8 segundos.
-3. `status: 1` preenche nome (prefere `product_name_pt`), marca, tamanho e foto.
-4. Não achou, deu erro ou está offline: a folha de cadastro abre com o campo de
-   nome vazio e em foco. O código fica guardado para as próximas leituras.
-   Se o problema foi rede, a folha mostra **Buscar de novo**.
+2. Se não existe, consulta ao mesmo tempo:
+   - **Lojas online brasileiras**, pelo repassador (seção 5.2). Têm preferência:
+     nome completo em português, marca, tamanho, foto e categoria da loja.
+   - **Open Food Facts**:
+     `GET https://world.openfoodfacts.org/api/v2/product/{code}?fields=product_name,product_name_pt,brands,quantity,image_front_small_url`,
+     usado se as lojas não acharem.
+   Cada consulta tem tempo limite (9 s e 8 s).
+3. Não achou: a folha de cadastro abre com o campo **Nome do produto**, que
+   também busca nas lojas enquanto a pessoa digita (a partir de 3 letras,
+   350 ms depois de parar). Tocar numa sugestão preenche nome, marca, tamanho,
+   foto e categoria; o produto fica com o código que foi lido.
+4. Produto sem código (`SEM-…`): o mesmo campo; se a sugestão tiver código de
+   barras, o produto passa a usar esse código e é reconhecido nas próximas
+   leituras. Se o código já existir no armário, abre esse produto.
+5. Nada encontrado ou sem rede: dá para salvar só com o nome. Se o problema foi
+   rede, a folha mostra **Buscar de novo**.
+
+Medição com 100 produtos reais: Open Food Facts sozinho achou 43%; com as lojas,
+84% (comida 50/63, limpeza 11/14, beleza e higiene 23/23). Busca por nome achou
+o produto certo em 10 de 10 testes.
+
+### 5.2 Repassador (`worker/`, Cloudflare Workers, plano grátis)
+
+As lojas que usam a plataforma VTEX têm busca pública de catálogo por código de
+barras (`/api/catalog_system/pub/products/search?fq=alternateIds_Ean:…`) e por
+nome (`/api/io/_v/api/intelligent-search/product_search/?query=…`), mas não
+liberam CORS. O Worker faz essas consultas e devolve um formato único.
+
+| Rota | O que faz | Cache |
+| --- | --- | --- |
+| `GET /lookup?ean=` | Consulta 13 lojas em paralelo e devolve a primeira que achar | 7 dias (não encontrado: 1 dia) |
+| `GET /search?q=` | Busca por nome em 3 supermercados e 1 farmácia, intercala, remove repetidos e mantém só o que contém as palavras digitadas | 1 dia |
+| `GET /diag` | Testa cada loja a partir da Cloudflare | sem cache |
+
+- Só consulta a lista fixa de lojas (não é um proxy aberto) e só responde a
+  chamadas de navegador vindas do endereço do app (`ALLOWED_ORIGINS`).
+- Se identifica como `KeepInventory404 (inventario domestico pessoal)`.
+- Plano grátis: 100 mil requisições por dia. A conta não tem cartão, então nunca
+  há cobrança; se o limite estourar, o app cai para Open Food Facts e nome.
+- Publicação: `.github/workflows/worker.yml`, com os segredos
+  `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`.
+- Busca não oficial: se uma loja mudar ou bloquear, as outras continuam.
+  `/diag` mostra quais respondem.
 
 ### 5.1 Um código, vários produtos
 
