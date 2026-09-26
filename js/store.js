@@ -55,6 +55,8 @@ function newProduct(code, info = {}) {
     source: info.source || 'manual',
     createdAt: now,
     updatedAt: now,
+    // Remédio achado na base da Anvisa: princípio ativo, tarja, registro etc.
+    ...(info.med ? { med: info.med } : {}),
   };
 }
 
@@ -205,6 +207,8 @@ export async function applyInfo(code, info, barcode = '') {
     barcodes,
     updatedAt: Date.now(),
   };
+  // Remédio: vai para a aba Remédios e fica sem foto.
+  if (info.med) Object.assign(next, { med: info.med, area: 'remedios', image: '' });
   await put('products', next);
   emit();
   return next;

@@ -73,10 +73,11 @@ validade por lote, lista de compras. Ver a seção 9.
 | `size` | string | Conteúdo da embalagem, ex. `395 g` |
 | `image` | string | URL da foto pequena da embalagem, opcional |
 | `category` | string | Categoria da loja, ex. `/Limpeza/Para Casa/Desinfetante/`. Opcional; base para os ambientes |
-| `area` | `cozinha` \| `limpeza` \| `beleza` | Ambiente da casa. Sugerido por `areas.js` e editável na página do produto |
+| `area` | `cozinha` \| `limpeza` \| `beleza` \| `remedios` | Ambiente da casa. Sugerido por `areas.js` e editável na página do produto. Remédios têm aba própria e não aparecem no Armário |
+| `med` | objeto | Só em remédio achado na base da Anvisa: `nome`, `substancia`, `forma`, `tamanho`, `apresentacao`, `laboratorio`, `registro`, `classe`, `tipo`, `tarja`, `pmc`, `hospitalar` (seção 5.3) |
 | `qty` | inteiro ≥ 0 | Unidades no armário. Nunca negativo |
 | `minQty` | inteiro ≥ 0 | Abaixo ou igual a isso o item aparece como "acabando". 0 desliga o aviso |
-| `source` | `off` \| `loja` \| `manual` | De onde veio o cadastro |
+| `source` | `off` \| `loja` \| `anvisa` \| `nota` \| `manual` | De onde veio o cadastro |
 | `createdAt`, `updatedAt` | número (ms) | |
 
 Versão 3 do banco. As migrações nunca mexem em quantidades nem no histórico:
@@ -200,6 +201,41 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
   Workers AI (10 mil neurônios por dia) dá para centenas de fotos por dia. A foto
   é o último recurso: vem depois do código, da busca nas lojas e do nome.
 
+### 5.3 Remédios (`remedios.js`, base em `data/remedios/`)
+
+A Anvisa (CMED) publica todo mês a lista de preços de todos os remédios
+vendidos no Brasil, com até três códigos de barras por apresentação, princípio
+ativo, laboratório, registro, tarja, tipo (genérico, similar, novo) e o preço
+máximo ao consumidor. `scripts/remedios.py` baixa a planilha e gera arquivos
+estáticos, publicados junto com o app:
+
+| Arquivo | Conteúdo | Tamanho |
+| --- | --- | --- |
+| `ean/NN.json` | Remédios pelo código de barras, em 100 partes (NN são os dois números antes do dígito verificador) | ~120 KB cada, ~20 KB comprimido |
+| `busca.json` | `[código, nome, princípio ativo, tamanho, laboratório, vendido]` por apresentação, sem as de uso hospitalar | 2,2 MB, ~320 KB comprimido |
+| `info.json` | Data da tabela e número de códigos | |
+
+- **Pelo código:** `lookupRemote` consulta a base antes das lojas. Achou, o
+  produto nasce com `area: 'remedios'`, `source: 'anvisa'`, os dados em `med` e
+  sem foto. Uma leitura baixa só uma parte da base.
+- **Pelo nome:** a aba Remédios baixa `busca.json` uma vez por sessão; cada
+  palavra digitada tem de aparecer no nome, princípio ativo, dose ou
+  laboratório.
+- **Sem internet:** o service worker guarda cada parte já consultada
+  (`remedios-v1`, responde do cache e atualiza por trás).
+- **Produto antigo:** se o código de um produto do Armário está na base, a
+  página dele oferece "Usar os dados da Anvisa", que troca os dados e muda o
+  produto para a aba Remédios.
+- **Textos:** o script traduz a apresentação da CMED ("500 MG COM CT BL AL
+  PLAS AMB X 20") para "500 mg, 20 comprimidos" e encurta o laboratório
+  ("EUROFARMA LABORATORIOS S.A." vira "Eurofarma"). O original fica em
+  `apresentacao`.
+- **Preço máximo:** coluna PMC com ICMS de 17% (RS). Muda na constante
+  `PMC_COLUMN` do script.
+- **Bula:** link para o Bulário Eletrônico da Anvisa pelo nome do remédio.
+- **Atualização:** `.github/workflows/remedios.yml`, todo dia 12, faz o commit
+  se a tabela mudou e dispara a publicação do site.
+
 ### 5.1 Um código, vários produtos
 
 Acontece de verdade: fabricante que reusa o mesmo código em sabores diferentes,
@@ -320,6 +356,7 @@ js/app.js               Inicialização e roteador
 js/db.js                Acesso ao IndexedDB
 js/store.js             Regras de estoque
 js/lookup.js            Open Food Facts, lojas pelo repassador e foto
+js/remedios.js          Base de remédios da Anvisa: código, busca e textos
 js/areas.js             Regra dos ambientes da casa
 js/dates.js             Validade: leitura do que foi digitado, textos, .ics
 js/consumo.js           Ritmo de consumo e lista de compras
@@ -329,6 +366,8 @@ js/ui.js                Folha, aviso, seletor de quantidade, escape de HTML
 js/icons.js             Ícones Phosphor (MIT)
 js/sound.js             Bip de leitura e de erro
 js/views/*.js           Uma tela por arquivo
+data/remedios/          Base de remédios gerada por scripts/remedios.py
+scripts/remedios.py     Baixa a tabela CMED e gera data/remedios/
 vendor/barcode-detector Polyfill ZXing (MIT) e o .wasm
 icons/                  Ícones do PWA
 docs/                   Este documento, interfaces e design system

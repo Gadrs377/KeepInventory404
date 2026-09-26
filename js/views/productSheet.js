@@ -24,6 +24,7 @@ const actionLabel = (mode, n) => `${icon(ACTION_ICON[mode])}${ACTION[mode](n)}`;
 
 const NEW_MSG = {
   found: 'Novo no armário. Confira o nome antes de salvar.',
+  med: 'Remédio da lista da Anvisa. Marque a validade que está na caixa.',
   notfound: 'Esse código não está nas lojas. Digite o nome e escolha o produto nas sugestões.',
   offline: 'Sem internet para buscar esse código. Digite o nome do produto para cadastrar.',
   nocode: 'Escreva o nome e escolha o produto nas sugestões. Sem ideia do nome? Fotografe a embalagem.',
@@ -178,13 +179,14 @@ function localRow(p) {
 
 // ---------- Validade (só na entrada) ----------
 // Escondida atrás de um botão: a maioria das leituras não precisa dela.
+// Em remédio já vem aberta: a validade é o que mais importa na caixa.
 
-function expiryHtml() {
+function expiryHtml(open = false) {
   return `
     <div class="expiry">
-      <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="false" aria-controls="exp-field">${icon('calendar')}Marcar validade</button>
-      <div class="field" id="exp-field" hidden>
-        <label class="field-label" for="exp-input">Validade</label>
+      <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="${open}" aria-controls="exp-field" ${open ? 'hidden' : ''}>${icon('calendar')}Marcar validade</button>
+      <div class="field" id="exp-field" ${open ? '' : 'hidden'}>
+        <label class="field-label" for="exp-input">Validade${open ? ' (opcional)' : ''}</label>
         <input class="input input-date" id="exp-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="DD/MM/AA ou MM/AA" aria-describedby="exp-note">
         <p class="field-note" id="exp-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
       </div>
@@ -387,7 +389,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       ${head(local, local)}
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryHtml() : ''}
+      ${mode === 'entrada' ? expiryHtml(!!local.med) : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
       ${canAddOther ? '<button type="button" class="btn btn-quiet" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
@@ -434,7 +436,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
   body.innerHTML = `
     <form class="stack" novalidate>
       <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
-      <p class="sheet-text" data-msg>${esc(NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
+      <p class="sheet-text" data-msg>${esc(info.med ? NEW_MSG.med : NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
       <div class="field">
         <label class="field-label" for="new-name">Nome do produto</label>
@@ -457,7 +459,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       </fieldset>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryHtml() : ''}
+      ${mode === 'entrada' ? expiryHtml(!!info.med) : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
     </form>`;
 

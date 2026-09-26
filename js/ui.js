@@ -53,14 +53,24 @@ export function tagState(p) {
 }
 
 // Foto da embalagem por cima de um ícone de pacote; se a foto falhar, sobra o ícone.
+// Remédio nunca mostra foto: só o ícone de comprimido.
+const medLike = (p) => !!p && (p.area === 'remedios' || !!p.med);
 export function thumb(p, size = 'sm') {
-  const img = p && p.image
+  const med = medLike(p);
+  const img = p && p.image && !med
     ? `<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
     : '';
-  return `<span class="thumb thumb-${size}" aria-hidden="true">${icon('package')}${img}</span>`;
+  return `<span class="thumb thumb-${size}${med ? ' thumb-med' : ''}" aria-hidden="true">${icon(med ? 'pill' : 'package')}${img}</span>`;
 }
 
+// Marca e tamanho. Em remédio, o princípio ativo vem antes (o nome comercial
+// não diz o que é), a não ser que o nome já seja o princípio ativo (genérico).
 export function subtitle(p) {
+  if (p && p.med && p.med.substancia) {
+    const fold = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const first = fold(p.name) === fold(p.med.substancia) ? p.brand : p.med.substancia;
+    return [first, p.size].filter(Boolean).map(esc).join(', ');
+  }
   return [p.brand, p.size].filter(Boolean).map(esc).join(', ');
 }
 
@@ -98,11 +108,12 @@ export function icon(name, cls = '') {
 }
 
 // ---------- Barra de abas (como no iPhone/WhatsApp) ----------
-// Quatro abas numa cápsula de vidro e, separado, o botão de ler código, que
+// Cinco abas numa cápsula de vidro e, separado, o botão de ler código, que
 // abre o leitor no último modo usado. Aba ativa: ícone cheio e texto forte.
 
 const TABS = [
   { id: 'armario', href: '#/', label: 'Armário', icon: 'package', active: 'packageFill' },
+  { id: 'remedios', href: '#/remedios', label: 'Remédios', icon: 'pill', active: 'pillFill' },
   { id: 'compras', href: '#/compras', label: 'Compras', icon: 'cart', active: 'cartFill' },
   { id: 'cupons', href: '#/cupons', label: 'Cupons', icon: 'receipt', active: 'receiptFill' },
   { id: 'mais', href: '#/dados', label: 'Mais', icon: 'menu', active: 'menuFill' },

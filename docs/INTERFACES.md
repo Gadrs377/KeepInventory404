@@ -36,6 +36,9 @@ regras de `store.js` descritas no [system design](SYSTEM_DESIGN.md).
 As folhas (produto lido, escolha entre produtos, digitar código) abrem por cima
 da tela atual e não mudam o endereço.
 
+A barra de abas tem cinco abas: Armário `#/`, Remédios `#/remedios`, Compras,
+Cupons e Mais. Produto de remédio volta para Remédios.
+
 ---
 
 ## 1. Armário `#/`
@@ -667,3 +670,33 @@ num canto; o que não serve naquele momento não aparece.
 - **Só o que serve:** os blocos de resumo do Armário somem quando nada está
   acabando, zerado ou vencendo; o botão da nota fiscal não aparece na Saída;
   "Instalar no celular" não aparece com o app já instalado.
+
+## Versão 3.15: aba Remédios `#/remedios`
+
+Remédio é um ambiente à parte (`area: 'remedios'`), com aba própria entre
+Armário e Compras. O Armário não mostra remédios.
+
+- **Topo:** título grande "Remédios" e a busca presa no topo, "Nome ou
+  princípio ativo".
+- **Blocos de resumo:** Vencidos, Vencendo (até 30 dias) e Acabando. Tocar
+  filtra; somem quando não há nada.
+- **Lista de casa:** a mesma linha do Armário (ícone de comprimido no lugar da
+  foto, nome, princípio ativo e dose, etiqueta, "−"). A validade aparece sempre,
+  não só quando está perto, e a lista vem do que vence antes para o que vence
+  depois.
+- **Busca:** primeiro "Em casa" (o que bate), depois "Na lista da Anvisa",
+  agrupado por remédio (nome e princípio ativo no título) e uma linha por caixa
+  (dose e quantidade, laboratório). Caixa sem venda no último ano leva a pílula
+  "Sem venda recente". A partir de 3 letras; dá para buscar pela dose
+  ("losartana 50").
+- **Folha do remédio:** dados da Anvisa (princípio ativo, apresentação, venda
+  com a cor da tarja, tipo, laboratório, classe terapêutica, preço máximo,
+  registro), "Ver a bula na Anvisa" e **Guardar em casa**, que abre a folha de
+  Entrada normal.
+- **Leitura de remédio:** a folha de produto novo diz "Remédio da lista da
+  Anvisa. Marque a validade que está na caixa." e já traz o campo de validade
+  aberto (continua opcional). "Onde fica" ganhou a opção Remédios.
+- **Página do produto:** seção "Sobre o remédio" com os mesmos dados e a bula.
+  Produto antigo cujo código está na base mostra "Usar os dados da Anvisa".
+- **Sem fotos:** remédio nunca mostra foto, nem a das lojas; só o ícone de
+  comprimido e os dados oficiais. O rodapé da aba diz de quando é a tabela.

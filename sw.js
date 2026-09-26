@@ -1,10 +1,13 @@
 // Service worker: guarda o app para abrir sem internet.
 // Arquivos do app: rede primeiro (pega atualizações), cache se estiver offline.
 // Fontes e fotos de produto: cache primeiro. API do Open Food Facts: só rede.
+// Base de remédios (data/remedios): responde do cache na hora e atualiza por
+// trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v25';
+const VERSION = 'v26';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
+const DATA_CACHE = 'remedios-v1';
 
 const APP_FILES = [
   './',
@@ -22,6 +25,7 @@ const APP_FILES = [
   './js/photo.js',
   './js/store.js',
   './js/lookup.js',
+  './js/remedios.js',
   './js/scanner.js',
   './js/ui.js',
   './js/icons.js',
@@ -37,6 +41,8 @@ const APP_FILES = [
   './js/views/produto.js',
   './js/views/nota.js',
   './js/views/receipt.js',
+  './js/views/remedios.js',
+  './js/views/remedioInfo.js',
   './js/views/revisao.js',
   './js/views/scan.js',
   './vendor/barcode-detector/ponyfill.js',
@@ -70,6 +76,11 @@ self.addEventListener('fetch', (event) => {
 
   if (url.hostname.endsWith('openfoodfacts.org') && url.pathname.startsWith('/api/')) return;
 
+  if (url.origin === self.location.origin && url.pathname.includes('/data/remedios/')) {
+    event.respondWith(staleWhileRevalidate(request, event));
+    return;
+  }
+
   if (url.origin === self.location.origin) {
     event.respondWith(networkFirst(request));
     return;
@@ -94,6 +105,20 @@ async function networkFirst(request) {
     if (request.mode === 'navigate') return cache.match('./index.html');
     throw new Error('offline');
   }
+}
+
+async function staleWhileRevalidate(request, event) {
+  const cache = await caches.open(DATA_CACHE);
+  const hit = await cache.match(request);
+  const fresh = fetch(request).then((res) => {
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  });
+  if (hit) {
+    event.waitUntil(fresh.catch(() => {}));
+    return hit;
+  }
+  return fresh;
 }
 
 async function cacheFirst(request) {

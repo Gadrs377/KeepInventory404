@@ -3,9 +3,12 @@
 
 import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, removeStock, undoMovement } from '../store.js';
 import { addToShopList } from '../shop.js';
-import { AREAS } from '../areas.js';
+import { AREAS as ALL_AREAS, isMed } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
 import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText } from '../ui.js';
+
+// Remédios têm aba própria: o Armário mostra só os outros ambientes.
+const AREAS = ALL_AREAS.filter((a) => a.id !== 'remedios');
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -205,7 +208,7 @@ export default function mountArmario(root) {
   async function load() {
     const [list, draft, lots] = await Promise.all([listProducts(), getCountDraft(), listLots()]);
     if (!alive) return;
-    products = list;
+    products = list.filter((p) => !isMed(p));
     nextExpiry = new Map();
     for (const lot of lots) if (!nextExpiry.has(lot.code)) nextExpiry.set(lot.code, lot.expiresAt);
     const n = draft ? Object.keys(draft.counts).length : 0;

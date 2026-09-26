@@ -3,7 +3,9 @@
 import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl } from '../photo.js';
-import { AREAS } from '../areas.js';
+import { AREAS, isMed } from '../areas.js';
+import { medByEan, medInfo } from '../remedios.js';
+import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
 import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate } from '../ui.js';
@@ -35,11 +37,13 @@ export default async function mountProduto(root, { code }) {
     : 'Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
+  // Remédio volta para a aba Remédios; o resto, para o Armário.
+  const home = isMed(p) ? { href: '#/remedios', label: 'Voltar aos remédios' } : { href: '#/', label: 'Voltar ao armário' };
 
   root.innerHTML = `
     <div class="screen screen-product">
       <header class="topbar nav-bar">
-        <a class="icon-btn glass-btn" href="#/" aria-label="Voltar ao armário">${icon('chevronLeft')}</a>
+        <a class="icon-btn glass-btn" href="${home.href}" aria-label="${home.label}">${icon('chevronLeft')}</a>
         <span class="nav-title" aria-hidden="true">${esc(p.name)}</span>
         <button type="button" class="icon-btn glass-btn" data-edit aria-label="Editar detalhes">${icon('pencil')}</button>
       </header>
@@ -51,7 +55,7 @@ export default async function mountProduto(root, { code }) {
             <p class="product-sub">${subtitle(p) || '&nbsp;'}</p>
             <p class="product-code">${esc(niceCode)}</p>
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
-            ${p.source === 'loja' || p.source === 'off' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
+            ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
           ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>
@@ -60,6 +64,14 @@ export default async function mountProduto(root, { code }) {
           <button type="button" class="btn btn-quiet" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
           <button type="button" class="btn btn-quiet" data-use="1">${icon('plus')}Guardar 1</button>
         </div>
+
+        <div data-med-offer hidden></div>
+
+        ${p.med ? `
+        <section aria-labelledby="med-title">
+          <h2 class="list-title" id="med-title">Sobre o remédio</h2>
+          ${medFacts(p.med)}
+        </section>` : ''}
 
         <section aria-labelledby="lots-title">
           <h2 class="list-title" id="lots-title">Validade</h2>
@@ -202,7 +214,7 @@ export default async function mountProduto(root, { code }) {
       if (!ok) return;
       await deleteProduct(code);
       toast(`${cur.name} removido.`, { duration: 3000 });
-      location.hash = '#/';
+      location.hash = home.href;
     } else if (r) {
       toast('Detalhes salvos.', { duration: 2500 });
       // Desenha a página de novo pelo roteador (limpa os ouvintes da versão antiga).
@@ -266,6 +278,31 @@ export default async function mountProduto(root, { code }) {
   const offLots = onChange(() => renderLots());
   const off = () => { offLots(); navIo.disconnect(); };
   renderLots();
+
+  // Produto cadastrado antes da aba Remédios (ou pelas lojas) cujo código está
+  // na lista da Anvisa: oferece trocar pelos dados oficiais e mudar de aba.
+  if (!p.med && barcodes.length) {
+    Promise.all(barcodes.map((b) => medByEan(b).catch(() => null))).then((found) => {
+      const i = found.findIndex(Boolean);
+      const offer = $('[data-med-offer]', root);
+      if (i < 0 || !offer || !offer.isConnected) return;
+      offer.hidden = false;
+      offer.className = 'med-offer';
+      offer.innerHTML = `
+        <p class="sheet-text">${icon('pill')}Este código é de um remédio da lista da Anvisa: ${esc(found[i].nome)}, ${esc(found[i].tamanho)}.</p>
+        <button type="button" class="btn btn-quiet btn-sm" data-use-med>Usar os dados da Anvisa</button>
+        <p class="field-note">O produto passa para a aba Remédios, com princípio ativo, tarja e bula, e fica sem foto.</p>`;
+      $('[data-use-med]', offer).addEventListener('click', async () => {
+        try {
+          await applyInfo(code, medInfo(found[i]));
+          toast('Agora está em Remédios, com os dados da Anvisa.', { duration: 3000 });
+          window.dispatchEvent(new HashChangeEvent('hashchange'));
+        } catch (err) {
+          toast(err.message, { duration: 3000 });
+        }
+      });
+    });
+  }
 
   return off;
 }

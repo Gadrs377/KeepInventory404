@@ -22,6 +22,12 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - **Compras:** lista sugerida pelo mínimo de cada produto e pelo ritmo de
   consumo, com itens soltos, compartilhar e **Perguntar ao Claude** (revisar a
   lista ou pedir receitas com o que vence).
+- **Remédios (aba própria):** leia o código de barras da caixa e o app acha o
+  remédio na lista oficial da Anvisa (tabela CMED, 27 mil códigos): princípio
+  ativo, dose, tarja, genérico ou referência, laboratório, registro, preço
+  máximo e link para a bula. A validade já vem aberta ao guardar, e a aba
+  destaca o que venceu ou está vencendo. Também busca pelo nome, pelo princípio
+  ativo ou pela dose. Remédio aparece sem foto, só com os dados oficiais.
 - **Sem código de barras:** busque pelo nome ou tire uma foto da embalagem; a IA
   gratuita da Cloudflare lê a marca e o app sugere o produto das lojas.
 - Bip de caixa de mercado a cada leitura (dá para desligar em Dados).
@@ -61,6 +67,15 @@ consultar direto. Ele é publicado sozinho pelo GitHub Actions
 `CLOUDFLARE_ACCOUNT_ID`. Teste local: `cd worker && node test/local.mjs`.
 Diagnóstico das lojas: `https://keepinventory-api.gabriel-gadrs377.workers.dev/diag`.
 
+## Base de remédios (pasta `data/remedios/`)
+
+Montada por `scripts/remedios.py` a partir da
+[tabela de preços da CMED](https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos),
+que a Anvisa publica todo mês com o código de barras de cada apresentação. O
+workflow `.github/workflows/remedios.yml` baixa a tabela nova no dia 12 de cada
+mês, faz o commit se algo mudou e publica o site. Para rodar à mão:
+`pip install openpyxl && python3 scripts/remedios.py`.
+
 ## Rodar no computador
 
 Qualquer servidor estático serve, por exemplo:
@@ -77,6 +92,7 @@ endereço precisa de HTTPS.
 - Leitura de código de barras: [barcode-detector](https://github.com/Sec-ant/barcode-detector)
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).
+- Dados de remédios: tabela CMED da [Anvisa](https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos) (dado público).
 - Fontes: [Urbanist](https://fonts.google.com/specimen/Urbanist) e
   [Schibsted Grotesk](https://fonts.google.com/specimen/Schibsted+Grotesk) (OFL),
   guardadas em `fonts/` com as licenças, sem depender do Google para carregar.

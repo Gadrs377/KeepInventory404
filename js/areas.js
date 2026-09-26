@@ -1,12 +1,16 @@
 // Ambientes da casa e a regra que sugere o ambiente de um produto.
 // Sem IA: usa a categoria da loja (ex.: "/Limpeza/Desinfetante/") e, sem ela,
 // palavras do nome. A pessoa sempre pode trocar na página do produto.
+// Remédios são um ambiente à parte: têm aba própria e não aparecem no Armário.
 
 export const AREAS = [
   { id: 'cozinha', label: 'Cozinha', short: 'Cozinha', icon: 'pot' },
   { id: 'limpeza', label: 'Banheiro e limpeza', short: 'Limpeza', icon: 'spray' },
   { id: 'beleza', label: 'Beleza e cuidados', short: 'Beleza', icon: 'lotus' },
+  { id: 'remedios', label: 'Remédios', short: 'Remédios', icon: 'pill' },
 ];
+
+export const isMed = (p) => !!p && p.area === 'remedios';
 
 export const AREA_IDS = AREAS.map((a) => a.id);
 
@@ -25,6 +29,9 @@ const OVERRIDES = [
 ];
 
 // Segmentos da categoria das lojas. Vale o primeiro segmento reconhecido.
+// Remédio em qualquer nível da categoria (as farmácias usam "/Farmácia/Medicamentos/...").
+const MED_CATEGORY = /^(medicamentos?.*|remedios|genericos|similares|dor e febre|gripe e resfriado|antialergicos)$/;
+
 const CATEGORY_RULES = [
   [/^(limpeza|lavanderia|utilidades domesticas|descartaveis|casa e limpeza|produtos de limpeza|cuidado e limpeza|limpeza da casa)$/, 'limpeza'],
   [/^(perfumaria.*|higiene.*|beleza.*|.*cuidado pessoal|dermocosmeticos|cabelos?|maquiagem|saude e beleza|mamae e bebe|infantil|farmacia|aparador de pelos|barbeadores?)$/, 'beleza'],
@@ -38,9 +45,12 @@ const NAME_RULES = [
 ];
 
 export function guessArea(p) {
+  // Achado na base da Anvisa: é remédio.
+  if (p && p.med) return 'remedios';
   const text = norm(`${(p && p.name) || ''} ${(p && p.brand) || ''}`).replace(/\bsem perfume\b/g, '');
   for (const [re, area] of OVERRIDES) if (re.test(text)) return area;
   const segments = norm(p && p.category).split('/').map((x) => x.trim()).filter(Boolean);
+  if (segments.some((seg) => MED_CATEGORY.test(seg))) return 'remedios';
   for (const seg of segments) {
     for (const [re, area] of CATEGORY_RULES) if (re.test(seg)) return area;
   }

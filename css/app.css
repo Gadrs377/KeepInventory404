@@ -1007,7 +1007,7 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 .choice-group .group-row { min-height: 72px; padding-block: 12px; }
 
 /* ---------- Barra de abas (versão 3.5) ----------
-   Como o iPhone: cápsula de vidro regular flutuando embaixo, 4 abas com ícone e
+   Como o iPhone: cápsula de vidro regular flutuando embaixo, 5 abas com ícone e
    rótulo curto; aba ativa com o ícone cheio. O botão de ler código fica separado
    (como a busca no iOS 26), redondo e tingido, e abre o leitor no último modo.
    É a única barra de vidro embaixo; a camada de cima é a busca do Armário. */
@@ -1031,7 +1031,7 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 }
 .tabbar {
   flex: 1; min-width: 0;
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;
   padding: 4px; border-radius: 999px;
 }
 .tab-item {
@@ -1828,3 +1828,63 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .screen-scan.mode-saida [data-nota] { display: none; }
 @media (display-mode: standalone) { .install-note { display: none; } }
 .screen-product .quick-actions .btn-quiet { background: color-mix(in oklab, var(--ink) 7%, transparent); }
+
+/* ---------- Versão 3.15: Remédios ---------- */
+
+/* Tarja tem cor de verdade na caixa: aqui ela é informação, como a cor do modo */
+:root { --tarja-vermelha: #C8102E; }
+@media (prefers-color-scheme: dark) { :root { --tarja-vermelha: #FF6B7D; } }
+
+/* Cinco abas: rótulo de 10 px, como a barra de abas do iPhone, para
+   "Remédios" caber inteiro em 360 px; em tela estreita o botão do leitor encolhe */
+.tab-item { padding-inline: 0; font-size: 10px; }
+.tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 400px) {
+  .tabbar-wrap { inset-inline: 8px; gap: 8px; }
+  .scan-fab { width: 58px; height: 58px; }
+  .tabbar { padding-inline: 2px; gap: 0; }
+}
+@media (max-width: 340px) {
+  .tabbar-wrap { inset-inline: 6px; gap: 6px; }
+  .scan-fab { width: 52px; height: 52px; }
+  .tab-item { font-size: 9.5px; letter-spacing: -0.02em; }
+}
+
+/* Remédio sem foto: o ícone de comprimido fica mais presente que o do pacote */
+.thumb-med .icon { opacity: 0.7; }
+
+/* Fatos do remédio: rótulo pequeno em cima, valor embaixo, fio entre eles */
+.facts { margin: 0 0 12px; border-top: 1px solid var(--line); }
+.fact { padding-block: 10px; border-bottom: 1px solid var(--line); }
+.fact dt { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fact dd { margin: 2px 0 0; font-size: 17px; line-height: 1.35; color: var(--ink); overflow-wrap: anywhere; }
+.fact-sub { display: block; font-size: 13px; color: var(--ink-2); }
+.fact-num { font-variant-numeric: tabular-nums; }
+.tarja {
+  display: inline-block; width: 22px; height: 10px; margin-inline-end: 8px;
+  border-radius: 2px; vertical-align: 1px;
+}
+.tarja-vermelha, .tarja-vermelha-retencao { background: var(--tarja-vermelha); }
+.tarja-preta { background: #161817; outline: 1px solid var(--ink-2); outline-offset: -1px; }
+.tarja-livre { background: transparent; outline: 1.5px dashed var(--ink-2); outline-offset: -1.5px; }
+@media (forced-colors: active) { .tarja { outline: 1px solid CanvasText; } }
+
+/* Produto antigo que é remédio: oferta discreta para passar para a aba */
+.med-offer { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-control); background: var(--shelf); }
+.med-offer .sheet-text { display: flex; gap: 8px; align-items: flex-start; }
+.med-offer .sheet-text .icon { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+
+/* Aba Remédios */
+.tile-vencidos .tile-icon { background: var(--ink); color: var(--paper); }
+.tile-vencidos:not(.is-empty) .tile-icon { background: var(--acabando); color: #161817; }
+.tile-vencidos[aria-pressed="true"] .tile-icon { background: var(--paper); color: var(--ink); }
+.found-title { margin: 0; padding: 18px var(--gutter) 6px; display: flex; flex-direction: column; gap: 2px; }
+.found-name { font-family: var(--font-num); font-weight: 700; font-size: 18px; line-height: 1.25; }
+.found-sub { font-size: 15px; color: var(--ink-2); }
+.meds-found { border-top: 1px solid var(--line); }
+.meds-found .row { min-height: 56px; padding-block: 8px; }
+.meds-found .row-name { font-family: var(--font-ui); font-size: 16px; font-weight: 600; }
+.row-chevron { flex: none; width: 16px; height: 16px; color: var(--ink-2); }
+.meds-hint { padding: 12px var(--gutter); color: var(--ink-2); font-size: 15px; }
+.meds-source { padding: 8px var(--gutter) 16px; font-size: 13px; color: var(--ink-2); text-wrap: pretty; }
+.screen-meds .empty-state .field-note { margin-top: 8px; color: var(--ink-2); }

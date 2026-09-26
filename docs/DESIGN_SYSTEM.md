@@ -58,6 +58,7 @@ Uma base neutra quase sem cor, e cor só onde ela significa algo.
 | `--acabando` | `#F2C230` | `#F2C230` | Etiqueta de estoque baixo (amarelo de etiqueta de oferta) |
 | `--danger` | `#B42318` | `#FF8A7A` | Só ações destrutivas e erros (matiz 4°, 38° longe da Saída) |
 | `--ink-disabled` | `#A3AAA6` | `#5E6561` | Ícones e trilhos desabilitados |
+| `--tarja-vermelha` | `#C8102E` | `#FF6B7D` | Só a faixa da tarja nos dados do remédio. A tarja preta é preta com contorno; sem tarja, tracejado. O texto sempre diz a tarja |
 
 Regras:
 - Texto de corpo e mensagens sempre em `--ink`. `--ink-2` só para metadados.
@@ -152,6 +153,8 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | **Seletor segmentado** (`.segmented`) | Onde fica: três rádios nativos num trilho de 4 px; o escolhido fica preto. Raio interno 10 = 14 − 4 |
 | **Validade** (`.lot`) | Data em Urbanist; amarela quando vence em até 7 dias, como a etiqueta de acabando |
 | **Lista de compras** (`.shop-item`) | Caixa de marcar de 28 px dentro de uma linha inteira tocável, nome completo, quantidade sugerida condensada à direita. Marcado fica riscado |
+| **Fatos do remédio** (`.facts`) | Lista `dl`: rótulo de 13 px em `--ink-2`, valor de 17 px, fio entre as linhas. A venda leva uma faixa de 22 × 10 px na cor da tarja |
+| **Barra de abas** (`.tabbar`) | Cinco abas com rótulo de 10 px, como no iPhone. Até 400 px o botão do leitor tem 58 px; até 340 px, 52 px, para "Remédios" caber inteiro |
 | **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), acima da barra flutuante. Com **Desfazer**, fica até ser fechado, trocado ou até mudar de tela; sem ação, some em 4 s. Fica atrás das folhas |
 
 Ícones: [Phosphor](https://phosphoricons.com), peso bold, MIT. Nunca desenhados à mão.

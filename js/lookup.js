@@ -1,8 +1,10 @@
-// Descobre o que é um código de barras. Primeiro no armário, depois no Open
-// Food Facts e nas lojas online brasileiras (pelo repassador em worker/).
+// Descobre o que é um código de barras. Primeiro no armário, depois na base de
+// remédios da Anvisa, e por fim no Open Food Facts e nas lojas online
+// brasileiras (pelo repassador em worker/).
 
 import { productsByBarcode } from './store.js';
 import { API_URL } from './config.js';
+import { medByEan, medInfo } from './remedios.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
 const FIELDS = 'product_name,product_name_pt,generic_name_pt,brands,quantity,image_front_small_url';
@@ -34,6 +36,12 @@ export async function lookup(code) {
 // têm nomes completos em português e cobrem limpeza e beleza, então têm preferência.
 export async function lookupRemote(code) {
   if (code.startsWith('SEM-')) return { status: 'notfound' };
+  // Remédio: os dados oficiais da Anvisa valem mais que os das lojas (e sem foto).
+  // A parte da base já consultada fica guardada no celular e vale sem internet.
+  try {
+    const med = await medByEan(code);
+    if (med) return { status: 'found', info: medInfo(med) };
+  } catch { /* base fora do ar: segue para as lojas */ }
   if (!navigator.onLine) return { status: 'offline' };
   // As duas consultas começam juntas; quem achar primeiro com dados de loja ganha.
   const offPromise = lookupOff(code);

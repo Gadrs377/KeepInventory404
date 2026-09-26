@@ -9,7 +9,7 @@ import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
 import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows, pill } from '../ui.js';
 
-const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
+const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus', remedios: 'pill' };
 
 export default function mountCompras(root) {
   const state = loadState();
