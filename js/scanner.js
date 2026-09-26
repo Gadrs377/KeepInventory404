@@ -137,6 +137,14 @@ export function createScanner(video, { onCode, onError }) {
     video.srcObject = null;
   }
 
+  // Resolução maior para o QR Code da nota; volta ao normal para poupar bateria.
+  async function setHighRes(on) {
+    const track = stream && stream.getVideoTracks()[0];
+    if (!track || !track.applyConstraints) return;
+    const size = on ? { width: { ideal: 1920 }, height: { ideal: 1080 } } : { width: { ideal: 1280 }, height: { ideal: 720 } };
+    try { await track.applyConstraints(size); } catch { /* fica como está */ }
+  }
+
   function torchAvailable() {
     const track = stream && stream.getVideoTracks()[0];
     const caps = track && track.getCapabilities ? track.getCapabilities() : {};
@@ -154,5 +162,5 @@ export function createScanner(video, { onCode, onError }) {
     }
   }
 
-  return { start, stop, pause, resume, torchAvailable, setTorch, get running() { return running; } };
+  return { start, stop, pause, resume, torchAvailable, setTorch, setHighRes, get running() { return running; } };
 }

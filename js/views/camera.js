@@ -14,7 +14,8 @@ const ERRORS = {
 
 /**
  * Monta o visor em `host`. `onCode(code)` deve devolver uma Promise; o leitor
- * volta a ler quando ela termina.
+ * volta a ler quando ela termina. Com `onNota`, o botão de QR Code põe o visor
+ * no modo nota fiscal: mira quadrada, instrução e "Colar o link" como alternativa.
  */
 export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   host.innerHTML = `
@@ -24,11 +25,12 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
       <p class="cam-msg" hidden></p>
       <p class="cam-loading" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Abrindo a câmera</p>
       <button type="button" class="cam-hint" data-byname hidden>Não lê ou não tem código? <strong>Ver outras formas</strong></button>
+      ${onNota ? '<p class="cam-qr-note" hidden>Aponte para o QR Code no fim do cupom</p><button type="button" class="cam-hint cam-paste" data-paste hidden>Não lê? <strong>Colar o link da nota</strong></button>' : ''}
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
         <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
         <button type="button" class="cam-tool" data-nocode-tool aria-label="Produto sem código de barras">${icon('package')}</button>
-        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-label="Nota fiscal do mercado">${icon('qrCode')}</button>` : ''}
+        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-pressed="false" aria-label="Ler o QR Code da nota fiscal">${icon('qrCode')}</button>` : ''}
       </div>
     </div>`;
 
@@ -46,15 +48,19 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   let paused = false;
   let torchOn = false;
   let hintTimer = 0;
+  let qrMode = false;
 
   // Depois de uns segundos sem ler nada, oferece a busca pelo nome.
   const HINT_AFTER = 9000;
   function armHint() {
     clearTimeout(hintTimer);
     hintBtn.hidden = true;
+    if (pasteBtn) pasteBtn.hidden = true;
+    // No modo nota, a alternativa é colar o link (e aparece mais cedo).
     hintTimer = setTimeout(() => {
-      if (alive && scanner.running && !handling && !paused) hintBtn.hidden = false;
-    }, HINT_AFTER);
+      if (!alive || !scanner.running || handling || paused) return;
+      if (qrMode) { if (pasteBtn) pasteBtn.hidden = false; } else hintBtn.hidden = false;
+    }, qrMode ? 6000 : HINT_AFTER);
   }
 
   async function handle(code, fn = onCode) {
@@ -74,12 +80,15 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   const scanner = createScanner(video, {
     onCode(code) {
       if (!isValidCode(code)) {
-        // QR Code da nota fiscal: importa a compra inteira.
+        // QR Code da nota fiscal: importa a compra inteira (em qualquer modo).
         const p = onNota && notaParam(code);
-        if (p) { beep('ok'); vibrate(40); handle(p, onNota); return; }
+        if (p) { beep('ok'); vibrate(40); setQrMode(false); handle(p, onNota); return; }
+        if (qrMode) flash('Esse QR Code não é de nota fiscal', 'saida');
         scanner.resume();
         return;
       }
+      // No modo nota, código de barras de produto não conta.
+      if (qrMode) { scanner.resume(); return; }
       aim.classList.remove('is-hit');
       void aim.offsetWidth;
       aim.classList.add('is-hit');
@@ -96,6 +105,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
 
   async function start() {
     await scanner.start();
+    if (alive && scanner.running && qrMode) scanner.setHighRes(true);
     if (alive && scanner.running && scanner.torchAvailable()) torchBtn.hidden = false;
     if (alive && scanner.running) armHint();
   }
@@ -115,14 +125,31 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
     else if (alive && !paused) { scanner.resume(); armHint(); }
   });
 
+  // Modo nota fiscal: a mesma câmera, com mira quadrada e resolução maior
+  // (o QR Code do cupom é denso e vem impresso pequeno).
   const notaBtn = $('[data-nota]', host);
+  const qrNote = $('.cam-qr-note', host);
+  const pasteBtn = $('[data-paste]', host);
+  function setQrMode(on) {
+    if (!notaBtn || on === qrMode) return;
+    qrMode = on;
+    viewfinder.classList.toggle('is-qr', on);
+    notaBtn.setAttribute('aria-pressed', String(on));
+    qrNote.hidden = !on;
+    hintBtn.hidden = true;
+    pasteBtn.hidden = true;
+    scanner.setHighRes(on);
+    if (alive && scanner.running && !paused) armHint();
+  }
   if (notaBtn) {
-    notaBtn.addEventListener('click', async () => {
+    notaBtn.addEventListener('click', () => { vibrate(8); setQrMode(!qrMode); });
+    pasteBtn.addEventListener('click', async () => {
       scanner.pause();
       clearTimeout(hintTimer);
+      pasteBtn.hidden = true;
       const { notaEntrySheet } = await import('./nota.js');
       const p = await notaEntrySheet();
-      if (p) await handle(p, onNota);
+      if (p) { setQrMode(false); await handle(p, onNota); }
       else if (alive && !paused) { scanner.resume(); armHint(); }
     });
   }
@@ -158,6 +185,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   return {
     handle,
     flash,
+    setQrMode,
     pause() {
       paused = true;
       clearTimeout(hintTimer);

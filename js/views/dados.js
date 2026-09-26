@@ -59,10 +59,10 @@ export default async function mountDados(root) {
       ${tabBar('mais')}
     </div>`;
 
-  $('[data-nota]', root).addEventListener('click', async () => {
-    const { notaEntrySheet, importNota } = await import('./nota.js');
-    const p = await notaEntrySheet({ camera: true });
-    if (p && await importNota(p)) location.hash = '#/';
+  // Importar nota: abre o leitor já no modo QR Code (colar o link fica lá).
+  $('[data-nota]', root).addEventListener('click', () => {
+    try { sessionStorage.setItem('ki.qr', '1'); } catch { /* sem armazenamento */ }
+    location.hash = '#/entrada';
   });
 
   $('[data-sound]', root).addEventListener('change', (e) => {

@@ -182,6 +182,8 @@ export async function fetchNota(p) {
     return data;
   } catch (err) {
     if (err.name === 'AbortError') throw new Error('A SEFAZ demorou demais. Tente de novo em instantes.');
+    // Sem conexão com o repassador ("Failed to fetch", "Load failed" no iPhone).
+    if (err.name === 'TypeError') throw new Error('Não deu para buscar a nota agora. Confira a internet e tente de novo.');
     throw err;
   } finally {
     clearTimeout(timer);

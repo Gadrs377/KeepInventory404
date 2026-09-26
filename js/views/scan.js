@@ -417,6 +417,10 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
 
   const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota });
   if (initialCode) cam.handle(initialCode);
+  // Veio de "Importar nota fiscal" (Mais): abre já no modo nota.
+  try {
+    if (sessionStorage.getItem('ki.qr')) { sessionStorage.removeItem('ki.qr'); cam.setQrMode(true); }
+  } catch { /* sem armazenamento */ }
 
   return () => cam.stop();
 }

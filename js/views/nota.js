@@ -322,19 +322,19 @@ function review(body, close, data, rows, products, already) {
 }
 
 // Folha de entrada: explica onde fica o QR Code e aceita colar o link.
-export function notaEntrySheet({ camera = false } = {}) {
+// Alternativa à câmera: colar o link que o QR Code abre.
+export function notaEntrySheet() {
   return openSheet({
     title: 'Nota fiscal',
-    label: 'Importar nota fiscal',
+    label: 'Colar o link da nota',
     render(body, close) {
       body.innerHTML = `
-        <p class="sheet-text">Aponte a câmera para o QR Code no fim do cupom do mercado. Todos os itens da compra entram de uma vez.</p>
+        <p class="sheet-text">Leia o QR Code do cupom com a câmera do celular, copie o link que ele abre e cole aqui. Todos os itens da compra entram de uma vez.</p>
         <form class="stack" novalidate>
-          <label class="field"><span class="field-label">Ou cole o link da nota</span>
+          <label class="field"><span class="field-label">Link da nota</span>
             <input class="input" name="link" inputmode="url" autocomplete="off" placeholder="https://dfe-portal.svrs.rs.gov.br/..." aria-describedby="nota-link-error"></label>
           <p class="field-error" id="nota-link-error" hidden></p>
           <button type="submit" class="btn btn-primary">${icon('receipt')}Ler a nota</button>
-          ${camera ? `<a class="btn btn-quiet" href="#/entrada" data-camera>${icon('camera')}Abrir a câmera</a>` : ''}
         </form>`;
       const input = $('input', body);
       const error = $('.field-error', body);

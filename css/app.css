@@ -1888,3 +1888,18 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .meds-hint { padding: 12px var(--gutter); color: var(--ink-2); font-size: 15px; }
 .meds-source { padding: 8px var(--gutter) 16px; font-size: 13px; color: var(--ink-2); text-wrap: pretty; }
 .screen-meds .empty-state .field-note { margin-top: 8px; color: var(--ink-2); }
+
+/* ---------- Leitor: modo nota fiscal (QR Code) ---------- */
+/* Mira quadrada no meio, instrução em cima e o botão de QR aceso */
+.viewfinder.is-qr { aspect-ratio: 1; max-height: 62dvh; margin-inline: auto; }
+.viewfinder.is-qr .aim { left: 50%; right: auto; top: 44%; width: 54%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); }
+.viewfinder.is-qr .aim-line { display: none; }
+.cam-qr-note {
+  position: absolute; z-index: 2; top: 10px; left: 50%; translate: -50% 0;
+  width: max-content; max-width: calc(100% - 20px);
+  padding: 8px 16px; border-radius: 999px;
+  background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
+  font-size: 15px; font-weight: 600; text-align: center; text-wrap: balance;
+}
+.cam-paste { top: auto; bottom: 70px; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .cam-qr-note { background: #161817; } }
