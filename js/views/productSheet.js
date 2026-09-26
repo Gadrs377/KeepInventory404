@@ -7,7 +7,7 @@
 // qual deles está na mão, e sempre deixa cadastrar mais um com o mesmo código.
 
 import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
-import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts } from '../store.js';
+import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessArea } from '../areas.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil } from '../dates.js';
 import { photoToDataUrl } from '../photo.js';
@@ -235,17 +235,66 @@ function chooser(ctx, products) {
 
 // ---------- Saída de algo que não está no armário ----------
 
-function notInCupboard({ body, close, barcode }) {
+// Saída de um código que o armário não conhece. Três causas comuns, cada uma
+// com o seu caminho: leitura errada, produto que ninguém cadastrou, ou produto
+// que já está no armário com outro código (embalagem nova, fardo x unidade).
+function notInCupboard(ctx) {
+  const { body, close, barcode } = ctx;
   beep('error');
   body.innerHTML = `
-    ${head({ name: 'Produto desconhecido', code: barcode }, null)}
-    <p class="sheet-text">Esse produto não está no armário. Se ele acabou de chegar, cadastre como entrada.</p>
-    <div class="sheet-actions">
-      <button type="button" class="btn btn-entrada" data-switch>${icon('in')}Cadastrar como entrada</button>
-      <button type="button" class="btn btn-quiet" data-cancel>Fechar</button>
-    </div>`;
+    <h2 class="sheet-title">Esse código não está no armário</h2>
+    <p class="sheet-text">Código ${esc(barcode)}. O que aconteceu?</p>
+    <ul class="group choice-group">
+      <li><button type="button" class="group-row" data-link>
+        <span class="group-icon">${icon('search')}</span>
+        <span class="group-label">É um produto que já está no armário<span class="group-sub">Escolha qual; o app passa a reconhecer este código</span></span>
+        ${icon('chevron', 'group-chevron')}</button></li>
+      <li><button type="button" class="group-row" data-switch>
+        <span class="group-icon is-entrada">${icon('plus')}</span>
+        <span class="group-label">Esqueci de cadastrar<span class="group-sub">Cadastre agora com quantos ainda tem no armário</span></span>
+        ${icon('chevron', 'group-chevron')}</button></li>
+      <li><button type="button" class="group-row" data-retry>
+        <span class="group-icon">${icon('barcode')}</span>
+        <span class="group-label">Leu errado<span class="group-sub">Fecha e volta a ler; aponte para o código do produto, não o da caixa</span></span>
+        ${icon('chevron', 'group-chevron')}</button></li>
+    </ul>`;
   $('[data-switch]', body).addEventListener('click', () => close({ kind: 'switch', code: barcode }));
-  $('[data-cancel]', body).addEventListener('click', () => close(null));
+  $('[data-retry]', body).addEventListener('click', () => close(null));
+  $('[data-link]', body).addEventListener('click', () => linkToProduct(ctx));
+}
+
+// Liga o código lido a um produto que já existe e segue com a saída dele.
+async function linkToProduct(ctx) {
+  const { body, barcode } = ctx;
+  const products = await listProducts();
+  if (!body.isConnected) return;
+  body.innerHTML = `
+    <h2 class="sheet-title">Qual produto é?</h2>
+    <p class="sheet-text">O código ${esc(barcode)} passa a abrir o produto que você escolher.</p>
+    <div class="field">
+      <label class="field-label" for="link-q">Nome do produto</label>
+      <input class="input" id="link-q" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Ex.: leite" aria-describedby="link-status">
+      <p class="suggest-status" id="link-status" aria-live="polite"></p>
+    </div>
+    <ul class="pick suggest"></ul>`;
+  const input = $('input', body);
+  const list = $('.suggest', body);
+  const status = $('#link-status', body);
+  const render = () => {
+    const found = matchLocal(products, input.value).slice(0, 8);
+    list.innerHTML = found.map((p) => localRow(p)).join('');
+    list.hidden = !found.length;
+    status.textContent = input.value.trim() && !found.length ? `Nada no armário com “${input.value.trim()}”.` : '';
+  };
+  input.addEventListener('input', render);
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-local]');
+    if (!btn) return;
+    const p = await addBarcode(btn.dataset.local, barcode);
+    productForm(ctx, p, {});
+  });
+  render();
+  setTimeout(() => input.focus(), 250);
 }
 
 // ---------- Produto já cadastrado ----------

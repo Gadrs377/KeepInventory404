@@ -174,6 +174,18 @@ export async function updateProduct(code, fields) {
   return next;
 }
 
+// Guarda mais um código de barras num produto (embalagem nova, código trocado).
+export async function addBarcode(code, barcode) {
+  const p = await getProduct(code);
+  if (!p) throw new Error('Produto não cadastrado');
+  const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
+  if (barcodes.includes(barcode)) return p;
+  const next = { ...p, barcodes: [...barcodes, barcode], updatedAt: Date.now() };
+  await put('products', next);
+  emit();
+  return next;
+}
+
 // Cadastra sem mexer no estoque (usado pela contagem antes de salvar a quantidade).
 export async function ensureProduct(code, info) {
   const existing = await getProduct(code);

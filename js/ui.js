@@ -40,8 +40,31 @@ export function subtitle(p) {
   return [p.brand, p.size].filter(Boolean).map(esc).join(', ');
 }
 
+// Retorno tátil. Android: navigator.vibrate. iPhone: o Safari não tem vibrate,
+// mas desde o iOS 18 alternar um <input type="checkbox" switch> dispara o
+// háptico do sistema; um interruptor invisível é alternado a cada chamada.
+// Só funciona dentro de um toque da pessoa (não na leitura automática).
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function iosHaptic() {
+  const label = document.createElement('label');
+  label.setAttribute('aria-hidden', 'true');
+  label.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.setAttribute('switch', '');
+  label.append(input);
+  document.head.append(label);
+  label.click();
+  label.remove();
+}
+
 export function vibrate(ms = 40) {
-  try { navigator.vibrate && navigator.vibrate(ms); } catch { /* sem vibração */ }
+  try {
+    if (navigator.vibrate && navigator.vibrate(ms)) return;
+  } catch { /* sem vibração */ }
+  if (isIOS) {
+    try { iosHaptic(); } catch { /* sem háptico */ }
+  }
 }
 
 // ---------- Ícones (Phosphor, ver icons.js) ----------

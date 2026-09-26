@@ -19,7 +19,7 @@ export default async function mountDados(root) {
 
   root.innerHTML = `
     <div class="screen screen-data">
-      <header class="topbar">
+      <header class="topbar glass-regular">
         <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
         <h1 class="topbar-title">Mais</h1>
       </header>

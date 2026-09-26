@@ -94,8 +94,11 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   const pendingBox = $('.pending', root);
   const pendingList = $('.pending-list', root);
 
+  // "Aponte para o código" é óbvio numa tela de câmera: a linha só aparece
+  // para explicar o modo rápido.
   function renderHint() {
-    hint.textContent = fast ? COPY[mode].fastHint : COPY[mode].hint;
+    hint.textContent = fast ? COPY[mode].fastHint : '';
+    hint.hidden = !fast;
   }
 
   // Troca de modo sem desmontar a tela: a câmera continua ligada.

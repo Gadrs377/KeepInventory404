@@ -82,6 +82,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Sem zoom de toque duplo (o celular esperava um segundo toque e dava zoom);
+   o gesto de pinça continua funcionando, por acessibilidade. */
+html, body, a, button, input, label, select, textarea { touch-action: manipulation; }
 
 body {
   margin: 0;
@@ -934,6 +937,60 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 /* Folhas sobre a câmera: sólidas. O vidro borrava o vídeo em manchas que se
    mexem atrás do texto (mesmo motivo do cupom). */
 body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ---------- Liquid glass, versão 3.4 ----------
+   Mapa de camadas: barras do topo das telas com lista (Produto, Compras, Mais,
+   Cupons) ficam fixas e em vidro regular, porque a lista passa por baixo delas.
+   No Armário, os filtros entraram na faixa de vidro da busca (são preenchimentos
+   dentro do vidro, não uma camada nova). Avisos viram vidro tingido. No máximo
+   2 camadas com desfoque por tela; o aviso é passageiro e fica fora da conta. */
+
+.topbar.glass-regular {
+  position: sticky; top: 0; z-index: 4;
+  border-bottom: 0;
+  box-shadow: inset 0 -1px 0 var(--glass-edge);
+}
+
+.home-tools .chips { padding: 4px 0 10px; }
+.home-tools .chip { background: color-mix(in oklab, var(--ink) 6%, transparent); border-color: transparent; }
+.home-tools .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+.home-tools .chip-vencendo.is-urgent { background: var(--acabando); border-color: var(--acabando); }
+.home-tools .chip-vencendo.is-urgent[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+.home-tools:not(:has(.tabs:not([hidden]))):not(:has(.chips:not([hidden]))) { padding-bottom: 10px; }
+
+/* Aviso em vidro tingido: a cor do modo (ou a tinta) a 94% com borda e brilho do
+   material. A 88% o texto da lista passava por trás das letras do aviso. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .toast {
+    background: color-mix(in oklab, var(--ink) 94%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(20px) saturate(var(--glass-saturate));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.10), var(--glass-shadow);
+  }
+  .toast.has-mode { background: color-mix(in oklab, var(--mode) 94%, transparent); }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .toast { background: var(--ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .toast.has-mode { background: var(--mode); }
+}
+
+/* Luz que nasce do ponto do toque nos botões de vidro */
+.mode-btn, .floating-bar .btn, .mode-opt span { position: relative; overflow: hidden; isolation: isolate; }
+.mode-btn::after, .floating-bar .btn::after, .mode-opt span::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(circle at var(--press-x, 50%) var(--press-y, 50%), rgba(255, 255, 255, 0.34), transparent 65%);
+  opacity: 0; scale: 0.6;
+  transition-property: opacity, scale; transition-duration: 300ms; transition-timing-function: var(--ease);
+}
+.mode-btn:active::after, .floating-bar .btn:active::after, .mode-opt span:active::after { opacity: 1; scale: 1; transition-duration: 120ms; }
+
+/* Folha "não está no armário": opções como linhas agrupadas */
+.choice-group { background: color-mix(in oklab, var(--ink) 6%, transparent); }
+.group-label { display: flex; flex-direction: column; gap: 2px; }
+.choice-group .group-label { font-weight: 700; }
+.group-sub { font-weight: 400; font-size: 15px; color: var(--ink-2); text-wrap: pretty; }
+.group-icon.is-entrada { background: var(--entrada); color: var(--on-mode); }
+.choice-group .group-row { min-height: 72px; padding-block: 12px; }
 
 /* ---------- Telas largas ---------- */
 

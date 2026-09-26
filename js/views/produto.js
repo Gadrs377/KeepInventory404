@@ -18,7 +18,7 @@ export default async function mountProduto(root, { code }) {
   if (!p) {
     root.innerHTML = `
       <div class="screen">
-        <header class="topbar"><a class="icon-btn" href="#/" aria-label="Voltar">${icon('back')}</a></header>
+        <header class="topbar glass-regular"><a class="icon-btn" href="#/" aria-label="Voltar">${icon('back')}</a></header>
         <main class="content"><p class="empty">Esse produto não está mais no armário.</p>
         <a class="btn btn-primary" href="#/">Voltar ao armário</a></main>
       </div>`;
@@ -36,7 +36,7 @@ export default async function mountProduto(root, { code }) {
 
   root.innerHTML = `
     <div class="screen screen-product">
-      <header class="topbar">
+      <header class="topbar glass-regular">
         <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
       </header>
       <main class="content">

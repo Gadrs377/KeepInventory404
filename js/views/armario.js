@@ -26,8 +26,8 @@ export default function mountArmario(root) {
           <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}" autocomplete="off">
         </label>
         <div class="tabs" role="group" aria-label="Ambiente"></div>
+        <div class="chips" role="group" aria-label="Mostrar só" hidden></div>
       </div>
-      <div class="chips" role="group" aria-label="Mostrar só" hidden></div>
       <div class="draft-note" hidden></div>
       <main class="shelf" aria-live="polite"></main>
       <nav class="modebar floating-bar glass-regular" aria-label="Registrar">

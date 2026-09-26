@@ -15,7 +15,7 @@ export default async function mountCupons(root) {
   const list = await listReceipts();
   root.innerHTML = `
     <div class="screen screen-cupons">
-      <header class="topbar">
+      <header class="topbar glass-regular">
         <a class="icon-btn" href="#/dados" aria-label="Voltar para Mais">${icon('back')}</a>
         <h1 class="topbar-title">Cupons</h1>
       </header>

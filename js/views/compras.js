@@ -32,7 +32,7 @@ export default function mountCompras(root) {
 
   root.innerHTML = `
     <div class="screen screen-shop has-floating-bar">
-      <header class="topbar">
+      <header class="topbar glass-regular">
         <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
         <h1 class="topbar-title">Compras</h1>
       </header>

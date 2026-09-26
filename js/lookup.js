@@ -11,6 +11,16 @@ export function isValidCode(code) {
   return /^\d{8,14}$/.test(code) || /^SEM-\d+$/.test(code);
 }
 
+// Dígito verificador dos códigos EAN/UPC/GTIN (8, 12, 13 e 14 números).
+// O leitor da câmera já confere; isto pega erro de digitação no código manual.
+export function checkDigitOk(code) {
+  if (![8, 12, 13, 14].includes(code.length)) return true;
+  const digits = code.split('').map(Number);
+  const check = digits.pop();
+  const sum = digits.reverse().reduce((a, d, i) => a + d * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === check;
+}
+
 // Resolve com { status: 'local', products } quando o código já está no armário
 // (um ou mais produtos), ou com o resultado de lookupRemote.
 export async function lookup(code) {

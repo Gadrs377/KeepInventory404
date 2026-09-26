@@ -414,3 +414,22 @@ Mudanças guiadas por "como a Apple faria" e pelas skills better-layout e liquid
 - **Zaffari:** entrou no repassador, primeiro na busca por nome e com
   preferência na busca por código (tinha 12 de 22 produtos da amostra de fotos).
 
+## Versão 3.4
+
+- **Saída de código desconhecido:** em vez de só oferecer cadastro, a folha pergunta
+  o que houve: "É um produto que já está no armário" (escolhe o produto e o código
+  passa a abri-lo; a saída continua), "Esqueci de cadastrar" (cadastra com o que
+  sobrou) ou "Leu errado" (fecha e volta a ler). No código digitado, o dígito de
+  controle é conferido antes de buscar.
+- **Toque duplo:** `touch-action: manipulation` tira o zoom de toque duplo; a pinça
+  continua funcionando.
+- **Háptico:** Android usa `navigator.vibrate`. No iPhone (iOS 18 ou mais novo) o
+  app alterna um interruptor nativo invisível, que faz o celular vibrar de leve.
+  Só funciona em toques da pessoa (−1, seletor, trocar de modo), não na leitura
+  automática da câmera.
+- **Vidro:** barras do topo de Produto, Compras, Mais e Cupons fixas e em vidro;
+  filtros do Armário dentro da faixa de vidro da busca; avisos em vidro tingido a
+  94%; brilho que nasce do ponto do toque nos botões de vidro e no seletor de modo.
+- **Leitor:** a linha "Aponte para o código de barras" só aparece com o modo rápido
+  ligado (para explicá-lo).
+

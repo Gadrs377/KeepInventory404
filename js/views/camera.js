@@ -1,7 +1,7 @@
 // Visor da câmera compartilhado pelo leitor (entrada/saída) e pela contagem.
 
 import { createScanner, cameraSupported } from '../scanner.js';
-import { isValidCode } from '../lookup.js';
+import { isValidCode, checkDigitOk } from '../lookup.js';
 import { $, icon, openSheet, vibrate } from '../ui.js';
 import { beep } from '../sound.js';
 
@@ -160,6 +160,13 @@ export function manualCodeSheet() {
         const code = input.value.replace(/\D/g, '');
         if (!isValidCode(code)) {
           error.textContent = 'Digite os 8 a 14 números que aparecem embaixo das barras.';
+          error.hidden = false;
+          input.setAttribute('aria-invalid', 'true');
+          input.focus();
+          return;
+        }
+        if (!checkDigitOk(code)) {
+          error.textContent = 'Esses números não conferem: o último é um dígito de controle. Confira na embalagem e digite de novo.';
           error.hidden = false;
           input.setAttribute('aria-invalid', 'true');
           input.focus();
