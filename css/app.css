@@ -449,6 +449,12 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .receipt-dots { flex: 1 1 24px; min-width: 24px; border-bottom: 2px dotted var(--line); transform: translateY(-4px); }
 .receipt-n { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 24px; line-height: 1; }
 .receipt-empty { color: var(--ink-2); }
+/* Linha da sessão tocável: abre a edição antes de concluir */
+.receipt-edit {
+  min-height: 44px; border: 0; background: none; color: inherit; text-align: start;
+  border-radius: 8px; margin-inline: -8px; padding-inline: 8px; width: calc(100% + 16px);
+}
+.receipt-edit:active { background: var(--shelf); }
 .receipt-total {
   display: flex; justify-content: space-between; align-items: baseline;
   margin-top: 8px; padding-top: 8px;
@@ -595,6 +601,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   transition-property: transform, opacity; transition-duration: 220ms; transition-timing-function: var(--ease);
 }
 .sheet:focus { outline: none; }
+/* Arrastando pela alça: a folha segue o dedo sem atraso */
+.sheet.is-dragging { transition: none; }
 /* O cupom não flutua sobre conteúdo em movimento: o vidro só mostrava a câmera
    borrada atrás do papel. Material sólido, mesma borda e brilho. */
 .sheet.sheet-solid { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -721,7 +729,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 /* ---------- Cupom impresso (fim da sessão) ---------- */
 
 .receipt-stage {
-  padding: 12px 14px 20px;
+  padding: 12px 14px 8px;
   border-radius: var(--r-media);
   background: color-mix(in oklab, var(--ink) 7%, transparent);
 }
@@ -733,24 +741,32 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.10), 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .ticket-clip {
-  margin: -6px 10px 0;
-  /* Corta só em cima (o papel "sai" da boca); sombra dos lados e de baixo continua visível */
-  clip-path: inset(0 -24px -40px -24px);
-  filter: drop-shadow(0 1px 1px rgba(22, 24, 23, 0.10)) drop-shadow(0 8px 14px rgba(22, 24, 23, 0.14));
+  /* Corta só em cima: o papel "sai" da boca da impressora. As sobras de 12 px
+     nos lados e embaixo deixam a sombra aparecer. Sem clip-path, máscara nem
+     filtro: essa combinação deixava o papel em branco ao arrastar a folha. */
+  position: relative;
+  margin: -6px -2px 0; padding: 0 12px 14px;
+  overflow: hidden;
 }
 .ticket {
   /* O papel é sempre claro, também no tema escuro, como um cupom de verdade */
   --ink: #161817; --ink-2: #3F4541; --line: #C9CEC9;
   --entrada: #17693F; --saida: #8E1B5C; --contagem: #1F3F9E;
   --tooth: 12px;
+  position: relative;
   color-scheme: light;
   background: #FFFFFF; color: var(--ink);
-  padding: 22px 18px calc(18px + var(--tooth) / 2);
+  padding: 22px 18px 18px;
+  margin-bottom: calc(var(--tooth) / 2);
   font-variant-numeric: tabular-nums;
-  /* Borda de baixo rasgada em dentes (conic-gradient em máscara, técnica de Temani Afif) */
-  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
-  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
+  box-shadow: 0 1px 2px rgba(22, 24, 23, 0.10), 0 10px 18px -8px rgba(22, 24, 23, 0.22);
   animation: ticket-print var(--print-ms, 1100ms) cubic-bezier(0.22, 1, 0.36, 1) 200ms backwards;
+}
+/* Borda rasgada: dentes desenhados como fundo de uma faixa logo abaixo do papel */
+.ticket::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%;
+  height: calc(var(--tooth) / 2);
+  background: conic-gradient(from -45deg at bottom, #FFFFFF 90deg, #0000 0) bottom / var(--tooth) 100% repeat-x;
 }
 @keyframes ticket-print { from { transform: translateY(-100%); } }
 /* Ao fechar, o conteúdo vai para a cópia que some: o papel não pode "imprimir" de novo */
@@ -778,7 +794,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 }
 @media (max-width: 359px) {
   .receipt-stage { padding-inline: 8px; }
-  .ticket-clip { margin-inline: 6px; }
+  .ticket-clip { padding-inline: 8px; }
   .ticket { padding-inline: 14px; }
 }
 .ticket-barcode {
@@ -948,13 +964,13 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
   }
   .printer-slot, @media (max-width: 359px) {
   .receipt-stage { padding-inline: 8px; }
-  .ticket-clip { margin-inline: 6px; }
+  .ticket-clip { padding-inline: 8px; }
   .ticket { padding-inline: 14px; }
 }
 .ticket-barcode { forced-color-adjust: none; background-color: CanvasText; }
   @media (max-width: 359px) {
   .receipt-stage { padding-inline: 8px; }
-  .ticket-clip { margin-inline: 6px; }
+  .ticket-clip { padding-inline: 8px; }
   .ticket { padding-inline: 14px; }
 }
 .ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }

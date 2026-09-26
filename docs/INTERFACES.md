@@ -401,3 +401,16 @@ Mudanças guiadas por "como a Apple faria" e pelas skills better-layout e liquid
   Cupons, Lista de compras; Backup; Som.
 - **Folhas sobre a câmera** são sólidas: o vidro borrava o vídeo em manchas que se
   mexiam atrás do texto.
+
+## Versão 3.3
+
+- **Editar antes de concluir:** no leitor, tocar numa linha da sessão abre uma
+  folha com a quantidade registrada (0 tira a linha e devolve o estoque), o nome
+  e o ambiente. A diferença vira um ajuste no estoque.
+- **Cupom ao arrastar:** o papel era desenhado com máscara, recorte e filtro de
+  sombra juntos, e ficava em branco ao arrastar ou rolar a folha no celular.
+  Agora os dentes são um fundo simples e a sombra é comum; a folha segue o dedo
+  sem atraso.
+- **Zaffari:** entrou no repassador, primeiro na busca por nome e com
+  preferência na busca por código (tinha 12 de 22 produtos da amostra de fotos).
+

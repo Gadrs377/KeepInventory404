@@ -181,8 +181,8 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
 
 | Rota | O que faz | Cache |
 | --- | --- | --- |
-| `GET /lookup?ean=` | Consulta 13 lojas em paralelo e devolve a primeira que achar | 7 dias (não encontrado: 1 dia) |
-| `GET /search?q=` | Busca por nome em 3 supermercados e 1 farmácia, intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
+| `GET /lookup?ean=` | Consulta 14 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais | 7 dias (não encontrado: 1 dia) |
+| `GET /search?q=` | Busca por nome no Zaffari, em 3 supermercados e em 1 farmácia (Zaffari primeiro), intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
 | `POST /identify` | Recebe a foto da embalagem (JPEG até 1 MB), a IA da Cloudflare (Llama 4 Scout) lê marca, produto, variante e tamanho, e o Worker busca em cascata (busca sugerida, marca + produto + variante, marca + produto, marca) até juntar 6 sugestões | a busca usa o cache da `/search` |
 | `GET /diag` | Testa cada loja a partir da Cloudflare | sem cache |
 

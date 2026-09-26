@@ -15,8 +15,10 @@
 //   POST /identify              -> lê a embalagem numa foto (IA grátis da Cloudflare)
 //                                  e devolve marca, produto, tamanho e um texto de busca
 
-// Ordem medida em 100 produtos reais: as primeiras cobrem mais.
+// Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
+// antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
 export const LOOKUP_STORES = [
+  'www.zaffari.com.br',
   'www.covabra.com.br',
   'www.drogariasaopaulo.com.br',
   'www.supernosso.com',
@@ -32,8 +34,10 @@ export const LOOKUP_STORES = [
   'www.epocacosmeticos.com.br',
 ];
 
-// Busca por nome: 3 supermercados e 1 farmácia bastam (10 de 10 no teste).
+// Busca por nome: o Zaffari primeiro (as sugestões dele aparecem no topo),
+// depois 3 supermercados e 1 farmácia (10 de 10 no teste).
 export const SEARCH_STORES = [
+  'www.zaffari.com.br',
   'www.covabra.com.br',
   'www.coopsupermercado.com.br',
   'www.savegnago.com.br',
@@ -115,6 +119,12 @@ export async function lookup(ean) {
     }));
   try {
     const product = await Promise.any(tries);
+    // A loja da casa (a primeira da lista) tem preferência: se outra respondeu
+    // antes, espera ela mais um pouco.
+    if (product.store !== LOOKUP_STORES[0]) {
+      const preferred = await Promise.race([tries[0].catch(() => null), new Promise((r) => setTimeout(() => r(null), 800))]);
+      if (preferred) return { found: true, product: preferred };
+    }
     return { found: true, product };
   } catch {
     return { found: false };

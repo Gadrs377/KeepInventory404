@@ -9,10 +9,11 @@
 import { mountCamera } from './camera.js';
 import { showProductSheet } from './productSheet.js';
 import { showReceipt } from './receipt.js';
-import { undoMovement, productsByBarcode, addStock, removeStock } from '../store.js';
+import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, setStock, updateProduct } from '../store.js';
+import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { beep } from '../sound.js';
-import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate } from '../ui.js';
+import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle } from '../ui.js';
 
 const COPY = {
   entrada: {
@@ -122,11 +123,14 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
       return;
     }
     const entries = [...session.values()];
+    // Cada linha abre a edição: dá para corrigir antes de concluir.
     lines.innerHTML = entries.slice().reverse().map((s) => `
-      <li class="receipt-line">
-        <span class="receipt-name">${esc(s.product.name)}</span>
-        <span class="receipt-dots" aria-hidden="true"></span>
-        <span class="receipt-n">${signed(s)}</span>
+      <li>
+        <button type="button" class="receipt-line receipt-edit" data-edit="${esc(`${s.mode}:${s.product.code}`)}" aria-label="Editar ${esc(s.product.name)}, ${signed(s)}">
+          <span class="receipt-name">${esc(s.product.name)}</span>
+          <span class="receipt-dots" aria-hidden="true"></span>
+          <span class="receipt-n">${signed(s)}</span>
+        </button>
       </li>`).join('');
     total.hidden = false;
     total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n">${signedNet(netOf(entries))}</span>`;
@@ -169,6 +173,77 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
       },
     });
   }
+
+  // Editar uma linha da sessão: quantidade registrada, nome e ambiente.
+  // A diferença na quantidade vira um ajuste no estoque (0 desfaz a linha).
+  async function editEntry(key) {
+    const entry = session.get(key);
+    if (!entry) return;
+    const product = (await getProduct(entry.product.code)) || entry.product;
+    const sign = entry.mode === 'entrada' ? 1 : -1;
+    // Saída: dá para tirar no máximo o que ainda tem mais o que já saiu nesta linha.
+    const max = entry.mode === 'saida' ? entry.n + product.qty : 999;
+    cam.pause();
+    await openSheet({
+      mode: entry.mode,
+      label: `Editar ${product.name}`,
+      render(body, close) {
+        body.innerHTML = `
+          <form class="stack" novalidate>
+            <div class="product-head">
+              ${thumb(product, 'md')}
+              <div class="product-meta">
+                <p class="product-name">${esc(product.name)}</p>
+                ${subtitle(product) ? `<p class="product-sub">${subtitle(product)}</p>` : ''}
+              </div>
+            </div>
+            <div class="field">
+              <span class="field-label">${entry.mode === 'entrada' ? 'Quantidade que entrou' : 'Quantidade que saiu'}</span>
+              <div class="stepper-host stepper-sm"></div>
+              <p class="field-note">0 tira esta linha da sessão e devolve o estoque.</p>
+            </div>
+            <label class="field"><span class="field-label">Nome</span>
+              <input class="input" name="name" maxlength="80" value="${esc(product.name)}" autocomplete="off"></label>
+            <fieldset class="segmented">
+              <legend class="field-label">Onde fica</legend>
+              <div class="segmented-track">
+                ${AREAS.map((a) => `
+                  <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === (product.area || 'cozinha') ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
+              </div>
+            </fieldset>
+            <button type="submit" class="btn btn-mode btn-lg">${icon('check')}Salvar</button>
+          </form>`;
+        const step = stepper($('.stepper-host', body), { value: entry.n, min: 0, max, label: 'Quantidade registrada' });
+        $('form', body).addEventListener('submit', async (e) => {
+          e.preventDefault();
+          try {
+            const fresh = await getProduct(product.code);
+            const diff = step.value - entry.n;
+            if (diff) await setStock(product.code, fresh.qty + sign * diff, 'ajuste');
+            const name = $('input[name=name]', body).value.trim();
+            const area = $('input[name=area]:checked', body)?.value;
+            if (name !== product.name || area !== product.area) await updateProduct(product.code, { name, area });
+            entry.n = step.value;
+            entry.product = await getProduct(product.code);
+            if (entry.n === 0) session.delete(key);
+            // O nome mudou para as outras linhas do mesmo produto também.
+            for (const other of session.values()) if (other.product.code === product.code) other.product = entry.product;
+            renderSession();
+            close(true);
+            toast(entry.n === 0 ? `${entry.product.name} saiu da sessão.` : 'Linha atualizada.', { duration: 2500 });
+          } catch (err) {
+            toast(err.message, { duration: 4000 });
+          }
+        });
+      },
+    });
+    cam.resume();
+  }
+
+  lines.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-edit]');
+    if (btn) editEntry(btn.dataset.edit);
+  });
 
   // Fluxo normal: a folha pergunta a quantidade.
   async function sheetFlow(barcode, qty, m = mode) {

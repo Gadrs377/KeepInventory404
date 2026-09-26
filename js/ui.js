@@ -183,12 +183,14 @@ function enableDrag(sheet) {
   const onUp = () => {
     if (startY === null) return;
     startY = null;
+    sheet.classList.remove('is-dragging');
     sheet.style.transform = '';
     if (dy > 90) closeSheet(null);
     dy = 0;
   };
   grip.addEventListener('pointerdown', (e) => {
     startY = e.clientY;
+    sheet.classList.add('is-dragging');
     grip.setPointerCapture(e.pointerId);
   });
   grip.addEventListener('pointermove', onMove);
