@@ -23,11 +23,12 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
       <p class="cam-loading" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Abrindo a câmera</p>
-      <button type="button" class="cam-hint" data-byname hidden>Não está lendo? <strong>Buscar pelo nome</strong></button>
+      <button type="button" class="cam-hint" data-byname hidden>Não lê ou não tem código? <strong>Ver outras formas</strong></button>
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
         <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
-        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-label="Nota fiscal do mercado">${icon('receipt')}</button>` : ''}
+        <button type="button" class="cam-tool" data-nocode-tool aria-label="Produto sem código de barras">${icon('package')}</button>
+        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-label="Nota fiscal do mercado">${icon('qrCode')}</button>` : ''}
       </div>
     </div>`;
 
@@ -126,6 +127,9 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
     });
   }
 
+  // Produto sem código de barras: abre as formas de registrar sem ler código.
+  $('[data-nocode-tool]', host).addEventListener('click', () => handle(`SEM-${Date.now()}`));
+
   // Sem código: a folha abre direto na busca pelo nome.
   hintBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));
 
@@ -186,7 +190,7 @@ export function manualCodeSheet() {
             <p class="field-error" id="manual-code-error" hidden></p>
           </div>
           <button type="submit" class="btn btn-primary">${icon('search')}Buscar produto</button>
-          <button type="button" class="btn btn-quiet" data-nocode>${icon('search')}Sem código? Buscar pelo nome</button>
+          <button type="button" class="btn btn-quiet" data-nocode>${icon('package')}Produto sem código de barras</button>
         </form>`;
       const form = $('form', body);
       const input = $('input', body);

@@ -26,7 +26,8 @@ const NEW_MSG = {
   found: 'Novo no armário. Confira o nome antes de salvar.',
   notfound: 'Esse código não está nas lojas. Digite o nome e escolha o produto nas sugestões.',
   offline: 'Sem internet para buscar esse código. Digite o nome do produto para cadastrar.',
-  nocode: 'Digite o nome ou tire uma foto da embalagem e escolha o produto nas sugestões.',
+  nocode: 'Escreva o nome e escolha o produto nas sugestões. Sem ideia do nome? Fotografe a embalagem.',
+  photo: 'O app lê a marca e o produto na foto e mostra as sugestões das lojas.',
   other: 'Outro produto com o mesmo código de barras. Dê um nome que diferencie os dois, por exemplo o sabor.',
 };
 
@@ -44,7 +45,7 @@ export function showProductSheet({ mode, barcode, productId, qty = 1 }) {
   return openSheet({
     mode,
     title: { entrada: 'Guardar', saida: 'Tirar', contagem: 'Contar' }[mode] || '',
-    label: barcode && barcode.startsWith('SEM-') ? 'Buscar pelo nome' : 'Produto lido',
+    label: barcode && barcode.startsWith('SEM-') ? 'Produto sem código' : 'Produto lido',
     render(body, close) {
       const ctx = { body, close, mode, barcode, qty };
       loading(ctx, barcode || '');
@@ -62,6 +63,7 @@ async function start(ctx, productId) {
     return p ? productForm(ctx, p, { fromList: true }) : ctx.close(null);
   }
   if (ctx.barcode.startsWith('SEM-') && ctx.mode === 'saida') return searchLocal(ctx);
+  if (ctx.barcode.startsWith('SEM-')) return noCodeChoice(ctx);
   // Na saída só interessa o que já está no armário: não espera a internet.
   if (ctx.mode === 'saida') {
     const local = await productsByBarcode(ctx.barcode);
@@ -80,14 +82,51 @@ async function start(ctx, productId) {
   return newForm(ctx, ctx.barcode.startsWith('SEM-') ? { status: 'nocode' } : result);
 }
 
+// ---------- Produto sem código de barras (entrada e contagem) ----------
+// A caixa já foi para o lixo, ou o produto nunca teve código (pão, fruta, feira).
+// Três caminhos, do mais comum para o menos: já está no armário (compra de
+// novo), fotografar a embalagem (a IA lê marca e produto) ou escrever o nome.
+
+function noCodeChoice(ctx) {
+  const { body } = ctx;
+  body.innerHTML = `
+    <h2 class="sheet-title">Produto sem código</h2>
+    <p class="sheet-text">A caixa já foi para o lixo, ou o produto não tem código de barras?</p>
+    <ul class="group choice-group">
+      <li><button type="button" class="group-row" data-way="local">
+        <span class="group-icon is-entrada">${icon('package')}</span>
+        <span class="group-label">Já está no armário<span class="group-sub">Escolha na lista; só soma a quantidade</span></span>
+        ${icon('chevron', 'group-chevron')}
+      </button></li>
+      <li><label class="group-row file-btn" data-way="photo">
+        <span class="group-icon">${icon('camera')}</span>
+        <span class="group-label">Fotografar a embalagem<span class="group-sub">O app lê a marca e o produto na foto</span></span>
+        ${icon('chevron', 'group-chevron')}
+        <input type="file" accept="image/*" capture="environment" class="sr-only" data-way-photo>
+      </label></li>
+      <li><button type="button" class="group-row" data-way="name">
+        <span class="group-icon">${icon('keyboard')}</span>
+        <span class="group-label">Escrever o nome<span class="group-sub">Para pão, fruta e o que não tem embalagem</span></span>
+        ${icon('chevron', 'group-chevron')}
+      </button></li>
+    </ul>`;
+  $('[data-way="local"]', body).addEventListener('click', () => searchLocal(ctx, { all: true, title: 'Qual produto do armário?' }));
+  $('[data-way="name"]', body).addEventListener('click', () => newForm(ctx, { status: 'nocode' }));
+  // A câmera do celular abre direto no toque (a foto escolhida segue para o formulário).
+  $('[data-way-photo]', body).addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) newForm(ctx, { status: 'photo' }, { photo: file });
+  });
+}
+
 // ---------- Saída sem código: procura no armário pelo nome ----------
 
-async function searchLocal(ctx) {
+async function searchLocal(ctx, { all = false, title = 'O que está tirando?' } = {}) {
   const { body } = ctx;
-  const products = (await listProducts()).filter((p) => p.qty > 0);
+  const products = (await listProducts()).filter((p) => all || p.qty > 0);
   if (!body.isConnected) return;
   body.innerHTML = `
-    <h2 class="sheet-title">O que está tirando?</h2>
+    <h2 class="sheet-title">${esc(title)}</h2>
     <div class="field">
       <label class="field-label" for="local-q">Nome do produto</label>
       <input class="input" id="local-q" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Ex.: leite" aria-describedby="local-status">
@@ -380,7 +419,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
 // digita. Se nem assim achar, a foto da embalagem vai para a IA, que lê marca e
 // produto e devolve sugestões das lojas. Tocar numa sugestão preenche tudo.
 
-async function newForm(ctx, result) {
+async function newForm(ctx, result, { photo = null } = {}) {
   const { body, mode } = ctx;
   let barcode = ctx.barcode;
   let info = result.info || {};
@@ -394,7 +433,7 @@ async function newForm(ctx, result) {
 
   body.innerHTML = `
     <form class="stack" novalidate>
-      <div data-head>${head({ ...info, name: info.name || (noCode ? 'Buscar pelo nome' : 'Produto novo'), code: barcode }, null)}</div>
+      <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
       <p class="sheet-text" data-msg>${esc(NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
       <div class="field">
@@ -405,7 +444,7 @@ async function newForm(ctx, result) {
         <p class="suggest-status" id="new-name-status" aria-live="polite"></p>
         <ul class="pick suggest" hidden></ul>
         ${result.status === 'found' ? '' : `
-        <label class="btn btn-quiet file-btn" data-photo-btn>${icon('camera')}<span>Tirar foto da embalagem</span>
+        <label class="btn btn-quiet file-btn" data-photo-btn>${icon('camera')}<span>Fotografar a embalagem</span>
           <input type="file" accept="image/*" capture="environment" data-photo class="sr-only">
         </label>`}
       </div>
@@ -543,11 +582,7 @@ async function newForm(ctx, result) {
   });
 
   // Foto da embalagem -> IA -> sugestões das lojas.
-  if (photoInput) {
-    photoInput.addEventListener('change', async () => {
-      const file = photoInput.files && photoInput.files[0];
-      photoInput.value = '';
-      if (!file) return;
+  async function readPhoto(file) {
       if (ctrl) ctrl.abort();
       clearTimeout(timer);
       photoBtn.classList.add('is-busy');
@@ -571,13 +606,21 @@ async function newForm(ctx, result) {
           photoBtn.classList.remove('is-busy');
           photoBtn.removeAttribute('aria-disabled');
           photoInput.disabled = false;
-          $('span', photoBtn).textContent = 'Tirar outra foto';
+          $('span', photoBtn).textContent = 'Fotografar de novo';
         }
       }
+  }
+  if (photoInput) {
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files && photoInput.files[0];
+      photoInput.value = '';
+      if (file) readPhoto(file);
     });
   }
 
-  if (!nameInput.value) setTimeout(() => nameInput.focus(), 250);
+  // Veio da escolha "Fotografar a embalagem": a foto já foi tirada, lê agora.
+  if (photo && photoInput) readPhoto(photo);
+  else if (!nameInput.value) setTimeout(() => nameInput.focus(), 250);
 
   const retry = $('[data-retry]', body);
   if (retry) {

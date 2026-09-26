@@ -626,3 +626,23 @@ itens pelo lugar da casa e destacam o que está acabando ou vencendo.
   amarelo quando algo vence nesta semana.
 - **Seções por ambiente** em "Tudo": Cozinha, Banheiro e limpeza, Beleza e
   cuidados, com ícone e quantos itens cada uma tem.
+
+## Versão 3.13: produto sem código de barras
+
+A caixa já foi para o lixo, ou o produto nunca teve código (pão, fruta, feira).
+Antes o caminho mandava digitar ("Buscar pelo nome") e a foto ficava escondida
+dentro do formulário. Agora há um ponto de escolha, "Produto sem código", com
+três caminhos, do mais comum para o menos:
+
+1. **Já está no armário:** lista do armário (inclusive zerados); escolher só
+   soma a quantidade. É o caso da compra repetida sem a caixa.
+2. **Fotografar a embalagem:** a câmera abre direto; a IA lê marca e produto e
+   o formulário já vem com o nome e as sugestões das lojas.
+3. **Escrever o nome:** para o que não tem embalagem; a foto continua como
+   alternativa no formulário.
+
+Como chegar: botão novo na câmera (ícone de pacote), "Produto sem código de
+barras" na folha de digitar o código e o aviso "Não lê ou não tem código? Ver
+outras formas", que aparece quando a câmera não lê. Na Saída, sem código
+continua indo direto para a lista do armário. O botão da nota fiscal na câmera
+passou a usar o ícone de QR Code, para não se confundir com o do teclado.
