@@ -17,6 +17,7 @@ export function showReceipt({ mode, lines, total, note = '' }) {
   return openSheet({
     mode,
     label: `Cupom da ${TITLE[mode].toLowerCase()}`,
+    className: 'sheet-solid',
     render(body, close) {
       body.innerHTML = `
         <h2 class="sheet-title">Pronto</h2>
@@ -31,9 +32,12 @@ export function showReceipt({ mode, lines, total, note = '' }) {
               <ul class="ticket-lines">
                 ${lines.map((l) => `
                   <li class="ticket-line">
-                    <span class="ticket-name">${esc(l.name)}${l.sub ? `<span class="ticket-sub">${esc(l.sub)}</span>` : ''}</span>
-                    <span class="ticket-dots" aria-hidden="true"></span>
-                    <span class="ticket-n">${esc(l.value)}</span>
+                    <span class="ticket-row">
+                      <span class="ticket-name">${esc(l.name)}</span>
+                      <span class="ticket-dots" aria-hidden="true"></span>
+                      <span class="ticket-n">${esc(l.value)}</span>
+                    </span>
+                    ${l.sub ? `<span class="ticket-sub">${esc(l.sub)}</span>` : ''}
                   </li>`).join('')}
               </ul>
               <p class="ticket-total"><span>${esc(total.label)}</span><span class="ticket-n">${esc(total.value)}</span></p>

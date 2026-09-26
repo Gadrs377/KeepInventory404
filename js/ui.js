@@ -103,13 +103,13 @@ let openSheetState = null;
  * Acessibilidade: o resto da tela fica `inert`, o foco entra na folha e volta
  * para quem abriu quando ela fecha.
  */
-export function openSheet({ mode = '', label = 'Produto', render }) {
+export function openSheet({ mode = '', label = 'Produto', render, className = '' }) {
   closeSheet(null);
   const root = $('#sheet-root');
   const trigger = document.activeElement;
   root.innerHTML = `
     <div class="sheet-backdrop" data-close></div>
-    <section class="sheet glass-thick ${mode ? `mode-${mode}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1">
+    <section class="sheet glass-thick ${className} ${mode ? `mode-${mode}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1">
       <div class="sheet-grip" aria-hidden="true"></div>
       <button type="button" class="icon-btn sheet-close" data-close aria-label="Fechar">${icon('close')}</button>
       <div class="sheet-body"></div>

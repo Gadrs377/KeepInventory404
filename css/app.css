@@ -571,6 +571,9 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   transition-property: transform, opacity; transition-duration: 220ms; transition-timing-function: var(--ease);
 }
 .sheet:focus { outline: none; }
+/* O cupom não flutua sobre conteúdo em movimento: o vidro só mostrava a câmera
+   borrada atrás do papel. Material sólido, mesma borda e brilho. */
+.sheet.sheet-solid { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .sheet.is-open { transform: translateY(0); }
 /* Saída mais suave que a entrada: desce 12px e some */
 .sheet-ghost.is-leaving .sheet { transform: translateY(12px); opacity: 0; transition-duration: 160ms; transition-timing-function: ease-out; }
@@ -635,7 +638,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 /* Leituras que esperam o fim: contorno tracejado, como a etiqueta de algo que falta */
 .pending {
   margin: 16px var(--gutter) 0; padding: 0 12px 4px;
-  border: 2px dashed var(--ink-2); border-radius: var(--r-control);
+  border: 2px dashed var(--ink-2); border-radius: calc(var(--r-control) + 8px);
 }
 .pending .list-title { margin-block: 12px 4px; }
 .pending-row { display: flex; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); }
@@ -653,7 +656,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   font-size: 15px; text-wrap: balance;
   animation: hint-in 240ms var(--ease);
 }
-.cam-hint { --focus: #FFFFFF; }
+.cam-hint { --focus: #FFFFFF; transition-property: scale; transition-duration: 150ms; transition-timing-function: var(--ease); }
+.cam-hint:active { scale: 0.96; }
 @keyframes hint-in { from { opacity: 0; translate: -50% -6px; } }
 
 /* ---------- Cupom impresso (fim da sessão) ---------- */
@@ -695,8 +699,10 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .ticket-title { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 34px; line-height: 1; color: var(--mode); text-transform: uppercase; letter-spacing: 0.04em; }
 .ticket-meta { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
 .ticket-lines { padding-block: 10px; }
-.ticket-line { display: flex; align-items: baseline; gap: 6px; padding-block: 5px; }
-.ticket-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; font-size: 16px; line-height: 1.3; }
+.ticket-line { padding-block: 5px; }
+/* Pontilhado e valor acompanham a última linha do nome, como no cupom de verdade */
+.ticket-row { display: flex; align-items: baseline; align-items: last baseline; gap: 6px; }
+.ticket-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; font-size: 16px; line-height: 1.3; text-wrap: pretty; }
 .ticket-sub { display: block; font-size: 13px; color: var(--ink-2); }
 .ticket-dots { flex: 1 1 20px; min-width: 20px; border-bottom: 2px dotted var(--line); transform: translateY(-4px); }
 .ticket-n { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 24px; line-height: 1; }
@@ -709,6 +715,11 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .ticket-foot {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   margin-top: 18px; font-size: 11px; letter-spacing: 0.2em; color: var(--ink-2);
+}
+@media (max-width: 359px) {
+  .receipt-stage { padding-inline: 8px; }
+  .ticket-clip { margin-inline: 6px; }
+  .ticket { padding-inline: 14px; }
 }
 .ticket-barcode {
   width: 62%; height: 30px;
@@ -850,7 +861,17 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   .segment input:checked + span, .chip[aria-pressed="true"], .check:checked, .switch:checked {
     forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight;
   }
-  .printer-slot, .ticket-barcode { forced-color-adjust: none; background-color: CanvasText; }
-  .ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }
+  .printer-slot, @media (max-width: 359px) {
+  .receipt-stage { padding-inline: 8px; }
+  .ticket-clip { margin-inline: 6px; }
+  .ticket { padding-inline: 14px; }
+}
+.ticket-barcode { forced-color-adjust: none; background-color: CanvasText; }
+  @media (max-width: 359px) {
+  .receipt-stage { padding-inline: 8px; }
+  .ticket-clip { margin-inline: 6px; }
+  .ticket { padding-inline: 14px; }
+}
+.ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }
   .cam-hint { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
 }

@@ -142,7 +142,7 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | **Escolha de produto** (`.pick`) | Lista dentro da folha quando um código tem mais de um produto |
 | **Seletor de quantidade** (`.stepper`) | − e + de 64 px e o número de 96 px no meio; tocar no número abre o teclado |
 | **Filtros** (`.tabs`) | Todos, Acabando, Zerados: botões com `aria-pressed`, sublinhado no ativo |
-| **Cupom impresso** (`.ticket`) | Papel sempre claro (também no tema escuro) que desce da boca da impressora (`.printer-slot`) com a borda de baixo rasgada em dentes de 12 px (máscara `conic-gradient`). Título do modo em caixa alta, linhas com pontilhado, total sob traço duplo e um código de barras decorativo. É conteúdo, não vidro |
+| **Cupom impresso** (`.ticket`) | Fica numa folha sólida (`.sheet-solid`): o vidro mostrava a câmera borrada atrás do papel. Pontilhado e valor acompanham a última linha do nome (`align-items: last baseline`). Papel sempre claro (também no tema escuro) que desce da boca da impressora (`.printer-slot`) com a borda de baixo rasgada em dentes de 12 px (máscara `conic-gradient`). Título do modo em caixa alta, linhas com pontilhado, total sob traço duplo e um código de barras decorativo. É conteúdo, não vidro |
 | **Interruptor na faixa** (`.band-switch`) | Modo rápido. Sobre a cor do modo: trilho claro translúcido; ligado, trilho cheio e bolinha na cor do modo |
 | **Para resolver** (`.pending`) | Caixa com contorno tracejado, a mesma linguagem da etiqueta zerada: algo que ainda falta |
 | **Abas de ambiente** (`.tabs`) | Tudo, Cozinha, Limpeza, Beleza. Sublinhado no ativo. Em 320 px diminuem para caber inteiras |
@@ -236,3 +236,10 @@ Contraste medido na tela (fundo amostrado com o texto escondido), claro e escuro
 | Segmento inativo / escolhido | 8,54:1 / 17,84:1 | 8,57:1 / 15,89:1 |
 | Modo rápido na faixa verde | 6,71:1 | 8,26:1 |
 
+
+**Ajustes depois do uso (make-interfaces-feel-better e better-writing):** folha
+do cupom sólida; valor na última linha do nome; papel mais largo em 320 px; raio
+do Para resolver concêntrico com o botão (14 + 8); toque com escala 0,96 na dica
+da câmera; validade aceita `10/2026`; textos "Revisar a lista com o Claude",
+"Pedir receitas com o que vence", "Criar lembrete no calendário", "Acaba em
+cerca de 5 dias" (em vez de "uns") e concordância de "A unidade sem data sai".

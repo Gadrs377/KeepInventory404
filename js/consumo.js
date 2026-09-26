@@ -62,7 +62,7 @@ export function shoppingSuggestions(products, rates, every = 7) {
     let reason;
     if (p.qty === 0) reason = 'Zerado';
     else if (low) reason = `Acabando, tem ${p.qty}`;
-    else reason = `Acaba em uns ${Math.max(1, Math.round(left))} dias`;
+    else reason = `Acaba em cerca de ${Math.max(1, Math.round(left))} dias`;
     out.push({ product: p, buy, reason, rate: rateText(perDay), left });
   }
   return out.sort((a, b) => a.left - b.left || a.product.name.localeCompare(b.product.name, 'pt-BR'));

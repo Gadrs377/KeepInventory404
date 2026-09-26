@@ -88,7 +88,7 @@ export default function mountArmario(root) {
       const first = urgent[0];
       const text = urgent.length === 1
         ? `${esc(first.name)}: ${expiryText(nextExpiry.get(first.code)).toLowerCase()}.`
-        : `${plural(urgent.length, 'produto vence', 'produtos vencem')} nesta semana. O primeiro: ${esc(first.name)}.`;
+        : `${plural(urgent.length, 'produto vence', 'produtos vencem')} nesta semana. Primeiro a vencer: ${esc(first.name)}.`;
       expiringNote.innerHTML = `<span>${icon('calendar')}${text}</span><button type="button" class="btn btn-quiet btn-sm" data-show-expiring>Ver o que vence</button>`;
     }
 

@@ -29,7 +29,7 @@ export default async function mountProduto(root, { code }) {
   const perDay = rate && rate.used >= 2 ? rate.perDay : 0;
   const left = daysLeft(p, perDay);
   const usage = perDay
-    ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dá para uns ${Math.max(1, Math.round(left))} dias.` : ''}`
+    ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
     : 'Ainda sem histórico para calcular. Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
@@ -147,11 +147,13 @@ export default async function mountProduto(root, { code }) {
         </li>`;
       }).join('')}</ul>` : ''}
       <p class="sheet-text">${lots.length
-        ? (free > 0 ? `${plural(free, 'unidade está', 'unidades estão')} sem data. Elas saem primeiro na baixa, depois o que vence antes.` : 'Na baixa, sai primeiro o que vence antes.')
+        ? (free > 0
+          ? `${free === 1 ? 'A unidade sem data sai' : `As ${free} unidades sem data saem`} primeiro na baixa, depois o que vence antes.`
+          : 'Na baixa, sai primeiro o que vence antes.')
         : (cur.qty ? 'Nenhuma validade marcada. Marque para o app avisar antes de vencer.' : 'Sem unidades no armário.')}</p>
       <div class="lot-actions">
         ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
-        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Lembrete no calendário</button>' : ''}
+        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Criar lembrete no calendário</button>' : ''}
       </div>`;
   }
 

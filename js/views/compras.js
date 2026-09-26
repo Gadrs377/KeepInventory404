@@ -60,8 +60,8 @@ export default function mountCompras(root) {
           <h2 class="list-title">Perguntar ao Claude</h2>
           <p class="sheet-text">Abre uma conversa nova no Claude com o armário e a lista já escritos. Nada é enviado sem você tocar em Enviar lá.</p>
           <div class="stack-sm">
-            <a class="btn btn-quiet" data-ask="lista" target="_blank" rel="noopener">${icon('chat')}Revisar a lista comigo</a>
-            <a class="btn btn-quiet" data-ask="receitas" target="_blank" rel="noopener" hidden>${icon('chat')}Receitas com o que vence</a>
+            <a class="btn btn-quiet" data-ask="lista" target="_blank" rel="noopener">${icon('chat')}Revisar a lista com o Claude</a>
+            <a class="btn btn-quiet" data-ask="receitas" target="_blank" rel="noopener" hidden>${icon('chat')}Pedir receitas com o que vence</a>
           </div>
         </section>
       </main>
