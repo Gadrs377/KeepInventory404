@@ -49,10 +49,10 @@ export default async function mountDados(root) {
         <section>
           <h2 class="list-title">Últimos registros</h2>
           ${movements.length ? `<ul class="history">${movements.map((m) => `
-            <li class="history-item type-${m.type}">
-              <span><strong>${esc(names[m.code] || 'Produto removido')}</strong> ${esc(label(m))}</span>
+            <li class="history-item history-log type-${m.type}">
+              <strong class="history-name">${esc(names[m.code] || 'Produto removido')}</strong>
               <span class="history-qty">ficou ${m.qtyAfter}</span>
-              <span class="history-when">${when(m.at)}</span>
+              <span class="history-when"><span class="history-type">${esc(label(m))}</span> · ${when(m.at)}</span>
             </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
         </section>
       </main>

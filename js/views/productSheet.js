@@ -392,7 +392,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       <div class="stepper-host"></div>
       ${mode === 'entrada' ? expiryHtml(!!local.med) : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
-      ${canAddOther ? '<button type="button" class="btn btn-quiet" data-other>Não é este? Cadastrar outro</button>' : ''}
+      ${canAddOther ? '<button type="button" class="btn btn-link btn-other" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
 
   const submit = $('[type=submit]', body);

@@ -1642,10 +1642,16 @@ body.sheet-stack .mini-bar { opacity: 0; }
 .screen-product .content { gap: 12px; padding-top: 0; }
 .screen-product .product-hero { padding-block: 0 4px; }
 .product-hero .page-title { font-size: 24px; }
-.screen-product main > section:not(.product-hero) {
-  background: var(--shelf); border-radius: 16px; padding: 2px 16px 16px;
-}
-.screen-product main > section:not(.product-hero) > .list-title:first-child { margin-top: 14px; }
+/* Como os Ajustes e o Saúde: título da seção fora do cartão, conteúdo dentro */
+.group-card { background: var(--shelf); border-radius: 16px; padding: 4px 16px; }
+.group-card > .sheet-text:only-child, .group-card > .sheet-text:first-child { padding-block: 12px; }
+.group-card > .sheet-text + .sheet-text { padding-bottom: 12px; }
+.group-card .facts { margin: 0; border-top: 0; }
+.group-card .fact:last-child { border-bottom: 0; }
+.group-card > .btn { margin-block: 4px 12px; }
+.group-card .lot-actions:not(:empty) { padding-bottom: 12px; }
+.group-card .stock-fix-row { padding-block: 12px; }
+.group-note { padding: 6px 16px 0; font-size: 13px; color: var(--ink-2); text-wrap: pretty; }
 .screen-product .history li:last-child, .screen-product .lot:last-child { border-bottom: 0; }
 .screen-product .lots { border-top: 0; }
 .screen-product .btn-quiet { background: var(--paper); }
@@ -1724,7 +1730,7 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .list-title-icon { gap: 10px; }
 .list-title-icon .icon { width: 22px; height: 22px; }
 /* Dentro de um cartão (produto), o título do cartão é um degrau abaixo */
-.screen-product main > section:not(.product-hero) > .list-title { font-size: var(--text-headline); margin-block: 16px 10px; }
+.screen-product main > section:not(.product-hero) > .list-title { font-size: var(--text-headline); margin-block: 18px 8px; padding-inline: 4px; }
 .screen-product .sheet-text { font-size: var(--text-callout); }
 /* Histórico é detalhe: menor e mais claro que o conteúdo principal */
 .history li { font-size: var(--text-callout); padding-block: 8px; }
@@ -1926,4 +1932,48 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 }
 .cam-alt:active { scale: 0.96; background: color-mix(in oklab, var(--mode) 12%, transparent); }
 .screen-scan .cam-alt + * { margin-top: 0; }
+
+/* ---------- Versão 3.19: revisão com olhar de designer da Apple ---------- */
+
+/* Menu aberto pelo toque: foco no próprio menu, sem anel */
+.menu:focus { outline: none; }
+
+/* Ambientes do Armário: quando não cabem, a fileira rola e a borda esmaece,
+   dizendo que tem mais (em vez de cortar "Remé" no meio) */
+.home-tools .tabs {
+  margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter);
+  scroll-padding-inline: var(--gutter); scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--gutter), #000 calc(100% - 28px), transparent);
+}
+.home-tools .tab { scroll-snap-align: start; }
+
+/* "−" da linha: glifo leve num círculo, sem borda; a etiqueta é quem pesa */
+.row-minus {
+  width: 40px; height: 40px; margin-inline-end: calc(var(--gutter) - 4px);
+  border: 0; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink) 6%, transparent); color: var(--ink-2);
+}
+.row-minus-space { width: 40px; margin-inline-end: calc(var(--gutter) - 4px); }
+.row-minus .icon { width: 18px; height: 18px; }
+.row-minus:active:not(:disabled) { background: color-mix(in oklab, var(--ink) 14%, transparent); }
+.row-item .row { padding-inline-end: 10px; }
+
+/* Compras: marcar é redondo, como no Lembretes */
+.check { border-radius: 50%; border-width: 1.5px; border-color: var(--ink-2); }
+.check:checked { border-color: var(--ink); }
+
+/* Mais: registros com o nome em cima e o tipo e a hora embaixo */
+.history-log { align-items: baseline; }
+.history-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-log .history-when { color: var(--ink-2); }
+.history .type-entrada .history-type { color: var(--entrada); }
+.history .type-saida .history-type { color: var(--saida); }
+.history .type-contagem .history-type { color: var(--contagem); }
+.history-log > span:first-child { color: inherit; }
+
+/* Folha de guardar: ações secundárias em texto, sem sublinhado de site.
+   "Marcar validade" na cor do modo (como um botão de texto do iOS); "Não é
+   este?" discreto, para não competir com o botão principal. */
+.btn-expiry { text-decoration: none; color: var(--mode, var(--ink)); }
+.btn-other { align-self: center; text-decoration: none; color: var(--ink-2); font-size: 15px; font-weight: 600; }
 

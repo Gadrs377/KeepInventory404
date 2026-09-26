@@ -300,6 +300,8 @@ export default function mountArmario(root) {
     if (!btn) return;
     savedArea = btn.dataset.area;
     keepOrder = false;
+    // A aba escolhida vem inteira para a vista (a fileira rola quando não cabe).
+    btn.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     renderAnimated();
   });
   chips.addEventListener('click', (e) => {

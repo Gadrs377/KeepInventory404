@@ -728,3 +728,23 @@ parado na tela.
   tela de trás recuando; as abas esmaecem em vez de cortar seco. Ver design
   system, seção 7.
 
+## Versão 3.19: revisão com olhar de designer da Apple
+
+- **Ambientes do Armário:** quando não cabem, a fileira rola e a borda direita
+  esmaece (antes cortava "Remé" no meio); a aba tocada rola para a vista.
+- **Linha do Armário:** o "−" virou glifo leve num círculo sem borda; quem
+  pesa é a etiqueta com a quantidade.
+- **Menu de toque longo:** aberto pelo toque, sem anel de foco na primeira
+  opção (o anel só aparece pelo teclado).
+- **Produto, como os Ajustes e o Saúde:** título de cada seção fora do cartão
+  e notas embaixo dele. Ordem pelo uso: Tirar/Guardar, (Sobre o remédio),
+  Validade, Consumo, Histórico, Corrigir a quantidade, Detalhes. O código de
+  barras saiu do topo e foi para **Detalhes** (código, marca, tamanho, onde
+  fica). Sem foto, o quadrado do topo é menor.
+- **Folha de guardar:** "Marcar validade" é botão de texto na cor do modo, sem
+  sublinhado; "Não é este? Cadastrar outro" é texto discreto, sem competir com
+  o botão principal.
+- **Compras:** caixas de marcar redondas, como no Lembretes.
+- **Mais → Últimos registros:** nome do produto em cima; tipo (na cor do
+  movimento) e hora embaixo; "ficou N" à direita.
+

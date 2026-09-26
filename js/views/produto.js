@@ -3,7 +3,7 @@
 import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl } from '../photo.js';
-import { AREAS } from '../areas.js';
+import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
@@ -36,7 +36,6 @@ export default async function mountProduto(root, { code }) {
     ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
     : 'Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
-  const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
   const home = { href: '#/', label: 'Voltar ao armário' };
 
   root.innerHTML = `
@@ -48,11 +47,10 @@ export default async function mountProduto(root, { code }) {
       </header>
       <main class="content">
         <section class="product-hero">
-          ${thumb(p, 'lg')}
+          ${thumb(p, p.image && !p.med ? 'lg' : 'md')}
           <div class="product-meta">
             <h1 class="page-title">${esc(p.name)}</h1>
-            <p class="product-sub">${subtitle(p) || '&nbsp;'}</p>
-            <p class="product-code">${esc(niceCode)}</p>
+            ${subtitle(p) ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
             ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
@@ -69,38 +67,56 @@ export default async function mountProduto(root, { code }) {
         ${p.med ? `
         <section aria-labelledby="med-title">
           <h2 class="list-title" id="med-title">Sobre o remédio</h2>
-          ${medFacts(p.med)}
+          <div class="group-card">${medFacts(p.med)}</div>
         </section>` : ''}
 
         <section aria-labelledby="lots-title">
           <h2 class="list-title" id="lots-title">Validade</h2>
-          <div data-lots></div>
+          <div class="group-card" data-lots></div>
         </section>
 
-        <section>
-          <h2 class="list-title">Consumo</h2>
-          <p class="sheet-text">${esc(usage)}</p>
-          ${p.lastPrice && p.lastPrice.value ? `<p class="sheet-text">Último preço ${esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lastPrice.value))}${p.lastPrice.unit && p.lastPrice.unit !== 'UN' ? ` o ${esc(p.lastPrice.unit.toLowerCase())}` : ''}, ${esc(p.lastPrice.store || 'mercado')}, ${esc(new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(p.lastPrice.at)))}.</p>` : ''}
-          <p class="field-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando.'}</p>
-        </section>
-
-        <section class="stock-fix" aria-labelledby="stock-title">
-          <h2 class="list-title" id="stock-title">Corrigir a quantidade</h2>
-          <div class="stock-fix-row">
-            <div class="stepper-host stepper-sm" data-qty></div>
-            <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
+        <section aria-labelledby="use-title">
+          <h2 class="list-title" id="use-title">Consumo</h2>
+          <div class="group-card">
+            <p class="sheet-text">${esc(usage)}</p>
+            ${p.lastPrice && p.lastPrice.value ? `<p class="sheet-text">Último preço ${esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lastPrice.value))}${p.lastPrice.unit && p.lastPrice.unit !== 'UN' ? ` o ${esc(p.lastPrice.unit.toLowerCase())}` : ''}, ${esc(p.lastPrice.store || 'mercado')}, ${esc(new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(p.lastPrice.at)))}.</p>` : ''}
           </div>
-          <p class="field-note">Para quando o número do app não bate com o armário.</p>
+          <p class="group-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando.'}</p>
         </section>
 
-        <section>
-          <h2 class="list-title">Histórico</h2>
+        <section aria-labelledby="hist-title">
+          <h2 class="list-title" id="hist-title">Histórico</h2>
+          <div class="group-card">
           ${history.length ? `<ul class="history">${history.map((m) => `
             <li class="history-item type-${m.type}">
               <span>${TYPE_LABEL[m.type] ? TYPE_LABEL[m.type](m) : esc(m.type)}</span>
               <span class="history-qty">ficou ${m.qtyAfter}</span>
               <span class="history-when">${when(m.at)}</span>
-            </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
+            </li>`).join('')}</ul>` : '<p class="sheet-text">Nenhum registro ainda.</p>'}
+          </div>
+        </section>
+
+        <section class="stock-fix" aria-labelledby="stock-title">
+          <h2 class="list-title" id="stock-title">Corrigir a quantidade</h2>
+          <div class="group-card">
+            <div class="stock-fix-row">
+              <div class="stepper-host stepper-sm" data-qty></div>
+              <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
+            </div>
+          </div>
+          <p class="group-note">Para quando o número do app não bate com o armário.</p>
+        </section>
+
+        <section aria-labelledby="details-title">
+          <h2 class="list-title" id="details-title">Detalhes</h2>
+          <div class="group-card">
+            <dl class="facts">
+              <div class="fact"><dt>Código de barras</dt><dd class="fact-num">${esc(barcodes.length ? barcodes.join(', ') : 'Sem código')}</dd></div>
+              ${p.brand && !p.med ? `<div class="fact"><dt>Marca</dt><dd>${esc(p.brand)}</dd></div>` : ''}
+              ${p.size ? `<div class="fact"><dt>Tamanho</dt><dd>${esc(p.size)}</dd></div>` : ''}
+              <div class="fact"><dt>Onde fica</dt><dd>${esc(areaLabel(p.area))}</dd></div>
+            </dl>
+          </div>
         </section>
 
       </main>

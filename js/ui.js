@@ -640,7 +640,7 @@ export function openMenu(anchor, items, { label = 'Opções' } = {}) {
   host.className = 'menu-root';
   host.innerHTML = `
     <div class="menu-scrim"></div>
-    <div class="menu glass-thick" role="menu" aria-label="${esc(label)}">
+    <div class="menu glass-thick" role="menu" aria-label="${esc(label)}" tabindex="-1">
       ${items.map((it, i) => `
         <button type="button" class="menu-item ${it.danger ? 'is-danger' : ''}" role="menuitem" data-i="${i}" style="--i:${i}">
           <span>${esc(it.label)}</span>${it.icon ? icon(it.icon) : ''}
@@ -698,10 +698,17 @@ export function openMenu(anchor, items, { label = 'Opções' } = {}) {
     setTimeout(() => window.addEventListener('scroll', onScroll, true), 50);
     requestAnimationFrame(() => {
       host.classList.add('is-open');
-      buttons[0] && buttons[0].focus({ preventScroll: true });
+      if (lastInputKeyboard) buttons[0] && buttons[0].focus({ preventScroll: true });
+      else menuEl.focus({ preventScroll: true });
     });
   });
 }
+
+// Como o iPhone: menu aberto pelo toque não mostra anel de foco; pelo teclado,
+// a primeira opção já vem focada para andar com as setas.
+let lastInputKeyboard = false;
+document.addEventListener('keydown', () => { lastInputKeyboard = true; }, true);
+document.addEventListener('pointerdown', () => { lastInputKeyboard = false; }, true);
 
 let openMenuState = null;
 export function closeMenu() {
