@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v27';
+const VERSION = 'v28';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -97,8 +97,14 @@ async function networkFirst(request) {
   const cache = await caches.open(APP_CACHE);
   try {
     const res = await fetch(request);
-    if (res.ok) cache.put(request, res.clone());
-    return res;
+    if (res.ok) {
+      cache.put(request, res.clone());
+      return res;
+    }
+    // Site fora do ar (404, 5xx): abre a versão guardada no celular, se houver.
+    const saved = await cache.match(request, { ignoreSearch: true })
+      || (request.mode === 'navigate' ? await cache.match('./index.html') : null);
+    return saved || res;
   } catch {
     const hit = await cache.match(request, { ignoreSearch: true });
     if (hit) return hit;
