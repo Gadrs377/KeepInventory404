@@ -1734,3 +1734,68 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
    vermelho de apagar, que no app é só para ações destrutivas. */
 .tab-badge { background: var(--acabando); color: #161817; }
 @media (prefers-color-scheme: dark) { .tab-badge { background: var(--acabando); } }
+
+/* ---------- Versão 3.12: pílulas de estado, blocos de resumo e seções ----------
+   Inspiração: selos de estoque dos apps de inventário (um estado por pílula,
+   separado do nome), as listas inteligentes do Lembretes (blocos com contagem)
+   e os apps de despensa que separam por lugar da casa. */
+
+/* Pílula de estado na linha de baixo, antes da marca e do tamanho */
+.row-meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 3px; }
+.row-meta .row-sub { flex: 1; min-width: 0; }
+.row-meta:not(:has(.pill)) { margin-top: 0; }
+.pill {
+  flex: none; display: inline-flex; align-items: center; gap: 4px;
+  height: 22px; padding-inline: 8px; border-radius: 999px;
+  font-family: var(--font-ui); font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap;
+}
+.pill .icon { width: 13px; height: 13px; }
+.pill-low { background: var(--acabando); color: #161817; }
+.pill-zero { background: transparent; color: var(--ink); outline: 1.5px dashed var(--ink-2); outline-offset: -1.5px; }
+.pill-soon { background: color-mix(in oklab, var(--acabando) 45%, var(--paper)); color: var(--ink); }
+.pill-watch { background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink); }
+.pill-expired { background: var(--ink); color: var(--paper); }
+.pill-new { background: color-mix(in oklab, var(--entrada) 14%, var(--paper)); color: var(--entrada); }
+.hero-pills { display: flex; gap: 6px; margin-top: 8px; }
+@media (forced-colors: active) { .pill { border: 1px solid CanvasText; } }
+
+/* Blocos de resumo (Acabando, Zerados, Vencendo), como no Lembretes */
+.summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px var(--gutter) 4px; }
+.tile {
+  display: grid; grid-template-columns: auto 1fr; grid-template-areas: "icon n" "label label";
+  align-items: center; gap: 10px 6px;
+  min-height: 84px; padding: 12px; border: 0; border-radius: 16px;
+  background: var(--shelf); color: var(--ink); text-align: start;
+  transition-property: scale, background-color, color, opacity; transition-duration: 420ms, 200ms, 200ms, 200ms;
+  transition-timing-function: var(--spring-bouncy), var(--ease), var(--ease), var(--ease);
+}
+.tile:active { scale: 0.96; transition-duration: 90ms, 200ms, 200ms, 200ms; }
+.tile-icon { grid-area: icon; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; }
+.tile-icon .icon { width: 17px; height: 17px; }
+.tile-n { grid-area: n; justify-self: end; font-family: var(--font-num); font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile-label { grid-area: label; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.tile-acabando .tile-icon { background: var(--acabando); color: #161817; }
+.tile-zerados .tile-icon { background: transparent; color: var(--ink); outline: 1.5px dashed var(--ink-2); outline-offset: -1.5px; }
+.tile-vencendo .tile-icon { background: var(--ink); color: var(--paper); }
+.tile-vencendo.is-urgent .tile-icon { background: var(--acabando); color: #161817; }
+/* Sem nada: fica apagado, mas o 0 continua lá dizendo por quê */
+.tile.is-empty { opacity: 0.55; }
+.tile[aria-pressed="true"] { background: var(--ink); color: var(--paper); opacity: 1; }
+.tile-vencendo[aria-pressed="true"]:not(.is-urgent) .tile-icon { background: var(--paper); color: var(--ink); }
+.tile-zerados[aria-pressed="true"] .tile-icon { color: var(--paper); outline-color: var(--paper); }
+@media (max-width: 359px) {
+  .summary { gap: 8px; }
+  .tile { padding: 10px; }
+  .tile-n { font-size: 24px; }
+  .tile-label { font-size: 14px; }
+}
+@media (forced-colors: active) { .tile[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
+
+/* Seções por ambiente no Armário (em "Tudo") */
+.shelf-title { padding-inline: var(--gutter); margin-block: 26px 6px; }
+.shelf > .shelf-title:first-child { margin-top: 16px; }
+.title-count { margin-inline-start: auto; font-family: var(--font-ui); font-size: 15px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.shelf .rows { border-top: 1px solid var(--line); }
+/* Sem espaço ao lado da pílula, o texto desce para a linha de baixo inteiro */
+.row-meta { flex-wrap: wrap; row-gap: 2px; }
+.row-meta .row-sub { flex: 1 1 10ch; }

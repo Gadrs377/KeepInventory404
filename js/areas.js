@@ -3,9 +3,9 @@
 // palavras do nome. A pessoa sempre pode trocar na página do produto.
 
 export const AREAS = [
-  { id: 'cozinha', label: 'Cozinha', short: 'Cozinha' },
-  { id: 'limpeza', label: 'Banheiro e limpeza', short: 'Limpeza' },
-  { id: 'beleza', label: 'Beleza e cuidados', short: 'Beleza' },
+  { id: 'cozinha', label: 'Cozinha', short: 'Cozinha', icon: 'pot' },
+  { id: 'limpeza', label: 'Banheiro e limpeza', short: 'Limpeza', icon: 'spray' },
+  { id: 'beleza', label: 'Beleza e cuidados', short: 'Beleza', icon: 'lotus' },
 ];
 
 export const AREA_IDS = AREAS.map((a) => a.id);

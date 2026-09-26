@@ -22,6 +22,21 @@ export function stockNote(p) {
   return '';
 }
 
+// Pílula de estado: fica separada do nome e da marca, como os selos de
+// estoque dos apps de inventário. O texto diz o estado; a cor só reforça.
+// Tipos: low (acabando), zero, soon (vence em até 7 dias), watch (até 30),
+// expired (já venceu), new (produto novo).
+export function pill(kind, text) {
+  const ico = { soon: 'calendar', watch: 'calendar', expired: 'calendar', low: 'hourglass', zero: 'dashed' }[kind];
+  return `<span class="pill pill-${kind}">${ico ? icon(ico) : ''}${esc(text)}</span>`;
+}
+
+export function stockPill(p) {
+  if (p.qty === 0) return pill('zero', 'Zerado');
+  if (p.minQty > 0 && p.qty <= p.minQty) return pill('low', 'Acabando');
+  return '';
+}
+
 export function tagState(p) {
   if (p.qty === 0) return 'is-zero';
   if (p.minQty > 0 && p.qty <= p.minQty) return 'is-low';

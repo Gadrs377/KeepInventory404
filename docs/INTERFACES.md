@@ -606,3 +606,23 @@ o que o app sabe é "No app".
 - **Número da aba Compras** em amarelo de "acabando"; o vermelho fica só para
   apagar.
 - **Menu:** foco de teclado com contorno visível.
+
+## Versão 3.12: pílulas de estado, blocos de resumo e seções
+
+Referências: selos de estoque dos kits de interface de inventário e o guia de
+selos do Setproduct (um estado por pílula, separado do título; texto sempre
+junto da cor), as listas inteligentes do app Lembretes (blocos com contagem que
+filtram) e os apps de despensa (Panzy, iPantry, Pantry Check), que separam os
+itens pelo lugar da casa e destacam o que está acabando ou vencendo.
+
+- **Pílulas de estado** na linha de baixo, antes da marca e do tamanho:
+  "Acabando" (amarelo, ampulheta), "Zerado" (tracejado, como a etiqueta),
+  "Vence em 4 dias" (calendário; amarelo claro até 7 dias, cinza até 30, escura
+  quando já venceu) e "Novo" (verde, na nota fiscal). Valem no Armário, em
+  Compras, no topo do produto e na escolha entre produtos do mesmo código.
+- **Blocos de resumo** no Armário (Acabando, Zerados, Vencendo) com ícone e
+  contagem, no lugar dos filtros em forma de chip. Tocar filtra; tocar de novo
+  volta para todos; sem nada, o bloco fica apagado com o 0. "Vencendo" fica
+  amarelo quando algo vence nesta semana.
+- **Seções por ambiente** em "Tudo": Cozinha, Banheiro e limpeza, Beleza e
+  cuidados, com ícone e quantos itens cada uma tem.

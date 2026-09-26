@@ -4,7 +4,7 @@ import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsF
 import { AREAS } from '../areas.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockNote, openSheet, download, plural } from '../ui.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -48,7 +48,7 @@ export default async function mountProduto(root, { code }) {
             <h1 class="page-title">${esc(p.name)}</h1>
             <p class="product-sub">${subtitle(p) || '&nbsp;'}</p>
             <p class="product-code">${esc(niceCode)}</p>
-            ${stockNote(p) ? `<p class="stock-note">${stockNote(p)}</p>` : ''}
+            ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
           </div>
           ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>

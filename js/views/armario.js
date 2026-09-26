@@ -5,7 +5,7 @@ import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, remov
 import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -37,16 +37,16 @@ export default function mountArmario(root) {
           <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}" autocomplete="off">
         </label>
         <div class="tabs" role="group" aria-label="Ambiente"></div>
-        <div class="chips" role="group" aria-label="Mostrar só" hidden></div>
       </div>
       <div class="draft-note" hidden></div>
+      <div class="summary" role="group" aria-label="Mostrar só" hidden></div>
       <main class="shelf" aria-live="polite" aria-busy="true">${skeletonRows(5)}</main>
       ${tabBar('armario')}
     </div>`;
 
   const shelf = $('.shelf', root);
   const tabs = $('.tabs', root);
-  const chips = $('.chips', root);
+  const chips = $('.summary', root);
   const search = $('input[type=search]', root);
   const draftNote = $('.draft-note', root);
   let products = [];
@@ -81,16 +81,19 @@ export default function mountArmario(root) {
       <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}">${t.short}</button>`).join('') : '';
     if (showTabs) glideTo(tabs, tabs.querySelector('[aria-pressed="true"]'), { line: true });
 
-    // Filtros de estado, contados dentro do ambiente escolhido. Só aparecem quando têm algo.
-    // "Vencendo" fica amarelo quando algo vence nesta semana (substitui o antigo aviso).
+    // Blocos de resumo, como as listas inteligentes do app Lembretes: quantos
+    // estão acabando, zerados e vencendo no ambiente escolhido. Tocar filtra a
+    // lista; tocar de novo volta para todos. Sem nada, o bloco fica apagado.
     const inArea = products.filter((p) => savedArea === 'tudo' || (p.area || 'cozinha') === savedArea);
     const counts = Object.fromEntries(FILTERS.map((f) => [f.id, inArea.filter(f.test).length]));
     const urgent = inArea.some((p) => expiresSoon(p, SOON_DAYS));
-    const shown = FILTERS.filter((f) => f.id !== 'todos' && (counts[f.id] || savedFilter === f.id));
-    chips.hidden = !shown.length;
-    chips.innerHTML = shown.map((f) => `
-      <button type="button" class="chip chip-${f.id} ${f.id === 'vencendo' && urgent ? 'is-urgent' : ''}" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
-        ${f.label} <span class="chip-n">${counts[f.id]}</span>${f.id === 'vencendo' && urgent ? '<span class="sr-only">, algo vence nesta semana</span>' : ''}
+    const TILE_ICON = { acabando: 'hourglass', zerados: 'dashed', vencendo: 'calendar' };
+    chips.hidden = !products.length;
+    chips.innerHTML = FILTERS.filter((f) => f.id !== 'todos').map((f) => `
+      <button type="button" class="tile tile-${f.id}${f.id === 'vencendo' && urgent ? ' is-urgent' : ''}${counts[f.id] ? '' : ' is-empty'}" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
+        <span class="tile-icon" aria-hidden="true">${icon(TILE_ICON[f.id])}</span>
+        <span class="tile-n">${counts[f.id]}</span>
+        <span class="tile-label">${f.label}${f.id === 'vencendo' && urgent ? '<span class="sr-only">, algo vence nesta semana</span>' : ''}</span>
       </button>`).join('');
 
     if (!products.length) {
@@ -111,6 +114,11 @@ export default function mountArmario(root) {
       .filter(filter.test)
       .filter((p) => !q || `${p.name} ${p.brand} ${p.code}`.toLocaleLowerCase('pt-BR').includes(q))
       .sort(filter.id === 'vencendo' ? byExpiry : (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pt-BR'));
+    // Em "Tudo", com mais de um ambiente, a lista vem separada por ambiente
+    // (como a despensa, a geladeira e o armário dos apps de despensa).
+    const grouped = showTabs && savedArea === 'tudo';
+    const areaIndex = (p) => Math.max(0, AREAS.findIndex((a) => a.id === (p.area || 'cozinha')));
+    if (grouped) visible.sort((a, b) => areaIndex(a) - areaIndex(b));
     if (keepOrder) {
       const at = (p) => (lastOrder.has(p.code) ? lastOrder.get(p.code) : Infinity);
       visible.sort((a, b) => at(a) - at(b));
@@ -120,8 +128,7 @@ export default function mountArmario(root) {
 
     const entering = firstShow && visible.length;
     firstShow = false;
-    shelf.innerHTML = visible.length
-      ? `<ul class="rows${entering ? ' is-entering' : ''}">${visible.map((p, i) => `
+    const rowHtml = (p, i) => `
           <li class="row-item" data-code="${esc(p.code)}" data-qty="${p.qty}" style="--i:${Math.min(i, 12)}">
             <span class="swipe-bg" aria-hidden="true"><span class="swipe-act swipe-plus">${icon('plus')}1</span><span class="swipe-act swipe-minus">${icon('minus')}1</span></span>
             <div class="row-slide">
@@ -129,7 +136,7 @@ export default function mountArmario(root) {
               ${thumb(p)}
               <span class="row-main">
                 <span class="row-name">${esc(p.name)}</span>
-                <span class="row-sub">${rowSub(p)}</span>
+                ${rowMeta(p)}
               </span>
               ${tag(p.qty, `${tagState(p)} ${moved(p)}`)}
             </a>
@@ -137,7 +144,22 @@ export default function mountArmario(root) {
               ? `<button type="button" class="row-minus" data-minus="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}</button>`
               : '<span class="row-minus-space" aria-hidden="true"></span>'}
             </div>
-          </li>`).join('')}</ul>`
+          </li>`;
+    const ulClass = `rows${entering ? ' is-entering' : ''}`;
+    let listHtml = '';
+    if (grouped) {
+      let i = 0;
+      for (const a of AREAS) {
+        const rows = visible.filter((p) => (p.area || 'cozinha') === a.id);
+        if (!rows.length) continue;
+        listHtml += `<h2 class="list-title list-title-icon shelf-title">${icon(a.icon)}${a.label}<span class="title-count">${rows.length}</span></h2>
+          <ul class="${ulClass}">${rows.map((p) => rowHtml(p, i++)).join('')}</ul>`;
+      }
+    } else {
+      listHtml = `<ul class="${ulClass}">${visible.map(rowHtml).join('')}</ul>`;
+    }
+    shelf.innerHTML = visible.length
+      ? listHtml
       : `<div class="empty-filter">
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
@@ -159,10 +181,17 @@ export default function mountArmario(root) {
     }
   }
 
-  function rowSub(p) {
+  // Linha de baixo: pílulas de estado (estoque e validade) e, depois, marca e
+  // tamanho em texto comum. Assim o estado não parece parte do nome.
+  function rowMeta(p) {
     const exp = expiresSoon(p) ? nextExpiry.get(p.code) : '';
-    const expNote = exp && (daysUntil(exp) <= SOON_DAYS ? `<strong class="stock-note">${expiryText(exp)}</strong>` : expiryText(exp));
-    return [stockNote(p) && `<strong class="stock-note">${stockNote(p)}</strong>`, expNote, subtitle(p)].filter(Boolean).join(', ') || '&nbsp;';
+    let expPill = '';
+    if (exp) {
+      const n = daysUntil(exp);
+      expPill = pill(n < 0 ? 'expired' : n <= SOON_DAYS ? 'soon' : 'watch', expiryText(exp));
+    }
+    const pills = stockPill(p) + expPill;
+    return `<span class="row-meta">${pills}<span class="row-sub">${subtitle(p) || (pills ? '' : '&nbsp;')}</span></span>`;
   }
 
   function emptyText(id) {

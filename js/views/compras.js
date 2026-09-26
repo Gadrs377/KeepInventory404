@@ -7,7 +7,7 @@ import { listLots, onChange } from '../store.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
-import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows } from '../ui.js';
+import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows, pill } from '../ui.js';
 
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
 
@@ -96,7 +96,7 @@ export default function mountCompras(root) {
             ${thumb(i.product)}
             <span class="row-main">
               <span class="row-name">${esc(i.product.name)}</span>
-              <span class="row-sub">${esc([i.reason, i.rate].filter(Boolean).join(', '))}</span>
+              <span class="row-meta">${statusOf(i)}</span>
             </span>
             <span class="shop-qty"><span class="sr-only">Comprar </span>${i.buy}</span>
           </label>
@@ -116,6 +116,14 @@ export default function mountCompras(root) {
     const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
     if (done) lists.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>${icon('check')}Limpar marcados</button>`);
 
+  }
+
+  // Estado em pílula (Zerado, Acabando) e o resto em texto: quanto tem, previsão, ritmo.
+  function statusOf(i) {
+    const p = i.product;
+    if (p.qty === 0) return `${pill('zero', 'Zerado')}<span class="row-sub">${esc(i.rate)}</span>`;
+    if (i.reason.startsWith('Acabando')) return `${pill('low', 'Acabando')}<span class="row-sub">${esc([`tem ${p.qty}`, i.rate].filter(Boolean).join(', '))}</span>`;
+    return `<span class="row-sub">${esc([i.reason, i.rate].filter(Boolean).join(', '))}</span>`;
   }
 
   function listText() {

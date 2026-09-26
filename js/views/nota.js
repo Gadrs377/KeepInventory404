@@ -5,7 +5,7 @@
 import { fetchNota, checkDigitOk } from '../lookup.js';
 import { listProducts, newProductId, addStock, nfceMap, learnNfce, notaImported, markNota, setLastPrice } from '../store.js';
 import { guessArea } from '../areas.js';
-import { $, esc, icon, openSheet, stepper, plural, thumb, skeletonRows, vibrate } from '../ui.js';
+import { $, esc, icon, openSheet, stepper, plural, thumb, skeletonRows, vibrate, pill } from '../ui.js';
 import { showReceipt } from './receipt.js';
 
 // Vendido por peso ou volume: conta como 1 pacote e começa de fora (fruta, pão).
@@ -173,7 +173,7 @@ function review(body, close, data, rows, products, already) {
         <button type="button" class="nota-main" data-open aria-expanded="${isOpen}">
           <span class="row-main">
             <span class="row-name">${esc(title)}</span>
-            <span class="row-sub">${esc(sub(r))}</span>
+            <span class="row-meta">${r.on && !r.product ? pill('new', 'Novo') : ''}<span class="row-sub">${esc(r.on && !r.product ? '' : sub(r))}</span></span>
           </span>
           <span class="nota-qty">${r.on ? `+${r.qty}` : ''}</span>
           ${icon('chevron', 'nota-chev')}

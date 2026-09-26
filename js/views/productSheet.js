@@ -12,7 +12,7 @@ import { AREAS, guessArea } from '../areas.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil } from '../dates.js';
 import { photoToDataUrl } from '../photo.js';
 import { beep } from '../sound.js';
-import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote, skeletonRows } from '../ui.js';
+import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows } from '../ui.js';
 
 const ACTION = {
   entrada: (n) => `Guardar ${n}`,
@@ -229,7 +229,7 @@ function chooser(ctx, products) {
             ${thumb(p)}
             <span class="row-main">
               <span class="row-name">${esc(p.name)}</span>
-              <span class="row-sub">${empty ? 'Nenhum no armário' : [stockNote(p) && `<strong class="stock-note">${stockNote(p)}</strong>`, subtitle(p)].filter(Boolean).join(', ') || '&nbsp;'}</span>
+              <span class="row-meta">${empty ? '' : stockPill(p)}<span class="row-sub">${empty ? 'Nenhum no armário' : subtitle(p) || (stockPill(p) ? '' : '&nbsp;')}</span></span>
             </span>
             ${tag(p.qty, tagState(p))}
           </button>
