@@ -3,7 +3,7 @@
 import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl } from '../photo.js';
-import { AREAS, isMed } from '../areas.js';
+import { AREAS } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
@@ -37,8 +37,7 @@ export default async function mountProduto(root, { code }) {
     : 'Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
-  // Remédio volta para a aba Remédios; o resto, para o Armário.
-  const home = isMed(p) ? { href: '#/remedios', label: 'Voltar aos remédios' } : { href: '#/', label: 'Voltar ao armário' };
+  const home = { href: '#/', label: 'Voltar ao armário' };
 
   root.innerHTML = `
     <div class="screen screen-product">
@@ -279,8 +278,8 @@ export default async function mountProduto(root, { code }) {
   const off = () => { offLots(); navIo.disconnect(); };
   renderLots();
 
-  // Produto cadastrado antes da aba Remédios (ou pelas lojas) cujo código está
-  // na lista da Anvisa: oferece trocar pelos dados oficiais e mudar de aba.
+  // Produto cadastrado antes dos remédios (ou pelas lojas) cujo código está na
+  // lista da Anvisa: oferece trocar pelos dados oficiais e passar para Remédios.
   if (!p.med && barcodes.length) {
     Promise.all(barcodes.map((b) => medByEan(b).catch(() => null))).then((found) => {
       const i = found.findIndex(Boolean);
@@ -291,7 +290,7 @@ export default async function mountProduto(root, { code }) {
       offer.innerHTML = `
         <p class="sheet-text">${icon('pill')}Este código é de um remédio da lista da Anvisa: ${esc(found[i].nome)}, ${esc(found[i].tamanho)}.</p>
         <button type="button" class="btn btn-quiet btn-sm" data-use-med>Usar os dados da Anvisa</button>
-        <p class="field-note">O produto passa para a aba Remédios, com princípio ativo, tarja e bula, e fica sem foto.</p>`;
+        <p class="field-note">O produto passa para Remédios, com princípio ativo, tarja e bula, e fica sem foto.</p>`;
       $('[data-use-med]', offer).addEventListener('click', async () => {
         try {
           await applyInfo(code, medInfo(found[i]));

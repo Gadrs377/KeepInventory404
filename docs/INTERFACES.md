@@ -36,8 +36,8 @@ regras de `store.js` descritas no [system design](SYSTEM_DESIGN.md).
 As folhas (produto lido, escolha entre produtos, digitar código) abrem por cima
 da tela atual e não mudam o endereço.
 
-A barra de abas tem cinco abas: Armário `#/`, Remédios `#/remedios`, Compras,
-Cupons e Mais. Produto de remédio volta para Remédios.
+A barra de abas tem quatro abas: Armário `#/`, Compras, Cupons e Mais.
+Remédios são um ambiente do Armário, não uma aba.
 
 ---
 
@@ -671,24 +671,19 @@ num canto; o que não serve naquele momento não aparece.
   acabando, zerado ou vencendo; o botão da nota fiscal não aparece na Saída;
   "Instalar no celular" não aparece com o app já instalado.
 
-## Versão 3.15: aba Remédios `#/remedios`
+## Versão 3.15: Remédios no Armário
 
-Remédio é um ambiente à parte (`area: 'remedios'`), com aba própria entre
-Armário e Compras. O Armário não mostra remédios.
+Remédio é mais um ambiente da casa (`area: 'remedios'`), ao lado de Cozinha,
+Limpeza e Beleza. Não tem aba própria: aparece no Armário, na seção Remédios
+de "Tudo" e no filtro Remédios.
 
-- **Topo:** título grande "Remédios" e a busca presa no topo, "Nome ou
-  princípio ativo".
-- **Blocos de resumo:** Vencidos, Vencendo (até 30 dias) e Acabando. Tocar
-  filtra; somem quando não há nada.
-- **Lista de casa:** a mesma linha do Armário (ícone de comprimido no lugar da
-  foto, nome, princípio ativo e dose, etiqueta, "−"). A validade aparece sempre,
-  não só quando está perto, e a lista vem do que vence antes para o que vence
-  depois.
-- **Busca:** primeiro "Em casa" (o que bate), depois "Na lista da Anvisa",
-  agrupado por remédio (nome e princípio ativo no título) e uma linha por caixa
-  (dose e quantidade, laboratório). Caixa sem venda no último ano leva a pílula
-  "Sem venda recente". A partir de 3 letras; dá para buscar pela dose
-  ("losartana 50").
+- **Linha:** ícone de comprimido no lugar da foto, nome, princípio ativo e
+  dose. Em remédio a validade aparece sempre, não só quando está perto.
+- **Busca na lista da Anvisa:** com o filtro Remédios, a busca do Armário
+  mostra também "Na lista da Anvisa", agrupado por remédio (nome e princípio
+  ativo no título) e uma linha por caixa (dose e quantidade, laboratório). Em
+  Tudo, a lista da Anvisa aparece quando nada em casa bate com o que foi
+  digitado. A partir de 3 letras; dá para buscar pela dose ("losartana 50").
 - **Folha do remédio:** dados da Anvisa (princípio ativo, apresentação, venda
   com a cor da tarja, tipo, laboratório, classe terapêutica, preço máximo,
   registro), "Ver a bula na Anvisa" e **Guardar em casa**, que abre a folha de
@@ -699,4 +694,12 @@ Armário e Compras. O Armário não mostra remédios.
 - **Página do produto:** seção "Sobre o remédio" com os mesmos dados e a bula.
   Produto antigo cujo código está na base mostra "Usar os dados da Anvisa".
 - **Sem fotos:** remédio nunca mostra foto, nem a das lojas; só o ícone de
-  comprimido e os dados oficiais. O rodapé da aba diz de quando é a tabela.
+  comprimido e os dados oficiais.
+
+## Versão 3.16: nota fiscal pelo QR Code
+
+- O botão de QR Code do leitor liga o **modo nota**: visor quadrado, mira
+  quadrada, "Aponte para o QR Code no fim do cupom" e resolução maior.
+  Código de barras de produto é ignorado nesse modo.
+- "Colar o link da nota" só aparece se não ler em 6 s.
+- Mais → Importar nota fiscal abre o leitor já no modo nota.

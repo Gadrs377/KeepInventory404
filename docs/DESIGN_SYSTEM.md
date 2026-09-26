@@ -154,7 +154,6 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | **Validade** (`.lot`) | Data em Urbanist; amarela quando vence em até 7 dias, como a etiqueta de acabando |
 | **Lista de compras** (`.shop-item`) | Caixa de marcar de 28 px dentro de uma linha inteira tocável, nome completo, quantidade sugerida condensada à direita. Marcado fica riscado |
 | **Fatos do remédio** (`.facts`) | Lista `dl`: rótulo de 13 px em `--ink-2`, valor de 17 px, fio entre as linhas. A venda leva uma faixa de 22 × 10 px na cor da tarja |
-| **Barra de abas** (`.tabbar`) | Cinco abas com rótulo de 10 px, como no iPhone. Até 400 px o botão do leitor tem 58 px; até 340 px, 52 px, para "Remédios" caber inteiro |
 | **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), acima da barra flutuante. Com **Desfazer**, fica até ser fechado, trocado ou até mudar de tela; sem ação, some em 4 s. Fica atrás das folhas |
 
 Ícones: [Phosphor](https://phosphoricons.com), peso bold, MIT. Nunca desenhados à mão.

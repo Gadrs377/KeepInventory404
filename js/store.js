@@ -207,7 +207,7 @@ export async function applyInfo(code, info, barcode = '') {
     barcodes,
     updatedAt: Date.now(),
   };
-  // Remédio: vai para a aba Remédios e fica sem foto.
+  // Remédio: vai para o ambiente Remédios e fica sem foto.
   if (info.med) Object.assign(next, { med: info.med, area: 'remedios', image: '' });
   await put('products', next);
   emit();

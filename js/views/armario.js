@@ -3,12 +3,12 @@
 
 import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, removeStock, undoMovement } from '../store.js';
 import { addToShopList } from '../shop.js';
-import { AREAS as ALL_AREAS, isMed } from '../areas.js';
+import { AREAS, isMed } from '../areas.js';
+import { searchMeds } from '../remedios.js';
+import { medSheet, anvisaResultsHtml } from './remedioInfo.js';
+import { showProductSheet } from './productSheet.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
 import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText } from '../ui.js';
-
-// Remédios têm aba própria: o Armário mostra só os outros ambientes.
-const AREAS = ALL_AREAS.filter((a) => a.id !== 'remedios');
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -64,6 +64,10 @@ export default function mountArmario(root) {
   // Quantidade da última vez que a lista foi desenhada: o número que mudou
   // rola para cima ou para baixo, como os contadores do iPhone.
   let lastQty = new Map();
+  // Busca na lista da Anvisa: em Remédios, ou em Tudo quando nada em casa bate.
+  let meds = { q: '', rows: null, error: false };
+  let medTimer = 0;
+  let medId = 0;
 
   const expiresSoon = (p, days = WATCH_DAYS) => p.qty > 0 && nextExpiry.has(p.code) && daysUntil(nextExpiry.get(p.code)) <= days;
   const FILTERS = [
@@ -162,12 +166,12 @@ export default function mountArmario(root) {
     } else {
       listHtml = `<ul class="${ulClass}">${visible.map(rowHtml).join('')}</ul>`;
     }
-    shelf.innerHTML = visible.length
+    shelf.innerHTML = (visible.length
       ? listHtml
       : `<div class="empty-filter">
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
-        </div>`;
+        </div>`) + medsHtml(visible.length);
 
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
     shelf.removeAttribute('aria-busy');
@@ -185,10 +189,41 @@ export default function mountArmario(root) {
     }
   }
 
+  // Remédios da lista da Anvisa para o que foi digitado. Em Remédios aparece
+  // sempre; em Tudo, só quando nada em casa bate e a Anvisa conhece o nome.
+  function wantMeds(localHits) {
+    const q = savedQuery.trim();
+    if (q.length < 3) return false;
+    return savedArea === 'remedios' || (savedArea === 'tudo' && !localHits);
+  }
+  function medsHtml(localHits) {
+    const q = savedQuery.trim();
+    if (!wantMeds(localHits)) return '';
+    const title = '<h2 class="list-title list-title-icon shelf-title">' + icon('pill') + 'Na lista da Anvisa</h2>';
+    if (meds.q !== q) {
+      clearTimeout(medTimer);
+      medTimer = setTimeout(() => runMeds(q), 250);
+      return savedArea === 'remedios' ? title + skeletonRows(2) : '';
+    }
+    if (meds.error) return savedArea === 'remedios' ? `${title}<p class="empty meds-hint">Sem internet para buscar na lista da Anvisa agora.</p>` : '';
+    if (!meds.rows || !meds.rows.length) return savedArea === 'remedios' ? `${title}<p class="empty meds-hint">Nada na lista da Anvisa com “${esc(q)}”. Busque pelo princípio ativo, por exemplo “dipirona”.</p>` : '';
+    return title + anvisaResultsHtml(meds.rows) + (meds.rows.length >= 40 ? '<p class="empty meds-hint">Mostrando os 40 primeiros. Digite a dose para achar o certo.</p>' : '');
+  }
+  async function runMeds(q) {
+    const id = ++medId;
+    let rows = null;
+    let error = false;
+    try { rows = await searchMeds(q); } catch { error = true; }
+    if (!alive || id !== medId || savedQuery.trim() !== q) return;
+    meds = { q, rows, error };
+    render();
+  }
+
   // Linha de baixo: pílulas de estado (estoque e validade) e, depois, marca e
   // tamanho em texto comum. Assim o estado não parece parte do nome.
+  // Em remédio a validade aparece sempre, não só quando está perto.
   function rowMeta(p) {
-    const exp = expiresSoon(p) ? nextExpiry.get(p.code) : '';
+    const exp = expiresSoon(p) || (isMed(p) && p.qty > 0 && nextExpiry.has(p.code)) ? nextExpiry.get(p.code) : '';
     let expPill = '';
     if (exp) {
       const n = daysUntil(exp);
@@ -208,7 +243,7 @@ export default function mountArmario(root) {
   async function load() {
     const [list, draft, lots] = await Promise.all([listProducts(), getCountDraft(), listLots()]);
     if (!alive) return;
-    products = list.filter((p) => !isMed(p));
+    products = list;
     nextExpiry = new Map();
     for (const lot of lots) if (!nextExpiry.has(lot.code)) nextExpiry.set(lot.code, lot.expiresAt);
     const n = draft ? Object.keys(draft.counts).length : 0;
@@ -252,6 +287,8 @@ export default function mountArmario(root) {
       minusOne(minus.dataset.minus, minus);
       return;
     }
+    const hit = e.target.closest('[data-ean]');
+    if (hit) { openMed(hit.dataset.ean); return; }
     if (!e.target.closest('[data-reset]')) return;
     if (savedQuery.trim()) { savedQuery = ''; search.value = ''; } else { savedFilter = 'todos'; savedArea = 'tudo'; }
     keepOrder = false;
@@ -394,7 +431,15 @@ export default function mountArmario(root) {
     t.finished.catch(() => {}).then(() => root.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; }));
   }
 
+  // Remédio da lista da Anvisa: os dados e "Guardar em casa" (a folha da Entrada).
+  async function openMed(ean) {
+    const chosen = await medSheet(ean);
+    if (!chosen || !alive) return;
+    const r = await showProductSheet({ mode: 'entrada', barcode: chosen });
+    if (r && r.kind === 'entrada') toast(`${r.product.name} guardado. Agora tem ${r.product.qty}.`, { mode: 'entrada', duration: 3000 });
+  }
+
   const off = onChange(load);
   load();
-  return () => { alive = false; off(); };
+  return () => { alive = false; clearTimeout(medTimer); off(); };
 }

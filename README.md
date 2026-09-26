@@ -10,7 +10,7 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - **Contagem (inventário):** conte o que está no armário; na revisão você vê as diferenças
   e aplica a correção de uma vez.
 - **Armário:** lista com a quantidade de cada item, separada por ambiente
-  (Cozinha, Banheiro e limpeza, Beleza e cuidados), com busca e filtros
+  (Cozinha, Banheiro e limpeza, Beleza e cuidados, Remédios), com busca e filtros
   Acabando, Zerados e Vencendo.
 - **Modo rápido:** como no caixa do mercado, cada leitura soma ou tira 1 só com
   o bip. O que o app não conhece fica em "Para resolver" até o fim.
@@ -22,12 +22,12 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - **Compras:** lista sugerida pelo mínimo de cada produto e pelo ritmo de
   consumo, com itens soltos, compartilhar e **Perguntar ao Claude** (revisar a
   lista ou pedir receitas com o que vence).
-- **Remédios (aba própria):** leia o código de barras da caixa e o app acha o
+- **Remédios (ambiente do Armário):** leia o código de barras da caixa e o app acha o
   remédio na lista oficial da Anvisa (tabela CMED, 27 mil códigos): princípio
   ativo, dose, tarja, genérico ou referência, laboratório, registro, preço
-  máximo e link para a bula. A validade já vem aberta ao guardar, e a aba
-  destaca o que venceu ou está vencendo. Também busca pelo nome, pelo princípio
-  ativo ou pela dose. Remédio aparece sem foto, só com os dados oficiais.
+  máximo e link para a bula. A validade já vem aberta ao guardar e aparece
+  sempre na lista. A busca do Armário também procura na lista da Anvisa pelo
+  nome, princípio ativo ou dose. Remédio aparece sem foto, só com os dados oficiais.
 - **Sem código de barras:** busque pelo nome ou tire uma foto da embalagem; a IA
   gratuita da Cloudflare lê a marca e o app sugere o produto das lojas.
 - Bip de caixa de mercado a cada leitura (dá para desligar em Dados).

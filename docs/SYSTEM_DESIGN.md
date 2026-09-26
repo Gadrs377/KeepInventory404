@@ -73,7 +73,7 @@ validade por lote, lista de compras. Ver a seção 9.
 | `size` | string | Conteúdo da embalagem, ex. `395 g` |
 | `image` | string | URL da foto pequena da embalagem, opcional |
 | `category` | string | Categoria da loja, ex. `/Limpeza/Para Casa/Desinfetante/`. Opcional; base para os ambientes |
-| `area` | `cozinha` \| `limpeza` \| `beleza` \| `remedios` | Ambiente da casa. Sugerido por `areas.js` e editável na página do produto. Remédios têm aba própria e não aparecem no Armário |
+| `area` | `cozinha` \| `limpeza` \| `beleza` \| `remedios` | Ambiente da casa. Sugerido por `areas.js` e editável na página do produto. Remédios ficam no Armário como mais um ambiente |
 | `med` | objeto | Só em remédio achado na base da Anvisa: `nome`, `substancia`, `forma`, `tamanho`, `apresentacao`, `laboratorio`, `registro`, `classe`, `tipo`, `tarja`, `pmc`, `hospitalar` (seção 5.3) |
 | `qty` | inteiro ≥ 0 | Unidades no armário. Nunca negativo |
 | `minQty` | inteiro ≥ 0 | Abaixo ou igual a isso o item aparece como "acabando". 0 desliga o aviso |
@@ -218,14 +218,15 @@ estáticos, publicados junto com o app:
 - **Pelo código:** `lookupRemote` consulta a base antes das lojas. Achou, o
   produto nasce com `area: 'remedios'`, `source: 'anvisa'`, os dados em `med` e
   sem foto. Uma leitura baixa só uma parte da base.
-- **Pelo nome:** a aba Remédios baixa `busca.json` uma vez por sessão; cada
+- **Pelo nome:** a busca do Armário (em Remédios, ou em Tudo quando nada em
+  casa bate) baixa `busca.json` uma vez por sessão; cada
   palavra digitada tem de aparecer no nome, princípio ativo, dose ou
   laboratório.
 - **Sem internet:** o service worker guarda cada parte já consultada
   (`remedios-v1`, responde do cache e atualiza por trás).
 - **Produto antigo:** se o código de um produto do Armário está na base, a
-  página dele oferece "Usar os dados da Anvisa", que troca os dados e muda o
-  produto para a aba Remédios.
+  página dele oferece "Usar os dados da Anvisa", que troca os dados e passa o
+  produto para o ambiente Remédios.
 - **Textos:** o script traduz a apresentação da CMED ("500 MG COM CT BL AL
   PLAS AMB X 20") para "500 mg, 20 comprimidos" e encurta o laboratório
   ("EUROFARMA LABORATORIOS S.A." vira "Eurofarma"). O original fica em

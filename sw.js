@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v29';
+const VERSION = 'v30';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -41,7 +41,6 @@ const APP_FILES = [
   './js/views/produto.js',
   './js/views/nota.js',
   './js/views/receipt.js',
-  './js/views/remedios.js',
   './js/views/remedioInfo.js',
   './js/views/revisao.js',
   './js/views/scan.js',

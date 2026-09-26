@@ -1,7 +1,7 @@
 // Ambientes da casa e a regra que sugere o ambiente de um produto.
 // Sem IA: usa a categoria da loja (ex.: "/Limpeza/Desinfetante/") e, sem ela,
 // palavras do nome. A pessoa sempre pode trocar na página do produto.
-// Remédios são um ambiente à parte: têm aba própria e não aparecem no Armário.
+// Remédios são mais um ambiente do Armário, com os dados da Anvisa.
 
 export const AREAS = [
   { id: 'cozinha', label: 'Cozinha', short: 'Cozinha', icon: 'pot' },

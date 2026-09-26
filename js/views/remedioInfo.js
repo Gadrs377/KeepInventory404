@@ -3,7 +3,38 @@
 
 import { medByEan, medInfo, bulaUrl, registroText, money, TARJA, TIPO } from '../remedios.js';
 import { productsByBarcode } from '../store.js';
-import { $, esc, icon, openSheet, thumb, subtitle, toast, tag, tagState } from '../ui.js';
+import { $, esc, icon, openSheet, thumb, subtitle, toast, tag, tagState, pill } from '../ui.js';
+
+const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+// Resultados da busca na lista da Anvisa, agrupados pelo remédio: o título diz
+// o nome e o princípio ativo, e cada linha é uma caixa (dose e quantidade),
+// que é o que distingue uma da outra.
+export function anvisaResultsHtml(rows) {
+  const groups = new Map();
+  for (const r of rows) {
+    const k = fold(`${r.nome}|${r.substancia}`);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  return [...groups.values()].map((g) => {
+    const r0 = g[0];
+    const generic = fold(r0.substancia) === fold(r0.nome);
+    return `
+    <h3 class="found-title"><span class="found-name">${esc(r0.nome)}</span>${generic ? '' : `<span class="found-sub">${esc(r0.substancia)}</span>`}</h3>
+    <ul class="rows meds-found">${g.map((r) => `
+      <li>
+        <button type="button" class="row" data-ean="${esc(r.ean)}">
+          <span class="row-main">
+            <span class="row-name">${esc(r.tamanho || 'Apresentação sem descrição')}</span>
+            <span class="row-meta">${r.vendido ? '' : pill('watch', 'Sem venda recente')}<span class="row-sub">${esc(r.laboratorio)}</span></span>
+          </span>
+          ${icon('chevron', 'row-chevron')}
+        </button>
+      </li>`).join('')}
+    </ul>`;
+  }).join('');
+}
 
 // Lista de fatos: o que está na caixa e na bula, na ordem em que se procura.
 export function medFacts(med) {

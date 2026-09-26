@@ -108,12 +108,11 @@ export function icon(name, cls = '') {
 }
 
 // ---------- Barra de abas (como no iPhone/WhatsApp) ----------
-// Cinco abas numa cápsula de vidro e, separado, o botão de ler código, que
+// Quatro abas numa cápsula de vidro e, separado, o botão de ler código, que
 // abre o leitor no último modo usado. Aba ativa: ícone cheio e texto forte.
 
 const TABS = [
   { id: 'armario', href: '#/', label: 'Armário', icon: 'package', active: 'packageFill' },
-  { id: 'remedios', href: '#/remedios', label: 'Remédios', icon: 'pill', active: 'pillFill' },
   { id: 'compras', href: '#/compras', label: 'Compras', icon: 'cart', active: 'cartFill' },
   { id: 'cupons', href: '#/cupons', label: 'Cupons', icon: 'receipt', active: 'receiptFill' },
   { id: 'mais', href: '#/dados', label: 'Mais', icon: 'menu', active: 'menuFill' },
