@@ -2,7 +2,7 @@
 // Arquivos do app: rede primeiro (pega atualizações), cache se estiver offline.
 // Fontes e fotos de produto: cache primeiro. API do Open Food Facts: só rede.
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 
@@ -14,6 +14,7 @@ const APP_FILES = [
   './js/app.js',
   './js/config.js',
   './js/db.js',
+  './js/areas.js',
   './js/store.js',
   './js/lookup.js',
   './js/scanner.js',

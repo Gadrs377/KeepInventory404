@@ -2,6 +2,7 @@
 // movimento na mesma transação, para o número e o histórico nunca divergirem.
 
 import { tx, promisify, getAll, get, put, del } from './db.js';
+import { guessArea, AREA_IDS } from './areas.js';
 
 const listeners = new Set();
 export function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -48,6 +49,7 @@ function newProduct(code, info = {}) {
     size: (info.size || '').trim(),
     image: info.image || '',
     category: (info.category || '').trim(),
+    area: AREA_IDS.includes(info.area) ? info.area : guessArea(info),
     qty: 0,
     minQty: clampInt(info.minQty ?? 1),
     source: info.source || 'manual',
@@ -56,9 +58,33 @@ function newProduct(code, info = {}) {
   };
 }
 
+// ---------- Lotes (validade) ----------
+// Cada entrada pode ter uma validade: vira um lote { code, qty, expiresAt }.
+// A soma dos lotes nunca passa da quantidade do produto; o resto são unidades
+// sem data. Quando a quantidade cai, saem primeiro as unidades sem data (as mais
+// antigas) e depois os lotes que vencem antes.
+
+export const isIsoDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+
+async function lotsOf(s, code) {
+  return (await promisify(s.lots.index('code').getAll(code))).sort((a, b) => a.expiresAt.localeCompare(b.expiresAt) || a.id - b.id);
+}
+
+async function trimLots(s, lots, qty) {
+  let excess = lots.reduce((a, l) => a + l.qty, 0) - qty;
+  for (const lot of lots) {
+    if (excess <= 0) break;
+    const take = Math.min(lot.qty, excess);
+    excess -= take;
+    if (take === lot.qty) await promisify(s.lots.delete(lot.id));
+    else await promisify(s.lots.put({ ...lot, qty: lot.qty - take }));
+  }
+}
+
 // Aplica `delta` ao produto `code` e grava o movimento. `info` cria o produto se não existir.
-async function move(code, type, delta, info) {
-  const result = await tx(['products', 'movements'], 'readwrite', async (s) => {
+// `expiresAt` (AAAA-MM-DD), numa entrada, cria um lote com a validade.
+async function move(code, type, delta, info, expiresAt) {
+  const result = await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     let p = await promisify(s.products.get(code));
     if (!p) {
       if (!info) throw new Error('Produto não cadastrado');
@@ -70,9 +96,16 @@ async function move(code, type, delta, info) {
     const qtyBefore = p.qty;
     const qtyAfter = qtyBefore + delta;
     if (qtyAfter < 0) throw new Error(`Só tem ${qtyBefore} no armário`);
+    const lotsBefore = await lotsOf(s, code);
+    if (delta > 0 && isIsoDate(expiresAt)) {
+      await promisify(s.lots.add({ code, qty: delta, expiresAt, addedAt: Date.now() }));
+    } else if (delta < 0) {
+      await trimLots(s, lotsBefore, qtyAfter);
+    }
     p = { ...p, qty: qtyAfter, updatedAt: Date.now() };
     await promisify(s.products.put(p));
-    const movement = { code, type, delta, qtyBefore, qtyAfter, at: Date.now() };
+    const movement = { code, type, delta, qtyBefore, qtyAfter, at: Date.now(), lotsBefore };
+    if (delta > 0 && isIsoDate(expiresAt)) movement.expiresAt = expiresAt;
     movement.id = await promisify(s.movements.add(movement));
     return { product: p, movement };
   });
@@ -80,8 +113,8 @@ async function move(code, type, delta, info) {
   return result;
 }
 
-export function addStock(code, n, info) {
-  return move(code, 'entrada', clampInt(n, 1), info);
+export function addStock(code, n, info, expiresAt) {
+  return move(code, 'entrada', clampInt(n, 1), info, expiresAt);
 }
 
 export function removeStock(code, n) {
@@ -96,6 +129,34 @@ export async function setStock(code, n, type = 'ajuste') {
   return move(code, type, target - p.qty);
 }
 
+export async function lotsFor(code) {
+  return tx('lots', 'readonly', (s) => lotsOf(s, code));
+}
+
+export async function listLots() {
+  return (await getAll('lots')).sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
+}
+
+// Dá validade a unidades que já estão no armário sem data.
+export async function addLot(code, n, expiresAt) {
+  if (!isIsoDate(expiresAt)) throw new Error('Escolha a data de validade');
+  const qty = clampInt(n, 1);
+  await tx(['products', 'lots'], 'readwrite', async (s) => {
+    const p = await promisify(s.products.get(code));
+    if (!p) throw new Error('Produto não cadastrado');
+    const lots = await lotsOf(s, code);
+    const free = p.qty - lots.reduce((a, l) => a + l.qty, 0);
+    if (qty > free) throw new Error(free ? `Só ${free} sem validade para marcar` : 'Todas as unidades já têm validade');
+    await promisify(s.lots.add({ code, qty, expiresAt, addedAt: Date.now() }));
+  });
+  emit();
+}
+
+export async function removeLot(id) {
+  await del('lots', id);
+  emit();
+}
+
 export async function updateProduct(code, fields) {
   const p = await getProduct(code);
   if (!p) throw new Error('Produto não cadastrado');
@@ -105,6 +166,7 @@ export async function updateProduct(code, fields) {
     brand: (fields.brand ?? p.brand).trim(),
     size: (fields.size ?? p.size).trim(),
     minQty: clampInt(fields.minQty ?? p.minQty),
+    area: AREA_IDS.includes(fields.area) ? fields.area : (p.area || guessArea(p)),
     updatedAt: Date.now(),
   };
   await put('products', next);
@@ -123,17 +185,19 @@ export async function ensureProduct(code, info) {
 }
 
 export async function deleteProduct(code) {
-  await tx(['products', 'movements'], 'readwrite', async (s) => {
+  await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     s.products.delete(code);
     const keys = await promisify(s.movements.index('code').getAllKeys(code));
     keys.forEach((k) => s.movements.delete(k));
+    const lotKeys = await promisify(s.lots.index('code').getAllKeys(code));
+    lotKeys.forEach((k) => s.lots.delete(k));
   });
   emit();
 }
 
 // Desfaz um movimento, desde que seja o último do produto.
 export async function undoMovement(id) {
-  const result = await tx(['products', 'movements'], 'readwrite', async (s) => {
+  const result = await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     const m = await promisify(s.movements.get(id));
     if (!m) throw new Error('Esse registro já foi desfeito');
     const all = await promisify(s.movements.index('code').getAll(m.code));
@@ -143,6 +207,12 @@ export async function undoMovement(id) {
     if (!p) throw new Error('Produto não existe mais');
     const restored = { ...p, qty: m.qtyBefore, updatedAt: Date.now() };
     await promisify(s.products.put(restored));
+    // Volta os lotes para como estavam antes do movimento.
+    if (Array.isArray(m.lotsBefore)) {
+      const now = await promisify(s.lots.index('code').getAllKeys(m.code));
+      for (const k of now) await promisify(s.lots.delete(k));
+      for (const lot of m.lotsBefore) await promisify(s.lots.put(lot));
+    }
     await promisify(s.movements.delete(id));
     return restored;
   });
@@ -210,12 +280,14 @@ export async function applyCount(zeroMissing) {
   const targets = changes.map((c) => [c.product.code, c.to]);
   if (zeroMissing) missing.filter((p) => p.qty > 0).forEach((p) => targets.push([p.code, 0]));
 
-  await tx(['products', 'movements', 'meta'], 'readwrite', async (s) => {
+  await tx(['products', 'movements', 'meta', 'lots'], 'readwrite', async (s) => {
     const now = Date.now();
     for (const [code, to] of targets) {
       const p = await promisify(s.products.get(code));
       if (!p || p.qty === to) continue;
-      await promisify(s.movements.add({ code, type: 'contagem', delta: to - p.qty, qtyBefore: p.qty, qtyAfter: to, at: now }));
+      const lotsBefore = await lotsOf(s, code);
+      if (to < p.qty) await trimLots(s, lotsBefore, to);
+      await promisify(s.movements.add({ code, type: 'contagem', delta: to - p.qty, qtyBefore: p.qty, qtyAfter: to, at: now, lotsBefore }));
       await promisify(s.products.put({ ...p, qty: to, updatedAt: now }));
     }
     await promisify(s.meta.delete('countDraft'));
@@ -227,24 +299,29 @@ export async function applyCount(zeroMissing) {
 // ---------- Backup ----------
 
 export async function exportData() {
-  const [products, movements] = await Promise.all([getAll('products'), getAll('movements')]);
-  return { app: 'KeepInventory404', version: 1, exportedAt: new Date().toISOString(), products, movements };
+  const [products, movements, lots] = await Promise.all([getAll('products'), getAll('movements'), getAll('lots')]);
+  return { app: 'KeepInventory404', version: 2, exportedAt: new Date().toISOString(), products, movements, lots };
 }
 
 export async function importData(data) {
   if (!data || data.app !== 'KeepInventory404' || !Array.isArray(data.products) || !Array.isArray(data.movements)) {
     throw new Error('Esse arquivo não é um backup do KeepInventory404');
   }
-  await tx(['products', 'movements', 'meta'], 'readwrite', async (s) => {
+  await tx(['products', 'movements', 'meta', 'lots'], 'readwrite', async (s) => {
     await promisify(s.products.clear());
     await promisify(s.movements.clear());
+    await promisify(s.lots.clear());
     await promisify(s.meta.delete('countDraft'));
     for (const p of data.products) {
       if (typeof p.code !== 'string') continue;
       const base = newProduct(p.code, p);
-      s.products.put({ ...base, ...p, barcodes: base.barcodes, qty: clampInt(p.qty), minQty: clampInt(p.minQty) });
+      s.products.put({ ...base, ...p, barcodes: base.barcodes, area: AREA_IDS.includes(p.area) ? p.area : base.area, qty: clampInt(p.qty), minQty: clampInt(p.minQty) });
     }
     for (const m of data.movements) s.movements.put(m);
+    // Backups da versão 1 não têm lotes.
+    for (const l of Array.isArray(data.lots) ? data.lots : []) {
+      if (l && typeof l.code === 'string' && isIsoDate(l.expiresAt) && l.qty > 0) s.lots.put(l);
+    }
   });
   emit();
   return data.products.length;

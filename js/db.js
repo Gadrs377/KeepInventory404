@@ -1,10 +1,13 @@
 // Acesso ao IndexedDB. Só este arquivo conhece o banco; o resto do app usa store.js.
 
+import { guessArea } from './areas.js';
+
 const DB_NAME = 'keepinventory';
 // v1: produtos identificados pelo código de barras.
 // v2: `code` vira o identificador do produto e `barcodes` guarda os códigos
 //     de barras dele. Um mesmo código pode estar em mais de um produto.
-const DB_VERSION = 2;
+// v3: `area` (ambiente) em cada produto e o store `lots` com as validades.
+const DB_VERSION = 3;
 
 let dbPromise;
 
@@ -21,15 +24,6 @@ export function openDb() {
       if (event.oldVersion < 2) {
         const products = upgrade.objectStore('products');
         products.createIndex('barcodes', 'barcodes', { multiEntry: true });
-        products.openCursor().onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (!cursor) return;
-          const p = cursor.value;
-          if (!Array.isArray(p.barcodes)) {
-            cursor.update({ ...p, barcodes: p.code.startsWith('SEM-') ? [] : [p.code] });
-          }
-          cursor.continue();
-        };
       }
       if (!db.objectStoreNames.contains('movements')) {
         const mv = db.createObjectStore('movements', { keyPath: 'id', autoIncrement: true });
@@ -38,6 +32,26 @@ export function openDb() {
       }
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'key' });
+      }
+      if (event.oldVersion < 3) {
+        if (!db.objectStoreNames.contains('lots')) {
+          const lots = db.createObjectStore('lots', { keyPath: 'id', autoIncrement: true });
+          lots.createIndex('code', 'code');
+          lots.createIndex('expiresAt', 'expiresAt');
+        }
+      }
+      // Uma passada só pelos produtos antigos (v1 ou v2), para as mudanças não
+      // se sobreporem: códigos de barras (v2) e ambiente sugerido (v3).
+      if (event.oldVersion > 0 && event.oldVersion < 3) {
+        upgrade.objectStore('products').openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          const p = { ...cursor.value };
+          if (!Array.isArray(p.barcodes)) p.barcodes = p.code.startsWith('SEM-') ? [] : [p.code.split('~')[0]];
+          if (!p.area) p.area = guessArea(p);
+          cursor.update(p);
+          cursor.continue();
+        };
       }
     };
     req.onsuccess = () => {
