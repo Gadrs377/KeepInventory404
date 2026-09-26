@@ -27,7 +27,7 @@ export default async function mountDados(root) {
         <p class="lead">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
         <div class="stack-sm">
           <button type="button" class="btn btn-primary" data-export>Baixar backup</button>
-          <label class="btn btn-quiet file-btn">Restaurar backup<input type="file" accept="application/json,.json" data-import hidden></label>
+          <label class="btn btn-quiet file-btn">Restaurar backup<input type="file" accept="application/json,.json" data-import class="sr-only"></label>
           <button type="button" class="btn btn-quiet" data-csv>Baixar planilha</button>
         </div>
 

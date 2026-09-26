@@ -337,7 +337,7 @@ async function newForm(ctx, result) {
         <ul class="pick suggest" hidden></ul>
         ${result.status === 'found' ? '' : `
         <label class="btn btn-quiet file-btn" data-photo-btn>${icon('camera')}<span>Tirar foto da embalagem</span>
-          <input type="file" accept="image/*" capture="environment" data-photo hidden>
+          <input type="file" accept="image/*" capture="environment" data-photo class="sr-only">
         </label>`}
       </div>
       <fieldset class="segmented">
@@ -482,6 +482,7 @@ async function newForm(ctx, result) {
       clearTimeout(timer);
       photoBtn.classList.add('is-busy');
       photoBtn.setAttribute('aria-disabled', 'true');
+      photoInput.disabled = true;
       $('span', photoBtn).textContent = 'Lendo a embalagem';
       status.textContent = 'Lendo a embalagem. Leva uns 5 segundos.';
       list.hidden = true;
@@ -499,6 +500,7 @@ async function newForm(ctx, result) {
         if (body.isConnected) {
           photoBtn.classList.remove('is-busy');
           photoBtn.removeAttribute('aria-disabled');
+          photoInput.disabled = false;
           $('span', photoBtn).textContent = 'Tirar outra foto';
         }
       }

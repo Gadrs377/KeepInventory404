@@ -109,7 +109,7 @@ export default function mountScan(root, { mode, code: initialCode }) {
           <span class="row-name">${esc(p.reason)}</span>
           <span class="row-sub">Código ${esc(p.barcode)}${p.reads > 1 ? `, lido ${p.reads} vezes` : ''}</span>
         </span>
-        <button type="button" class="btn btn-quiet btn-sm" data-resolve="${esc(p.barcode)}">Resolver</button>
+        <button type="button" class="btn btn-quiet btn-sm" data-resolve="${esc(p.barcode)}" aria-label="Resolver o código ${esc(p.barcode)}">Resolver</button>
       </li>`).join('');
   }
 

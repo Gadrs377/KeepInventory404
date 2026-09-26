@@ -234,6 +234,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .btn-danger-ghost { background: transparent; color: var(--danger); border-color: var(--danger); }
 .btn-link { background: none; border: 0; text-decoration: underline; min-height: 44px; font-weight: 400; }
 .file-btn { cursor: pointer; }
+/* O campo de arquivo fica escondido só visualmente: continua no Tab e abre com Enter ou Espaço */
+.file-btn:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- Etiqueta de gôndola ---------- */
 
@@ -749,12 +751,17 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 
 .home-links { display: flex; gap: 8px; padding: 12px var(--gutter) 0; }
 .tabs { overflow-x: auto; scrollbar-width: none; }
+/* Em 320 px as quatro abas cabem inteiras, sem a última cortada na borda */
+@media (max-width: 359px) {
+  .tabs { gap: 12px; }
+  .tab { font-size: 15px; }
+}
 .tabs::-webkit-scrollbar { display: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px var(--gutter) 0; }
 .chip {
-  display: inline-flex; align-items: center; gap: 8px;
-  min-height: 44px; padding-inline: 12px 14px;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding-inline: 10px 12px;
   border: 1px solid var(--line); border-radius: var(--r-control); background: var(--paper);
   font-weight: 700; font-size: 15px;
   transition-property: scale; transition-duration: 150ms; transition-timing-function: var(--ease);
@@ -793,6 +800,9 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .shop-item { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px var(--gutter); cursor: pointer; }
 .shop-item .row-main { cursor: pointer; }
 .shop-item .row-sub { white-space: normal; }
+/* Na lista de compras o nome aparece inteiro: não há outra tela onde lê-lo */
+.shop-item .row-name { display: block; overflow: visible; overflow-wrap: anywhere; }
+.shop-item:active { background: var(--shelf); }
 .shop-item.is-done .row-name { text-decoration: line-through; color: var(--ink-2); }
 .shop-item.is-done .thumb, .shop-item.is-done .shop-qty { opacity: 0.45; }
 .shop-qty { flex: none; min-width: 44px; text-align: end; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -827,13 +837,20 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass-regular, .glass-thick { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .cam-tools { background: rgba(22, 24, 23, 0.92); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .cam-tools, .cam-hint { background: rgba(22, 24, 23, 0.92); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
   .glass-regular, .glass-thick { background: var(--glass-solid); box-shadow: inset 0 0 0 1px var(--ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .cam-tools { background: #161817; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .cam-tools, .cam-hint { background: #161817; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (forced-colors: active) {
   .glass-regular, .glass-thick, .cam-tools { background: Canvas; color: CanvasText; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .tag { border: 1px solid CanvasText; }
+  /* Estados que eram só preenchimento precisam de cor do sistema */
+  .segment input:checked + span, .chip[aria-pressed="true"], .check:checked, .switch:checked {
+    forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight;
+  }
+  .printer-slot, .ticket-barcode { forced-color-adjust: none; background-color: CanvasText; }
+  .ticket-barcode { background: repeating-linear-gradient(90deg, CanvasText 0 2px, transparent 2px 4px, CanvasText 4px 5px, transparent 5px 8px); }
+  .cam-hint { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
 }

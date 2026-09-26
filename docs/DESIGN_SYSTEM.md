@@ -1,5 +1,8 @@
 # Design system do KeepInventory404
 
+Versão 3.1: cupom impresso, modo rápido, ambientes, validade e compras,
+revisados de novo com liquid-glass e better-interface (seção 11).
+
 Versão 3: revisão com as skills better-* e make-interfaces-feel-better, e
 material liquid glass. O relatório completo, com medições, está em
 [REVISAO_INTERFACE.md](REVISAO_INTERFACE.md).
@@ -139,6 +142,14 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | **Escolha de produto** (`.pick`) | Lista dentro da folha quando um código tem mais de um produto |
 | **Seletor de quantidade** (`.stepper`) | − e + de 64 px e o número de 96 px no meio; tocar no número abre o teclado |
 | **Filtros** (`.tabs`) | Todos, Acabando, Zerados: botões com `aria-pressed`, sublinhado no ativo |
+| **Cupom impresso** (`.ticket`) | Papel sempre claro (também no tema escuro) que desce da boca da impressora (`.printer-slot`) com a borda de baixo rasgada em dentes de 12 px (máscara `conic-gradient`). Título do modo em caixa alta, linhas com pontilhado, total sob traço duplo e um código de barras decorativo. É conteúdo, não vidro |
+| **Interruptor na faixa** (`.band-switch`) | Modo rápido. Sobre a cor do modo: trilho claro translúcido; ligado, trilho cheio e bolinha na cor do modo |
+| **Para resolver** (`.pending`) | Caixa com contorno tracejado, a mesma linguagem da etiqueta zerada: algo que ainda falta |
+| **Abas de ambiente** (`.tabs`) | Tudo, Cozinha, Limpeza, Beleza. Sublinhado no ativo. Em 320 px diminuem para caber inteiras |
+| **Filtros de estado** (`.chip`) | Acabando, Zerados, Vencendo, com contagem. Só aparecem quando têm algo. Marcador quadrado na linguagem da etiqueta (amarelo, tracejado, calendário). Pressionado fica preto |
+| **Seletor segmentado** (`.segmented`) | Onde fica: três rádios nativos num trilho de 4 px; o escolhido fica preto. Raio interno 10 = 14 − 4 |
+| **Validade** (`.lot`) | Data em Archivo condensado; amarela quando vence em até 7 dias, como a etiqueta de acabando |
+| **Lista de compras** (`.shop-item`) | Caixa de marcar de 28 px dentro de uma linha inteira tocável, nome completo, quantidade sugerida condensada à direita. Marcado fica riscado |
 | **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), acima da barra flutuante. Com **Desfazer**, fica até ser fechado, trocado ou até mudar de tela; sem ação, some em 4 s. Fica atrás das folhas |
 
 Ícones: [Phosphor](https://phosphoricons.com), peso bold, MIT. Nunca desenhados à mão.
@@ -152,7 +163,11 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 - O som pode ser desligado em Dados. No iPhone, a chave de silencioso também
   silencia o bip.
 - Ao ler, a linha de leitura do visor pisca e o celular vibra 40 ms.
-- A folha sobe em 200 ms. Nenhuma outra animação.
+- A folha sobe em 200 ms.
+- O cupom desce da impressora uma vez, em 0,6 a 1,7 s conforme o número de
+  linhas, com `cubic-bezier(0.22, 1, 0.36, 1)` e 200 ms de espera para a folha
+  chegar antes. O celular vibra de leve três vezes, como o papel saindo.
+- A dica "Não está lendo?" aparece com 240 ms de opacidade e 6 px de descida.
 - `prefers-reduced-motion` remove todas as transições.
 
 ## 8. Escrita
@@ -186,3 +201,38 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 | Inicial do nome num quadrado quando falta foto | Ícone de pacote |
 | Mesma família no título e no corpo | Archivo para números e títulos, Atkinson para texto |
 | Reticências tipográficas em textos | Texto direto |
+
+## 11. Revisão da versão 3.1
+
+**Liquid glass (mapa de camadas das telas novas).** O cupom é conteúdo: papel
+sólido, sem vidro. A faixa de validade, os filtros e o Para resolver são
+estrutura: fundos sólidos. A dica sobre a câmera fica sobre vídeo, mas é sólida
+(86%) para não somar uma terceira camada com desfoque. Compras ganhou uma barra
+flutuante de vidro regular porque a lista passa por baixo dela. Medido com o
+Chromium, contando elementos com `backdrop-filter` na tela: Armário 2 (busca e
+barra de modos), Leitor 1, Compras 1, Contagem 1, Produto 0, Dados 0; com uma
+folha aberta, só a folha. Com cores forçadas e mais contraste, 0.
+
+**Better-interface.** Achados e correções:
+
+| Achado | Correção |
+| --- | --- |
+| Tirar foto e Restaurar backup não eram alcançáveis pelo teclado (campo de arquivo com `hidden`) | Campo escondido só visualmente (`.sr-only`); o botão mostra o anel de foco quando o campo tem foco |
+| Em 320 px a aba Beleza ficava cortada na borda, sem sinal de que havia mais | Abas com 15 px e 12 px de espaço abaixo de 360 px; as quatro cabem |
+| Nomes longos cortados na lista de compras, sem outro lugar para lê-los | Nome inteiro, quebrando linha |
+| Com cores forçadas, o segmento escolhido, o filtro pressionado e a caixa marcada perdiam o preenchimento | `Highlight` e `HighlightText` nesses estados; a boca da impressora vira `CanvasText` |
+| Botão "Ver" sem contexto no aviso de validade | "Ver o que vence" |
+| Vários "Resolver" com o mesmo nome para leitor de tela | "Resolver o código 789…" |
+
+Contraste medido na tela (fundo amostrado com o texto escondido), claro e escuro:
+
+| Par | Claro | Escuro |
+| --- | --- | --- |
+| Aviso de validade | 15,46:1 | 8,32:1 |
+| Filtro de estado | 17,84:1 | 15,89:1 |
+| Aba inativa | 9,82:1 | 10,17:1 |
+| Data amarela do lote | 10,65:1 | 10,65:1 |
+| Texto do lote | 9,82:1 | 10,17:1 |
+| Segmento inativo / escolhido | 8,54:1 / 17,84:1 | 8,57:1 / 15,89:1 |
+| Modo rápido na faixa verde | 6,71:1 | 8,26:1 |
+

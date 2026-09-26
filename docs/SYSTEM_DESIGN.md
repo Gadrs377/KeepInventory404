@@ -60,7 +60,7 @@ validade por lote, lista de compras. Ver a seção 9.
 - **Funciona offline**, exceto a consulta de produtos novos. Sem internet, o
   app oferece cadastro manual do nome.
 
-## 3. Modelo de dados (IndexedDB `keepinventory`, versão 2)
+## 3. Modelo de dados (IndexedDB `keepinventory`, versão 3)
 
 ### `products` (chave: `code`; índice `barcodes`, multiEntry)
 
@@ -73,14 +73,22 @@ validade por lote, lista de compras. Ver a seção 9.
 | `size` | string | Conteúdo da embalagem, ex. `395 g` |
 | `image` | string | URL da foto pequena da embalagem, opcional |
 | `category` | string | Categoria da loja, ex. `/Limpeza/Para Casa/Desinfetante/`. Opcional; base para os ambientes |
+| `area` | `cozinha` \| `limpeza` \| `beleza` | Ambiente da casa. Sugerido por `areas.js` e editável na página do produto |
 | `qty` | inteiro ≥ 0 | Unidades no armário. Nunca negativo |
 | `minQty` | inteiro ≥ 0 | Abaixo ou igual a isso o item aparece como "acabando". 0 desliga o aviso |
 | `source` | `off` \| `loja` \| `manual` | De onde veio o cadastro |
 | `createdAt`, `updatedAt` | número (ms) | |
 
-Versão 2 do banco. A migração da versão 1 cria o índice `barcodes` e preenche
-`barcodes = [code]` em cada produto existente, sem mexer em quantidades nem no
-histórico.
+Versão 3 do banco. As migrações nunca mexem em quantidades nem no histórico:
+da versão 1 cria o índice `barcodes` e preenche `barcodes = [code]`; da 2 cria a
+tabela `lots` e preenche `area` com a regra de ambientes. Uma só passada de
+cursor faz as duas coisas, para uma não sobrescrever a outra.
+
+**Ambientes (`areas.js`), sem IA.** Ordem: exceções pelo nome (papel higiênico,
+saco de lixo e inseticida vão para limpeza, embora as lojas ponham em higiene),
+depois o primeiro segmento reconhecido da categoria da loja, depois palavras do
+nome, e por fim cozinha. Medido em produtos que as regras nunca viram: 99% certo
+pela categoria e 99% só pelo nome.
 
 ### `movements` (chave: `id` autoincremento; índices `code`, `at`)
 
@@ -91,6 +99,21 @@ histórico.
 | `delta` | inteiro | Positivo soma, negativo subtrai |
 | `qtyBefore`, `qtyAfter` | inteiro | Permite auditar e desfazer |
 | `at` | número (ms) | Momento do registro |
+| `lotsBefore` | lote[] | Como estavam os lotes antes, para desfazer |
+| `expiresAt` | `AAAA-MM-DD` | Só em entradas com validade |
+
+### `lots` (chave: `id` autoincremento; índices `code`, `expiresAt`)
+
+| Campo | Tipo | Observação |
+| --- | --- | --- |
+| `code` | string | Produto |
+| `qty` | inteiro ≥ 1 | Unidades com esta validade |
+| `expiresAt` | `AAAA-MM-DD` | Validade. Só mês e ano vira o último dia do mês |
+| `addedAt` | número (ms) | |
+
+A soma dos lotes nunca passa de `qty`; o que sobra são unidades sem data. Quando
+o estoque cai (saída, ajuste ou contagem), saem primeiro as unidades sem data e
+depois os lotes que vencem antes.
 
 O estoque (`products.qty`) é sempre atualizado na **mesma transação** que grava
 o movimento. Assim o número exibido e o histórico nunca divergem.
@@ -112,7 +135,16 @@ contagem continua de onde parou.
 | `removeStock(code, n)` | `n ≥ 1` e `n ≤ qty`. Não deixa o estoque negativo; a interface limita o seletor ao estoque atual |
 | `setStock(code, n)` | Ajuste manual na tela do produto. Grava `ajuste` com a diferença |
 | `applyCount(draft, zeroMissing)` | Para cada item contado com quantidade diferente, grava `contagem` com a diferença. Com `zeroMissing`, itens não contados vão a 0 |
-| `undoMovement(id)` | Desfaz só se for o último movimento do produto; volta `qty` para `qtyBefore` e apaga o movimento |
+| `undoMovement(id)` | Desfaz só se for o último movimento do produto; volta `qty` para `qtyBefore`, restaura os lotes e apaga o movimento |
+| `addStock(code, n, info, expiresAt)` | Com validade, cria um lote de `n` unidades |
+| `addLot(code, n, expiresAt)` | Dá validade a unidades que já estão no armário sem data |
+
+**Consumo (`consumo.js`).** Ritmo = saídas e baixas por ajuste ou contagem nos
+últimos 60 dias, divididas pelos dias de histórico (mínimo 7). Uma saída só não
+conta como ritmo. A lista de compras sugere o que está no mínimo ou acaba antes
+da próxima compra; a quantidade leva o estoque ao consumo até a próxima compra
+mais o mínimo. O intervalo entre compras (padrão 7 dias), os itens marcados e os
+itens soltos ficam no `localStorage` deste celular.
 
 ## 5. Busca do produto (`lookup.js`)
 
@@ -150,7 +182,8 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
 | Rota | O que faz | Cache |
 | --- | --- | --- |
 | `GET /lookup?ean=` | Consulta 13 lojas em paralelo e devolve a primeira que achar | 7 dias (não encontrado: 1 dia) |
-| `GET /search?q=` | Busca por nome em 3 supermercados e 1 farmácia, intercala, remove repetidos e mantém só o que contém as palavras digitadas | 1 dia |
+| `GET /search?q=` | Busca por nome em 3 supermercados e 1 farmácia, intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
+| `POST /identify` | Recebe a foto da embalagem (JPEG até 1 MB), a IA da Cloudflare (Llama 4 Scout) lê marca, produto, variante e tamanho, e o Worker busca em cascata (busca sugerida, marca + produto + variante, marca + produto, marca) até juntar 6 sugestões | a busca usa o cache da `/search` |
 | `GET /diag` | Testa cada loja a partir da Cloudflare | sem cache |
 
 - Só consulta a lista fixa de lojas (não é um proxy aberto) e só responde a
@@ -162,6 +195,10 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
   `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`.
 - Busca não oficial: se uma loja mudar ou bloquear, as outras continuam.
   `/diag` mostra quais respondem.
+- **Foto com IA, validada:** em 22 fotos reais de embalagens, o produto certo
+  apareceu nas sugestões em 17 (15 entre as 5 primeiras). A cota grátis da
+  Workers AI (10 mil neurônios por dia) dá para centenas de fotos por dia. A foto
+  é o último recurso: vem depois do código, da busca nas lojas e do nome.
 
 ### 5.1 Um código, vários produtos
 
@@ -213,6 +250,8 @@ brasileiros e aceita chamadas do navegador (CORS liberado).
 - Lanterna, quando a câmera oferece `torch`.
 - Sem câmera ou sem permissão: a tela explica como liberar e oferece
   **Digitar código**.
+- **Não está lendo?** Depois de 9 s com a câmera ligada e nenhuma leitura, o
+  visor mostra **Buscar pelo nome**. A mesma opção fica na folha Digitar código.
 
 ## 7. Fluxos
 
@@ -224,6 +263,31 @@ Armário ─[Entrada]→ Leitor (verde) ─código→ busca ─→ Folha do prod
                                                       └[Adicionar N]→ addStock
                                                             → aviso "Agora: X" + Desfazer
                                                             → leitor volta a ler
+```
+
+### Modo rápido (caixa do mercado)
+
+```
+Leitor com [Modo rápido] ligado ─código→ um produto só no armário?
+          ├ sim → soma (ou tira) 1 na hora, bip, linha no cupom, aviso com Desfazer
+          └ não (novo ou vários produtos) → vai para "Para resolver" (conta as leituras)
+[Concluir] com pendentes → pergunta: Resolver agora | Concluir sem elas
+[Resolver] → folha normal, com a quantidade = número de leituras
+```
+
+### Fim da sessão
+
+Concluir mostra o cupom da sessão (Entrada, Saída ou, depois de aplicar, a
+Contagem), que sai da impressora e pode ser compartilhado como texto.
+
+### Sem código de barras
+
+```
+[Buscar pelo nome] → Saída: lista o que está no armário pelo nome
+                   → Entrada/Contagem: nome digitado → primeiro o que já está no
+                     armário, depois as lojas → [Tirar foto da embalagem] → IA lê →
+                     sugestões das lojas → escolher preenche nome, marca, foto e o
+                     código de barras de verdade
 ```
 
 ### Saída
@@ -255,7 +319,11 @@ css/app.css             Tokens e componentes do design system
 js/app.js               Inicialização e roteador
 js/db.js                Acesso ao IndexedDB
 js/store.js             Regras de estoque
-js/lookup.js            Open Food Facts
+js/lookup.js            Open Food Facts, lojas pelo repassador e foto
+js/areas.js             Regra dos ambientes da casa
+js/dates.js             Validade: leitura do que foi digitado, textos, .ics
+js/consumo.js           Ritmo de consumo e lista de compras
+js/photo.js             Reduz a foto antes de enviar
 js/scanner.js           Câmera e decodificação
 js/ui.js                Folha, aviso, seletor de quantidade, escape de HTML
 js/icons.js             Ícones Phosphor (MIT)
@@ -273,8 +341,12 @@ docs/                   Este documento, interfaces e design system
 - **Sincronizar entre celulares da casa:** trocar `db.js` por um adaptador que
   grava também em um backend simples (Supabase ou Firebase). As telas não mudam,
   porque só falam com `store.js`.
-- **Validade:** guardar lotes com data de validade em `movements` de entrada.
-- **Lista de compras:** gerar a partir dos itens com `qty ≤ minQty`.
+- **Conector MCP:** expor o armário ao Claude como ferramenta (hoje o app monta
+  a pergunta e abre `claude.ai/new?q=`).
+- **Aviso de validade no celular:** hoje o aviso aparece ao abrir o app e pelo
+  lembrete `.ics` no calendário; notificação push precisaria de servidor.
+- **Validade pela foto:** a IA poderia ler a data impressa; ainda não validado
+  com fotos reais, por isso a data é digitada.
 
 ## 10. Publicação
 

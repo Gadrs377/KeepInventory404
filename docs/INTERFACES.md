@@ -23,9 +23,13 @@ regras de `store.js` descritas no [system design](SYSTEM_DESIGN.md).
           │   │ #/saida │                       │  Produto    │
           │   └─────────┘                       │#/produto/:c │
           │                                     └─────────────┘
-          └── menu ─────────► ┌──────────┐
-                              │  Dados   │
-                              │ #/dados  │
+          ├── menu ─────────► ┌──────────┐
+          │                   │  Dados   │
+          │                   │ #/dados  │
+          │                   └──────────┘
+          └── Compras ──────► ┌──────────┐
+                              │ Compras  │
+                              │#/compras │
                               └──────────┘
 ```
 
@@ -40,13 +44,16 @@ Tela inicial. Responde "quanto tem de cada coisa?".
 
 ```
 ┌─────────────────────────────────┐
-│ Armário           [Contar]  [≡] │  Contar abre o inventário; ≡ abre Dados
+│ Armário                     [≡] │  ≡ abre Dados
 │ 23 produtos, 4 acabando         │  resumo
+│ [Compras] [Contar]              │  outras telas
 │ ┌─────────────────────────────┐ │
 │ │ Buscar no armário           │ │
 │ └─────────────────────────────┘ │
-│ Todos   Acabando 4   Zerados 1  │  abas, a ativa sublinhada
-│ ‾‾‾‾‾                           │
+│ Tudo  Cozinha  Limpeza  Beleza  │  ambientes, o ativo sublinhado
+│ ‾‾‾‾                            │
+│ [■ Acabando 4] [▭ Vencendo 1]   │  filtros de estado, só os que têm algo
+│ ┌ Leite vence em 2 dias. [Ver o que vence] ┐  aviso amarelo (vence nesta semana)
 ├─────────────────────────────────┤
 │ [img] Leite condensado     ┌──┐ │
 │       Moça, 395 g          │ 3│ │  etiqueta escura
@@ -66,7 +73,11 @@ Tela inicial. Responde "quanto tem de cada coisa?".
 
 - O inventário é feito de vez em quando, então fica no topo como ação
   secundária (**Contar**) e não disputa espaço com Entrada e Saída.
-- Ordem: acabando primeiro, depois alfabética.
+- Ordem: acabando primeiro, depois alfabética. No filtro Vencendo, o que vence antes.
+- Ambientes: Cozinha, Banheiro e limpeza, Beleza e cuidados. O app sugere pelo
+  tipo de produto; a pessoa troca na página do produto.
+- A linha mostra "Vence em 3 dias" (em negrito na última semana) quando algum
+  lote vence nos próximos 30 dias.
 - Busca filtra por nome, marca ou código enquanto digita.
 - Vazio: "Comece pela Entrada." e uma frase com o passo a passo.
 
@@ -78,6 +89,7 @@ Mesma tela, duas cores. A faixa do modo ocupa o topo inteiro.
 ┌─────────────────────────────────┐
 │█ Entrada                    ✕ █│  faixa verde (ou beterraba em Saída)
 │█ Aponte para o código de barras█│
+│█ (●  ) Modo rápido             █│  cada leitura conta 1, sem folha
 ├─────────────────────────────────┤
 │                                 │
 │        vídeo da câmera          │
@@ -87,13 +99,37 @@ Mesma tela, duas cores. A faixa do modo ocupa o topo inteiro.
 │                                 │
 ├─────────────────────────────────┤
 │   ( Lanterna | Digitar código ) │  grupo de vidro sobre a imagem
+│ (Não está lendo? Buscar pelo nome) depois de 9 s sem leitura
+├─────────────────────────────────┤
+│ ┌╌ Para resolver ╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐ │  só no modo rápido: códigos novos
+│ ╎ Produto novo      [Resolver] ╎ │  ou com vários produtos
+│ └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘ │
 ├─────────────────────────────────┤
 │ Leite condensado ........... +2 │  cupom: um item por linha
 │ Arroz branco ............... +1 │
 │ ═══════════════════════════════ │
 │ 2 produtos                   +3 │  total
 ├─────────────────────────────────┤
-│ [          Concluir           ] │  volta ao Armário
+│ [          Concluir           ] │  mostra o cupom impresso
+└─────────────────────────────────┘
+```
+
+### Cupom (ao concluir)
+
+```
+┌─────────────────────────────────┐
+│ Pronto                        ✕ │
+│ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ │  boca da impressora
+│   │         ENTRADA         │   │  o papel desce dela
+│   │     26/09/2026 21:14    │   │
+│   │ Leite condensado ... +2 │   │
+│   │ ficou 3                 │   │
+│   │ ═══════════════════════ │   │
+│   │ 2 produtos           +3 │   │
+│   │   ||||||||||||||||||    │   │
+│   └╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲┘   │  borda rasgada
+│ [      Voltar ao armário      ] │
+│ [      Compartilhar cupom     ] │  texto pelo compartilhar do celular
 └─────────────────────────────────┘
 ```
 
@@ -165,6 +201,20 @@ fecha e o foco volta para onde estava.
   o sabor."
 - Na contagem funciona igual: a folha "Quantos tem?" abre para o produto
   escolhido.
+
+### Validade na folha de entrada
+
+Escondida atrás de **Adicionar validade** (a maioria das leituras não precisa).
+O campo aceita como vem impresso: `15/10/26`, `15/10/2026`, `10/26` ou `10/2026`;
+as barras entram sozinhas e a linha de baixo confirma "Vence em 31/10/2026,
+daqui a 35 dias". Só mês e ano vale até o último dia do mês.
+
+### Folha de produto novo e Buscar pelo nome
+
+Nome com sugestões (primeiro o que já está no armário, depois as lojas),
+**Tirar foto da embalagem** quando o código não foi achado, e **Onde fica**
+(Cozinha, Limpeza, Beleza) já escolhido pela regra de ambientes. Na Saída, Buscar
+pelo nome lista só o que está no armário.
 
 ### Folha Digitar código
 
@@ -245,9 +295,18 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 │ Nome          [Leite condensado]│
 │ Marca         [Moça            ]│
 │ Tamanho       [395 g           ]│
+│ Onde fica  [Cozinha|Limpeza|Beleza] seletor segmentado
 │ Avisar com    [ 1 ] ou menos    │
 │ Quantidade    [ − ] 5 [ + ]     │  ajuste manual
 │ [          Salvar             ] │
+├─────────────────────────────────┤
+│ Validade                        │
+│ 29/09/2026  1 unidade, daqui a 3 dias  🗑 │  data amarela na última semana
+│ 31/10/2026  2 unidades, daqui a 35 dias 🗑│
+│ [Marcar validade] [Lembrete no calendário] .ics com alarme 3 dias antes
+├─────────────────────────────────┤
+│ Consumo                         │
+│ Vocês usam cerca de 3 por semana. O que tem dá para uns 5 dias.
 ├─────────────────────────────────┤
 │ Histórico                       │
 │ Entrada de 2       hoje 19:40   │
@@ -258,7 +317,30 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 └─────────────────────────────────┘
 ```
 
-## 6. Dados `#/dados`
+## 6. Compras `#/compras`
+
+```
+┌─────────────────────────────────┐
+│ ← Compras                       │
+│ 3 itens para comprar.           │
+│ Cozinha                         │  agrupado por ambiente
+│ ☐ [img] Arroz Tio João       2  │  quantidade sugerida
+│         Acabando, tem 1, cerca de 3 por semana
+│ Outros                          │
+│ ☐ Pão                        ✕  │  itens soltos
+│ Acrescentar à lista [____][Acrescentar]
+│ Vocês fazem compras a cada [− 7 +] dias
+│ Perguntar ao Claude             │
+│ [Revisar a lista comigo]        │  abre claude.ai com a pergunta escrita
+│ [Receitas com o que vence]      │  só quando algo vence em 30 dias
+│ [      Compartilhar lista     ] │  barra flutuante
+└─────────────────────────────────┘
+```
+
+- Marcar risca o item. Quando o produto é reposto e sai da sugestão, a marca some.
+- Nada vai para o Claude sem a pessoa tocar em Enviar lá.
+
+## 7. Dados `#/dados`
 
 ```
 │ ← Dados                         │

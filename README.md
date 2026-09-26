@@ -9,8 +9,21 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 - **Saída:** leia o código e dê baixa na quantidade que saiu.
 - **Contagem (inventário):** conte o que está no armário; na revisão você vê as diferenças
   e aplica a correção de uma vez.
-- **Armário:** lista com a quantidade de cada item, busca e filtros de
-  "acabando" e "zerados".
+- **Armário:** lista com a quantidade de cada item, separada por ambiente
+  (Cozinha, Banheiro e limpeza, Beleza e cuidados), com busca e filtros
+  Acabando, Zerados e Vencendo.
+- **Modo rápido:** como no caixa do mercado, cada leitura soma ou tira 1 só com
+  o bip. O que o app não conhece fica em "Para resolver" até o fim.
+- **Cupom:** ao concluir, a sessão sai impressa num cupom com a borda rasgada,
+  que dá para compartilhar.
+- **Validade (opcional):** digite como vem na embalagem (`15/10/26` ou `10/26`).
+  O app avisa o que vence na semana, gasta primeiro o que vence antes e gera um
+  lembrete para o calendário.
+- **Compras:** lista sugerida pelo mínimo de cada produto e pelo ritmo de
+  consumo, com itens soltos, compartilhar e **Perguntar ao Claude** (revisar a
+  lista ou pedir receitas com o que vence).
+- **Sem código de barras:** busque pelo nome ou tire uma foto da embalagem; a IA
+  gratuita da Cloudflare lê a marca e o app sugere o produto das lojas.
 - Bip de caixa de mercado a cada leitura (dá para desligar em Dados).
 - Se um código de barras estiver em mais de um produto, o app pergunta qual
   deles você está segurando.
