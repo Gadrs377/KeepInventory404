@@ -187,6 +187,29 @@ export async function addBarcode(code, barcode) {
 }
 
 // Cadastra sem mexer no estoque (usado pela contagem antes de salvar a quantidade).
+// Corrigir um cadastro feito à mão: troca nome, marca, tamanho e foto pelos
+// dados de uma loja e, se veio de uma leitura, passa a reconhecer o código.
+export async function applyInfo(code, info, barcode = '') {
+  const p = await getProduct(code);
+  if (!p) throw new Error('Esse produto não está mais no armário.');
+  const barcodes = Array.isArray(p.barcodes) ? p.barcodes.slice() : [];
+  if (barcode && !barcodes.includes(barcode)) barcodes.push(barcode);
+  const next = {
+    ...p,
+    name: String(info.name || '').trim() || p.name,
+    brand: String(info.brand ?? p.brand ?? '').trim(),
+    size: String(info.size ?? p.size ?? '').trim(),
+    image: info.image || p.image || '',
+    category: info.category || p.category || '',
+    source: info.source || 'loja',
+    barcodes,
+    updatedAt: Date.now(),
+  };
+  await put('products', next);
+  emit();
+  return next;
+}
+
 export async function ensureProduct(code, info) {
   const existing = await getProduct(code);
   if (existing) return existing;

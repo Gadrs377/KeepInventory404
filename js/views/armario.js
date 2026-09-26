@@ -5,7 +5,7 @@ import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, remov
 import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -88,7 +88,8 @@ export default function mountArmario(root) {
     const counts = Object.fromEntries(FILTERS.map((f) => [f.id, inArea.filter(f.test).length]));
     const urgent = inArea.some((p) => expiresSoon(p, SOON_DAYS));
     const TILE_ICON = { acabando: 'hourglass', zerados: 'dashed', vencendo: 'calendar' };
-    chips.hidden = !products.length;
+    // Sem nada acabando, zerado ou vencendo, os blocos não têm o que mostrar: somem.
+    chips.hidden = !products.length || (savedFilter === 'todos' && !counts.acabando && !counts.zerados && !counts.vencendo);
     chips.innerHTML = FILTERS.filter((f) => f.id !== 'todos').map((f) => `
       <button type="button" class="tile tile-${f.id}${f.id === 'vencendo' && urgent ? ' is-urgent' : ''}${counts[f.id] ? '' : ' is-empty'}" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
         <span class="tile-icon" aria-hidden="true">${icon(TILE_ICON[f.id])}</span>
@@ -222,7 +223,7 @@ export default function mountArmario(root) {
     try {
       const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
       vibrate(15);
-      toast(`${delta < 0 ? '−1' : '+1'} ${product.name}. Agora tem ${product.qty}.`, {
+      toast(`${delta < 0 ? '−1' : '+1'} ${product.name}. Agora tem ${product.qty}.${delta < 0 ? afterUseText(product) : ''}`, {
         mode: delta < 0 ? 'saida' : 'entrada',
         action: 'Desfazer',
         onAction: async () => {

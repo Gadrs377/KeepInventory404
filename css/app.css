@@ -1799,3 +1799,32 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 /* Sem espaço ao lado da pílula, o texto desce para a linha de baixo inteiro */
 .row-meta { flex-wrap: wrap; row-gap: 2px; }
 .row-meta .row-sub { flex: 1 1 10ch; }
+
+/* ---------- Versão 3.14: opções pela frequência de uso ---------- */
+
+/* Produto: Tirar 1 e Guardar 1 logo abaixo do topo (o que mais se faz ali) */
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick-actions .btn { min-height: 48px; }
+/* Ação rara, discreta: link pequeno sob o código */
+.link-sm {
+  align-self: flex-start; margin-top: 6px; padding: 10px 0; min-height: 44px;
+  border: 0; background: none; color: var(--ink-2);
+  font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.fix-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.fix-cam { margin-inline: calc(var(--gutter) * -1); }
+.fix-cam .cam-host { padding-top: 0; }
+
+/* Leitor em Saída: tirar sem ler o código */
+.quick-out { padding: 4px var(--gutter) 24px; }
+.quick-out .list-title { margin-top: 20px; margin-bottom: 2px; }
+.quick-out .field-note { margin-bottom: 8px; }
+.quick-list { border-top: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1); margin-bottom: 12px; }
+.quick-row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px var(--gutter); border-bottom: 1px solid var(--line); }
+.quick-row .row-main { flex: 1; min-width: 0; }
+.quick-row .btn { flex: none; }
+
+/* O que não se usa naquele momento não aparece */
+.screen-scan.mode-saida [data-nota] { display: none; }
+@media (display-mode: standalone) { .install-note { display: none; } }
+.screen-product .quick-actions .btn-quiet { background: color-mix(in oklab, var(--ink) 7%, transparent); }

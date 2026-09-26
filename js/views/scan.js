@@ -9,11 +9,12 @@
 import { mountCamera } from './camera.js';
 import { showProductSheet } from './productSheet.js';
 import { showReceipt } from './receipt.js';
-import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, setStock, updateProduct } from '../store.js';
+import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, setStock, updateProduct, listProducts, recentMovements } from '../store.js';
+import { consumptionByProduct } from '../consumo.js';
 import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { beep } from '../sound.js';
-import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo } from '../ui.js';
+import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo, afterUseText } from '../ui.js';
 
 const COPY = {
   entrada: {
@@ -80,6 +81,12 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
           <ul class="receipt-lines"></ul>
           <p class="receipt-total"></p>
         </section>
+        <section class="quick-out" aria-labelledby="quick-out-title" hidden>
+          <h2 class="list-title" id="quick-out-title">Usados com frequência</h2>
+          <p class="field-note">Para o que não tem código, como o rolo de papel toalha.</p>
+          <ul class="quick-list"></ul>
+          <button type="button" class="btn btn-quiet btn-sm" data-quick-search>${icon('search')}Procurar outro no armário</button>
+        </section>
       </main>
       <footer class="floating-bar glass-regular glass-static">
         <button type="button" class="btn btn-primary btn-lg" data-finish>${icon('check')}Concluir</button>
@@ -111,6 +118,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     const radio = $(`input[name=scan-mode][value="${mode}"]`, root);
     if (radio) { radio.checked = true; glideTo($('.mode-switch', root), radio.closest('label')); }
     renderHint();
+    renderQuick();
     history.replaceState(null, '', `#/${mode}`);
     try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
     vibrate(10);
@@ -122,6 +130,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
 
   let freshKey = ''; // linha que acabou de mudar: entra com destaque
   function renderSession() {
+    renderQuick(); // as quantidades da lista "Tirar sem ler" acompanham
     if (!session.size) {
       lines.innerHTML = '<li class="receipt-empty">O que você guardar ou tirar aparece aqui.</li>';
       total.hidden = true;
@@ -164,7 +173,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     freshKey = key;
     renderSession();
     cam.flash(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}`, m);
-    toast(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}. Agora tem ${product.qty}.`, {
+    toast(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}. Agora tem ${product.qty}.${m === 'saida' ? afterUseText(product) : ''}`, {
       mode: m,
       action: 'Desfazer',
       onAction: async () => {
@@ -359,6 +368,42 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     });
     location.hash = '#/';
   });
+
+  // Saída sem ler: os produtos que vocês mais usam, com Tirar 1. Resolve o
+  // que não tem código (rolo de papel toalha, cápsula solta, pão).
+  const quick = $('.quick-out', root);
+  const quickList = $('.quick-list', root);
+  let quickRates = null;
+  async function renderQuick() {
+    if (mode !== 'saida') { quick.hidden = true; return; }
+    const products = (await listProducts()).filter((p) => p.qty > 0);
+    if (!quickRates) quickRates = consumptionByProduct(products, await recentMovements(2000));
+    if (mode !== 'saida') return;
+    const rateOf = (p) => (quickRates.get(p.code) || { perDay: 0 }).perDay;
+    const top = products.sort((a, b) => rateOf(b) - rateOf(a) || b.updatedAt - a.updatedAt).slice(0, 6);
+    quick.hidden = !top.length;
+    $('#quick-out-title', root).textContent = top.some((p) => rateOf(p) > 0) ? 'Usados com frequência' : 'No armário';
+    quickList.innerHTML = top.map((p) => `
+      <li class="quick-row">
+        ${thumb(p)}
+        <span class="row-main"><span class="row-name">${esc(p.name)}</span><span class="row-sub">Tem ${p.qty}</span></span>
+        <button type="button" class="btn btn-quiet btn-sm" data-quick="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}Tirar 1</button>
+      </li>`).join('');
+  }
+  quickList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-quick]');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const r = await removeStock(btn.dataset.quick, 1);
+      vibrate(15);
+      record('saida', r.product, r.movement, 1);
+    } catch (err) {
+      btn.disabled = false;
+      toast(err.message, { duration: 3000 });
+    }
+  });
+  $('[data-quick-search]', root).addEventListener('click', () => cam.handle(`SEM-${Date.now()}`));
 
   renderHint();
   renderSession();

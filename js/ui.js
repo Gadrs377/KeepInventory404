@@ -37,6 +37,15 @@ export function stockPill(p) {
   return '';
 }
 
+// Depois de tirar: o aviso conta o que isso mudou, não só o número.
+// "Acabando" já põe o produto na lista de compras (sugestão automática).
+export function afterUseText(p) {
+  if (p.minQty > 0 && p.qty <= p.minQty) {
+    return p.qty === 0 ? ' Acabou; já está na lista de compras.' : ' Está acabando; já está na lista de compras.';
+  }
+  return p.qty === 0 ? ' Acabou.' : '';
+}
+
 export function tagState(p) {
   if (p.qty === 0) return 'is-zero';
   if (p.minQty > 0 && p.qty <= p.minQty) return 'is-low';

@@ -1,10 +1,12 @@
 // Página do produto: dados, validades, consumo, ajuste manual e histórico.
 
-import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement } from '../store.js';
+import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
+import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
+import { photoToDataUrl } from '../photo.js';
 import { AREAS } from '../areas.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural } from '../ui.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -49,18 +51,15 @@ export default async function mountProduto(root, { code }) {
             <p class="product-sub">${subtitle(p) || '&nbsp;'}</p>
             <p class="product-code">${esc(niceCode)}</p>
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
+            ${p.source === 'loja' || p.source === 'off' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
           ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>
 
-        <section class="stock-fix" aria-labelledby="stock-title">
-          <h2 class="list-title" id="stock-title">Quantidade no armário</h2>
-          <div class="stock-fix-row">
-            <div class="stepper-host stepper-sm" data-qty></div>
-            <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
-          </div>
-          <p class="field-note">Só para acertar a contagem.</p>
-        </section>
+        <div class="quick-actions">
+          <button type="button" class="btn btn-quiet" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
+          <button type="button" class="btn btn-quiet" data-use="1">${icon('plus')}Guardar 1</button>
+        </div>
 
         <section aria-labelledby="lots-title">
           <h2 class="list-title" id="lots-title">Validade</h2>
@@ -72,6 +71,15 @@ export default async function mountProduto(root, { code }) {
           <p class="sheet-text">${esc(usage)}</p>
           ${p.lastPrice && p.lastPrice.value ? `<p class="sheet-text">Último preço ${esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lastPrice.value))}${p.lastPrice.unit && p.lastPrice.unit !== 'UN' ? ` o ${esc(p.lastPrice.unit.toLowerCase())}` : ''}, ${esc(p.lastPrice.store || 'mercado')}, ${esc(new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(p.lastPrice.at)))}.</p>` : ''}
           <p class="field-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando.'}</p>
+        </section>
+
+        <section class="stock-fix" aria-labelledby="stock-title">
+          <h2 class="list-title" id="stock-title">Corrigir a quantidade</h2>
+          <div class="stock-fix-row">
+            <div class="stepper-host stepper-sm" data-qty></div>
+            <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
+          </div>
+          <p class="field-note">Para quando o número do app não bate com o armário.</p>
         </section>
 
         <section>
@@ -105,6 +113,54 @@ export default async function mountProduto(root, { code }) {
       $('span', fixBtn).textContent = `Corrigir para ${n}`;
     },
   });
+  // Mostra a quantidade nova no topo, no botão Tirar 1 e no seletor de correção.
+  function showQty(product, dir = '') {
+    currentQty = product.qty;
+    qtyStep.set(product.qty);
+    fixBtn.hidden = true;
+    $('.product-hero .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
+    const pills = $('.hero-pills', root);
+    if (pills) pills.innerHTML = stockPill(product);
+    $('[data-use="-1"]', root).disabled = product.qty === 0;
+  }
+
+  // Tirar 1 e Guardar 1 no topo: o que mais se faz na página do produto.
+  $('.quick-actions', root).addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-use]');
+    if (!btn || btn.disabled) return;
+    const delta = Number(btn.dataset.use);
+    try {
+      const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
+      vibrate(12);
+      showQty(product, delta < 0 ? 'is-down' : 'is-up');
+      toast(`${delta < 0 ? '−1' : '+1'}. Agora tem ${product.qty}.${delta < 0 ? afterUseText(product) : ''}`, {
+        mode: delta < 0 ? 'saida' : 'entrada',
+        action: 'Desfazer',
+        onAction: async () => {
+          try {
+            showQty(await undoMovement(movement.id));
+            toast('Desfeito.', { duration: 2500 });
+          } catch (err) {
+            toast(err.message, { duration: 4000 });
+          }
+        },
+      });
+    } catch (err) {
+      toast(err.message, { duration: 3000 });
+    }
+  });
+
+  const fixName = $('[data-fixname]', root);
+  if (fixName) {
+    fixName.addEventListener('click', async () => {
+      const cur = (await getProduct(code)) || p;
+      if (await fixNameSheet(cur)) {
+        toast('Nome corrigido.', { duration: 2500 });
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      }
+    });
+  }
+
   fixBtn.addEventListener('click', async () => {
     const target = qtyStep.value;
     try {
@@ -321,4 +377,94 @@ function editSheet(p) {
       });
     },
   });
+}
+
+// Corrigir um nome esquisito: busca o nome certo nas lojas pelo código de
+// barras que o produto já tem, lendo o código com a câmera ou pela foto da
+// embalagem (IA). Tocar numa sugestão troca nome, marca, tamanho e foto.
+function fixNameSheet(p) {
+  let cam = null;
+  let scanned = '';
+  const sheet = openSheet({
+    title: 'Buscar o nome certo',
+    label: 'Buscar o nome certo',
+    render(body, close) {
+      const saved = (p.barcodes || [])[0] || '';
+      body.innerHTML = `
+        <p class="sheet-text">Agora: <strong>${esc(p.name)}</strong></p>
+        <div class="fix-tools">
+          <button type="button" class="btn btn-quiet btn-sm" data-scan>${icon('barcode')}Ler o código</button>
+          <label class="btn btn-quiet btn-sm file-btn" data-photo-btn>${icon('camera')}<span>Fotografar a embalagem</span>
+            <input type="file" accept="image/*" capture="environment" class="sr-only" data-photo></label>
+        </div>
+        <div class="fix-cam" hidden></div>
+        <p class="loading-note" aria-live="polite"><span class="spinner" aria-hidden="true" hidden></span><span data-status></span></p>
+        <ul class="pick suggest" hidden></ul>`;
+      const status = $('[data-status]', body);
+      const spinner = $('.spinner', body);
+      const list = $('.suggest', body);
+      const camHost = $('.fix-cam', body);
+      let items = [];
+      const busy = (text) => { spinner.hidden = false; status.textContent = text; list.hidden = true; };
+      const done = (text) => { spinner.hidden = true; status.textContent = text; };
+      const show = (found, from) => {
+        items = found.filter((x) => x && x.name);
+        list.innerHTML = items.map((x, i) => `
+          <li><button type="button" class="pick-row suggest-row" data-i="${i}">
+            ${thumb(x)}
+            <span class="row-main"><span class="row-name">${esc(x.name)}</span><span class="row-sub">${subtitle(x) || '&nbsp;'}</span></span>
+          </button></li>`).join('');
+        list.hidden = !items.length;
+        done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}. Toque na certa.` : `Nada encontrado ${from}. Tente ler o código ou fotografar a embalagem.`);
+      };
+      async function byCode(code) {
+        busy(`Procurando o código ${code} nas lojas`);
+        const r = await lookupRemote(code);
+        if (!body.isConnected) return;
+        if (r.status === 'found') show([r.info], 'pelo código');
+        else done(r.status === 'offline' ? 'Sem internet para buscar agora.' : 'As lojas não conhecem esse código. Fotografe a embalagem.');
+      }
+      if (saved) byCode(saved);
+      else done('Leia o código da embalagem ou fotografe.');
+
+      $('[data-scan]', body).addEventListener('click', async () => {
+        camHost.hidden = false;
+        if (cam) return;
+        const { mountCamera } = await import('./camera.js');
+        cam = mountCamera(camHost, {
+          compact: true,
+          onCode: async (code) => {
+            if (!checkDigitOk(code)) return;
+            scanned = code;
+            cam.stop(); cam = null;
+            camHost.hidden = true;
+            await byCode(code);
+          },
+        });
+      });
+      $('[data-photo]', body).addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+        busy('Lendo a embalagem. Leva uns 5 segundos.');
+        try {
+          const read = await identifyPhoto(await photoToDataUrl(file));
+          if (body.isConnected) show(read.results, 'pela foto');
+        } catch {
+          if (body.isConnected) done('Não deu para enviar a foto agora. Confira a internet e tente de novo.');
+        }
+      });
+      list.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-i]');
+        if (!btn) return;
+        try {
+          await applyInfo(p.code, items[Number(btn.dataset.i)], scanned);
+          close(true);
+        } catch (err) {
+          done(err.message);
+        }
+      });
+    },
+  });
+  return sheet.finally(() => { if (cam) cam.stop(); });
 }

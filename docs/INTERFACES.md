@@ -646,3 +646,24 @@ barras" na folha de digitar o código e o aviso "Não lê ou não tem código? V
 outras formas", que aparece quando a câmera não lê. Na Saída, sem código
 continua indo direto para a lista do armário. O botão da nota fiscal na câmera
 passou a usar o ícone de QR Code, para não se confundir com o do teclado.
+
+## Versão 3.14: opções pela frequência de uso e retorno ligado ao uso
+
+Critério: o que se usa toda hora fica perto e grande; o raro fica pequeno ou
+num canto; o que não serve naquele momento não aparece.
+
+- **Corrigir nome (raro, discreto).** Em produto cadastrado à mão, um link
+  pequeno "Nome estranho? Buscar o nome certo" abre uma folha que procura o
+  código salvo nas lojas, lê o código com a câmera ou usa a foto da embalagem
+  (IA). Tocar numa sugestão troca nome, marca, tamanho e foto, e o app passa a
+  reconhecer o código lido. Depois de corrigido, o link some.
+- **Produto:** "Tirar 1" e "Guardar 1" logo abaixo do topo, com Desfazer. A
+  correção de quantidade desceu para "Corrigir a quantidade", perto do fim.
+- **Saída sem ler o código:** no leitor em Saída, a lista "Usados com
+  frequência" (pelo ritmo de consumo) com "Tirar 1" em cada um, e "Procurar
+  outro no armário". Resolve o rolo de papel toalha e o que não tem código.
+- **Retorno ligado ao uso:** ao tirar, o aviso diz o que mudou: "Está
+  acabando; já está na lista de compras" ou "Acabou".
+- **Só o que serve:** os blocos de resumo do Armário somem quando nada está
+  acabando, zerado ou vencendo; o botão da nota fiscal não aparece na Saída;
+  "Instalar no celular" não aparece com o app já instalado.

@@ -41,7 +41,7 @@ export default async function mountDados(root) {
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
         </ul>
 
-        <section>
+        <section class="install-note">
           <h2 class="list-title">Instalar no celular</h2>
           <p class="group-note">iPhone: Compartilhar no Safari e Adicionar à Tela de Início. Android: menu do Chrome e Instalar app.</p>
         </section>
