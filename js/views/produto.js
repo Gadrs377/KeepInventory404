@@ -1,7 +1,7 @@
 // Página do produto: dados, ajuste manual e histórico.
 
 import { getProduct, updateProduct, setStock, movementsFor, deleteProduct } from '../store.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet } from '../ui.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockNote } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -37,6 +37,7 @@ export default async function mountProduto(root, { code }) {
             <h1 class="page-title">${esc(p.name)}</h1>
             <p class="product-sub">${subtitle(p) || '&nbsp;'}</p>
             <p class="product-code">${esc(niceCode)}</p>
+            ${stockNote(p) ? `<p class="stock-note">${stockNote(p)}</p>` : ''}
           </div>
           ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>
@@ -100,7 +101,7 @@ export default async function mountProduto(root, { code }) {
     const ok = await confirmSheet({
       title: `Remover ${p.name}?`,
       text: 'O produto e todo o histórico dele saem do armário. Isso não pode ser desfeito.',
-      confirm: 'Remover',
+      confirm: 'Remover produto',
       danger: true,
     });
     if (!ok) return;

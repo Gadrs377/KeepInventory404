@@ -1,14 +1,14 @@
 // Tela inicial: o que tem no armário e quanto.
 
 import { listProducts, getCountDraft, isLow, onChange } from '../store.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedQuery = '';
 
 export default function mountArmario(root) {
   root.innerHTML = `
-    <div class="screen screen-home">
+    <div class="screen screen-home has-floating-bar">
       <header class="home-head">
         <div>
           <h1 class="page-title">Armário</h1>
@@ -19,16 +19,16 @@ export default function mountArmario(root) {
           <a class="icon-btn" href="#/dados" aria-label="Dados e backup">${icon('menu')}</a>
         </div>
       </header>
-      <div class="home-tools">
+      <div class="home-tools glass-thick">
         <label class="search">
           ${icon('search')}
           <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}" autocomplete="off">
         </label>
-        <div class="tabs" role="tablist" aria-label="Filtro"></div>
+        <div class="tabs" role="group" aria-label="Filtrar"></div>
       </div>
       <div class="draft-note" hidden></div>
       <main class="shelf" aria-live="polite"></main>
-      <nav class="modebar" aria-label="Registrar">
+      <nav class="modebar floating-bar glass-regular" aria-label="Registrar">
         <a class="mode-btn mode-entrada" href="#/entrada">${icon('in')}<span>Entrada</span></a>
         <a class="mode-btn mode-saida" href="#/saida">${icon('out')}<span>Saída</span></a>
       </nav>
@@ -57,7 +57,7 @@ export default function mountArmario(root) {
 
     const counts = { todos: products.length, acabando: low, zerados: zero };
     tabs.innerHTML = FILTERS.map((f) => `
-      <button type="button" class="tab" role="tab" aria-selected="${savedFilter === f.id}" data-filter="${f.id}">
+      <button type="button" class="tab" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
         ${f.label}${f.id !== 'todos' && counts[f.id] ? ` <span class="tab-n">${counts[f.id]}</span>` : ''}
       </button>`).join('');
 
@@ -85,12 +85,15 @@ export default function mountArmario(root) {
               ${thumb(p)}
               <span class="row-main">
                 <span class="row-name">${esc(p.name)}</span>
-                <span class="row-sub">${subtitle(p) || (isLow(p) ? 'Acabando' : '&nbsp;')}</span>
+                <span class="row-sub">${[stockNote(p) && `<strong class="stock-note">${stockNote(p)}</strong>`, subtitle(p)].filter(Boolean).join(', ') || '&nbsp;'}</span>
               </span>
               ${tag(p.qty, tagState(p))}
             </a>
           </li>`).join('')}</ul>`
-      : `<p class="empty">${q ? `Nada no armário com "${esc(savedQuery.trim())}".` : 'Nenhum produto neste filtro.'}</p>`;
+      : `<div class="empty-filter">
+          <p>${q ? `Nada no armário com “${esc(savedQuery.trim())}”.` : `Nenhum produto ${filter.id === 'zerados' ? 'zerado' : 'acabando'} agora.`}</p>
+          <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
+        </div>`;
   }
 
   async function load() {
@@ -105,6 +108,12 @@ export default function mountArmario(root) {
     render();
   }
 
+  shelf.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-reset]')) return;
+    if (savedQuery.trim()) { savedQuery = ''; search.value = ''; } else { savedFilter = 'todos'; }
+    render();
+    search.focus();
+  });
   tabs.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-filter]');
     if (!btn) return;

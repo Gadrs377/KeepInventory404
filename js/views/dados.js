@@ -90,7 +90,7 @@ export default async function mountDados(root) {
     const ok = await confirmSheet({
       title: 'Restaurar este backup?',
       text: 'Tudo o que está no armário agora será substituído pelo conteúdo do arquivo.',
-      confirm: 'Restaurar',
+      confirm: 'Restaurar backup',
       danger: true,
     });
     if (!ok) return;

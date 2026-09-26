@@ -1,5 +1,9 @@
 # Design system do KeepInventory404
 
+Versão 3: revisão com as skills better-* e make-interfaces-feel-better, e
+material liquid glass. O relatório completo, com medições, está em
+[REVISAO_INTERFACE.md](REVISAO_INTERFACE.md).
+
 Versão 2. A versão 1 foi auditada com a skill
 [no-ai-slop](../.claude/skills/no-ai-slop/SKILL.md)
 ([unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill), MIT,
@@ -46,12 +50,18 @@ Uma base neutra quase sem cor, e cor só onde ela significa algo.
 | `--ink-2` | `#3F4541` | `#BFC5C1` | Só metadados (marca, tamanho, datas). Contraste AA |
 | `--line` | `#D5D9D6` | `#343936` | Fios de 1 px que separam tudo |
 | `--entrada` | `#17693F` | `#5CC48A` | Modo Entrada |
-| `--saida` | `#A3173F` | `#F07A9C` | Modo Saída |
+| `--saida` | `#8E1B5C` | `#E58CC0` | Modo Saída (beterraba, matiz 326°) |
 | `--contagem` | `#1F3F9E` | `#8FA5F5` | Modo Inventário |
 | `--acabando` | `#F2C230` | `#F2C230` | Etiqueta de estoque baixo (amarelo de etiqueta de oferta) |
+| `--danger` | `#B42318` | `#FF8A7A` | Só ações destrutivas e erros (matiz 4°, 38° longe da Saída) |
+| `--ink-disabled` | `#A3AAA6` | `#5E6561` | Ícones e trilhos desabilitados |
 
 Regras:
 - Texto de corpo e mensagens sempre em `--ink`. `--ink-2` só para metadados.
+- Estado de estoque nunca só pela cor: a linha escreve **Acabando** ou
+  **Zerado** junto da etiqueta.
+- Anel de foco em `--ink`; sobre fundos na cor do modo, em `--on-mode`
+  (medido 6,71 a 9,28:1).
 - Nenhum degradê, nenhum vidro fosco, nenhuma sombra difusa em cartões.
 - Na tela inicial, só Entrada e Saída levam cor. O inventário é uma ação de
   segunda ordem e fica em preto.
@@ -73,14 +83,46 @@ Escala: título 34 px, nome de produto 18 px, texto 17 px, metadados 15 px,
 etiqueta 34 px (lista) a 64 px (produto), seletor 96 px. Peso de texto 400,
 nomes e botões 700. Caixa de frase em tudo. Números com `tabular-nums`.
 
-## 5. Forma
+## 5. Forma e material
 
-- **Raio único de 4 px** para botões, campos, etiquetas e visor. A folha
-  inferior tem 10 px só nos cantos de cima. Nada em formato de pílula.
-- **Fios em vez de sombras.** Listas são uma prateleira contínua com fio de
-  1 px entre os itens. A única sombra é a da folha, que realmente flutua.
-- Grade de 4 px. Margem lateral de 16 px. Alvos de toque de 48 px no mínimo;
-  botões de modo com 72 px.
+### Raios (concêntricos: interno = externo menos o espaço entre eles)
+
+| Token | Valor | Onde |
+| --- | --- | --- |
+| `--r-sheet` | 28 px | Folha inferior (cantos de cima) |
+| `--r-bar` | 26 px | Barras flutuantes (8 px de espaço interno) |
+| `--r-in-bar` | 18 px | Botões dentro das barras (26 − 8) |
+| `--r-control` | 14 px | Botões, campos, seletor |
+| `--r-media` | 20 px | Visor da câmera |
+| `--r-thumb` | 10 px | Foto do produto na lista (12 e 16 px nos tamanhos maiores) |
+| `--r-tag` | 8 px | Etiqueta de gôndola (12 px na grande) |
+| pílula | 999 px | Só o grupo de controles sobre a câmera |
+
+### Material (liquid glass)
+
+Vidro só na camada que flutua sobre conteúdo que se move. Mapa completo em
+[REVISAO_INTERFACE.md](REVISAO_INTERFACE.md#mapa-de-camadas).
+
+| Nível | Claro | Escuro | Desfoque | Uso |
+| --- | --- | --- | --- | --- |
+| Regular | branco 72% | `#161817` 78% | 24 px, saturação 140% | Barras flutuantes de rodapé |
+| Grosso | branco 88% | `#161817` 90% | 28 px | Folha inferior, busca e filtros do Armário |
+| Mídia | `#161817` 66% | igual | 16 px | Controles sobre a câmera |
+| Estático | igual ao regular | igual | nenhum | Onde medimos que nada passa por baixo |
+
+Cada superfície de vidro tem borda de 1 px em 10%, brilho de 1 px no topo e
+sombra suave. A versão sólida é desenhada primeiro; o vidro entra por
+`@supports`. Com reduzir transparência, mais contraste ou cores forçadas, tudo
+fica sólido. No máximo 2 camadas de vidro por tela no celular.
+
+### Outros
+
+- **Fios para estrutura.** Listas são uma prateleira contínua com fio de 1 px
+  entre os itens.
+- Grade de 4 px. Margem lateral de 16 px. Alvos de toque de 44 px no mínimo;
+  botões de modo com 64 px.
+- Toque: `scale: 0.96` em 150 ms, curva `cubic-bezier(0.2, 0, 0, 1)`.
+- Fotos com contorno de 1 px `oklch(0 0 0 / 0.1)` (branco a 10% no escuro).
 
 ## 6. Componentes
 
@@ -88,15 +130,16 @@ nomes e botões 700. Caixa de frase em tudo. Números com `tabular-nums`.
 | --- | --- |
 | **Etiqueta** (`.tag`) | Bloco com número condensado. Preto normal, amarelo quando acabando, tracejado quando zero, azul quando contado |
 | **Linha de produto** (`.row`) | Foto da embalagem 48 px (ou ícone de pacote), nome, metadados, etiqueta à direita |
-| **Barra de modos** (`.modebar`) | Rodapé com Entrada e Saída grandes, lado a lado. Inventário fica no topo da tela, como botão de texto "Contar" |
+| **Barra de modos** (`.modebar`) | Barra de vidro flutuante com Entrada e Saída, lado a lado, tingidas a 90%. A contagem fica no topo da tela, no botão "Contar" |
+| **Barra flutuante** (`.floating-bar`) | Rodapé de ação de cada tela, em vidro, afastado 12 px das bordas |
 | **Faixa de modo** (`.band`) | Cabeçalho cheio na cor do modo, título condensado e botão Fechar |
-| **Visor** (`.viewfinder`) | Câmera com a mira no formato de um código de barras e uma linha de leitura vermelha, como a do leitor do caixa |
+| **Visor** (`.viewfinder`) | Câmera com a mira no formato de um código de barras e uma linha de leitura vermelha, como a do leitor do caixa. Lanterna e Digitar código ficam num grupo de vidro escuro por cima da imagem |
 | **Cupom** (`.receipt`) | Lista da sessão: nome, pontilhado, quantidade; total sob traço duplo |
 | **Folha** (`.sheet`) | Painel que sobe do rodapé com o produto e a ação |
 | **Escolha de produto** (`.pick`) | Lista dentro da folha quando um código tem mais de um produto |
 | **Seletor de quantidade** (`.stepper`) | − e + de 64 px e o número de 96 px no meio; tocar no número abre o teclado |
-| **Abas de filtro** (`.tabs`) | Todos, Acabando, Zerados, com sublinhado no ativo |
-| **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), com Desfazer |
+| **Filtros** (`.tabs`) | Todos, Acabando, Zerados: botões com `aria-pressed`, sublinhado no ativo |
+| **Aviso** (`.toast`) | Bloco sólido na cor do modo (ou preto), acima da barra flutuante. Com **Desfazer**, fica até ser fechado, trocado ou até mudar de tela; sem ação, some em 4 s. Fica atrás das folhas |
 
 Ícones: [Phosphor](https://phosphoricons.com), peso bold, MIT. Nunca desenhados à mão.
 
@@ -136,10 +179,10 @@ nomes e botões 700. Caixa de frase em tudo. Números com `tabular-nums`.
 | Texto de corpo e estado vazio em cinza | Corpo sempre em `--ink`; cinza só em metadados |
 | Ícones SVG desenhados à mão | Phosphor bold |
 | Faixa colorida de um lado só no aviso, na folha e na nota de contagem | Removidas; aviso vira bloco sólido na cor do modo |
-| Barra inferior com vidro fosco (`backdrop-filter`) | Barra sólida com fio no topo |
+| Barra inferior com vidro fosco (`backdrop-filter`) | Barra sólida com fio no topo. **Na v3 o vidro voltou a pedido do dono**, agora só onde passa na regra da skill liquid-glass e com contraste medido |
 | Filtros em pílula | Abas com sublinhado |
 | Três botões iguais lado a lado para ações de peso diferente | Entrada e Saída grandes; inventário vira ação secundária |
-| Raios variados e grandes (12 a 20 px) em tudo | Raio único de 4 px |
+| Raios variados e grandes (12 a 20 px) em tudo | Raio único de 4 px. **Na v3**, escala de raios concêntricos tokenizada (seção 5) |
 | Inicial do nome num quadrado quando falta foto | Ícone de pacote |
 | Mesma família no título e no corpo | Archivo para números e títulos, Atkinson para texto |
 | Reticências tipográficas em textos | Texto direto |

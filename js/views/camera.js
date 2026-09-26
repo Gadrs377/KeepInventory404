@@ -22,10 +22,10 @@ export function mountCamera(host, { onCode, compact = false }) {
       <video muted playsinline aria-label="Imagem da câmera"></video>
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
-    </div>
-    <div class="cam-tools">
-      <button type="button" class="btn btn-quiet btn-sm" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
-      <button type="button" class="btn btn-quiet btn-sm" data-manual>${icon('keyboard')}Digitar código</button>
+      <div class="cam-tools">
+        <button type="button" class="cam-tool" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
+        <button type="button" class="cam-tool" data-manual>${icon('keyboard')}Digitar código</button>
+      </div>
     </div>`;
 
   const video = $('video', host);
@@ -111,11 +111,11 @@ export function manualCodeSheet() {
       body.innerHTML = `
         <h2 class="sheet-title">Código de barras</h2>
         <form class="stack" novalidate>
-          <label class="field">
-            <span class="field-label">Números embaixo das barras</span>
-            <input class="input input-code" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="7891000100103" maxlength="14">
-          </label>
-          <p class="field-error" hidden></p>
+          <div class="field">
+            <label class="field-label" for="manual-code">Números embaixo das barras</label>
+            <input class="input input-code" id="manual-code" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="7891000100103" maxlength="14" aria-describedby="manual-code-error">
+            <p class="field-error" id="manual-code-error" hidden></p>
+          </div>
           <button type="submit" class="btn btn-primary">Buscar produto</button>
           <button type="button" class="btn btn-link" data-nocode>Cadastrar produto sem código</button>
         </form>`;
@@ -127,8 +127,10 @@ export function manualCodeSheet() {
         e.preventDefault();
         const code = input.value.replace(/\D/g, '');
         if (!isValidCode(code)) {
-          error.textContent = 'O código tem de 8 a 14 números. Confira e tente de novo.';
+          error.textContent = 'Digite os 8 a 14 números que aparecem embaixo das barras.';
           error.hidden = false;
+          input.setAttribute('aria-invalid', 'true');
+          input.focus();
           return;
         }
         close(code);

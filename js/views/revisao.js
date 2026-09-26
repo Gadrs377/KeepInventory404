@@ -16,7 +16,7 @@ export default async function mountRevisao(root) {
   const signed = (d) => (d > 0 ? `+${d}` : `−${Math.abs(d)}`);
 
   root.innerHTML = `
-    <div class="screen screen-review mode-contagem">
+    <div class="screen screen-review has-floating-bar mode-contagem">
       <header class="band">
         <a class="icon-btn" href="#/inventario" aria-label="Voltar para a contagem">${icon('back')}</a>
         <div class="band-text">
@@ -41,7 +41,7 @@ export default async function mountRevisao(root) {
           <label class="radio"><input type="radio" name="missing" value="zero"> Zerar os não contados</label>
         </fieldset>` : ''}
       </main>
-      <footer class="footer-bar">
+      <footer class="floating-bar glass-regular">
         <button type="button" class="btn btn-mode btn-lg" data-apply>Aplicar contagem</button>
       </footer>
     </div>`;

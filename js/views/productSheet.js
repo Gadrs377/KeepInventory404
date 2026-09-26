@@ -9,7 +9,7 @@
 import { lookup, lookupRemote } from '../lookup.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId } from '../store.js';
 import { beep } from '../sound.js';
-import { $, $$, esc, openSheet, stepper, subtitle, thumb, tag, tagState, plural } from '../ui.js';
+import { $, $$, esc, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote } from '../ui.js';
 
 const ACTION = {
   entrada: (n) => `Adicionar ${n}`,
@@ -92,14 +92,14 @@ function chooser(ctx, products) {
             ${thumb(p)}
             <span class="row-main">
               <span class="row-name">${esc(p.name)}</span>
-              <span class="row-sub">${empty ? 'Nenhum no armário' : subtitle(p) || '&nbsp;'}</span>
+              <span class="row-sub">${empty ? 'Nenhum no armário' : [stockNote(p) && `<strong class="stock-note">${stockNote(p)}</strong>`, subtitle(p)].filter(Boolean).join(', ') || '&nbsp;'}</span>
             </span>
             ${tag(p.qty, tagState(p))}
           </button>
         </li>`;
       }).join('')}
     </ul>
-    ${mode === 'saida' ? '' : '<button type="button" class="btn btn-quiet" data-other>Outro produto com este código</button>'}`;
+    ${mode === 'saida' ? '' : '<button type="button" class="btn btn-quiet" data-other>Cadastrar outro produto com este código</button>'}`;
 
   $$('.pick-row', body).forEach((btn) => btn.addEventListener('click', () => {
     const p = products.find((x) => x.code === btn.dataset.id);
@@ -198,10 +198,11 @@ async function newForm(ctx, result) {
       ${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}
       <p class="sheet-text">${esc(NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
-      <label class="field">
-        <span class="field-label">Nome do produto</span>
-        <input class="input" name="name" autocomplete="off" maxlength="80" value="${esc(info.name || '')}" placeholder="Ex.: Feijão preto">
-      </label>
+      <div class="field">
+        <label class="field-label" for="new-name">Nome do produto</label>
+        <input class="input" id="new-name" name="name" autocomplete="off" maxlength="80" value="${esc(info.name || '')}" placeholder="Ex.: Feijão preto" aria-describedby="new-name-error">
+        <p class="field-error" id="new-name-error" hidden></p>
+      </div>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
       <button type="submit" class="btn btn-mode btn-lg"></button>
@@ -212,11 +213,12 @@ async function newForm(ctx, result) {
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
-    onChange: (n) => { submit.textContent = ACTION[mode](n); syncEnabled(); },
+    onChange: (n) => { submit.textContent = ACTION[mode](n); },
   });
-  function syncEnabled() { submit.disabled = !nameInput.value.trim(); }
-  nameInput.addEventListener('input', syncEnabled);
-  syncEnabled();
+  const nameError = $('#new-name-error', body);
+  nameInput.addEventListener('input', () => {
+    if (nameInput.value.trim()) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
+  });
   if (!nameInput.value) setTimeout(() => nameInput.focus(), 250);
 
   const retry = $('[data-retry]', body);
@@ -230,6 +232,13 @@ async function newForm(ctx, result) {
   }
 
   onSubmit(ctx, step, async (n) => {
+    if (!nameInput.value.trim()) {
+      nameInput.setAttribute('aria-invalid', 'true');
+      nameError.textContent = 'Digite o nome do produto para cadastrar.';
+      nameError.hidden = false;
+      nameInput.focus();
+      return undefined;
+    }
     const id = barcode.startsWith('SEM-') ? barcode : await newProductId(barcode);
     const newInfo = {
       ...(result.status === 'other' ? {} : info),
@@ -254,7 +263,9 @@ function onSubmit({ body, close }, step, action) {
     if (submit.disabled) return;
     submit.disabled = true;
     try {
-      close(await action(step.value));
+      const result = await action(step.value);
+      if (result === undefined) { submit.disabled = false; return; }
+      close(result);
     } catch (err) {
       submit.disabled = false;
       form.insertAdjacentHTML('beforeend', `<p class="field-error">${esc(err.message)}</p>`);
@@ -273,6 +284,6 @@ function head(p, local) {
         ${sub ? `<p class="product-sub">${sub}</p>` : ''}
         <p class="product-code">${esc(code)}</p>
       </div>
-      ${local ? `<div class="product-stock"><span class="product-stock-label">No armário</span>${tag(local.qty, tagState(local))}</div>` : ''}
+      ${local ? `<div class="product-stock"><span class="product-stock-label">No armário</span>${tag(local.qty, tagState(local), '')}</div>` : ''}
     </div>`;
 }

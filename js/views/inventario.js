@@ -9,17 +9,19 @@ import { $, esc, icon, openSheet, subtitle, tag, thumb, toast } from '../ui.js';
 export default function mountInventario(root) {
   warmUp();
   root.innerHTML = `
-    <div class="screen screen-count mode-contagem">
+    <div class="screen screen-count has-floating-bar mode-contagem">
       <header class="band">
         <div class="band-text">
-          <h1 class="band-title">Inventário</h1>
+          <h1 class="band-title">Contagem</h1>
           <p class="band-hint" data-progress>Conte o que está no armário</p>
         </div>
         <button type="button" class="icon-btn" data-exit aria-label="Sair da contagem">${icon('close')}</button>
       </header>
-      <div class="cam-host"></div>
-      <div class="count-lists" aria-live="polite"></div>
-      <footer class="footer-bar">
+      <main>
+        <div class="cam-host"></div>
+        <div class="count-lists"></div>
+      </main>
+      <footer class="floating-bar glass-regular">
         <a class="btn btn-mode btn-lg" href="#/revisao" data-review>Revisar</a>
       </footer>
     </div>`;
@@ -50,7 +52,7 @@ export default function mountInventario(root) {
             <span class="row-name">${esc(p.name)}</span>
             <span class="row-sub">${counted === undefined ? `Sistema diz ${p.qty}` : `Era ${p.qty}`}${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
           </span>
-          ${counted === undefined ? '<span class="tag is-empty" aria-label="Não contado"></span>' : tag(counted, 'is-counted')}
+          ${counted === undefined ? '<span class="tag is-empty"><span class="sr-only">Ainda não contado</span></span>' : tag(counted, 'is-counted', 'Contados')}
         </button>
       </li>`;
 

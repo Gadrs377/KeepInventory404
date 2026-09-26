@@ -9,8 +9,17 @@ export function esc(value) {
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-export function tag(qty, state = '') {
-  return `<span class="tag ${state}" aria-label="${qty} no armário">${qty}</span>`;
+// Etiqueta de gôndola. O texto oculto dá o sentido do número para leitores de tela.
+export function tag(qty, state = '', srLabel = 'No armário') {
+  const sr = srLabel ? `<span class="sr-only">${esc(srLabel)}: </span>` : '';
+  return `<span class="tag ${state}">${sr}${qty}</span>`;
+}
+
+// Texto do estado do estoque, para não depender só da cor da etiqueta.
+export function stockNote(p) {
+  if (p.qty === 0) return 'Zerado';
+  if (p.minQty > 0 && p.qty <= p.minQty) return 'Acabando';
+  return '';
 }
 
 export function tagState(p) {
@@ -42,30 +51,46 @@ export function icon(name, cls = '') {
 }
 
 // ---------- Aviso (toast) ----------
+// Aviso com ação (Desfazer) fica até ser dispensado, trocado por outro ou até
+// mudar de tela. Aviso sem ação some sozinho. O anúncio para leitores de tela
+// vai por uma região fixa (#toast-live), sempre presente no DOM.
 
 let toastTimer;
 let toastAt = 0;
-export function toast(message, { action, onAction, mode = '', duration = 5000 } = {}) {
+export function toast(message, { action, onAction, mode = '', duration = 4000 } = {}) {
   const host = $('#toast');
   clearTimeout(toastTimer);
   toastAt = Date.now();
   host.className = `toast ${mode ? `mode-${mode} has-mode` : ''}`;
-  host.innerHTML = `<span class="toast-text">${esc(message)}</span>${action ? `<button type="button" class="toast-action">${esc(action)}</button>` : ''}`;
+  host.innerHTML = `
+    <span class="toast-text">${esc(message)}</span>
+    ${action ? `<button type="button" class="toast-action">${esc(action)}</button>
+      <button type="button" class="toast-close" aria-label="Fechar aviso">${icon('close')}</button>` : ''}`;
   host.hidden = false;
+  const live = $('#toast-live');
+  if (live) live.textContent = message;
   if (action) {
     $('.toast-action', host).addEventListener('click', () => {
-      host.hidden = true;
+      hideToast();
       onAction && onAction();
     }, { once: true });
+    $('.toast-close', host).addEventListener('click', hideToast);
+  } else {
+    toastTimer = setTimeout(hideToast, duration);
   }
-  toastTimer = setTimeout(() => { host.hidden = true; }, duration);
+}
+
+export function hideToast() {
+  const host = $('#toast');
+  if (host) { host.hidden = true; host.innerHTML = ''; }
+  const live = $('#toast-live');
+  if (live) live.textContent = '';
 }
 
 // Ao trocar de tela, esconde avisos antigos; mantém o que acabou de ser criado
 // (ex.: "Contagem aplicada" mostrado junto com a volta ao Armário).
 export function hideStaleToast() {
-  const host = $('#toast');
-  if (host && Date.now() - toastAt > 1000) host.hidden = true;
+  if (Date.now() - toastAt > 1000) hideToast();
 }
 
 // ---------- Folha inferior (sheet) ----------
@@ -75,24 +100,29 @@ let openSheetState = null;
 /**
  * Abre uma folha. `render(body)` preenche o conteúdo. Resolve quando fecha,
  * com o valor passado a close(value).
+ * Acessibilidade: o resto da tela fica `inert`, o foco entra na folha e volta
+ * para quem abriu quando ela fecha.
  */
 export function openSheet({ mode = '', label = 'Produto', render }) {
   closeSheet(null);
   const root = $('#sheet-root');
+  const trigger = document.activeElement;
   root.innerHTML = `
     <div class="sheet-backdrop" data-close></div>
-    <section class="sheet ${mode ? `mode-${mode}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}">
+    <section class="sheet glass-thick ${mode ? `mode-${mode}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1">
       <div class="sheet-grip" aria-hidden="true"></div>
       <button type="button" class="icon-btn sheet-close" data-close aria-label="Fechar">${icon('close')}</button>
       <div class="sheet-body"></div>
     </section>`;
   root.hidden = false;
   document.body.classList.add('has-sheet');
+  const app = $('#app');
+  if (app) app.inert = true;
   const sheet = $('.sheet', root);
   const body = $('.sheet-body', root);
 
   return new Promise((resolve) => {
-    const state = { resolve, root };
+    const state = { resolve, root, trigger };
     openSheetState = state;
     $$('[data-close]', root).forEach((el) => el.addEventListener('click', () => closeSheet(null)));
     enableDrag(sheet);
@@ -100,7 +130,10 @@ export function openSheet({ mode = '', label = 'Produto', render }) {
     document.addEventListener('keydown', onKey);
     state.cleanup = () => document.removeEventListener('keydown', onKey);
     render(body, (value) => closeSheet(value));
-    requestAnimationFrame(() => sheet.classList.add('is-open'));
+    requestAnimationFrame(() => {
+      sheet.classList.add('is-open');
+      if (!sheet.contains(document.activeElement)) sheet.focus({ preventScroll: true });
+    });
   });
 }
 
@@ -110,9 +143,27 @@ export function closeSheet(value = null) {
   openSheetState = null;
   state.cleanup && state.cleanup();
   const root = state.root;
+  // Saída suave: o conteúdo vai para uma cópia que desce 12px e some,
+  // e a raiz fica livre na hora para a próxima folha.
+  const sheet = $('.sheet', root);
+  if (sheet && sheet.classList.contains('is-open')) {
+    const ghost = document.createElement('div');
+    ghost.className = 'sheet-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.inert = true;
+    while (root.firstChild) ghost.appendChild(root.firstChild);
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => ghost.classList.add('is-leaving'));
+    setTimeout(() => ghost.remove(), 200);
+  }
   root.hidden = true;
   root.innerHTML = '';
   document.body.classList.remove('has-sheet');
+  const app = $('#app');
+  if (app) app.inert = false;
+  if (state.trigger && state.trigger.isConnected && typeof state.trigger.focus === 'function') {
+    state.trigger.focus({ preventScroll: true });
+  }
   state.resolve(value);
 }
 

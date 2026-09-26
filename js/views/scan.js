@@ -17,7 +17,7 @@ export default function mountScan(root, { mode, code: initialCode }) {
   warmUp();
 
   root.innerHTML = `
-    <div class="screen screen-scan mode-${mode}">
+    <div class="screen screen-scan has-floating-bar mode-${mode}">
       <header class="band">
         <div class="band-text">
           <h1 class="band-title">${copy.title}</h1>
@@ -25,12 +25,14 @@ export default function mountScan(root, { mode, code: initialCode }) {
         </div>
         <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
       </header>
-      <div class="cam-host"></div>
-      <section class="receipt" aria-live="polite" aria-label="Registros desta ${copy.title.toLowerCase()}">
-        <ul class="receipt-lines"></ul>
-        <p class="receipt-total"></p>
-      </section>
-      <footer class="footer-bar">
+      <main>
+        <div class="cam-host"></div>
+        <section class="receipt" aria-label="Registros desta ${copy.title.toLowerCase()}">
+          <ul class="receipt-lines"></ul>
+          <p class="receipt-total"></p>
+        </section>
+      </main>
+      <footer class="floating-bar glass-regular glass-static">
         <a class="btn btn-primary btn-lg" href="#/">Concluir</a>
       </footer>
     </div>`;

@@ -86,7 +86,7 @@ Mesma tela, duas cores. A faixa do modo ocupa o topo inteiro.
 │    └─                     ─┘    │  ao ler: bip, vibração e a linha pisca
 │                                 │
 ├─────────────────────────────────┤
-│ [Lanterna]      [Digitar código]│
+│   ( Lanterna | Digitar código ) │  grupo de vidro sobre a imagem
 ├─────────────────────────────────┤
 │ Leite condensado ........... +2 │  cupom: um item por linha
 │ Arroz branco ............... +1 │
@@ -131,7 +131,12 @@ Variações:
 | Saída | Seletor vai de 1 até o estoque atual; botão "Dar baixa em N" |
 
 Depois de confirmar: a folha fecha, aparece o aviso "Adicionado 2. Leite
-condensado agora tem 5" com **Desfazer**, e o leitor volta a ler.
+condensado agora tem 5" com **Desfazer** e um X, e o leitor volta a ler. O
+aviso fica acima da barra de baixo até ser fechado, trocado por outro ou até
+sair da tela; se outra folha abrir, ele fica atrás dela e volta depois.
+
+Com teclado: a folha recebe o foco ao abrir, o resto da tela fica inativo, Esc
+fecha e o foco volta para onde estava.
 
 ### Folha "Qual destes?" (um código, vários produtos)
 
@@ -174,11 +179,14 @@ condensado agora tem 5" com **Desfazer**, e o leitor volta a ler.
 
 ## 3. Contagem `#/inventario`
 
+O botão **Contar** da tela inicial abre esta tela. O nome é o mesmo em tudo:
+tela Contagem, botões "Salvar contagem" e "Aplicar contagem".
+
 Contagem física do armário. Serve para corrigir diferenças acumuladas.
 
 ```
 ┌─────────────────────────────────┐
-│█ Inventário                 ✕ █│  faixa azul
+│█ Contagem                   ✕ █│  faixa azul
 │█ 12 de 23 produtos contados   █│
 ├─────────────────────────────────┤
 │    [ vídeo da câmera menor ]    │

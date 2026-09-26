@@ -7,7 +7,7 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
 
 - **Entrada:** leia o código, escolha a quantidade e toque em Adicionar.
 - **Saída:** leia o código e dê baixa na quantidade que saiu.
-- **Inventário:** conte o que está no armário; na revisão você vê as diferenças
+- **Contagem (inventário):** conte o que está no armário; na revisão você vê as diferenças
   e aplica a correção de uma vez.
 - **Armário:** lista com a quantidade de cada item, busca e filtros de
   "acabando" e "zerados".
@@ -56,5 +56,10 @@ endereço precisa de HTTPS.
 - Fontes: [Archivo](https://fonts.google.com/specimen/Archivo) e
   [Atkinson Hyperlegible Next](https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next) (OFL).
 - Ícones: [Phosphor](https://phosphoricons.com) (MIT).
-- Auditoria visual: skill [unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill)
-  (MIT), em `.claude/skills/no-ai-slop/`.
+- Skills de design em `.claude/skills/` (todas MIT):
+  [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (better-ui,
+  better-layout, better-writing, better-interface e outras),
+  [make-interfaces-feel-better](https://github.com/jakubkrehel/make-interfaces-feel-better),
+  [liquid-glass](https://github.com/Armitanemati/liquid-glass-claude-skill) e
+  [unslop-ui-skill](https://github.com/claudiusararu/unslop-ui-skill).
+  Relatório da revisão em [docs/REVISAO_INTERFACE.md](docs/REVISAO_INTERFACE.md).
