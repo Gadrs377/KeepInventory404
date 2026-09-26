@@ -441,7 +441,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .cam-tool[aria-pressed="true"] { background: #F1F2F0; color: #161817; }
 
 /* Cupom da sessão */
-.receipt { padding: 20px var(--gutter) 16px; font-variant-numeric: tabular-nums; }
+.receipt { padding: 20px var(--gutter) 16px; }
+.receipt-n { font-variant-numeric: tabular-nums; }
 .receipt-lines { display: flex; flex-direction: column; }
 .receipt-line { display: flex; align-items: baseline; gap: 6px; padding-block: 5px; }
 .receipt-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; }
@@ -1216,3 +1217,173 @@ html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
   .row-name { font-size: 16px; }
   .home-head .page-title { font-size: 42px; }
 }
+
+/* ---------- Versão 3.7: título que encolhe, arrastar, leitor limpo, feedback ---------- */
+
+/* Título pequeno no topo quando o grande sai da tela (vidro grosso, como no iPhone).
+   No Armário a busca desce junto e as duas barras viram um bloco só. */
+.mini-bar {
+  position: fixed; z-index: 6; top: 0; inset-inline: 0;
+  height: calc(44px + var(--safe-top)); padding-top: var(--safe-top);
+  display: grid; place-items: center;
+  background: var(--glass-solid);
+  box-shadow: inset 0 -1px 0 var(--glass-edge);
+  opacity: 0; pointer-events: none; cursor: pointer;
+  transition: opacity 200ms var(--ease);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mini-bar {
+    background: color-mix(in oklab, var(--paper) 94%, transparent);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+  }
+}
+.mini-title { font-family: var(--font-num); font-weight: 800; font-size: 17px; letter-spacing: -0.01em; translate: 0 6px; transition: translate 420ms var(--spring); }
+.is-collapsed .mini-bar { opacity: 1; pointer-events: auto; }
+.is-collapsed .mini-title { translate: 0 0; }
+.screen-home .mini-bar { box-shadow: none; }
+.home-tools { transition: top 380ms var(--spring); }
+.screen-home.is-collapsed .home-tools { top: 44px; }
+@media (min-width: 720px) { .mini-bar { inset-inline: 0; } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .mini-bar { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* Esqueletos: o formato do que vai chegar, com um brilho que passa devagar */
+.skel {
+  display: block; border-radius: 6px;
+  background: linear-gradient(90deg, var(--shelf) 0 35%, color-mix(in oklab, var(--shelf), var(--paper) 70%) 50%, var(--shelf) 65% 100%) 0 0 / 300% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.skel-row { display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 12px var(--gutter); border-bottom: 1px solid var(--line); }
+.skel-thumb { width: 48px; height: 48px; border-radius: var(--r-thumb); flex: none; }
+.skel-thumb-md { width: 64px; height: 64px; border-radius: 12px; flex: none; }
+.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.skel-line { height: 14px; }
+.skel-short { width: 34%; height: 11px; }
+.skel-tag { width: 52px; height: 46px; border-radius: var(--r-tag); flex: none; }
+.skel-block { height: 120px; border-radius: var(--r-control); }
+.skeleton-list .skel-row:nth-child(2) .skel { animation-delay: 80ms; }
+.skeleton-list .skel-row:nth-child(3) .skel { animation-delay: 160ms; }
+.skeleton-list .skel-row:nth-child(4) .skel { animation-delay: 240ms; }
+.skeleton-list .skel-row:nth-child(5) .skel { animation-delay: 320ms; }
+.pick .skel-row { padding-inline: var(--gutter); min-height: 64px; }
+.product-head.is-loading .product-meta { gap: 8px; padding-top: 6px; }
+
+/* Rodinha de "fazendo" */
+.spinner {
+  display: inline-block; flex: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { rotate: 360deg; } }
+.loading-note { display: flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 15px; min-height: 24px; }
+.loading-note [data-note] { animation: fade-in 300ms var(--ease); }
+/* Botão ocupado: a rodinha só aparece se demorar (mais de 300 ms) */
+.btn[aria-busy="true"] { position: relative; color: transparent; }
+.btn[aria-busy="true"] > * { visibility: hidden; }
+.btn[aria-busy="true"]::after {
+  content: ''; position: absolute; inset: 0; margin: auto; width: 20px; height: 20px; border-radius: 50%;
+  border: 2.5px solid var(--on-mode); border-right-color: transparent;
+  animation: spin 700ms linear infinite, fade-in 200ms 300ms backwards;
+}
+.btn-primary[aria-busy="true"]::after { border-color: var(--paper); border-right-color: transparent; }
+
+/* Arrastar a linha: por baixo, o verde do +1 (direita) e o vinho do −1 (esquerda) */
+.row-item { position: relative; overflow: hidden; display: block; }
+.row-slide { position: relative; z-index: 1; display: flex; align-items: center; background: var(--paper); transition: transform 460ms var(--spring); }
+.row-slide.is-swiping { transition: none; }
+.rows { touch-action: pan-y pinch-zoom; }
+.swipe-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; visibility: hidden; }
+.row-item.swipe-left .swipe-bg, .row-item.swipe-right .swipe-bg { visibility: visible; }
+.row-item.swipe-left .swipe-bg { background: var(--saida); }
+.row-item.swipe-right .swipe-bg { background: var(--entrada); }
+.swipe-act {
+  display: inline-flex; align-items: center; gap: 4px; padding-inline: 24px;
+  color: var(--on-mode); font-family: var(--font-num); font-weight: 800; font-size: 22px;
+  opacity: 0; scale: 0.7; transition: opacity 150ms var(--ease), scale 360ms var(--spring-bouncy);
+}
+.swipe-act .icon { width: 20px; height: 20px; }
+.row-item.swipe-right .swipe-plus, .row-item.swipe-left .swipe-minus { opacity: 0.7; scale: 0.85; }
+.row-item.is-armed .swipe-plus, .row-item.is-armed .swipe-minus { opacity: 1; scale: 1.15; }
+.row-item.swipe-right .swipe-minus, .row-item.swipe-left .swipe-plus { opacity: 0; }
+.rows .row-slide .row { -webkit-user-drag: none; }
+.row-item:has(.row.is-lifted) { overflow: visible; z-index: 2; }
+.row-item:has(.row.is-lifted) .row-slide { background: transparent; }
+
+/* Leitor: faixa fina com fechar, Entrada | Saída e Rápido numa linha só */
+.band.band-slim {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 8px;
+  padding-block: calc(6px + var(--safe-top)) 10px; padding-inline: 4px 12px;
+}
+.band.band-slim > .icon-btn:first-of-type { margin: 0; }
+.band-slim .mode-switch { justify-self: center; align-self: center; }
+.band-slim .mode-opt span { min-height: 42px; font-size: 18px; padding-inline: 10px 14px; }
+.band-slim .mode-opt .icon { width: 20px; height: 20px; }
+.band-slim .band-hint { grid-column: 1 / -1; padding-inline: 12px 0; font-size: 15px; animation: fade-in 300ms var(--ease); }
+.fast-toggle { position: relative; cursor: pointer; }
+.fast-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 42px; padding-inline: 10px 12px; border-radius: 999px;
+  border: 1.5px solid color-mix(in oklab, var(--on-mode) 55%, transparent);
+  color: var(--on-mode); font-weight: 700; font-size: 14px;
+  transition: background-color 200ms var(--ease), color 200ms var(--ease), scale 300ms var(--spring-bouncy);
+}
+.fast-pill .icon { width: 18px; height: 18px; }
+.fast-toggle:active .fast-pill { scale: 0.94; }
+.fast-toggle input:checked + .fast-pill { background: var(--on-mode); color: var(--mode); border-color: var(--on-mode); }
+.fast-toggle input:checked + .fast-pill .icon { animation: bolt-zap 420ms var(--spring-bouncy); }
+@keyframes bolt-zap { 0% { scale: 0.6; rotate: -12deg; } }
+.fast-toggle input:focus-visible + .fast-pill { outline: 3px solid var(--on-mode); outline-offset: 2px; }
+/* Em celulares comuns (até 430 px) as setas saem: a cor e a palavra já dizem o modo */
+@media (max-width: 430px) {
+  .band-slim .mode-opt .icon { display: none; }
+  .band-slim .mode-opt span { padding-inline: 12px; }
+}
+@media (max-width: 359px) {
+  .band-slim .mode-opt span { font-size: 16px; padding-inline: 8px; }
+  .fast-pill span { display: none; }
+}
+@media (forced-colors: active) { .fast-toggle input:checked + .fast-pill { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
+
+/* Câmera abrindo, procurando e lendo */
+.cam-loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px;
+  color: #F1F2F0; font-size: 16px;
+}
+.viewfinder.is-live .aim-line { animation: scan-breathe 1.8s ease-in-out infinite; }
+@keyframes scan-breathe { 50% { opacity: 0.55; box-shadow: 0 0 12px var(--scanline); } }
+.viewfinder.is-live .aim.is-hit .aim-line { animation: hit 360ms var(--ease); }
+.cam-pop {
+  position: absolute; z-index: 3; left: 50%; top: 42%;
+  max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 999px;
+  background: var(--mode); color: var(--on-mode);
+  font-family: var(--font-num); font-weight: 800; font-size: 20px; line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  translate: -50% -50%;
+  animation: cam-pop 1500ms var(--spring-bouncy) forwards;
+}
+@keyframes cam-pop {
+  0% { opacity: 0; scale: 0.6; }
+  18% { opacity: 1; scale: 1; }
+  70% { opacity: 1; translate: -50% -50%; }
+  100% { opacity: 0; translate: -50% -130%; }
+}
+
+/* Linha nova da sessão: entra e acende de leve na cor do modo */
+.receipt-lines > li.is-fresh { animation: line-in 520ms var(--spring); border-radius: 8px; }
+.receipt-lines > li.is-fresh .receipt-edit { animation: line-glow 1400ms var(--ease); }
+@keyframes line-in { from { translate: 0 -10px; opacity: 0; } }
+@keyframes line-glow { from { background: color-mix(in oklab, var(--mode, var(--ink)) 16%, transparent); } }
+
+/* Número do seletor pula para o lado do toque */
+.stepper-value.is-up { animation: num-up 320ms var(--spring); }
+.stepper-value.is-down { animation: num-down 320ms var(--spring); }
+@keyframes num-up { from { translate: 0 18%; opacity: 0.4; } }
+@keyframes num-down { from { translate: 0 -18%; opacity: 0.4; } }
+
+/* Ícone da aba escolhida dá um pulinho (como os símbolos do iPhone) */
+html[data-nav="fade"] .tab-item[aria-current="page"] .icon { animation: symbol-bounce 520ms var(--spring-bouncy); }
+@keyframes symbol-bounce { 0% { scale: 0.7; } }

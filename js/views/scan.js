@@ -53,23 +53,22 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
 
   root.innerHTML = `
     <div class="screen screen-scan has-floating-bar mode-${mode}">
-      <header class="band">
-        <div class="band-text">
-          <h1 class="sr-only">Leitor</h1>
-          <div class="mode-switch" role="radiogroup" aria-label="Registrar">
-            ${['entrada', 'saida'].map((m) => `
-              <label class="mode-opt">
-                <input type="radio" name="scan-mode" value="${m}" ${m === mode ? 'checked' : ''}>
-                <span>${icon(m === 'entrada' ? 'in' : 'out')}${COPY[m].title}</span>
-              </label>`).join('')}
-          </div>
-          <p class="band-hint" data-hint></p>
-          <label class="band-switch">
-            <input type="checkbox" class="switch switch-on-mode" data-fast ${fast ? 'checked' : ''}>
-            <span>${icon('bolt')}Modo rápido</span>
-          </label>
-        </div>
+      <header class="band band-slim">
+        <h1 class="sr-only">Leitor</h1>
         <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
+        <div class="mode-switch" role="radiogroup" aria-label="Registrar">
+          ${['entrada', 'saida'].map((m) => `
+            <label class="mode-opt">
+              <input type="radio" name="scan-mode" value="${m}" ${m === mode ? 'checked' : ''}>
+              <span>${icon(m === 'entrada' ? 'in' : 'out')}${COPY[m].title}</span>
+            </label>`).join('')}
+        </div>
+        <label class="fast-toggle">
+          <input type="checkbox" class="sr-only" data-fast ${fast ? 'checked' : ''}>
+          <span class="fast-pill" aria-hidden="true">${icon('bolt')}<span>Rápido</span></span>
+          <span class="sr-only">Modo rápido</span>
+        </label>
+        <p class="band-hint" data-hint></p>
       </header>
       <main>
         <div class="cam-host"></div>
@@ -121,6 +120,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   const signedNet = (net) => `${net > 0 ? '+' : net < 0 ? '−' : ''}${Math.abs(net)}`;
   const netOf = (entries) => entries.reduce((a, s) => a + (s.mode === 'entrada' ? s.n : -s.n), 0);
 
+  let freshKey = ''; // linha que acabou de mudar: entra com destaque
   function renderSession() {
     if (!session.size) {
       lines.innerHTML = '<li class="receipt-empty">O que você guardar ou tirar aparece aqui.</li>';
@@ -130,13 +130,14 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     const entries = [...session.values()];
     // Cada linha abre a edição: dá para corrigir antes de concluir.
     lines.innerHTML = entries.slice().reverse().map((s) => `
-      <li>
+      <li class="${`${s.mode}:${s.product.code}` === freshKey ? 'is-fresh' : ''}">
         <button type="button" class="receipt-line receipt-edit" data-edit="${esc(`${s.mode}:${s.product.code}`)}" aria-label="Editar ${esc(s.product.name)}, ${signed(s)}">
           <span class="receipt-name">${esc(s.product.name)}</span>
           <span class="receipt-dots" aria-hidden="true"></span>
           <span class="receipt-n">${signed(s)}</span>
         </button>
       </li>`).join('');
+    freshKey = '';
     total.hidden = false;
     total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n">${signedNet(netOf(entries))}</span>`;
   }
@@ -160,7 +161,9 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     entry.product = product;
     entry.n += n;
     session.set(key, entry);
+    freshKey = key;
     renderSession();
+    cam.flash(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}`, m);
     toast(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}. Agora tem ${product.qty}.`, {
       mode: m,
       action: 'Desfazer',

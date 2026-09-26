@@ -485,3 +485,32 @@ simulada com um vídeo de código de barras e lojas falsas, 32 verificações).
 - Nome do produto em linha própria, sem quebrar no meio da palavra.
 - Texto do início vazio fala do botão do leitor (o botão Entrada não existe mais).
 - Corrigido um bloco quebrado de CSS de alto contraste do Windows.
+
+## Versão 3.7: título que encolhe, arrastar, leitor limpo e feedback
+
+**Título grande que encolhe.** Nas quatro abas, quando o título grande sai da
+tela, aparece o título pequeno numa barra de vidro no topo (no Armário a busca
+desce junto). Tocar nele volta ao começo.
+
+**Arrastar a linha.** No Armário, arrastar um produto para a esquerda tira 1
+(vinho) e para a direita põe 1 (verde), como no Mail. Passando do ponto, a ação
+"arma" (cresce e vibra); arrasto curto volta sem fazer nada. Produto zerado
+resiste para a esquerda. O "−" e o toque longo continuam como alternativas.
+
+**Leitor limpo.** A faixa colorida virou uma linha só: fechar, Entrada | Saída e
+o botão Rápido (raio, cheio quando ligado). A explicação do modo rápido aparece
+embaixo só quando ele está ligado. A câmera ganhou mais espaço.
+
+**O que está acontecendo, sempre à vista.**
+- "Abrindo a câmera" com rodinha até a imagem chegar; a linha vermelha "respira"
+  enquanto procura um código.
+- Ao registrar, aparece em cima da imagem "+1 Leite Moça" (ou −1), que sobe e
+  some; a linha nova da sessão entra e acende de leve.
+- Buscando um produto: esqueleto do produto e uma frase que muda se a loja
+  demorar ("A loja está demorando", depois "Se não achar, você digita o nome").
+- Esqueletos no Armário e em Compras enquanto os dados carregam, e linhas
+  esqueleto nas sugestões das lojas.
+- Botão de salvar mostra rodinha se demorar mais de 300 ms.
+- Aviso quando a internet cai e quando volta.
+- O número do seletor pula para o lado do toque; o ícone da aba escolhida dá um
+  pulinho; o raio do modo rápido "acende".

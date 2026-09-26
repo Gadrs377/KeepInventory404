@@ -5,7 +5,7 @@ import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, remov
 import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu, skeletonRows } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -26,7 +26,7 @@ export default function mountArmario(root) {
         <div class="chips" role="group" aria-label="Mostrar só" hidden></div>
       </div>
       <div class="draft-note" hidden></div>
-      <main class="shelf" aria-live="polite"></main>
+      <main class="shelf" aria-live="polite" aria-busy="true">${skeletonRows(5)}</main>
       ${tabBar('armario')}
     </div>`;
 
@@ -104,8 +104,10 @@ export default function mountArmario(root) {
 
     shelf.innerHTML = visible.length
       ? `<ul class="rows">${visible.map((p) => `
-          <li class="row-item">
-            <a class="row" href="#/produto/${encodeURIComponent(p.code)}">
+          <li class="row-item" data-code="${esc(p.code)}" data-qty="${p.qty}">
+            <span class="swipe-bg" aria-hidden="true"><span class="swipe-act swipe-plus">${icon('plus')}1</span><span class="swipe-act swipe-minus">${icon('minus')}1</span></span>
+            <div class="row-slide">
+            <a class="row" draggable="false" href="#/produto/${encodeURIComponent(p.code)}">
               ${thumb(p)}
               <span class="row-main">
                 <span class="row-name">${esc(p.name)}</span>
@@ -116,6 +118,7 @@ export default function mountArmario(root) {
             ${p.qty > 0
               ? `<button type="button" class="row-minus" data-minus="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}</button>`
               : '<span class="row-minus-space" aria-hidden="true"></span>'}
+            </div>
           </li>`).join('')}</ul>`
       : `<div class="empty-filter">
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
@@ -123,6 +126,7 @@ export default function mountArmario(root) {
         </div>`;
 
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
+    shelf.removeAttribute('aria-busy');
 
     if (refocus) {
       const again = shelf.querySelector(`[data-minus="${CSS.escape(refocus)}"]`);
@@ -216,6 +220,54 @@ export default function mountArmario(root) {
     keepOrder = false;
     render();
   });
+
+  // Arrastar a linha, como no Mail do iPhone: para a esquerda tira 1, para a
+  // direita põe 1. Passando do ponto a ação "arma" (vibra e cresce); soltando,
+  // acontece e a linha volta com mola. O "−" continua lá como alternativa.
+  const ARM = 88;
+  let swipe = null;
+  shelf.addEventListener('pointerdown', (e) => {
+    const slide = e.target.closest('.row-slide');
+    if (!slide || e.button > 0 || e.target.closest('[data-minus]')) return;
+    swipe = { slide, li: slide.parentElement, x: e.clientX, y: e.clientY, id: e.pointerId, on: false, dx: 0, armed: false };
+  });
+  shelf.addEventListener('pointermove', (e) => {
+    if (!swipe || e.pointerId !== swipe.id) return;
+    const dx = e.clientX - swipe.x;
+    const dy = e.clientY - swipe.y;
+    if (!swipe.on) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }
+      if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      swipe.on = true;
+      suppressClick = true;
+      swipe.slide.classList.add('is-swiping');
+      try { swipe.slide.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
+    }
+    const qty = Number(swipe.li.dataset.qty);
+    let d = dx < 0 && qty === 0 ? dx * 0.25 : dx; // zerado: resiste, não há o que tirar
+    if (Math.abs(d) > ARM) d = Math.sign(d) * (ARM + (Math.abs(d) - ARM) * 0.4);
+    swipe.dx = d;
+    swipe.slide.style.transform = `translateX(${d}px)`;
+    swipe.li.classList.toggle('swipe-left', d < 0);
+    swipe.li.classList.toggle('swipe-right', d > 0);
+    const armed = Math.abs(d) >= ARM && !(d < 0 && qty === 0);
+    if (armed !== swipe.armed) { swipe.armed = armed; swipe.li.classList.toggle('is-armed', armed); if (armed) vibrate(12); }
+  });
+  const endSwipe = () => {
+    if (!swipe) return;
+    const { slide, li, armed, dx, on } = swipe;
+    swipe = null;
+    if (!on) return;
+    slide.classList.remove('is-swiping');
+    slide.style.transform = '';
+    setTimeout(() => li.classList.remove('swipe-left', 'swipe-right', 'is-armed'), 420);
+    if (armed) {
+      keepOrder = true;
+      minusOne(li.dataset.code, null, dx < 0 ? -1 : 1);
+    }
+  };
+  shelf.addEventListener('pointerup', endSwipe);
+  shelf.addEventListener('pointercancel', endSwipe);
 
   // Toque longo (ou botão direito) numa linha: menu rápido, como no iPhone.
   function rowMenu(row) {

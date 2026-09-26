@@ -101,6 +101,33 @@ export function tabBar(current) {
     </div>`;
 }
 
+// ---------- Título grande que encolhe (como no iPhone) ----------
+// Quando o título grande sai de baixo da barra, aparece o título pequeno no
+// topo, numa barra de vidro. Tocar nela volta ao começo da tela.
+
+export function collapsingTitle(root) {
+  const screen = root.querySelector('.screen');
+  const h1 = root.querySelector('.home-head .page-title');
+  if (!screen || !h1 || !('IntersectionObserver' in window)) return () => {};
+  const bar = document.createElement('div');
+  bar.className = 'mini-bar';
+  bar.setAttribute('aria-hidden', 'true');
+  bar.innerHTML = `<span class="mini-title">${esc(h1.textContent)}</span>`;
+  screen.prepend(bar);
+  bar.addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+  const io = new IntersectionObserver(([e]) => {
+    screen.classList.toggle('is-collapsed', !e.isIntersecting && e.boundingClientRect.top < bar.offsetHeight);
+  }, { rootMargin: `-${bar.offsetHeight}px 0px 0px 0px` });
+  io.observe(h1);
+  return () => io.disconnect();
+}
+
+// Linhas-esqueleto: o formato do que vai chegar, enquanto carrega.
+export function skeletonRows(n = 4, cls = 'rows') {
+  return `<ul class="${cls} skeleton-list" aria-hidden="true">${Array.from({ length: n }, (_, i) => `
+    <li class="skel-row"><span class="skel skel-thumb"></span><span class="skel-lines"><span class="skel skel-line" style="width:${[68, 52, 74, 60, 46][i % 5]}%"></span><span class="skel skel-line skel-short"></span></span><span class="skel skel-tag"></span></li>`).join('')}</ul>`;
+}
+
 // ---------- Aviso (toast) ----------
 // Aviso com ação (Desfazer) fica até ser dispensado, trocado por outro ou até
 // mudar de tela. Aviso sem ação some sozinho. O anúncio para leitores de tela
@@ -399,6 +426,10 @@ export function stepper(host, { value = 1, min = 1, max = 999, label = 'Quantida
     const btn = e.target.closest('[data-step]');
     if (!btn) return;
     set(current + Number(btn.dataset.step));
+    // O número pula para o lado do toque, como os contadores do iPhone.
+    input.classList.remove('is-up', 'is-down');
+    void input.offsetWidth;
+    input.classList.add(Number(btn.dataset.step) > 0 ? 'is-up' : 'is-down');
     vibrate(10);
   });
   input.addEventListener('focus', () => input.select());

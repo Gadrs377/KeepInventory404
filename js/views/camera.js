@@ -22,6 +22,7 @@ export function mountCamera(host, { onCode, compact = false }) {
       <video muted playsinline aria-label="Imagem da câmera"></video>
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
+      <p class="cam-loading" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Abrindo a câmera</p>
       <button type="button" class="cam-hint" data-byname hidden>Não está lendo? <strong>Buscar pelo nome</strong></button>
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
@@ -34,6 +35,10 @@ export function mountCamera(host, { onCode, compact = false }) {
   const msg = $('.cam-msg', host);
   const torchBtn = $('[data-torch]', host);
   const hintBtn = $('[data-byname]', host);
+  const viewfinder = $('.viewfinder', host);
+  const camLoading = $('.cam-loading', host);
+  // A câmera demora um instante para abrir: a mensagem some quando a imagem chega.
+  video.addEventListener('playing', () => { camLoading.hidden = true; viewfinder.classList.add('is-live'); });
   let alive = true;
   let handling = false;
   let paused = false;
@@ -115,8 +120,21 @@ export function mountCamera(host, { onCode, compact = false }) {
   if (cameraSupported()) start();
   else scanner.start(); // dispara a mensagem de "sem suporte"
 
+  // Confirmação em cima da imagem ("+1 Leite Moça"): sobe e some, para quem
+  // está olhando o pacote e não o rodapé da tela.
+  function flash(text, mode) {
+    const pop = document.createElement('p');
+    pop.className = `cam-pop mode-${mode}`;
+    pop.setAttribute('aria-hidden', 'true');
+    pop.textContent = text;
+    viewfinder.querySelectorAll('.cam-pop').forEach((el) => el.remove());
+    viewfinder.append(pop);
+    setTimeout(() => pop.remove(), 1600);
+  }
+
   return {
     handle,
+    flash,
     pause() {
       paused = true;
       clearTimeout(hintTimer);

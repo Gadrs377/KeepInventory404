@@ -8,7 +8,7 @@ import mountProduto from './views/produto.js';
 import mountDados from './views/dados.js';
 import mountCompras from './views/compras.js';
 import mountCupons from './views/cupons.js';
-import { closeSheet, closeMenu, hideStaleToast, $ } from './ui.js';
+import { closeSheet, closeMenu, hideStaleToast, collapsingTitle, toast, $ } from './ui.js';
 import { refreshShopBadge } from './shop.js';
 import { onChange } from './store.js';
 import { unlockAudio } from './sound.js';
@@ -78,7 +78,8 @@ async function route() {
       if (typeof result === 'function') result();
       return;
     }
-    cleanup = result;
+    const offTitle = collapsingTitle(root);
+    cleanup = () => { offTitle(); if (typeof result === 'function') result(); };
     const heading = root.querySelector('h1');
     if (heading) document.title = `${heading.textContent} | Armário`;
     window.scrollTo(0, 0);
@@ -109,6 +110,10 @@ document.addEventListener('pointerdown', (e) => {
 }, { passive: true });
 window.addEventListener('hashchange', route);
 onChange(() => refreshShopBadge());
+
+// Sem internet o app continua funcionando; só não busca nomes nas lojas.
+window.addEventListener('offline', () => toast('Sem internet. O armário continua funcionando; nomes novos você digita.', { duration: 4500 }));
+window.addEventListener('online', () => toast('Internet de volta.', { duration: 2000 }));
 route();
 
 // Pede ao navegador para não apagar os dados sozinho.

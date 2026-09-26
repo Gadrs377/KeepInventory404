@@ -7,7 +7,7 @@ import { listLots, onChange } from '../store.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
-import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet } from '../ui.js';
+import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows } from '../ui.js';
 
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
 
@@ -28,8 +28,8 @@ export default function mountCompras(root) {
         </div>
       </header>
       <main class="content">
-        <p class="lead" data-lead>&nbsp;</p>
-        <div class="shop-lists"></div>
+        <p class="lead" data-lead>Montando a lista pelo que vocês usam</p>
+        <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
 
         <form class="shop-add" novalidate>
           <label class="field-label" for="shop-extra">Acrescentar à lista</label>
@@ -77,6 +77,7 @@ export default function mountCompras(root) {
   });
 
   function render() {
+    lists.removeAttribute('aria-busy');
     const open = items.filter((i) => !state.checked[i.product.code]).length + state.extra.filter((x) => !x.checked).length;
     const all = items.length + state.extra.length;
     lead.textContent = all

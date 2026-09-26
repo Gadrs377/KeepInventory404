@@ -12,7 +12,7 @@ import { AREAS, guessArea } from '../areas.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil } from '../dates.js';
 import { photoToDataUrl } from '../photo.js';
 import { beep } from '../sound.js';
-import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote } from '../ui.js';
+import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote, skeletonRows } from '../ui.js';
 
 const ACTION = {
   entrada: (n) => `Adicionar ${n}`,
@@ -190,15 +190,25 @@ function bindExpiry(body) {
   };
 }
 
+// Enquanto procura: esqueleto do produto e o que está acontecendo agora.
+// Se a loja demora, a frase muda para a pessoa saber que não travou.
 function loading({ body }, code) {
   body.innerHTML = `
-    <div class="product-head is-loading">
-      ${thumb(null, 'md')}
+    <div class="product-head is-loading" aria-busy="true">
+      <span class="skel skel-thumb-md" aria-hidden="true"></span>
       <div class="product-meta">
-        <p class="product-name">Buscando produto</p>
+        <p class="sr-only">Buscando produto</p>
+        <span class="skel skel-line" style="width:72%" aria-hidden="true"></span>
+        <span class="skel skel-line skel-short" aria-hidden="true"></span>
         <p class="product-code">${esc(code.startsWith('SEM-') ? 'Produto sem código' : code)}</p>
       </div>
-    </div>`;
+    </div>
+    <p class="loading-note" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span data-note>Procurando no armário e nas lojas</span></p>
+    <span class="skel skel-block" aria-hidden="true"></span>`;
+  const note = $('[data-note]', body);
+  const slow = setTimeout(() => { if (note.isConnected) note.textContent = 'A loja está demorando. Mais um instante'; }, 3500);
+  const slower = setTimeout(() => { if (note.isConnected) note.textContent = 'Quase desistindo da loja. Se não achar, você digita o nome'; }, 7000);
+  new MutationObserver((_, obs) => { if (!note.isConnected) { clearTimeout(slow); clearTimeout(slower); obs.disconnect(); } }).observe(body, { childList: true });
 }
 
 // ---------- Vários produtos no mesmo código ----------
@@ -469,6 +479,7 @@ async function newForm(ctx, result) {
     if (ctrl) ctrl.abort();
     ctrl = new AbortController();
     status.textContent = 'Procurando nas lojas';
+    if (list.hidden) { list.hidden = false; list.innerHTML = skeletonRows(3, 'skel-in-pick').replace(/^<ul[^>]*>|<\/ul>$/g, ''); }
     try {
       const items = await searchStores(query, ctrl.signal);
       if (body.isConnected && nameInput.value.trim() === query) showSuggestions(items, query);
@@ -612,12 +623,14 @@ function onSubmit({ body, close }, step, action) {
     e.preventDefault();
     if (submit.disabled) return;
     submit.disabled = true;
+    submit.setAttribute('aria-busy', 'true');
     try {
       const result = await action(step.value);
-      if (result === undefined) { submit.disabled = false; return; }
+      if (result === undefined) { submit.disabled = false; submit.removeAttribute('aria-busy'); return; }
       close(result);
     } catch (err) {
       submit.disabled = false;
+      submit.removeAttribute('aria-busy');
       form.insertAdjacentHTML('beforeend', `<p class="field-error">${esc(err.message)}</p>`);
     }
   });
