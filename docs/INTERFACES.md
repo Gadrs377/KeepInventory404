@@ -717,3 +717,14 @@ parado na tela.
 - O que o app não conhece não precisa de aviso antes: aparece em "Para
   resolver" na hora.
 
+## Versão 3.18: "sem código" em texto e trocas de tela fluidas
+
+- **Produto sem código de barras** deixou de ser um ícone de caixa na barra
+  da câmera (nenhum desenho diz "sem código"). Virou um botão de texto na cor
+  do modo logo abaixo do visor, como o "Inserir manualmente" da Carteira do
+  iPhone. A barra da câmera ficou com lanterna, digitar código e QR Code.
+- **Trocas de tela:** detalhe entra e sai pela direita com a tela de trás
+  visível e escurecida (antes ficava branca ou misturada); o leitor sobe com a
+  tela de trás recuando; as abas esmaecem em vez de cortar seco. Ver design
+  system, seção 7.
+

@@ -201,6 +201,8 @@ button { cursor: pointer; }
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   background: var(--mode);
   color: var(--on-mode);
+  /* Entrada ↔ Saída: a cor da faixa muda junto com a pílula, sem piscar */
+  transition: background-color 360ms var(--ease), color 360ms var(--ease);
   padding-block: calc(12px + var(--safe-top)) 16px;
   padding-inline: var(--gutter) 8px;
 }
@@ -1208,7 +1210,15 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 ::view-transition-group(tabbar) { animation-duration: 0s; }
 ::view-transition-old(tabbar) { display: none; }
 ::view-transition-new(tabbar) { animation: none; }
+/* As "fotos" das telas precisam de fundo: sem ele a tela de cima fica
+   transparente e as duas se misturam no meio da troca. */
+::view-transition-old(root), ::view-transition-new(root) { background: var(--paper); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; animation-timing-function: var(--ease); }
+/* Abas: esmaecimento curto (a nova sobe 6 px), sem corte seco. */
+html[data-nav="tab"]::view-transition-old(root) { animation: vt-fade-out 140ms var(--ease) both; }
+html[data-nav="tab"]::view-transition-new(root) { animation: vt-tab-in 260ms var(--ease) both; }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-tab-in { from { opacity: 0; translate: 0 6px; } }
 html[data-nav="push"]::view-transition-old(root),
 html[data-nav="pop"]::view-transition-old(root),
 html[data-nav="up"]::view-transition-old(root),
@@ -1216,23 +1226,31 @@ html[data-nav="down"]::view-transition-old(root),
 html[data-nav="push"]::view-transition-new(root),
 html[data-nav="pop"]::view-transition-new(root),
 html[data-nav="up"]::view-transition-new(root),
-html[data-nav="down"]::view-transition-new(root) { mix-blend-mode: normal; animation-duration: 480ms; animation-timing-function: var(--spring); }
-html[data-nav="push"]::view-transition-new(root) { animation-name: vt-in-right; }
+html[data-nav="down"]::view-transition-new(root) { mix-blend-mode: normal; animation-duration: 520ms; animation-timing-function: var(--spring); animation-fill-mode: both; }
+/* Detalhe (como o empurrar do iPhone): a nova entra pela direita com sombra
+   na borda; a de trás anda um terço para a esquerda e escurece. */
+html[data-nav="push"]::view-transition-new(root) { animation-name: vt-in-right; z-index: 2; }
 html[data-nav="push"]::view-transition-old(root) { animation-name: vt-recede-left; }
 html[data-nav="pop"]::view-transition-old(root) { animation-name: vt-out-right; z-index: 2; }
 html[data-nav="pop"]::view-transition-new(root) { animation-name: vt-return-left; }
-html[data-nav="up"]::view-transition-new(root) { animation-name: vt-in-up; }
-html[data-nav="up"]::view-transition-old(root) { animation-name: vt-dim; }
-html[data-nav="down"]::view-transition-old(root) { animation-name: vt-out-down; z-index: 2; animation-duration: 380ms; }
-html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
-@keyframes vt-in-right { from { translate: 100% 0; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12); } }
-@keyframes vt-recede-left { to { translate: -30% 0; filter: brightness(0.9); } }
-@keyframes vt-out-right { to { translate: 100% 0; } }
-@keyframes vt-return-left { from { translate: -30% 0; filter: brightness(0.9); } }
+/* Leitor (tela modal): sobe de baixo; a de trás recua e escurece. */
+html[data-nav="up"]::view-transition-new(root) { animation-name: vt-in-up; z-index: 2; border-radius: 18px 18px 0 0; }
+html[data-nav="up"]::view-transition-old(root) { animation-name: vt-sink; }
+html[data-nav="down"]::view-transition-old(root) { animation-name: vt-out-down; z-index: 2; animation-duration: 420ms; border-radius: 18px 18px 0 0; }
+html[data-nav="down"]::view-transition-new(root) { animation-name: vt-rise; animation-duration: 420ms; }
+@keyframes vt-in-right { from { translate: 100% 0; box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18); } to { box-shadow: -12px 0 32px rgba(0, 0, 0, 0); } }
+@keyframes vt-recede-left { to { translate: -30% 0; filter: brightness(0.82); } }
+@keyframes vt-out-right { from { box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18); } to { translate: 100% 0; box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18); } }
+@keyframes vt-return-left { from { translate: -30% 0; filter: brightness(0.82); } }
 @keyframes vt-in-up { from { translate: 0 100%; } }
-@keyframes vt-dim { to { filter: brightness(0.85); } }
+@keyframes vt-sink { to { scale: 0.94; filter: brightness(0.7); border-radius: 18px; } }
 @keyframes vt-out-down { to { translate: 0 100%; } }
-@keyframes vt-undim { from { filter: brightness(0.85); } }
+@keyframes vt-rise { from { scale: 0.94; filter: brightness(0.7); border-radius: 18px; } }
+/* Atrás da tela que recua para o leitor subir: preto, como no iPhone */
+html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-transition { background: #000; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 
 /* Em 320 px, nomes em Urbanist um pouco menores para não sobrar "L" sozinho na segunda linha */
 @media (max-width: 359px) {
@@ -1897,3 +1915,15 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .viewfinder.is-qr .cam-notice { display: none; }
 @media (prefers-reduced-motion: reduce) { .cam-notice { transition: none; } }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .cam-notice { background: #161817; } }
+
+/* "Produto sem código de barras": botão de texto na cor do modo, logo abaixo
+   da câmera (ícone nenhum comunica "sem código") */
+.cam-alt {
+  display: block; margin: 6px auto 0; min-height: 44px; padding: 10px 16px;
+  border: 0; border-radius: 999px; background: none;
+  color: var(--mode); font-size: 16px; font-weight: 700;
+  transition-property: scale, background-color, color; transition-duration: 150ms, 150ms, 360ms; transition-timing-function: var(--ease);
+}
+.cam-alt:active { scale: 0.96; background: color-mix(in oklab, var(--mode) 12%, transparent); }
+.screen-scan .cam-alt + * { margin-top: 0; }
+

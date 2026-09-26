@@ -30,10 +30,10 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
         <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
-        <button type="button" class="cam-tool" data-nocode-tool aria-label="Produto sem código de barras">${icon('package')}</button>
         ${onNota ? `<button type="button" class="cam-tool" data-nota aria-pressed="false" aria-label="Ler o QR Code da nota fiscal">${icon('qrCode')}</button>` : ''}
       </div>
-    </div>`;
+    </div>
+    ${compact ? '' : '<button type="button" class="cam-alt" data-nocode-tool>Produto sem código de barras</button>'}`;
 
   const video = $('video', host);
   const aim = $('.aim', host);
@@ -156,7 +156,10 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   }
 
   // Produto sem código de barras: abre as formas de registrar sem ler código.
-  $('[data-nocode-tool]', host).addEventListener('click', () => handle(`SEM-${Date.now()}`));
+  // É texto, não ícone: nenhum desenho diz "sem código" (como o "Inserir
+  // manualmente" da Carteira do iPhone, embaixo da câmera).
+  const nocodeBtn = $('[data-nocode-tool]', host);
+  if (nocodeBtn) nocodeBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));
 
   // Sem código: a folha abre direto na busca pelo nome.
   hintBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));

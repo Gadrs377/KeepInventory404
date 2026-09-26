@@ -47,8 +47,8 @@ function navKind(from, to) {
   if (a === 'modal') return 'down';
   if (b > a) return 'push';
   if (b < a) return 'pop';
-  // Entre abas o iPhone troca na hora, sem esmaecer: só a pílula da barra anda.
-  return '';
+  // Entre abas: esmaecimento curto enquanto a pílula da barra anda.
+  return 'tab';
 }
 let prevPath = null;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');

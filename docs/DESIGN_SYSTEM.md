@@ -172,6 +172,18 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
   linhas, com `cubic-bezier(0.22, 1, 0.36, 1)` e 200 ms de espera para a folha
   chegar antes. O celular vibra de leve três vezes, como o papel saindo.
 - A dica "Não está lendo?" aparece com 240 ms de opacidade e 6 px de descida.
+- **Troca de tela (View Transitions), como no iPhone.** As capturas das
+  telas têm fundo `--paper`; sem ele a tela de cima fica transparente e as
+  duas se misturam.
+  - Detalhe (empurrar): a nova entra pela direita com sombra na borda; a de
+    trás anda 30% para a esquerda e escurece (brilho 0,82). Voltar é o
+    inverso. Mola, 520 ms. Foto, nome e etiqueta voam entre a linha e o topo
+    do produto.
+  - Leitor (modal): sobe de baixo com os cantos de cima arredondados; a de
+    trás recua para 94% e escurece sobre fundo preto.
+  - Abas: a antiga esmaece em 140 ms e a nova aparece em 260 ms subindo 6 px,
+    enquanto a pílula da barra desliza.
+  - A faixa do leitor troca de cor (Entrada ↔ Saída) em 360 ms.
 - `prefers-reduced-motion` remove todas as transições.
 
 ## 8. Escrita
