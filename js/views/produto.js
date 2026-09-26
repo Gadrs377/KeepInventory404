@@ -18,7 +18,7 @@ export default async function mountProduto(root, { code }) {
   if (!p) {
     root.innerHTML = `
       <div class="screen">
-        <header class="topbar glass-regular"><a class="icon-btn" href="#/" aria-label="Voltar">${icon('back')}</a></header>
+        <header class="topbar nav-bar"><a class="icon-btn glass-btn" href="#/" aria-label="Voltar">${icon('chevronLeft')}</a></header>
         <main class="content"><p class="empty">Esse produto não está mais no armário.</p>
         <a class="btn btn-primary" href="#/">Voltar ao armário</a></main>
       </div>`;
@@ -30,15 +30,16 @@ export default async function mountProduto(root, { code }) {
   const left = daysLeft(p, perDay);
   const usage = perDay
     ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
-    : 'Ainda sem histórico para calcular. Aparece depois de algumas saídas.';
+    : 'Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
 
   root.innerHTML = `
     <div class="screen screen-product">
-      <header class="topbar glass-regular">
-        <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
-        <button type="button" class="icon-btn topbar-end" data-edit aria-label="Editar detalhes">${icon('pencil')}</button>
+      <header class="topbar nav-bar">
+        <a class="icon-btn glass-btn" href="#/" aria-label="Voltar ao armário">${icon('chevronLeft')}</a>
+        <span class="nav-title" aria-hidden="true">${esc(p.name)}</span>
+        <button type="button" class="icon-btn glass-btn" data-edit aria-label="Editar detalhes">${icon('pencil')}</button>
       </header>
       <main class="content">
         <section class="product-hero">
@@ -58,7 +59,7 @@ export default async function mountProduto(root, { code }) {
             <div class="stepper-host stepper-sm" data-qty></div>
             <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
           </div>
-          <p class="field-note">Use só para corrigir a contagem. Entradas e saídas do dia a dia vão pelo leitor ou pelo "−" do armário.</p>
+          <p class="field-note">Só para acertar a contagem.</p>
         </section>
 
         <section aria-labelledby="lots-title">
@@ -69,7 +70,8 @@ export default async function mountProduto(root, { code }) {
         <section>
           <h2 class="list-title">Consumo</h2>
           <p class="sheet-text">${esc(usage)}</p>
-          <p class="field-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando. Toque no lápis, no topo, para definir.'}</p>
+          ${p.lastPrice && p.lastPrice.value ? `<p class="sheet-text">Último preço ${esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lastPrice.value))}${p.lastPrice.unit && p.lastPrice.unit !== 'UN' ? ` o ${esc(p.lastPrice.unit.toLowerCase())}` : ''}, ${esc(p.lastPrice.store || 'mercado')}, ${esc(new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(p.lastPrice.at)))}.</p>` : ''}
+          <p class="field-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando.'}</p>
         </section>
 
         <section>
@@ -84,6 +86,13 @@ export default async function mountProduto(root, { code }) {
 
       </main>
     </div>`;
+
+  // Barra do topo como no iPhone: transparente sobre o topo da página; quando o
+  // nome sai de vista, ganha vidro e o nome aparece pequeno no meio.
+  const screenEl = $('.screen-product', root);
+  const heroTitle = $('.product-hero .page-title', root);
+  const navIo = new IntersectionObserver(([e]) => screenEl.classList.toggle('is-scrolled', !e.isIntersecting && e.boundingClientRect.top < 60), { rootMargin: '-56px 0px 0px 0px' });
+  navIo.observe(heroTitle);
 
   // Correção de estoque separada dos detalhes: só grava quando a pessoa confirma.
   let currentQty = p.qty;
@@ -171,10 +180,10 @@ export default async function mountProduto(root, { code }) {
         ? (free > 0
           ? `${free === 1 ? 'A unidade sem data sai' : `As ${free} unidades sem data saem`} primeiro na baixa, depois o que vence antes.`
           : 'Na baixa, sai primeiro o que vence antes.')
-        : (cur.qty ? 'Nenhuma validade marcada. Marque para o app avisar antes de vencer.' : 'Sem unidades no armário.')}</p>
+        : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>
       <div class="lot-actions">
         ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
-        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Criar lembrete no calendário</button>' : ''}
+        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Lembrete no calendário</button>' : ''}
       </div>`;
   }
 
@@ -198,7 +207,8 @@ export default async function mountProduto(root, { code }) {
     }
   });
 
-  const off = onChange(() => renderLots());
+  const offLots = onChange(() => renderLots());
+  const off = () => { offLots(); navIo.disconnect(); };
   renderLots();
 
   return off;

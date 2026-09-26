@@ -354,3 +354,17 @@ O workflow `.github/workflows/pages.yml` publica a raiz do repositório no GitHu
 Pages a cada push. Passo único no GitHub: **Settings → Pages → Build and
 deployment → Source: GitHub Actions**. O endereço fica
 `https://<usuario>.github.io/KeepInventory404/`.
+
+
+## Nota fiscal (NFC-e)
+
+- `GET /nfce?p=<parâmetro p do QR Code>` no Worker: valida a chave (44 números,
+  começando por 43, RS), busca `dfe-portal.svrs.rs.gov.br/Dfe/QrCodeNFce?p=...`
+  e devolve `{ store: { name, cnpj }, issuedAt, total, discount, key, items:
+  [{ name, code, qty, unit, unitPrice, total }] }`. Resposta boa fica 30 dias em
+  cache (a nota não muda); erro passageiro não é guardado.
+- No app: `meta.nfceMap` guarda "CNPJ:código do mercado" → produto (aprendizado
+  por mercado); `meta.notas` guarda as chaves já importadas; `product.lastPrice`
+  guarda o último preço. Tudo entra no backup.
+- Formato da página conferido com o projeto aberto leitor-notas-fiscais, que lê
+  as notas do RS pelo mesmo endereço.

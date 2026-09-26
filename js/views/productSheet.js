@@ -43,6 +43,7 @@ const NEW_MSG = {
 export function showProductSheet({ mode, barcode, productId, qty = 1 }) {
   return openSheet({
     mode,
+    title: { entrada: 'Guardar', saida: 'Tirar', contagem: 'Contar' }[mode] || '',
     label: barcode && barcode.startsWith('SEM-') ? 'Buscar pelo nome' : 'Produto lido',
     render(body, close) {
       const ctx = { body, close, mode, barcode, qty };
@@ -349,7 +350,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       <div class="stepper-host"></div>
       ${mode === 'entrada' ? expiryHtml() : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
-      ${canAddOther ? '<button type="button" class="btn btn-quiet" data-other>Não é este? Cadastrar outro produto com este código</button>' : ''}
+      ${canAddOther ? '<button type="button" class="btn btn-quiet" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
 
   const submit = $('[type=submit]', body);

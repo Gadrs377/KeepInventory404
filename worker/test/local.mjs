@@ -48,3 +48,13 @@ assert.ok(idBody.results.length > 0 && idBody.results.length <= 12);
 r = await call('/diag', null);
 console.log('diag:', r.body.storesOk, 'lojas OK de', r.body.stores.length);
 console.log('todos os testes passaram');
+
+// Nota fiscal do RS (NFC-e): QR Code de uma nota real de exemplo
+r = await call('/nfce?p=' + encodeURIComponent('43260907718633007868650080002005971056148317|3|1'));
+console.log('nfce:', r.body.store, r.body.items && r.body.items.length, 'itens, total', r.body.total);
+assert.equal(r.body.found, true);
+assert.equal(r.body.items.length, 21);
+r = await call('/nfce?p=abc');
+assert.equal(r.status, 400);
+r = await call('/nfce?p=' + encodeURIComponent('35260907718633007868650080002005971056148317|3|1'));
+assert.equal(r.status, 422, 'nota de outro estado');

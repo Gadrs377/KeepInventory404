@@ -143,3 +143,38 @@ export async function identifyPhoto(dataUrl) {
     clearTimeout(timer);
   }
 }
+
+// ---------- Nota fiscal (NFC-e) ----------
+
+// Do texto do QR Code (ou de um link colado) tira o parâmetro "p" da consulta.
+// Aceita também só a chave de 44 números.
+export function notaParam(text) {
+  const t = String(text || '').trim();
+  const digits = t.replace(/\s/g, '');
+  if (/^\d{44}$/.test(digits)) return `${digits}|3|1`;
+  if (!/^https?:\/\//i.test(t)) return '';
+  try {
+    const u = new URL(t);
+    const p = u.searchParams.get('p') || '';
+    return /^\d{44}\|/.test(p) && /fazenda|sefaz|svrs|nfce/i.test(u.hostname + u.pathname) ? p : '';
+  } catch {
+    return '';
+  }
+}
+
+export async function fetchNota(p) {
+  if (!navigator.onLine) throw new Error('Sem internet. A nota precisa ser buscada na SEFAZ.');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const res = await fetch(`${API_URL}/nfce?p=${encodeURIComponent(p)}`, { signal: ctrl.signal });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.found) throw new Error(data.error || 'Não deu para ler a nota agora.');
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('A SEFAZ demorou demais. Tente de novo em instantes.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}

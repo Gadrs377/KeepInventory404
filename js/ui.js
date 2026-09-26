@@ -394,7 +394,7 @@ let openSheetState = null;
  * Acessibilidade: o resto da tela fica `inert`, o foco entra na folha e volta
  * para quem abriu quando ela fecha.
  */
-export function openSheet({ mode = '', label = 'Produto', render, className = '' }) {
+export function openSheet({ mode = '', label = 'Produto', render, className = '', title = '' }) {
   closeSheet(null);
   const root = $('#sheet-root');
   const trigger = document.activeElement;
@@ -402,7 +402,11 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
     <div class="sheet-backdrop" data-close></div>
     <section class="sheet glass-thick ${className} ${mode ? `mode-${mode}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(label)}" tabindex="-1">
       <div class="sheet-grip" aria-hidden="true"></div>
-      <button type="button" class="icon-btn sheet-close" data-close aria-label="Fechar">${icon('close')}</button>
+      <div class="sheet-bar">
+        <button type="button" class="icon-btn glass-btn sheet-close" data-close aria-label="Fechar">${icon('close')}</button>
+        <div class="sheet-bar-title"></div>
+        <div class="sheet-bar-end"></div>
+      </div>
       <div class="sheet-body"></div>
     </section>`;
   root.hidden = false;
@@ -410,6 +414,7 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
   const app = $('#app');
   if (app) app.inert = true;
   setTabBarInert(true);
+  if (title) $('.sheet', root).dataset.title = title;
   // A tela de trás recua e escurece, como um cartão empilhado no iPhone.
   // Não nas telas com barra fixa própria (leitor, contagem): ela pularia.
   if (app && window.innerWidth < 640 && !app.querySelector('.floating-bar') && !reducedMotion()) {
@@ -428,11 +433,24 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
     document.addEventListener('keydown', onKey);
     state.cleanup = () => document.removeEventListener('keydown', onKey);
     render(body, (value) => closeSheet(value));
+    hoistHeader(sheet);
+    // Conteúdo trocado (buscando → formulário): o título novo sobe para a barra.
+    // Só um aviso acrescentado no fim não mexe no título.
+    const hoist = new MutationObserver((list) => {
+      const added = list.flatMap((m) => [...m.addedNodes]);
+      if (added.includes(body.firstElementChild) || body.querySelector(':scope > .sheet-title, :scope > .sheet-share')) hoistHeader(sheet);
+    });
+    hoist.observe(body, { childList: true });
     requestAnimationFrame(() => {
       sheet.classList.add('is-open');
       if (!sheet.contains(document.activeElement)) sheet.focus({ preventScroll: true });
+      // Só a folha alta empurra a tela de trás (como a folha grande do iPhone);
+      // a média fica por cima, sem mexer no fundo.
+      if (sheet.offsetHeight < window.innerHeight * 0.7) document.body.classList.remove('sheet-stack');
     });
     state.cleanupMotion = sheetMotion(sheet, body);
+    const prevCleanup = state.cleanup;
+    state.cleanup = () => { prevCleanup(); hoist.disconnect(); };
   });
 }
 
@@ -455,7 +473,7 @@ export function closeSheet(value = null) {
     while (root.firstChild) ghost.appendChild(root.firstChild);
     document.body.appendChild(ghost);
     requestAnimationFrame(() => ghost.classList.add('is-leaving'));
-    setTimeout(() => ghost.remove(), sheet.dataset.flung ? 320 : 200);
+    setTimeout(() => ghost.remove(), 340);
   }
   root.hidden = true;
   root.innerHTML = '';
@@ -467,6 +485,21 @@ export function closeSheet(value = null) {
     state.trigger.focus({ preventScroll: true });
   }
   state.resolve(value);
+}
+
+// Cabeçalho como no iOS 26: X à esquerda, título pequeno no meio e a ação
+// (compartilhar) à direita. As telas escrevem o título no corpo; ele sobe.
+function hoistHeader(sheet) {
+  const body = sheet.querySelector('.sheet-body');
+  const title = body.querySelector(':scope > .sheet-title');
+  const share = body.querySelector(':scope > .sheet-share');
+  const fallback = sheet.dataset.title;
+  const slot = sheet.querySelector('.sheet-bar-title');
+  if (title) slot.replaceChildren(title);
+  else if (fallback) slot.innerHTML = `<h2 class="sheet-title">${esc(fallback)}</h2>`;
+  else slot.replaceChildren();
+  sheet.querySelector('.sheet-bar-end').replaceChildren(...(share ? [share] : []));
+  if (title) sheet.setAttribute('aria-label', title.textContent.trim());
 }
 
 // Quando o conteúdo da folha muda (buscando → formulário) ou cresce (sugestões,

@@ -32,9 +32,9 @@ export default function mountCompras(root) {
         <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
 
         <form class="shop-add" novalidate>
-          <label class="field-label" for="shop-extra">Acrescentar à lista</label>
+          <label class="sr-only" for="shop-extra">Acrescentar à lista</label>
           <div class="shop-add-row">
-            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
+            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Novo item, ex.: pão" enterkeyhint="done">
             <button type="submit" class="btn btn-quiet btn-icon" aria-label="Acrescentar à lista">${icon('plus')}</button>
           </div>
         </form>
@@ -82,7 +82,7 @@ export default function mountCompras(root) {
     const all = items.length + state.extra.length;
     lead.textContent = all
       ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}, pensando em ${plural(state.every, 'dia', 'dias')}.` : 'Tudo marcado. Boas compras.')
-      : 'Nada para comprar agora. Quando algo chegar no mínimo ou for acabar antes da próxima compra, aparece aqui.';
+      : 'Nada para comprar agora. O que estiver acabando aparece aqui.';
 
     const groups = AREAS.map((a) => ({ ...a, rows: items.filter((i) => (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
     lists.innerHTML = groups.map((g) => `

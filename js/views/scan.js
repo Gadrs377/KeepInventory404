@@ -362,7 +362,15 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
 
   renderHint();
   renderSession();
-  const cam = mountCamera($('.cam-host', root), { onCode: handleCode });
+  // Nota fiscal lida (ou link colado): a compra inteira entra de uma vez.
+  async function handleNota(p) {
+    if (mode !== 'entrada') setMode('entrada');
+    const { importNota } = await import('./nota.js');
+    const done = await importNota(p);
+    if (done && !session.size) location.hash = '#/';
+  }
+
+  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota });
   if (initialCode) cam.handle(initialCode);
 
   return () => cam.stop();

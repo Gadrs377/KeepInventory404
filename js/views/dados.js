@@ -23,8 +23,9 @@ export default async function mountDados(root) {
         <h1 class="page-title">Mais</h1>
       </header>
       <main class="content stack">
-        <ul class="group" aria-label="Contagem">
+        <ul class="group" aria-label="Atalhos">
           <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
+          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('receipt')}</span><span class="group-label">Importar nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
         </ul>
 
         <h2 class="list-title">Backup</h2>
@@ -33,7 +34,7 @@ export default async function mountDados(root) {
           <li><label class="group-row file-btn"><span class="group-icon">${icon('upload')}</span><span class="group-label">Restaurar backup</span><input type="file" accept="application/json,.json" data-import class="sr-only"></label></li>
           <li><button type="button" class="group-row" data-csv><span class="group-icon">${icon('table')}</span><span class="group-label">Baixar planilha</span></button></li>
         </ul>
-        <p class="group-note">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
+        <p class="group-note">Os dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática' : ''}. Baixe um backup de vez em quando.</p>
 
         <h2 class="list-title">Som</h2>
         <ul class="group">
@@ -42,7 +43,7 @@ export default async function mountDados(root) {
 
         <section>
           <h2 class="list-title">Instalar no celular</h2>
-          <p class="sheet-text">No Android, abra o menu do Chrome e toque em Instalar app. No iPhone, toque em Compartilhar no Safari e depois em Adicionar à Tela de Início.</p>
+          <p class="group-note">iPhone: Compartilhar no Safari e Adicionar à Tela de Início. Android: menu do Chrome e Instalar app.</p>
         </section>
 
         <section>
@@ -57,6 +58,12 @@ export default async function mountDados(root) {
       </main>
       ${tabBar('mais')}
     </div>`;
+
+  $('[data-nota]', root).addEventListener('click', async () => {
+    const { notaEntrySheet, importNota } = await import('./nota.js');
+    const p = await notaEntrySheet({ camera: true });
+    if (p && await importNota(p)) location.hash = '#/';
+  });
 
   $('[data-sound]', root).addEventListener('change', (e) => {
     setSoundEnabled(e.target.checked);

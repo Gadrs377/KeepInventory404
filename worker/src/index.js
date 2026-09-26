@@ -84,6 +84,14 @@ export default {
           if (normalize(q).length < 2) return withCors(json({ error: 'Digite pelo menos 2 letras' }, 400), allowed);
           return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)), allowed);
         }
+        case '/nfce': {
+          // Nota fiscal do consumidor (NFC-e) pelo parâmetro "p" do QR Code.
+          const p = (url.searchParams.get('p') || '').trim();
+          const key = nfceKey(p);
+          if (!key) return withCors(json({ error: 'Não parece um QR Code de nota fiscal' }, 400), allowed);
+          if (!key.startsWith('43')) return withCors(json({ error: 'Por enquanto só notas do Rio Grande do Sul', uf: key.slice(0, 2) }, 422), allowed);
+          return withCors(await cached(ctx, `nfce:${key}`, 30 * DAY, () => fetchNfce(p, key)), allowed);
+        }
         case '/diag':
           return withCors(json(await diag()), allowed);
         case '/identify': {
@@ -313,9 +321,10 @@ async function cached(ctx, key, ttl, compute) {
   }
   const body = await compute();
   // Não guarda "não encontrado" por muito tempo: a loja pode cadastrar depois.
-  const maxAge = body && body.found === false ? DAY : ttl;
-  const res = json(body, 200, { 'Cache-Control': `public, max-age=${maxAge}` });
-  if (cache && ctx && ctx.waitUntil) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  // Erro passageiro (SEFAZ fora do ar, nota ainda não autorizada) não fica guardado.
+  const maxAge = body && body.found === false ? (body.error ? 0 : DAY) : ttl;
+  const res = json(body, 200, { 'Cache-Control': maxAge ? `public, max-age=${maxAge}` : 'no-store' });
+  if (maxAge && cache && ctx && ctx.waitUntil) ctx.waitUntil(cache.put(cacheKey, res.clone()));
   return res;
 }
 
@@ -340,4 +349,85 @@ function json(body, status = 200, extra = {}) {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...extra },
   });
+}
+
+// ---------- NFC-e do RS (portal da SVRS) ----------
+// O QR Code do cupom abre dfe-portal.svrs.rs.gov.br/Dfe/QrCodeNFce?p=CHAVE|versão|ambiente...
+// A página lista cada item com descrição, "Código" (do mercado; às vezes é o
+// código de barras), quantidade, unidade e valores. Nada é guardado aqui além
+// do cache da resposta, que é pública e não muda.
+
+const NFCE_URL = 'https://dfe-portal.svrs.rs.gov.br/Dfe/QrCodeNFce?p=';
+
+export function nfceKey(p) {
+  const m = /^(\d{44})(\|[\w.:-]*){1,10}$/.exec(String(p || ''));
+  return m ? m[1] : '';
+}
+
+async function fetchNfce(p, key) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(NFCE_URL + p.split('|').map(encodeURIComponent).join('%7C'), {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KeepInventory404/1.0)', Accept: 'text/html' },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return { found: false, error: `A SEFAZ respondeu ${res.status}` };
+    const html = await res.text();
+    const nota = parseNfce(html);
+    if (!nota.items.length) return { found: false, error: 'A SEFAZ não mostrou itens para esta nota. Ela pode ainda não ter sido autorizada.' };
+    if (nota.key && nota.key !== key) return { found: false, error: 'A nota devolvida não é a do QR Code' };
+    return { found: true, ...nota, key };
+  } catch (err) {
+    return { found: false, error: 'Não deu para falar com a SEFAZ agora', detail: String(err && err.message || err) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const decodeHtml = (s) => String(s || '')
+  .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+  .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+  .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+  .replace(/\u00AD/g, '').replace(/\s+/g, ' ').trim();
+const brNumber = (s) => {
+  const t = String(s || '').replace(/[^\d.,]/g, '');
+  const n = Number(t.replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : 0;
+};
+const grab = (re, s) => { const m = re.exec(s); return m ? decodeHtml(m[1]) : ''; };
+
+export function parseNfce(html) {
+  const items = [];
+  const rows = String(html).split(/<tr id="Item \+ \d+">/).slice(1);
+  for (const row of rows) {
+    const name = grab(/<span class="txtTit">([^<]*)<\/span>/, row);
+    if (!name) continue;
+    items.push({
+      name,
+      code: grab(/\(C[oó]digo:\s*([^)]*?)\s*\)/i, row).replace(/\s/g, ''),
+      qty: brNumber(grab(/Qtde\.:<\/strong>\s*([\d.,]+)/, row)),
+      unit: grab(/UN:\s*<\/strong>\s*([^<]*)/, row).toUpperCase(),
+      unitPrice: brNumber(grab(/Vl\. Unit\.:<\/strong>\s*([\d.,]+)/, row)),
+      total: brNumber(grab(/<span class="valor">([\d.,]+)/, row)),
+    });
+  }
+  const issued = grab(/Emiss[aã]o:\s*<\/strong>\s*(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2})/, html);
+  let issuedAt = '';
+  if (issued) {
+    const [d, t] = issued.split(' ');
+    const [dd, mm, yyyy] = d.split('/');
+    issuedAt = `${yyyy}-${mm}-${dd}T${t}-03:00`;
+  }
+  return {
+    store: {
+      name: grab(/id="u20"[^>]*>([^<]*)</, html),
+      cnpj: grab(/CNPJ:\s*([\d./-]+)/, html).replace(/\D/g, ''),
+    },
+    issuedAt,
+    total: brNumber(grab(/Valor a pagar R\$:<\/label>\s*<span[^>]*>([\d.,]+)/, html)),
+    discount: brNumber(grab(/Descontos R\$:<\/label>\s*<span[^>]*>([\d.,]+)/, html)),
+    key: grab(/class="chave">([\d\s]+)</, html).replace(/\s/g, ''),
+    items,
+  };
 }

@@ -43,11 +43,12 @@ function navKind(from, to) {
   if (from === null) return '';
   const a = depth(from);
   const b = depth(to);
-  if (b === 'modal') return a === 'modal' ? 'fade' : 'up';
+  if (b === 'modal') return a === 'modal' ? '' : 'up';
   if (a === 'modal') return 'down';
   if (b > a) return 'push';
   if (b < a) return 'pop';
-  return 'fade';
+  // Entre abas o iPhone troca na hora, sem esmaecer: só a pílula da barra anda.
+  return '';
 }
 let prevPath = null;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');

@@ -325,11 +325,48 @@ export async function saveReceipt(receipt) {
   return entry;
 }
 
+// ---------- Nota fiscal (NFC-e) ----------
+// meta.nfceMap: "CNPJ:código do mercado" → código do produto. É assim que o app
+// aprende: na primeira nota a pessoa diz qual produto é; nas próximas entra sozinho.
+// meta.notas: chaves das notas já importadas (para avisar antes de somar duas vezes).
+
+async function metaValue(key, fallback) {
+  const row = await get('meta', key);
+  return row && row.value ? row.value : fallback;
+}
+
+export function nfceMap() {
+  return metaValue('nfceMap', {});
+}
+
+export async function learnNfce(pairs) {
+  const map = await nfceMap();
+  for (const [k, code] of pairs) map[k] = code;
+  await put('meta', { key: 'nfceMap', value: map });
+}
+
+export async function notaImported(key) {
+  return (await metaValue('notas', {}))[key] || null;
+}
+
+export async function markNota(key, info) {
+  const notas = await metaValue('notas', {});
+  notas[key] = { at: Date.now(), ...info };
+  await put('meta', { key: 'notas', value: notas });
+}
+
+// Último preço pago, vindo da nota: { value, unit, store, at }.
+export async function setLastPrice(code, price) {
+  const p = await getProduct(code);
+  if (!p) return;
+  await put('products', { ...p, lastPrice: price });
+}
+
 // ---------- Backup ----------
 
 export async function exportData() {
-  const [products, movements, lots, receipts] = await Promise.all([getAll('products'), getAll('movements'), getAll('lots'), listReceipts()]);
-  return { app: 'KeepInventory404', version: 2, exportedAt: new Date().toISOString(), products, movements, lots, receipts };
+  const [products, movements, lots, receipts, nfce, notas] = await Promise.all([getAll('products'), getAll('movements'), getAll('lots'), listReceipts(), nfceMap(), metaValue('notas', {})]);
+  return { app: 'KeepInventory404', version: 2, exportedAt: new Date().toISOString(), products, movements, lots, receipts, nfceMap: nfce, notas };
 }
 
 export async function importData(data) {
@@ -342,6 +379,8 @@ export async function importData(data) {
     await promisify(s.lots.clear());
     await promisify(s.meta.delete('countDraft'));
     if (Array.isArray(data.receipts)) await promisify(s.meta.put({ key: 'receipts', value: data.receipts.slice(0, MAX_RECEIPTS) }));
+    if (data.nfceMap && typeof data.nfceMap === 'object') await promisify(s.meta.put({ key: 'nfceMap', value: data.nfceMap }));
+    if (data.notas && typeof data.notas === 'object') await promisify(s.meta.put({ key: 'notas', value: data.notas }));
     for (const p of data.products) {
       if (typeof p.code !== 'string') continue;
       const base = newProduct(p.code, p);

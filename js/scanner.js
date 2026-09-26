@@ -2,7 +2,8 @@
 // Usa o BarcodeDetector nativo quando existe (Android/Chrome) e o polyfill ZXing
 // em WebAssembly quando não existe (iPhone/Safari, desktop Firefox).
 
-const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
+// qr_code: o QR Code da nota fiscal do mercado (importa a compra inteira).
+const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'qr_code'];
 const SCAN_INTERVAL = 150;
 // O mesmo código só é aceito de novo depois de sumir do visor por este tempo.
 const GONE_BEFORE_REPEAT = 800;

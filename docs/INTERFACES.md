@@ -545,3 +545,33 @@ pílula clara sobre o trilho, texto sempre escuro, a escolhida em negrito.
 - Botões apertam rápido (0,96) e soltam com mola.
 
 Tudo isso desliga com "reduzir movimento".
+
+## Versão 3.9: posições e tamanhos do iOS 26, e a nota fiscal
+
+Referência: padrões do iOS 26 (título grande 34, compacto 17, corpo 17,
+secundário 15, legenda 13; botões fixos como círculos de vidro; folhas com X
+à esquerda e título no meio).
+
+- **Barra de abas:** o ícone troca de vazado para cheio na hora, sem pulinho;
+  a aba não encolhe ao tocar. Trocar de aba é instantâneo; só a pílula anda.
+- **Folhas:** alça, depois uma barra com X de vidro à esquerda, título pequeno
+  no meio e compartilhar à direita. Folhas de produto ganham título pelo modo
+  (Guardar, Tirar, Contar). Fechar desce a folha inteira. Só folha alta empurra
+  a tela de trás.
+- **Produto:** barra transparente com voltar e lápis em círculos de vidro; ao
+  rolar, ganha vidro e o nome aparece pequeno no meio. Seções em cartões
+  agrupados. Mostra o último preço pago quando veio de uma nota.
+- **Textos menores e mais curtos:** títulos 34, nomes 17, etiquetas 24,
+  seletor 72, notas de rodapé 13; frases longas cortadas.
+
+**Nota fiscal (NFC-e do RS).** No leitor, apontar para o QR Code do cupom
+importa a compra inteira (também há o botão de nota na câmera e "Importar nota
+fiscal" em Mais, que aceita colar o link). A folha mostra o mercado, a data, o
+total e cada item:
+- Itens vendidos por peso (fruta, pão) começam de fora; os outros, marcados.
+- O app liga cada item a um produto do armário: pelo que aprendeu daquele
+  mercado, pelo código de barras quando o código da nota é um, ou sugere pelo
+  nome ("Ou é um destes?"). Tocar num item expande para trocar nome, produto e
+  quantidade.
+- "Guardar N itens" dá entrada em tudo, guarda o preço e aprende as ligações.
+  Na próxima nota do mesmo mercado os itens já vêm certos. Nota repetida avisa.

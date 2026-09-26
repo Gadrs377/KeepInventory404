@@ -1,7 +1,7 @@
 // Visor da câmera compartilhado pelo leitor (entrada/saída) e pela contagem.
 
 import { createScanner, cameraSupported } from '../scanner.js';
-import { isValidCode, checkDigitOk } from '../lookup.js';
+import { isValidCode, checkDigitOk, notaParam } from '../lookup.js';
 import { $, icon, openSheet, vibrate } from '../ui.js';
 import { beep } from '../sound.js';
 
@@ -16,7 +16,7 @@ const ERRORS = {
  * Monta o visor em `host`. `onCode(code)` deve devolver uma Promise; o leitor
  * volta a ler quando ela termina.
  */
-export function mountCamera(host, { onCode, compact = false }) {
+export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   host.innerHTML = `
     <div class="viewfinder ${compact ? 'is-compact' : ''}">
       <video muted playsinline aria-label="Imagem da câmera"></video>
@@ -27,6 +27,7 @@ export function mountCamera(host, { onCode, compact = false }) {
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
         <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
+        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-label="Nota fiscal do mercado">${icon('receipt')}</button>` : ''}
       </div>
     </div>`;
 
@@ -55,14 +56,14 @@ export function mountCamera(host, { onCode, compact = false }) {
     }, HINT_AFTER);
   }
 
-  async function handle(code) {
+  async function handle(code, fn = onCode) {
     if (handling) return;
     handling = true;
     clearTimeout(hintTimer);
     hintBtn.hidden = true;
     scanner.pause();
     try {
-      await onCode(code);
+      await fn(code);
     } finally {
       handling = false;
       if (alive && !paused) { scanner.resume(); armHint(); }
@@ -71,7 +72,13 @@ export function mountCamera(host, { onCode, compact = false }) {
 
   const scanner = createScanner(video, {
     onCode(code) {
-      if (!isValidCode(code)) { scanner.resume(); return; }
+      if (!isValidCode(code)) {
+        // QR Code da nota fiscal: importa a compra inteira.
+        const p = onNota && notaParam(code);
+        if (p) { beep('ok'); vibrate(40); handle(p, onNota); return; }
+        scanner.resume();
+        return;
+      }
       aim.classList.remove('is-hit');
       void aim.offsetWidth;
       aim.classList.add('is-hit');
@@ -106,6 +113,18 @@ export function mountCamera(host, { onCode, compact = false }) {
     if (code) await handle(code);
     else if (alive && !paused) { scanner.resume(); armHint(); }
   });
+
+  const notaBtn = $('[data-nota]', host);
+  if (notaBtn) {
+    notaBtn.addEventListener('click', async () => {
+      scanner.pause();
+      clearTimeout(hintTimer);
+      const { notaEntrySheet } = await import('./nota.js');
+      const p = await notaEntrySheet();
+      if (p) await handle(p, onNota);
+      else if (alive && !paused) { scanner.resume(); armHint(); }
+    });
+  }
 
   // Sem código: a folha abre direto na busca pelo nome.
   hintBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));

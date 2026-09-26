@@ -494,7 +494,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .stock-fix .field-note { margin-top: 8px; }
 .product-code { font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
-.product-head { display: flex; gap: 14px; align-items: flex-start; padding-inline-end: 44px; }
+.product-head { display: flex; gap: 14px; align-items: flex-start; }
 .product-head.is-loading .product-name { color: var(--ink-2); }
 .product-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .product-name { font-weight: 700; font-size: 20px; line-height: 1.25; overflow-wrap: anywhere; text-wrap: balance; }
@@ -612,7 +612,6 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .sheet-ghost.is-leaving .sheet-backdrop { opacity: 0; }
 .sheet-grip { width: 100%; height: 24px; display: grid; place-items: center; touch-action: none; cursor: grab; }
 .sheet-grip::after { content: ''; width: 36px; height: 4px; border-radius: 2px; background: var(--ink-disabled); }
-.sheet-close { position: absolute; top: 10px; right: 10px; }
 .sheet-body { display: flex; flex-direction: column; gap: 16px; }
 .sheet-title { font-size: 30px; padding-inline-end: 44px; }
 .sheet-actions { display: flex; flex-direction: column; gap: 10px; }
@@ -1053,8 +1052,7 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 .btn-icon { width: 52px; padding: 0; flex: none; }
 .cam-tool { padding-inline: 0; width: 52px; justify-content: center; }
 .cam-tool .icon { width: 22px; height: 22px; }
-.sheet-share { position: absolute; top: 10px; right: 62px; }
-.sheet:has(.sheet-share) .sheet-title { padding-inline-end: 110px; }
+
 
 /* ---------- Telas largas ---------- */
 
@@ -1403,26 +1401,27 @@ html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
   background: color-mix(in oklab, var(--ink) 9%, transparent);
   box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 0.5px var(--glass-edge);
   transition-property: translate, width, scale, opacity, background-color, box-shadow;
-  transition-duration: 580ms, 420ms, 520ms, 200ms, 200ms, 200ms;
-  transition-timing-function: var(--spring-bouncy), var(--spring), var(--spring-bouncy), var(--ease), var(--ease), var(--ease);
+  transition-duration: 480ms, 420ms, 420ms, 200ms, 200ms, 200ms;
+  transition-timing-function: var(--spring), var(--spring), var(--spring), var(--ease), var(--ease), var(--ease);
 }
 .tab-glide.no-anim { transition: none; }
-.tab-glide.is-moving { scale: 1.16 0.88; transition-duration: 580ms, 420ms, 140ms, 200ms, 200ms, 200ms; }
+.tab-glide.is-moving { scale: 1.08 0.94; transition-duration: 580ms, 420ms, 140ms, 200ms, 200ms, 200ms; }
 .tabbar.is-scrubbing .tab-glide {
   scale: 1.2 1.14;
   background: color-mix(in oklab, var(--paper) 55%, transparent);
   box-shadow: 0 8px 22px rgba(22, 24, 23, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px var(--glass-edge);
 }
-.tab-item { position: relative; z-index: 1; transition-property: scale, color; transition-duration: 380ms, 250ms; transition-timing-function: var(--spring-bouncy), var(--ease); }
+.tab-item { position: relative; z-index: 1; transition: color 150ms var(--ease); }
 .tab-item[aria-current="page"] { background: transparent; }
-.tab-item:active { scale: 0.96; transition-duration: 90ms, 250ms; }
+/* Aba não encolhe nem pula ao tocar (o iPhone só destaca) */
+.tab-item:active { scale: 1; opacity: 0.7; }
 .tab-item.is-over { color: var(--ink); }
-/* Ícone vazado e cheio no mesmo lugar: trocam com escala, opacidade e desfoque */
+/* Ícone vazado e cheio no mesmo lugar. Como no iPhone: a troca é na hora,
+   sem escala nem mola (o que se mexe é só a pílula). */
 .tab-icons { position: relative; display: grid; width: 24px; height: 24px; }
-.tab-icons > .icon { grid-area: 1 / 1; transition-property: opacity, scale, filter; transition-duration: 220ms, 460ms, 220ms; transition-timing-function: var(--ease), var(--spring-bouncy), var(--ease); }
-.tab-icons > .tab-on { opacity: 0; scale: 0.25; filter: blur(4px); }
-.tab-item[aria-current="page"] .tab-on { opacity: 1; scale: 1; filter: blur(0); }
-.tab-item[aria-current="page"] .tab-off { opacity: 0; scale: 0.25; filter: blur(4px); }
+.tab-icons > .icon { grid-area: 1 / 1; }
+.tab-icons > .tab-on, .tab-item[aria-current="page"] .tab-off { visibility: hidden; }
+.tab-item[aria-current="page"] .tab-on { visibility: visible; }
 .tab-icons .tab-badge { top: -6px; left: 14px; }
 /* Fora das abas (produto, leitor, contagem) a barra desce e some com mola */
 .tabbar-wrap { transition-property: translate, opacity; transition-duration: 520ms, 260ms; transition-timing-function: var(--spring), var(--ease); }
@@ -1517,3 +1516,153 @@ body.sheet-stack .mini-bar { opacity: 0; }
 
 /* A cor da faixa do leitor troca junto com a pílula Entrada | Saída */
 .band { transition-duration: 420ms; }
+
+
+/* ---------- Versão 3.9: posições e tamanhos como no iOS 26 ----------
+   Escala do iPhone: título grande 34, título compacto 17, corpo 17,
+   secundário 15, legenda 13, rótulo da barra de abas 11. */
+.page-title, .home-head .page-title, .screen-home .page-title { font-size: 34px; letter-spacing: -0.02em; }
+.home-head { padding-block: calc(12px + var(--safe-top)) 0; }
+.lead { font-size: 15px; color: var(--ink-2); }
+.list-title { font-size: 15px; margin-block: 22px 8px; }
+.empty-lead { font-size: 22px; }
+.field-note, .group-note { font-size: 13px; }
+.tab-item { font-size: 11px; }
+.toast-text { font-size: 15px; }
+.row { min-height: 64px; padding-block: 10px; }
+.row-name { font-size: 17px; }
+.row-sub { font-size: 15px; }
+.thumb-sm { width: 44px; height: 44px; }
+.tag { min-width: 44px; height: 38px; font-size: 24px; padding-inline: 7px; border-radius: 7px; }
+.tag-lg { min-width: 64px; height: 56px; font-size: 40px; border-radius: 10px; }
+.row-minus, .row-minus-space { width: 44px; height: 44px; }
+.skel-tag { width: 44px; height: 38px; }
+.stepper-value { font-size: 72px; height: 80px; }
+.stepper-sm .stepper-value { font-size: 34px; height: 52px; }
+.shop-qty { font-size: 22px; }
+.cupom-total { font-size: 20px; }
+.lot-date { font-size: 22px; }
+.receipt-n { font-size: 20px; }
+.receipt-total .receipt-n { font-size: 24px; }
+.product-name { font-size: 18px; }
+.btn { font-size: 17px; }
+.btn-lg { min-height: 56px; font-size: 17px; }
+.mode-opt span { font-size: 16px; }
+.search { height: 44px; }
+.search input { font-size: 17px; }
+.input { height: 48px; font-size: 17px; }
+
+/* Botão circular de vidro (barra do produto, cabeçalho das folhas) */
+.glass-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 0.5px var(--glass-edge);
+}
+.glass-btn .icon { width: 20px; height: 20px; }
+.glass-btn:active { background: color-mix(in oklab, var(--ink) 14%, transparent); }
+
+/* Folha: alça, depois a barra com X à esquerda, título no meio e ação à direita */
+.sheet { padding-top: 0; }
+.sheet-grip { height: 14px; }
+.sheet-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; min-height: 48px; margin-bottom: 8px; }
+.sheet-bar-end { display: flex; justify-content: flex-end; }
+.sheet-bar-title { min-width: 0; text-align: center; }
+.sheet-bar .sheet-title { font-family: var(--font-num); font-size: 17px; font-weight: 800; line-height: 1.25; letter-spacing: 0; padding: 0; text-wrap: balance; }
+.sheet-bar .sheet-share { position: static; }
+.sheet-bar .icon-btn { width: 44px; height: 44px; }
+/* Fechar: a folha desce inteira pela borda, como no iPhone */
+.sheet-ghost.is-leaving .sheet { transform: translateY(100%); opacity: 1; transition: transform 320ms cubic-bezier(0.3, 0.6, 0.4, 1); }
+.sheet-ghost.is-leaving .sheet-backdrop { transition-duration: 320ms; }
+@media (min-width: 640px) { .sheet-ghost.is-leaving .sheet { transform: translate(-50%, 100%); } }
+
+/* Produto: barra transparente com botões de vidro; ao rolar, vidro e nome pequeno */
+.nav-bar.topbar {
+  position: sticky; top: 0; z-index: 4;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px;
+  padding: calc(6px + var(--safe-top)) 12px 6px;
+  border-bottom: 0; background: transparent; box-shadow: none;
+  transition: background-color 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+.nav-bar > :last-child:not(:first-child) { grid-column: 3; }
+.nav-title {
+  grid-column: 2; min-width: 0; text-align: center;
+  font-family: var(--font-num); font-weight: 800; font-size: 17px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; translate: 0 6px; transition: opacity 200ms var(--ease), translate 380ms var(--spring);
+}
+.is-scrolled .nav-bar.topbar { background: var(--glass-solid); box-shadow: inset 0 -1px 0 var(--glass-edge); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .is-scrolled .nav-bar.topbar {
+    background: color-mix(in oklab, var(--paper) 94%, transparent);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(var(--glass-saturate));
+  }
+}
+.is-scrolled .nav-title { opacity: 1; translate: 0 0; }
+.is-scrolled .nav-bar .glass-btn { background: transparent; box-shadow: none; }
+
+/* Produto em cartões agrupados, como os Ajustes */
+.screen-product .content { gap: 12px; padding-top: 0; }
+.screen-product .product-hero { padding-block: 0 4px; }
+.product-hero .page-title { font-size: 24px; }
+.screen-product main > section:not(.product-hero) {
+  background: var(--shelf); border-radius: 16px; padding: 2px 16px 16px;
+}
+.screen-product main > section:not(.product-hero) > .list-title:first-child { margin-top: 14px; }
+.screen-product .history li:last-child, .screen-product .lot:last-child { border-bottom: 0; }
+.screen-product .lots { border-top: 0; }
+.screen-product .btn-quiet { background: transparent; }
+
+/* Compras: "novo item" como uma linha no fim da lista */
+.shop-add { margin-top: 16px; }
+
+/* ---------- Nota fiscal (importar a compra) ---------- */
+.sheet.sheet-tall { min-height: 88dvh; }
+.sheet-footer {
+  position: sticky; bottom: calc(-20px - var(--safe-bottom)); z-index: 2;
+  margin: 8px calc(var(--gutter) * -1) calc(-20px - var(--safe-bottom));
+  padding: 12px var(--gutter) calc(16px + var(--safe-bottom));
+  background: linear-gradient(to top, var(--paper) 70%, color-mix(in oklab, var(--paper) 0%, transparent));
+}
+.sheet-footer .btn { width: 100%; }
+.nota-head { display: flex; flex-direction: column; gap: 4px; }
+.nota-store { font-family: var(--font-num); font-weight: 800; font-size: 24px; line-height: 1.15; letter-spacing: -0.01em; }
+.nota-meta { font-size: 15px; color: var(--ink-2); }
+.nota-warn {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 14px; border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--acabando) 30%, var(--paper)); color: var(--ink); font-size: 15px;
+}
+.nota-warn .icon { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.nota-items { border-top: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1); }
+.nota-item { border-bottom: 1px solid var(--line); }
+.nota-line { display: flex; align-items: center; gap: 4px; padding-inline: var(--gutter) 8px; }
+.nota-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+  min-height: 60px; padding: 8px 4px 8px 8px; border: 0; background: none; color: inherit; text-align: start;
+}
+.nota-main .row-name { font-size: 16px; }
+.nota-main .row-sub { font-size: 13px; white-space: normal; }
+.nota-qty { flex: none; font-family: var(--font-num); font-weight: 800; font-size: 20px; color: var(--entrada); font-variant-numeric: tabular-nums; }
+.nota-chev { width: 16px; height: 16px; color: var(--ink-2); flex: none; transition: rotate 380ms var(--spring); }
+.nota-item.is-open .nota-chev { rotate: 90deg; }
+.nota-item.is-off .row-name { color: var(--ink-2); }
+.nota-item.is-off .thumb { opacity: 0.5; }
+/* Linha que expande: a altura anima de 0 até o conteúdo (grid 0fr → 1fr) */
+.nota-edit { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 460ms var(--spring); }
+.nota-item.is-open .nota-edit { grid-template-rows: 1fr; }
+.nota-edit-in {
+  overflow: hidden; min-height: 0;
+  display: flex; flex-direction: column; gap: 12px;
+  padding-inline: calc(var(--gutter) + 40px) var(--gutter);
+  opacity: 0; translate: 0 -6px; transition: opacity 200ms var(--ease), translate 460ms var(--spring);
+}
+.nota-item.is-open .nota-edit-in { opacity: 1; translate: 0 0; padding-bottom: 16px; }
+.nota-src { font-size: 13px; color: var(--ink-2); }
+.nota-link { display: flex; align-items: center; gap: 10px; }
+.nota-link .row-main { gap: 0; }
+.nota-guesses { display: flex; flex-wrap: wrap; gap: 8px; }
+.nota-guesses .chip { background: color-mix(in oklab, var(--ink) 6%, transparent); border-color: transparent; font-weight: 600; text-align: start; }
+.nota-guesses .chip::before { display: none; }
+.nota-error { padding-inline: 0; }
+body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(--paper) 70%, color-mix(in oklab, var(--paper) 0%, transparent)); }
