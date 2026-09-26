@@ -51,6 +51,7 @@ quando, e **Restaurar backup** para passar para outro aparelho.
 - [System design](docs/SYSTEM_DESIGN.md): arquitetura, dados, regras de estoque e fluxos.
 - [Interfaces](docs/INTERFACES.md): plano de cada tela e como elas se ligam.
 - [Design system](docs/DESIGN_SYSTEM.md): cores, tipografia, componentes e escrita.
+- [Roadmap](docs/ROADMAP.md): ideias combinadas para depois, como produtos com várias unidades na embalagem.
 
 ## Repassador (pasta `worker/`)
 
