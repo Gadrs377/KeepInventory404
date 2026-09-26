@@ -21,24 +21,27 @@ export default async function mountDados(root) {
     <div class="screen screen-data">
       <header class="topbar">
         <a class="icon-btn" href="#/" aria-label="Voltar ao armário">${icon('back')}</a>
-        <h1 class="topbar-title">Dados</h1>
+        <h1 class="topbar-title">Mais</h1>
       </header>
       <main class="content stack">
-        <p class="lead">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
-        <a class="btn btn-quiet" href="#/cupons">${icon('receipt')}Cupons das últimas sessões</a>
-        <div class="stack-sm">
-          <button type="button" class="btn btn-primary" data-export>${icon('download')}Baixar backup</button>
-          <label class="btn btn-quiet file-btn">${icon('upload')}Restaurar backup<input type="file" accept="application/json,.json" data-import class="sr-only"></label>
-          <button type="button" class="btn btn-quiet" data-csv>${icon('table')}Baixar planilha</button>
-        </div>
+        <ul class="group" aria-label="Outras telas">
+          <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
+          <li><a class="group-row" href="#/cupons"><span class="group-icon">${icon('receipt')}</span><span class="group-label">Cupons das últimas sessões</span>${icon('chevron', 'group-chevron')}</a></li>
+          <li><a class="group-row" href="#/compras"><span class="group-icon">${icon('cart')}</span><span class="group-label">Lista de compras</span>${icon('chevron', 'group-chevron')}</a></li>
+        </ul>
 
-        <section>
-          <h2 class="list-title">Som</h2>
-          <label class="switch-row">
-            <span>Bip ao ler um código</span>
-            <input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}>
-          </label>
-        </section>
+        <h2 class="list-title">Backup</h2>
+        <ul class="group">
+          <li><button type="button" class="group-row" data-export><span class="group-icon">${icon('download')}</span><span class="group-label">Baixar backup</span></button></li>
+          <li><label class="group-row file-btn"><span class="group-icon">${icon('upload')}</span><span class="group-label">Restaurar backup</span><input type="file" accept="application/json,.json" data-import class="sr-only"></label></li>
+          <li><button type="button" class="group-row" data-csv><span class="group-icon">${icon('table')}</span><span class="group-label">Baixar planilha</span></button></li>
+        </ul>
+        <p class="group-note">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
+
+        <h2 class="list-title">Som</h2>
+        <ul class="group">
+          <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
+        </ul>
 
         <section>
           <h2 class="list-title">Instalar no celular</h2>

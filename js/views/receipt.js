@@ -4,7 +4,7 @@
 import { $, esc, openSheet, plural, shareText, icon, vibrate } from '../ui.js';
 import { saveReceipt } from '../store.js';
 
-const TITLE = { entrada: 'Entrada', saida: 'Saída', contagem: 'Contagem' };
+const TITLE = { entrada: 'Entrada', saida: 'Saída', contagem: 'Contagem', misto: 'Entrada e saída' };
 
 const stampFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 

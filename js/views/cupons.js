@@ -8,6 +8,7 @@ const INFO = {
   entrada: { title: 'Entrada', icon: 'in' },
   saida: { title: 'Saída', icon: 'out' },
   contagem: { title: 'Contagem', icon: 'count' },
+  misto: { title: 'Entrada e saída', icon: 'receipt' },
 };
 
 export default async function mountCupons(root) {
@@ -15,7 +16,7 @@ export default async function mountCupons(root) {
   root.innerHTML = `
     <div class="screen screen-cupons">
       <header class="topbar">
-        <a class="icon-btn" href="#/dados" aria-label="Voltar para Dados">${icon('back')}</a>
+        <a class="icon-btn" href="#/dados" aria-label="Voltar para Mais">${icon('back')}</a>
         <h1 class="topbar-title">Cupons</h1>
       </header>
       <main class="content">

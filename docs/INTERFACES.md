@@ -377,3 +377,27 @@ Segurar o ícone do app instalado mostra Entrada, Saída, Compras e Contar
 | O número é a etiqueta | Onde houver quantidade de estoque, ela aparece no componente etiqueta |
 | Sempre dá para voltar atrás | Todo registro mostra Desfazer; exclusão e restauração pedem confirmação |
 | Rodapé para o polegar | Ações principais ficam na metade de baixo da tela |
+
+## Versão 3.2: menos passos, tela inicial mais limpa
+
+Mudanças guiadas por "como a Apple faria" e pelas skills better-layout e liquid-glass:
+
+- **Baixa sem câmera:** cada linha do Armário tem um botão "−" (48 px) que tira 1
+  na hora, com Desfazer no aviso. A lista não reordena depois do "−" (um produto
+  que vira "acabando" não pula para o topo debaixo do dedo); volta a ordenar ao
+  buscar, filtrar ou trocar de ambiente.
+- **Tela inicial:** saíram o resumo, a fileira Compras/Contar e o aviso amarelo de
+  validade. O cabeçalho tem dois ícones (carrinho e ≡). As abas de ambiente só
+  aparecem quando há produtos em mais de um ambiente. O filtro Vencendo fica
+  amarelo quando algo vence nesta semana.
+- **Leitor único:** Entrada e Saída são a mesma tela. O seletor na faixa troca o
+  modo e a cor sem desligar a câmera (`#/entrada` e `#/saida` só dizem como ela
+  abre). Modo rápido é lembrado por modo e vem ligado na Saída. Uma sessão pode
+  ter entradas e saídas; o cupom sai como "Entrada e saída".
+- **Produto:** "Quantidade no armário" virou um bloco próprio no topo, com o botão
+  "Corrigir para N" (só aparece quando o número muda) e Desfazer. "Salvar
+  detalhes" grava só nome, marca, tamanho, ambiente e mínimo.
+- **Mais (≡):** lista agrupada como os Ajustes do celular: Contar o armário,
+  Cupons, Lista de compras; Backup; Som.
+- **Folhas sobre a câmera** são sólidas: o vidro borrava o vídeo em manchas que se
+  mexiam atrás do texto.

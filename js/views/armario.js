@@ -1,9 +1,10 @@
 // Tela inicial: o que tem no armário e quanto, por ambiente da casa.
+// Cada linha tem um "−" que dá baixa de 1 na hora, sem câmera, com Desfazer.
 
-import { listProducts, listLots, getCountDraft, isLow, onChange } from '../store.js';
+import { listProducts, listLots, getCountDraft, isLow, onChange, removeStock, undoMovement } from '../store.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
@@ -13,16 +14,12 @@ export default function mountArmario(root) {
   root.innerHTML = `
     <div class="screen screen-home has-floating-bar">
       <header class="home-head">
-        <div>
-          <h1 class="page-title">Armário</h1>
-          <p class="home-summary" data-summary>&nbsp;</p>
+        <h1 class="page-title">Armário</h1>
+        <div class="home-actions">
+          <a class="icon-btn" href="#/compras" aria-label="Lista de compras">${icon('cart')}</a>
+          <a class="icon-btn" href="#/dados" aria-label="Mais: contagem, cupons e backup">${icon('menu')}</a>
         </div>
-        <a class="icon-btn" href="#/dados" aria-label="Dados e backup">${icon('menu')}</a>
       </header>
-      <nav class="home-links" aria-label="Outras telas">
-        <a class="btn btn-quiet btn-sm" href="#/compras">${icon('cart')}Compras</a>
-        <a class="btn btn-quiet btn-sm" href="#/inventario">${icon('count')}Contar</a>
-      </nav>
       <div class="home-tools glass-thick">
         <label class="search">
           ${icon('search')}
@@ -32,7 +29,6 @@ export default function mountArmario(root) {
       </div>
       <div class="chips" role="group" aria-label="Mostrar só" hidden></div>
       <div class="draft-note" hidden></div>
-      <div class="draft-note alert-note" data-expiring hidden></div>
       <main class="shelf" aria-live="polite"></main>
       <nav class="modebar floating-bar glass-regular" aria-label="Registrar">
         <a class="mode-btn mode-entrada" href="#/entrada">${icon('in')}<span>Entrada</span></a>
@@ -43,15 +39,19 @@ export default function mountArmario(root) {
   const shelf = $('.shelf', root);
   const tabs = $('.tabs', root);
   const chips = $('.chips', root);
-  const summary = $('[data-summary]', root);
   const search = $('input[type=search]', root);
   const draftNote = $('.draft-note', root);
-  const expiringNote = $('[data-expiring]', root);
   let products = [];
   let nextExpiry = new Map(); // code -> AAAA-MM-DD do lote que vence antes
   let alive = true;
+  let refocus = null; // devolve o foco ao "−" depois de a lista ser redesenhada
+  // Depois de um "−", a lista mantém a ordem em que estava: um produto que passa
+  // a "acabando" não pula para o topo debaixo do dedo. Volta a ordenar quando a
+  // pessoa busca, filtra ou troca de ambiente.
+  let keepOrder = false;
+  let lastOrder = new Map();
 
-  const expiresSoon = (p, days = WATCH_DAYS) => nextExpiry.has(p.code) && daysUntil(nextExpiry.get(p.code)) <= days;
+  const expiresSoon = (p, days = WATCH_DAYS) => p.qty > 0 && nextExpiry.has(p.code) && daysUntil(nextExpiry.get(p.code)) <= days;
   const FILTERS = [
     { id: 'todos', label: 'Todos', test: () => true },
     { id: 'acabando', label: 'Acabando', test: isLow },
@@ -61,36 +61,25 @@ export default function mountArmario(root) {
   const TABS = [{ id: 'tudo', short: 'Tudo' }, ...AREAS];
 
   function render() {
-    const low = products.filter(isLow).length;
-    const zero = products.filter((p) => p.qty === 0).length;
-    summary.textContent = products.length
-      ? [plural(products.length, 'produto', 'produtos'), low && `${low} acabando`, zero && plural(zero, 'zerado', 'zerados')].filter(Boolean).join(', ')
-      : 'Nada guardado ainda';
-
-    tabs.innerHTML = TABS.map((t) => `
-      <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}">${t.short}</button>`).join('');
+    // Abas de ambiente só quando os produtos estão em mais de um lugar da casa.
+    const usedAreas = new Set(products.map((p) => p.area || 'cozinha'));
+    const showTabs = usedAreas.size > 1;
+    if (!showTabs) savedArea = 'tudo';
+    tabs.hidden = !showTabs;
+    tabs.innerHTML = showTabs ? TABS.filter((t) => t.id === 'tudo' || usedAreas.has(t.id)).map((t) => `
+      <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}">${t.short}</button>`).join('') : '';
 
     // Filtros de estado, contados dentro do ambiente escolhido. Só aparecem quando têm algo.
+    // "Vencendo" fica amarelo quando algo vence nesta semana (substitui o antigo aviso).
     const inArea = products.filter((p) => savedArea === 'tudo' || (p.area || 'cozinha') === savedArea);
     const counts = Object.fromEntries(FILTERS.map((f) => [f.id, inArea.filter(f.test).length]));
+    const urgent = inArea.some((p) => expiresSoon(p, SOON_DAYS));
     const shown = FILTERS.filter((f) => f.id !== 'todos' && (counts[f.id] || savedFilter === f.id));
     chips.hidden = !shown.length;
     chips.innerHTML = shown.map((f) => `
-      <button type="button" class="chip chip-${f.id}" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
-        ${f.label} <span class="chip-n">${counts[f.id]}</span>
+      <button type="button" class="chip chip-${f.id} ${f.id === 'vencendo' && urgent ? 'is-urgent' : ''}" aria-pressed="${savedFilter === f.id}" data-filter="${f.id}">
+        ${f.label} <span class="chip-n">${counts[f.id]}</span>${f.id === 'vencendo' && urgent ? '<span class="sr-only">, algo vence nesta semana</span>' : ''}
       </button>`).join('');
-
-    // Aviso de validade: o que venceu ou vence nesta semana, em qualquer ambiente.
-    const urgent = products.filter((p) => p.qty > 0 && expiresSoon(p, SOON_DAYS))
-      .sort((a, b) => nextExpiry.get(a.code).localeCompare(nextExpiry.get(b.code)));
-    expiringNote.hidden = !urgent.length || savedFilter === 'vencendo';
-    if (urgent.length) {
-      const first = urgent[0];
-      const text = urgent.length === 1
-        ? `${esc(first.name)}: ${expiryText(nextExpiry.get(first.code)).toLowerCase()}.`
-        : `${plural(urgent.length, 'produto vence', 'produtos vencem')} nesta semana. Primeiro a vencer: ${esc(first.name)}.`;
-      expiringNote.innerHTML = `<span>${icon('calendar')}${text}</span><button type="button" class="btn btn-quiet btn-sm" data-show-expiring>Ver o que vence</button>`;
-    }
 
     if (!products.length) {
       shelf.innerHTML = `
@@ -109,10 +98,15 @@ export default function mountArmario(root) {
       .filter(filter.test)
       .filter((p) => !q || `${p.name} ${p.brand} ${p.code}`.toLocaleLowerCase('pt-BR').includes(q))
       .sort(filter.id === 'vencendo' ? byExpiry : (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pt-BR'));
+    if (keepOrder) {
+      const at = (p) => (lastOrder.has(p.code) ? lastOrder.get(p.code) : Infinity);
+      visible.sort((a, b) => at(a) - at(b));
+    }
+    lastOrder = new Map(visible.map((p, i) => [p.code, i]));
 
     shelf.innerHTML = visible.length
       ? `<ul class="rows">${visible.map((p) => `
-          <li>
+          <li class="row-item">
             <a class="row" href="#/produto/${encodeURIComponent(p.code)}">
               ${thumb(p)}
               <span class="row-main">
@@ -121,15 +115,24 @@ export default function mountArmario(root) {
               </span>
               ${tag(p.qty, tagState(p))}
             </a>
+            ${p.qty > 0
+              ? `<button type="button" class="row-minus" data-minus="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}</button>`
+              : '<span class="row-minus-space" aria-hidden="true"></span>'}
           </li>`).join('')}</ul>`
       : `<div class="empty-filter">
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
         </div>`;
+
+    if (refocus) {
+      const again = shelf.querySelector(`[data-minus="${CSS.escape(refocus)}"]`);
+      (again || search).focus({ preventScroll: true });
+      refocus = null;
+    }
   }
 
   function rowSub(p) {
-    const exp = expiresSoon(p) && p.qty > 0 ? nextExpiry.get(p.code) : '';
+    const exp = expiresSoon(p) ? nextExpiry.get(p.code) : '';
     const expNote = exp && (daysUntil(exp) <= SOON_DAYS ? `<strong class="stock-note">${expiryText(exp)}</strong>` : expiryText(exp));
     return [stockNote(p) && `<strong class="stock-note">${stockNote(p)}</strong>`, expNote, subtitle(p)].filter(Boolean).join(', ') || '&nbsp;';
   }
@@ -155,9 +158,42 @@ export default function mountArmario(root) {
     render();
   }
 
+  // Baixa de 1 direto da lista. A ordem das linhas não muda na hora, para o
+  // dedo não acertar outro produto num segundo toque.
+  async function minusOne(code, btn) {
+    btn.disabled = true;
+    try {
+      const { product, movement } = await removeStock(code, 1);
+      vibrate(15);
+      toast(`−1 ${product.name}. Agora tem ${product.qty}.`, {
+        mode: 'saida',
+        action: 'Desfazer',
+        onAction: async () => {
+          try {
+            await undoMovement(movement.id);
+            toast('Baixa desfeita.', { duration: 2500 });
+          } catch (err) {
+            toast(err.message, { duration: 4000 });
+          }
+        },
+      });
+    } catch (err) {
+      btn.disabled = false;
+      toast(err.message, { duration: 3000 });
+    }
+  }
+
   shelf.addEventListener('click', (e) => {
+    const minus = e.target.closest('[data-minus]');
+    if (minus) {
+      refocus = minus.dataset.minus;
+      keepOrder = true;
+      minusOne(minus.dataset.minus, minus);
+      return;
+    }
     if (!e.target.closest('[data-reset]')) return;
     if (savedQuery.trim()) { savedQuery = ''; search.value = ''; } else { savedFilter = 'todos'; savedArea = 'tudo'; }
+    keepOrder = false;
     render();
     search.focus();
   });
@@ -165,23 +201,19 @@ export default function mountArmario(root) {
     const btn = e.target.closest('[data-area]');
     if (!btn) return;
     savedArea = btn.dataset.area;
+    keepOrder = false;
     render();
   });
   chips.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-filter]');
     if (!btn) return;
     savedFilter = savedFilter === btn.dataset.filter ? 'todos' : btn.dataset.filter;
+    keepOrder = false;
     render();
-  });
-  expiringNote.addEventListener('click', (e) => {
-    if (!e.target.closest('[data-show-expiring]')) return;
-    savedFilter = 'vencendo';
-    savedArea = 'tudo';
-    render();
-    chips.querySelector('[aria-pressed="true"]')?.focus();
   });
   search.addEventListener('input', () => {
     savedQuery = search.value;
+    keepOrder = false;
     render();
   });
 

@@ -243,3 +243,10 @@ do Para resolver concêntrico com o botão (14 + 8); toque com escala 0,96 na di
 da câmera; validade aceita `10/2026`; textos "Revisar a lista com o Claude",
 "Pedir receitas com o que vence", "Criar lembrete no calendário", "Acaba em
 cerca de 5 dias" (em vez de "uns") e concordância de "A unidade sem data sai".
+
+**Versão 3.2.** Componentes novos: botão "−" da linha (`.row-minus`, borda de 1 px,
+raio 14, escala 0,96 ao tocar), seletor de modo na faixa (`.mode-switch`, trilho
+on-mode a 18%, raio 18 com 4 px de espaço e itens de raio 14), lista agrupada
+(`.group`, fundo `--shelf`, linhas de 56 px, ícone em quadrado de 32 px com raio
+8). Vidro: folhas abertas nas telas com câmera ficam sólidas; as camadas de vidro
+continuam no máximo 2 por tela (busca fixa e barra de modos no Armário).

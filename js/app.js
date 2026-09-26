@@ -13,8 +13,8 @@ import { unlockAudio } from './sound.js';
 
 const ROUTES = [
   [/^\/?$/, mountArmario],
-  [/^\/entrada(?:\/([^/]+))?$/, (root, m) => mountScan(root, { mode: 'entrada', code: m[1] && decodeURIComponent(m[1]) })],
-  [/^\/saida$/, (root) => mountScan(root, { mode: 'saida' })],
+  // Entrada e Saída são a mesma tela; o endereço só diz em que modo ela abre.
+  [/^\/(entrada|saida)(?:\/([^/]+))?$/, (root, m) => mountScan(root, { mode: m[1], code: m[2] && decodeURIComponent(m[2]) })],
   [/^\/inventario$/, mountInventario],
   [/^\/revisao$/, mountRevisao],
   [/^\/produto\/([^/]+)$/, (root, m) => mountProduto(root, { code: decodeURIComponent(m[1]) })],

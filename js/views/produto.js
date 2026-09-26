@@ -1,6 +1,6 @@
 // Página do produto: dados, validades, consumo, ajuste manual e histórico.
 
-import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange } from '../store.js';
+import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement } from '../store.js';
 import { AREAS } from '../areas.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
@@ -51,7 +51,17 @@ export default async function mountProduto(root, { code }) {
           ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>
 
+        <section class="stock-fix" aria-labelledby="stock-title">
+          <h2 class="list-title" id="stock-title">Quantidade no armário</h2>
+          <div class="stock-fix-row">
+            <div class="stepper-host stepper-sm" data-qty></div>
+            <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
+          </div>
+          <p class="field-note">Use só para corrigir a contagem. Entradas e saídas do dia a dia vão pelo leitor ou pelo "−" do armário.</p>
+        </section>
+
         <form class="stack product-form" novalidate>
+          <h2 class="list-title">Detalhes</h2>
           <label class="field"><span class="field-label">Nome</span>
             <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
           <div class="field-row">
@@ -71,11 +81,7 @@ export default async function mountProduto(root, { code }) {
             <span class="field-label">Avisar quando tiver esta quantidade ou menos</span>
             <div class="stepper-host stepper-sm" data-min></div>
           </div>
-          <div class="field">
-            <span class="field-label">Quantidade no armário</span>
-            <div class="stepper-host stepper-sm" data-qty></div>
-          </div>
-          <button type="submit" class="btn btn-primary">${icon('check')}Salvar alterações</button>
+          <button type="submit" class="btn btn-primary">${icon('check')}Salvar detalhes</button>
         </form>
 
         <section aria-labelledby="lots-title">
@@ -103,7 +109,42 @@ export default async function mountProduto(root, { code }) {
     </div>`;
 
   const minStep = stepper($('[data-min]', root), { value: p.minQty, min: 0, max: 999, label: 'Avisar com' });
-  const qtyStep = stepper($('[data-qty]', root), { value: p.qty, min: 0, max: 9999, label: 'Quantidade' });
+  // Correção de estoque separada dos detalhes: só grava quando a pessoa confirma.
+  let currentQty = p.qty;
+  const fixBtn = $('[data-fix]', root);
+  const qtyStep = stepper($('[data-qty]', root), {
+    value: p.qty, min: 0, max: 9999, label: 'Quantidade no armário',
+    onChange: (n) => {
+      if (!fixBtn) return;
+      fixBtn.hidden = n === currentQty;
+      $('span', fixBtn).textContent = `Corrigir para ${n}`;
+    },
+  });
+  fixBtn.addEventListener('click', async () => {
+    const target = qtyStep.value;
+    try {
+      const { product, movement } = await setStock(code, target, 'ajuste');
+      currentQty = product.qty;
+      fixBtn.hidden = true;
+      $('.product-hero .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg`);
+      toast(`Quantidade corrigida para ${product.qty}.`, {
+        action: movement ? 'Desfazer' : undefined,
+        onAction: async () => {
+          try {
+            const restored = await undoMovement(movement.id);
+            currentQty = restored.qty;
+            qtyStep.set(restored.qty);
+            $('.product-hero .tag', root).outerHTML = tag(restored.qty, `${tagState(restored)} tag-lg`);
+            toast('Correção desfeita.', { duration: 2500 });
+          } catch (err) {
+            toast(err.message, { duration: 4000 });
+          }
+        },
+      });
+    } catch (err) {
+      toast(err.message);
+    }
+  });
 
   $('form', root).addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -116,8 +157,7 @@ export default async function mountProduto(root, { code }) {
         minQty: minStep.value,
         area: $('input[name=area]:checked', root)?.value,
       });
-      await setStock(code, qtyStep.value, 'ajuste');
-      toast('Alterações salvas.', { duration: 2500 });
+      toast('Detalhes salvos.', { duration: 2500 });
       location.hash = '#/';
     } catch (err) {
       toast(err.message);
