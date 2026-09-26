@@ -590,3 +590,19 @@ o que o app sabe é "No app".
   contagem", "Criar lembrete", "Pedir receitas com o que vence".
 - Campo de novo item em Compras voltou a ter rótulo visível; o texto de
   dentro é só exemplo.
+
+## Versão 3.11: fontes locais e hierarquia (revisão better-interface)
+
+- **Fontes dentro do app:** Urbanist e Schibsted Grotesk em `fonts/` (woff2
+  variável, só o alfabeto latino, 28 KB e 47 KB, licença OFL). Carregam com o
+  app, ficam no cache para uso sem internet e não dependem do Google.
+- **Escala com nomes por uso** (`--text-large-title` 34, `--text-title` 22,
+  `--text-headline` 17, `--text-body` 17, `--text-callout` 15,
+  `--text-footnote` 13). Títulos de seção ("Cozinha", "Backup", "Hoje") subiram
+  de 15 para 22 em Urbanist; antes eram menores que os nomes dos itens. No
+  produto, títulos de cartão 17 e o texto e o histórico 15.
+- **Botões secundários** com preenchimento suave no lugar do contorno preto,
+  para o botão principal (cheio) ser o único que chama atenção.
+- **Número da aba Compras** em amarelo de "acabando"; o vermelho fica só para
+  apagar.
+- **Menu:** foco de teclado com contorno visível.

@@ -77,7 +77,8 @@ endereço precisa de HTTPS.
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).
 - Fontes: [Urbanist](https://fonts.google.com/specimen/Urbanist) e
-  [Schibsted Grotesk](https://fonts.google.com/specimen/Schibsted+Grotesk) (OFL).
+  [Schibsted Grotesk](https://fonts.google.com/specimen/Schibsted+Grotesk) (OFL),
+  guardadas em `fonts/` com as licenças, sem depender do Google para carregar.
 - Ícones: [Phosphor](https://phosphoricons.com) (MIT).
 - Skills de design em `.claude/skills/` (todas MIT):
   [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (better-ui,
