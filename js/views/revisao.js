@@ -2,6 +2,7 @@
 
 import { listProducts, getCountDraft, diffCount, applyCount } from '../store.js';
 import { $, esc, icon, plural, toast } from '../ui.js';
+import { showReceipt } from './receipt.js';
 
 export default async function mountRevisao(root) {
   const [products, draft] = await Promise.all([listProducts(), getCountDraft()]);
@@ -52,7 +53,18 @@ export default async function mountRevisao(root) {
     const zero = $('input[name=missing]:checked', root)?.value === 'zero';
     try {
       const n = await applyCount(zero);
-      toast(n ? `Contagem aplicada. ${plural(n, 'produto ajustado', 'produtos ajustados')}.` : 'Contagem aplicada. Nada precisou mudar.', { mode: 'contagem' });
+      const applied = changes.map((c) => ({ name: c.product.name, from: c.from, to: c.to }))
+        .concat(zero ? missingWithStock.map((p) => ({ name: p.name, from: p.qty, to: 0 })) : []);
+      if (n && applied.length) {
+        const net = applied.reduce((a, c) => a + c.to - c.from, 0);
+        await showReceipt({
+          mode: 'contagem',
+          lines: applied.map((c) => ({ name: c.name, value: signed(c.to - c.from), sub: `${c.from} para ${c.to}` })),
+          total: { label: plural(applied.length, 'produto ajustado', 'produtos ajustados'), value: net ? signed(net) : '0' },
+        });
+      } else {
+        toast('Contagem aplicada. Nada precisou mudar.', { mode: 'contagem' });
+      }
       location.hash = '#/';
     } catch (err) {
       applyBtn.disabled = false;

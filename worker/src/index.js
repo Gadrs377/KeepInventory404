@@ -287,9 +287,11 @@ function tokensOf(q) {
   return normalize(q).split(/[^a-z0-9]+/).filter((t) => t.length >= 2);
 }
 
+// Cada palavra digitada precisa ser o começo de uma palavra do produto
+// ("renata" acha "Macarrão Renata", mas não o colírio "Drenatan").
 function matches(p, tokens) {
-  const hay = normalize(`${p.name} ${p.brand}`);
-  return tokens.every((t) => hay.includes(t));
+  const hay = ` ${normalize(`${p.name} ${p.brand}`).replace(/[^a-z0-9]+/g, ' ')}`;
+  return tokens.every((t) => hay.includes(` ${t}`));
 }
 
 async function cached(ctx, key, ttl, compute) {

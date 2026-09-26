@@ -1,7 +1,10 @@
-// Página do produto: dados, ajuste manual e histórico.
+// Página do produto: dados, validades, consumo, ajuste manual e histórico.
 
-import { getProduct, updateProduct, setStock, movementsFor, deleteProduct } from '../store.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockNote } from '../ui.js';
+import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange } from '../store.js';
+import { AREAS } from '../areas.js';
+import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
+import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockNote, openSheet, download, plural } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -21,7 +24,13 @@ export default async function mountProduto(root, { code }) {
       </div>`;
     return;
   }
-  const history = await movementsFor(code, 30);
+  const [history, allMoves] = await Promise.all([movementsFor(code, 30), movementsFor(code, 1000)]);
+  const rate = consumptionByProduct([p], allMoves).get(code);
+  const perDay = rate && rate.used >= 2 ? rate.perDay : 0;
+  const left = daysLeft(p, perDay);
+  const usage = perDay
+    ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dá para uns ${Math.max(1, Math.round(left))} dias.` : ''}`
+    : 'Ainda sem histórico para calcular. Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const niceCode = barcodes.length ? `Código ${barcodes.join(', ')}` : 'Produto sem código';
 
@@ -51,6 +60,13 @@ export default async function mountProduto(root, { code }) {
             <label class="field"><span class="field-label">Tamanho</span>
               <input class="input" name="size" maxlength="20" value="${esc(p.size)}" autocomplete="off" placeholder="Ex.: 1 kg"></label>
           </div>
+          <fieldset class="segmented">
+            <legend class="field-label">Onde fica</legend>
+            <div class="segmented-track">
+              ${AREAS.map((a) => `
+                <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === (p.area || 'cozinha') ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
+            </div>
+          </fieldset>
           <div class="field">
             <span class="field-label">Avisar quando tiver esta quantidade ou menos</span>
             <div class="stepper-host stepper-sm" data-min></div>
@@ -61,6 +77,16 @@ export default async function mountProduto(root, { code }) {
           </div>
           <button type="submit" class="btn btn-primary">Salvar alterações</button>
         </form>
+
+        <section aria-labelledby="lots-title">
+          <h2 class="list-title" id="lots-title">Validade</h2>
+          <div data-lots></div>
+        </section>
+
+        <section>
+          <h2 class="list-title">Consumo</h2>
+          <p class="sheet-text">${esc(usage)}</p>
+        </section>
 
         <section>
           <h2 class="list-title">Histórico</h2>
@@ -88,6 +114,7 @@ export default async function mountProduto(root, { code }) {
         brand: val('brand'),
         size: val('size'),
         minQty: minStep.value,
+        area: $('input[name=area]:checked', root)?.value,
       });
       await setStock(code, qtyStep.value, 'ajuste');
       toast('Alterações salvas.', { duration: 2500 });
@@ -96,6 +123,60 @@ export default async function mountProduto(root, { code }) {
       toast(err.message);
     }
   });
+
+  // ---------- Validades ----------
+  const lotsHost = $('[data-lots]', root);
+  let lots = [];
+
+  async function renderLots() {
+    const cur = await getProduct(code);
+    lots = await lotsFor(code);
+    if (!cur || !lotsHost.isConnected) return;
+    const dated = lots.reduce((a, l) => a + l.qty, 0);
+    const free = cur.qty - dated;
+    lotsHost.innerHTML = `
+      ${lots.length ? `<ul class="lots">${lots.map((l) => {
+        const n = daysUntil(l.expiresAt);
+        return `
+        <li class="lot ${n <= SOON_DAYS ? 'is-soon' : ''}">
+          <span class="lot-main">
+            <span class="lot-date">${formatDate(l.expiresAt)}</span>
+            <span class="lot-sub">${plural(l.qty, 'unidade', 'unidades')}, ${n < 0 ? 'já venceu' : n === 0 ? 'vence hoje' : n === 1 ? 'vence amanhã' : `daqui a ${n} dias`}</span>
+          </span>
+          <button type="button" class="icon-btn" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
+        </li>`;
+      }).join('')}</ul>` : ''}
+      <p class="sheet-text">${lots.length
+        ? (free > 0 ? `${plural(free, 'unidade está', 'unidades estão')} sem data. Elas saem primeiro na baixa, depois o que vence antes.` : 'Na baixa, sai primeiro o que vence antes.')
+        : (cur.qty ? 'Nenhuma validade marcada. Marque para o app avisar antes de vencer.' : 'Sem unidades no armário.')}</p>
+      <div class="lot-actions">
+        ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
+        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Lembrete no calendário</button>' : ''}
+      </div>`;
+  }
+
+  lotsHost.addEventListener('click', async (e) => {
+    const rm = e.target.closest('[data-remove-lot]');
+    if (rm) {
+      await removeLot(Number(rm.dataset.removeLot));
+      toast('Validade apagada. As unidades continuam no armário.', { duration: 3000 });
+      return;
+    }
+    if (e.target.closest('[data-ics]')) {
+      download(`validade-${p.name.toLowerCase().replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.ics`,
+        icsFor(lots.map((l) => ({ name: p.name, qty: l.qty, expiresAt: l.expiresAt, uid: `${code}-${l.id}` }))), 'text/calendar');
+      toast('Abra o arquivo baixado para pôr no calendário. O lembrete toca 3 dias antes.', { duration: 5000 });
+      return;
+    }
+    if (e.target.closest('[data-add-lot]')) {
+      const cur = await getProduct(code);
+      const free = cur.qty - lots.reduce((a, l) => a + l.qty, 0);
+      await lotSheet(cur, free);
+    }
+  });
+
+  const off = onChange(() => renderLots());
+  renderLots();
 
   $('[data-delete]', root).addEventListener('click', async () => {
     const ok = await confirmSheet({
@@ -108,5 +189,60 @@ export default async function mountProduto(root, { code }) {
     await deleteProduct(code);
     toast(`${p.name} removido.`, { duration: 3000 });
     location.hash = '#/';
+  });
+
+  return off;
+}
+
+// Dá validade a unidades que já estão no armário sem data.
+function lotSheet(p, free) {
+  return openSheet({
+    label: 'Marcar validade',
+    render(body, close) {
+      body.innerHTML = `
+        <h2 class="sheet-title">Marcar validade</h2>
+        <form class="stack" novalidate>
+          <div class="field">
+            <label class="field-label" for="lot-date">Validade</label>
+            <input class="input input-date" id="lot-date" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="DD/MM/AA ou MM/AA" aria-describedby="lot-note">
+            <p class="field-note" id="lot-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
+          </div>
+          <div class="field">
+            <span class="field-label">Quantas unidades têm essa data</span>
+            <div class="stepper-host stepper-sm"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar validade</button>
+        </form>`;
+      const input = $('#lot-date', body);
+      const note = $('#lot-note', body);
+      const step = stepper($('.stepper-host', body), { value: free, min: 1, max: free, label: 'Unidades' });
+      input.addEventListener('input', () => {
+        input.value = maskExpiry(input.value);
+        input.removeAttribute('aria-invalid');
+        note.classList.remove('is-error');
+        const iso = parseExpiry(input.value);
+        note.textContent = iso ? `Vence em ${formatDate(iso)}.` : 'Como está na embalagem. Só mês e ano vale até o fim do mês.';
+      });
+      setTimeout(() => input.focus(), 250);
+      $('form', body).addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const iso = parseExpiry(input.value);
+        if (!iso) {
+          input.setAttribute('aria-invalid', 'true');
+          note.classList.add('is-error');
+          note.textContent = 'Não entendi a data. Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
+          input.focus();
+          return;
+        }
+        try {
+          await addLot(p.code, step.value, iso);
+          toast(`Validade ${formatDate(iso)} marcada em ${plural(step.value, 'unidade', 'unidades')}.`, { duration: 3000 });
+          close(true);
+        } catch (err) {
+          note.classList.add('is-error');
+          note.textContent = err.message;
+        }
+      });
+    },
   });
 }

@@ -113,3 +113,23 @@ function capitalize(s) {
 function safeImage(url) {
   return typeof url === 'string' && url.startsWith('https://') ? url : '';
 }
+
+// Manda a foto da embalagem para a IA do repassador. Resolve com o que ela leu
+// ({ brand, product, variant, size, query }) e as sugestões das lojas (results).
+export async function identifyPhoto(dataUrl) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 45000);
+  try {
+    const res = await fetch(`${API_URL}/identify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return { ...data, results: (data.results || []).filter((p) => p && p.name).map(fromStore) };
+  } finally {
+    clearTimeout(timer);
+  }
+}

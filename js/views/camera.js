@@ -22,6 +22,7 @@ export function mountCamera(host, { onCode, compact = false }) {
       <video muted playsinline aria-label="Imagem da câmera"></video>
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
+      <button type="button" class="cam-hint" data-byname hidden>Não está lendo? <strong>Buscar pelo nome</strong></button>
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false">${icon('torch')}Lanterna</button>
         <button type="button" class="cam-tool" data-manual>${icon('keyboard')}Digitar código</button>
@@ -32,19 +33,34 @@ export function mountCamera(host, { onCode, compact = false }) {
   const aim = $('.aim', host);
   const msg = $('.cam-msg', host);
   const torchBtn = $('[data-torch]', host);
+  const hintBtn = $('[data-byname]', host);
   let alive = true;
   let handling = false;
+  let paused = false;
   let torchOn = false;
+  let hintTimer = 0;
+
+  // Depois de uns segundos sem ler nada, oferece a busca pelo nome.
+  const HINT_AFTER = 9000;
+  function armHint() {
+    clearTimeout(hintTimer);
+    hintBtn.hidden = true;
+    hintTimer = setTimeout(() => {
+      if (alive && scanner.running && !handling && !paused) hintBtn.hidden = false;
+    }, HINT_AFTER);
+  }
 
   async function handle(code) {
     if (handling) return;
     handling = true;
+    clearTimeout(hintTimer);
+    hintBtn.hidden = true;
     scanner.pause();
     try {
       await onCode(code);
     } finally {
       handling = false;
-      if (alive) scanner.resume();
+      if (alive && !paused) { scanner.resume(); armHint(); }
     }
   }
 
@@ -68,6 +84,7 @@ export function mountCamera(host, { onCode, compact = false }) {
   async function start() {
     await scanner.start();
     if (alive && scanner.running && scanner.torchAvailable()) torchBtn.hidden = false;
+    if (alive && scanner.running) armHint();
   }
 
   torchBtn.addEventListener('click', async () => {
@@ -79,10 +96,14 @@ export function mountCamera(host, { onCode, compact = false }) {
 
   $('[data-manual]', host).addEventListener('click', async () => {
     scanner.pause();
+    clearTimeout(hintTimer);
     const code = await manualCodeSheet();
     if (code) await handle(code);
-    else if (alive) scanner.resume();
+    else if (alive && !paused) { scanner.resume(); armHint(); }
   });
+
+  // Sem código: a folha abre direto na busca pelo nome.
+  hintBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));
 
   const onVisibility = () => {
     if (!alive) return;
@@ -96,8 +117,19 @@ export function mountCamera(host, { onCode, compact = false }) {
 
   return {
     handle,
+    pause() {
+      paused = true;
+      clearTimeout(hintTimer);
+      hintBtn.hidden = true;
+      scanner.pause();
+    },
+    resume() {
+      paused = false;
+      if (alive && !handling) { scanner.resume(); armHint(); }
+    },
     stop() {
       alive = false;
+      clearTimeout(hintTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       scanner.stop();
     },
@@ -117,7 +149,7 @@ export function manualCodeSheet() {
             <p class="field-error" id="manual-code-error" hidden></p>
           </div>
           <button type="submit" class="btn btn-primary">Buscar produto</button>
-          <button type="button" class="btn btn-link" data-nocode>Cadastrar produto sem código</button>
+          <button type="button" class="btn btn-quiet" data-nocode>${icon('search')}Sem código? Buscar pelo nome</button>
         </form>`;
       const form = $('form', body);
       const input = $('input', body);

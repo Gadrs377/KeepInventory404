@@ -1,7 +1,7 @@
 // Backup, restauração, planilha e histórico geral.
 
 import { exportData, importData, listProducts, recentMovements } from '../store.js';
-import { $, esc, icon, toast, when, confirmSheet } from '../ui.js';
+import { $, esc, icon, toast, when, confirmSheet, download } from '../ui.js';
 import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
 
 export default async function mountDados(root) {
@@ -106,13 +106,4 @@ export default async function mountDados(root) {
 
 function today() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function download(name, content, type) {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

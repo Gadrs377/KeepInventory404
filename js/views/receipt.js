@@ -1,0 +1,70 @@
+// Cupom do fim da sessão: sai da "impressora" com a borda de baixo rasgada.
+// Serve para Entrada, Saída e Contagem. Pode ser compartilhado como texto.
+
+import { $, esc, openSheet, plural, shareText, icon, vibrate } from '../ui.js';
+
+const TITLE = { entrada: 'Entrada', saida: 'Saída', contagem: 'Contagem' };
+
+const stampFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/**
+ * lines: [{ name, value, sub? }]   value já com sinal ("+2", "−1")
+ * total: { label, value }
+ * Resolve quando a pessoa fecha (sempre volta ao Armário depois).
+ */
+export function showReceipt({ mode, lines, total, note = '' }) {
+  const stamp = stampFmt.format(new Date()).replace(',', '');
+  return openSheet({
+    mode,
+    label: `Cupom da ${TITLE[mode].toLowerCase()}`,
+    render(body, close) {
+      body.innerHTML = `
+        <h2 class="sheet-title">Pronto</h2>
+        <div class="receipt-stage">
+          <div class="printer-slot" aria-hidden="true"></div>
+          <div class="ticket-clip">
+            <article class="ticket mode-${mode}" aria-label="Cupom" style="--print-ms: ${Math.min(1700, 600 + lines.length * 110)}ms">
+              <header class="ticket-head">
+                <p class="ticket-title">${TITLE[mode]}</p>
+                <p class="ticket-meta">${esc(stamp)}</p>
+              </header>
+              <ul class="ticket-lines">
+                ${lines.map((l) => `
+                  <li class="ticket-line">
+                    <span class="ticket-name">${esc(l.name)}${l.sub ? `<span class="ticket-sub">${esc(l.sub)}</span>` : ''}</span>
+                    <span class="ticket-dots" aria-hidden="true"></span>
+                    <span class="ticket-n">${esc(l.value)}</span>
+                  </li>`).join('')}
+              </ul>
+              <p class="ticket-total"><span>${esc(total.label)}</span><span class="ticket-n">${esc(total.value)}</span></p>
+              ${note ? `<p class="ticket-note">${esc(note)}</p>` : ''}
+              <p class="ticket-foot" aria-hidden="true"><span class="ticket-barcode"></span>ARMÁRIO ATUALIZADO</p>
+            </article>
+          </div>
+        </div>
+        <div class="sheet-actions">
+          <button type="button" class="btn btn-primary btn-lg" data-done>Voltar ao armário</button>
+          <button type="button" class="btn btn-quiet" data-share>${icon('share')}Compartilhar cupom</button>
+        </div>`;
+
+      // O cupom desce da impressora (CSS); o celular vibra de leve como o papel saindo.
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) vibrate([12, 70, 12, 70, 12]);
+
+      $('[data-done]', body).addEventListener('click', () => close(true));
+      $('[data-share]', body).addEventListener('click', () => {
+        const text = [
+          `${TITLE[mode]} ${stamp}`,
+          '',
+          ...lines.map((l) => `${l.name}: ${l.value}${l.sub ? ` (${l.sub})` : ''}`),
+          '',
+          `${total.label}: ${total.value}`,
+        ].join('\n');
+        shareText(`${TITLE[mode]} do armário`, text);
+      });
+    },
+  });
+}
+
+export function receiptTotal(count, units, sign) {
+  return { label: plural(count, 'produto', 'produtos'), value: `${sign}${units}` };
+}

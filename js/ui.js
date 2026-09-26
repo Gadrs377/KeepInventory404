@@ -281,3 +281,39 @@ export function when(ts) {
 export function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+// ---------- Arquivos e compartilhamento ----------
+
+export function download(name, content, type) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Abre o compartilhar do celular; sem ele, copia o texto.
+export async function shareText(title, text) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text });
+      return true;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return false;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Texto copiado. Cole onde quiser.', { duration: 3000 });
+    return true;
+  } catch {
+    toast('Não deu para compartilhar neste navegador.', { duration: 3000 });
+    return false;
+  }
+}
+
+// Conversa nova no Claude com a pergunta já escrita.
+export function claudeUrl(prompt) {
+  return `https://claude.ai/new?q=${encodeURIComponent(prompt)}`;
+}

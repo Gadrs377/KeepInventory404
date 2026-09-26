@@ -616,6 +616,203 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
    longe do botão Fechar da faixa. */
 @media (min-width: 640px) { .toast { inset-inline: auto; left: 50%; width: 480px; transform: translateX(-50%); } }
 
+/* ---------- Modo rápido (faixa do leitor) ---------- */
+
+.band-switch {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 44px; margin-top: 6px;
+  font-weight: 700; font-size: 16px; cursor: pointer;
+}
+/* Interruptor sobre a cor do modo: trilho claro translúcido; ligado, trilho cheio e bolinha na cor do modo */
+.switch-on-mode { background: color-mix(in oklab, var(--on-mode) 32%, transparent); }
+.switch-on-mode::after { background: var(--on-mode); }
+.switch-on-mode:checked { background: var(--on-mode); }
+.switch-on-mode:checked::after { background: var(--mode); }
+
+/* Leituras que esperam o fim: contorno tracejado, como a etiqueta de algo que falta */
+.pending {
+  margin: 16px var(--gutter) 0; padding: 0 12px 4px;
+  border: 2px dashed var(--ink-2); border-radius: var(--r-control);
+}
+.pending .list-title { margin-block: 12px 4px; }
+.pending-row { display: flex; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); }
+.pending-row:first-child { border-top: 0; }
+.pending-row .row-sub { white-space: normal; }
+
+/* Dica sobre a câmera depois de alguns segundos sem ler */
+.cam-hint {
+  position: absolute; z-index: 2; top: 10px; left: 50%; translate: -50% 0;
+  width: max-content; max-width: calc(100% - 20px);
+  min-height: 44px; padding: 8px 16px;
+  border: 0; border-radius: 999px;
+  background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 20px rgba(0, 0, 0, 0.3);
+  font-size: 15px; text-wrap: balance;
+  animation: hint-in 240ms var(--ease);
+}
+.cam-hint { --focus: #FFFFFF; }
+@keyframes hint-in { from { opacity: 0; translate: -50% -6px; } }
+
+/* ---------- Cupom impresso (fim da sessão) ---------- */
+
+.receipt-stage {
+  padding: 12px 14px 20px;
+  border-radius: var(--r-media);
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+/* A boca da impressora: o papel sai de baixo dela */
+.printer-slot {
+  position: relative; z-index: 1;
+  height: 12px; border-radius: 6px;
+  background: #161817;
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.10), 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.ticket-clip {
+  margin: -6px 10px 0;
+  /* Corta só em cima (o papel "sai" da boca); sombra dos lados e de baixo continua visível */
+  clip-path: inset(0 -24px -40px -24px);
+  filter: drop-shadow(0 1px 1px rgba(22, 24, 23, 0.10)) drop-shadow(0 8px 14px rgba(22, 24, 23, 0.14));
+}
+.ticket {
+  /* O papel é sempre claro, também no tema escuro, como um cupom de verdade */
+  --ink: #161817; --ink-2: #3F4541; --line: #C9CEC9;
+  --entrada: #17693F; --saida: #8E1B5C; --contagem: #1F3F9E;
+  --tooth: 12px;
+  color-scheme: light;
+  background: #FFFFFF; color: var(--ink);
+  padding: 22px 18px calc(18px + var(--tooth) / 2);
+  font-variant-numeric: tabular-nums;
+  /* Borda de baixo rasgada em dentes (conic-gradient em máscara, técnica de Temani Afif) */
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--tooth) 100%;
+  animation: ticket-print var(--print-ms, 1100ms) cubic-bezier(0.22, 1, 0.36, 1) 200ms backwards;
+}
+@keyframes ticket-print { from { transform: translateY(-100%); } }
+.ticket-head { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed var(--line); }
+.ticket-title { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 34px; line-height: 1; color: var(--mode); text-transform: uppercase; letter-spacing: 0.04em; }
+.ticket-meta { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
+.ticket-lines { padding-block: 10px; }
+.ticket-line { display: flex; align-items: baseline; gap: 6px; padding-block: 5px; }
+.ticket-name { min-width: 0; flex: 0 1 auto; overflow-wrap: anywhere; font-size: 16px; line-height: 1.3; }
+.ticket-sub { display: block; font-size: 13px; color: var(--ink-2); }
+.ticket-dots { flex: 1 1 20px; min-width: 20px; border-bottom: 2px dotted var(--line); transform: translateY(-4px); }
+.ticket-n { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 24px; line-height: 1; }
+.ticket-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-top: 8px; border-top: 3px double var(--ink); font-weight: 700;
+}
+.ticket-total .ticket-n { font-size: 32px; }
+.ticket-note { margin-top: 10px; font-size: 14px; color: var(--ink-2); text-align: center; }
+.ticket-foot {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-top: 18px; font-size: 11px; letter-spacing: 0.2em; color: var(--ink-2);
+}
+.ticket-barcode {
+  width: 62%; height: 30px;
+  background: repeating-linear-gradient(90deg, #161817 0 2px, transparent 2px 4px, #161817 4px 5px, transparent 5px 8px, #161817 8px 11px, transparent 11px 12px, #161817 12px 13px, transparent 13px 17px);
+}
+
+/* ---------- Seletor segmentado (ambiente) ---------- */
+
+.segmented { border: 0; margin: 0; padding: 0; min-width: 0; }
+.segmented legend { padding: 0; margin-bottom: 6px; }
+.segmented-track {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px;
+  padding: 4px; border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.segment { position: relative; display: block; cursor: pointer; }
+.segment input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.segment span {
+  display: grid; place-items: center; min-height: 44px; padding-inline: 6px;
+  border-radius: calc(var(--r-control) - 4px);
+  font-weight: 700; font-size: 16px; color: var(--ink-2);
+  transition-property: background-color, color; transition-duration: 150ms; transition-timing-function: var(--ease);
+}
+.segment input:checked + span { background: var(--ink); color: var(--paper); }
+.segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+/* ---------- Validade ---------- */
+
+.expiry { display: flex; flex-direction: column; }
+.btn-expiry { align-self: flex-start; padding: 0; gap: 8px; font-weight: 700; text-underline-offset: 3px; }
+.btn-expiry .icon { width: 20px; height: 20px; }
+.input-date { font-size: 22px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.field-note { font-size: 15px; color: var(--ink-2); text-wrap: pretty; }
+.field-note.is-error { color: var(--danger); font-weight: 700; }
+
+[data-photo-btn] { width: 100%; margin-top: 6px; }
+.file-btn.is-busy { opacity: 0.6; pointer-events: none; }
+
+/* ---------- Início: links, ambientes, filtros de estado, aviso de validade ---------- */
+
+.home-links { display: flex; gap: 8px; padding: 12px var(--gutter) 0; }
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px var(--gutter) 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding-inline: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--r-control); background: var(--paper);
+  font-weight: 700; font-size: 15px;
+  transition-property: scale; transition-duration: 150ms; transition-timing-function: var(--ease);
+}
+.chip:active { scale: 0.96; }
+/* Marcador pequeno com a mesma linguagem da etiqueta: amarelo, tracejado, calendário */
+.chip::before { content: ''; width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.chip-acabando::before { background: var(--acabando); }
+.chip-zerados::before { outline: 2px dashed currentColor; outline-offset: -2px; }
+.chip-vencendo::before { background: var(--ink); -webkit-mask: linear-gradient(#000 0 0) top / 100% 30% no-repeat, linear-gradient(#000 0 0) bottom / 100% 55% no-repeat; mask: linear-gradient(#000 0 0) top / 100% 30% no-repeat, linear-gradient(#000 0 0) bottom / 100% 55% no-repeat; }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.chip[aria-pressed="true"].chip-vencendo::before { background: var(--paper); }
+.chip-n { font-variant-numeric: tabular-nums; }
+
+.alert-note { background: color-mix(in oklab, var(--acabando) 30%, var(--paper)); }
+.alert-note > span { display: flex; gap: 8px; align-items: flex-start; text-wrap: pretty; }
+.alert-note .icon { width: 20px; height: 20px; margin-top: 2px; }
+
+/* ---------- Produto: validades ---------- */
+
+.lots { border-top: 1px solid var(--line); }
+.lot { display: flex; align-items: center; gap: 12px; padding-block: 8px; border-bottom: 1px solid var(--line); }
+.lot-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.lot-date { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.lot.is-soon .lot-date { padding-inline: 6px; border-radius: var(--r-tag); background: var(--acabando); color: #161817; }
+.lot-sub { font-size: 15px; color: var(--ink-2); }
+.lots + .sheet-text { margin-top: 8px; }
+.lot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lot-actions:empty { display: none; }
+
+/* ---------- Compras ---------- */
+
+.shop-lists { display: flex; flex-direction: column; }
+.shop-list { border-top: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1); }
+.shop-list > li { border-bottom: 1px solid var(--line); }
+.shop-item { display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px var(--gutter); cursor: pointer; }
+.shop-item .row-main { cursor: pointer; }
+.shop-item .row-sub { white-space: normal; }
+.shop-item.is-done .row-name { text-decoration: line-through; color: var(--ink-2); }
+.shop-item.is-done .thumb, .shop-item.is-done .shop-qty { opacity: 0.45; }
+.shop-qty { flex: none; min-width: 44px; text-align: end; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+.check {
+  appearance: none; -webkit-appearance: none; flex: none;
+  width: 28px; height: 28px; margin: 0;
+  display: grid; place-items: center;
+  border: 2px solid var(--ink); border-radius: 8px; background: var(--paper);
+  cursor: pointer;
+}
+.check:checked { background: var(--ink); }
+.check:checked::after { content: ''; width: 13px; height: 7px; border: solid var(--paper); border-width: 0 0 3px 3px; transform: translateY(-2px) rotate(-45deg); }
+.shop-clear { align-self: flex-start; margin-top: 12px; }
+.shop-add { display: flex; flex-direction: column; gap: 6px; margin-top: 24px; }
+.shop-add-row { display: flex; gap: 8px; }
+.shop-add-row .input { flex: 1; min-width: 0; }
+.shop-add-row .btn { flex: none; }
+.every-row { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.every-row .stepper-host { width: 200px; }
+
 /* ---------- Telas largas ---------- */
 
 @media (min-width: 720px) {

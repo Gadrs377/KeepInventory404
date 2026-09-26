@@ -6,6 +6,7 @@ import mountInventario from './views/inventario.js';
 import mountRevisao from './views/revisao.js';
 import mountProduto from './views/produto.js';
 import mountDados from './views/dados.js';
+import mountCompras from './views/compras.js';
 import { closeSheet, hideStaleToast, $ } from './ui.js';
 import { unlockAudio } from './sound.js';
 
@@ -17,6 +18,7 @@ const ROUTES = [
   [/^\/revisao$/, mountRevisao],
   [/^\/produto\/([^/]+)$/, (root, m) => mountProduto(root, { code: decodeURIComponent(m[1]) })],
   [/^\/dados$/, mountDados],
+  [/^\/compras$/, mountCompras],
 ];
 
 const root = $('#app');
