@@ -22,7 +22,7 @@ export default function mountInventario(root) {
         <div class="count-lists"></div>
       </main>
       <footer class="floating-bar glass-regular">
-        <a class="btn btn-mode btn-lg" href="#/revisao" data-review>Revisar</a>
+        <a class="btn btn-mode btn-lg" href="#/revisao" data-review>${icon('count')}Revisar</a>
       </footer>
     </div>`;
 

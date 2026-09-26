@@ -148,7 +148,7 @@ export function manualCodeSheet() {
             <input class="input input-code" id="manual-code" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="7891000100103" maxlength="14" aria-describedby="manual-code-error">
             <p class="field-error" id="manual-code-error" hidden></p>
           </div>
-          <button type="submit" class="btn btn-primary">Buscar produto</button>
+          <button type="submit" class="btn btn-primary">${icon('search')}Buscar produto</button>
           <button type="button" class="btn btn-quiet" data-nocode>${icon('search')}Sem código? Buscar pelo nome</button>
         </form>`;
       const form = $('form', body);

@@ -15,14 +15,14 @@ import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate } from '../u
 const COPY = {
   entrada: {
     title: 'Entrada', sign: '+',
-    hint: 'Aponte para o código de barras do que está guardando',
-    fastHint: 'Cada leitura soma 1. Produtos novos ficam para o fim.',
+    hint: 'Aponte para o código de barras',
+    fastHint: 'Cada leitura soma 1. Produto novo fica para o fim.',
     empty: 'Os produtos que você guardar aparecem aqui.',
   },
   saida: {
     title: 'Saída', sign: '−',
-    hint: 'Aponte para o código de barras do que está tirando',
-    fastHint: 'Cada leitura tira 1. O que o app não conhece fica para o fim.',
+    hint: 'Aponte para o código de barras',
+    fastHint: 'Cada leitura tira 1. Produto desconhecido fica para o fim.',
     empty: 'Os produtos que você tirar aparecem aqui.',
   },
 };
@@ -52,7 +52,7 @@ export default function mountScan(root, { mode, code: initialCode }) {
           <p class="band-hint" data-hint></p>
           <label class="band-switch">
             <input type="checkbox" class="switch switch-on-mode" data-fast ${fast ? 'checked' : ''}>
-            <span>Modo rápido</span>
+            <span>${icon('bolt')}Modo rápido</span>
           </label>
         </div>
         <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
@@ -69,7 +69,7 @@ export default function mountScan(root, { mode, code: initialCode }) {
         </section>
       </main>
       <footer class="floating-bar glass-regular glass-static">
-        <button type="button" class="btn btn-primary btn-lg" data-finish>Concluir</button>
+        <button type="button" class="btn btn-primary btn-lg" data-finish>${icon('check')}Concluir</button>
       </footer>
     </div>`;
 

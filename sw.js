@@ -2,7 +2,7 @@
 // Arquivos do app: rede primeiro (pega atualizações), cache se estiver offline.
 // Fontes e fotos de produto: cache primeiro. API do Open Food Facts: só rede.
 
-const VERSION = 'v7';
+const VERSION = 'v8';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 
@@ -27,6 +27,7 @@ const APP_FILES = [
   './js/views/armario.js',
   './js/views/camera.js',
   './js/views/compras.js',
+  './js/views/cupons.js',
   './js/views/dados.js',
   './js/views/inventario.js',
   './js/views/productSheet.js',
@@ -40,6 +41,10 @@ const APP_FILES = [
   './icons/icon.svg',
   './icons/icon-192.png',
   './icons/apple-touch-icon.png',
+  './icons/atalho-entrada.png',
+  './icons/atalho-saida.png',
+  './icons/atalho-compras.png',
+  './icons/atalho-contar.png',
 ];
 
 self.addEventListener('install', (event) => {

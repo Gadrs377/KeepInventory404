@@ -10,9 +10,80 @@
   "background_color": "#FFFFFF",
   "theme_color": "#FFFFFF",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Entrada",
+      "short_name": "Entrada",
+      "description": "Guardar produtos lendo o código",
+      "url": "./#/entrada",
+      "icons": [
+        {
+          "src": "icons/atalho-entrada.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Saída",
+      "short_name": "Saída",
+      "description": "Dar baixa no que saiu",
+      "url": "./#/saida",
+      "icons": [
+        {
+          "src": "icons/atalho-saida.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Compras",
+      "short_name": "Compras",
+      "description": "Lista de compras sugerida",
+      "url": "./#/compras",
+      "icons": [
+        {
+          "src": "icons/atalho-compras.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Contar o armário",
+      "short_name": "Contar",
+      "description": "Contagem do armário",
+      "url": "./#/inventario",
+      "icons": [
+        {
+          "src": "icons/atalho-contar.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

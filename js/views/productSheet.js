@@ -19,6 +19,8 @@ const ACTION = {
   saida: (n) => `Dar baixa em ${n}`,
   contagem: () => 'Salvar contagem',
 };
+const ACTION_ICON = { entrada: 'in', saida: 'out', contagem: 'count' };
+const actionLabel = (mode, n) => `${icon(ACTION_ICON[mode])}${ACTION[mode](n)}`;
 
 const NEW_MSG = {
   found: 'Novo no armário. Confira o nome antes de salvar.',
@@ -216,7 +218,7 @@ function chooser(ctx, products) {
         </li>`;
       }).join('')}
     </ul>
-    ${mode === 'saida' ? '' : '<button type="button" class="btn btn-quiet" data-other>Cadastrar outro produto com este código</button>'}`;
+    ${mode === 'saida' ? '' : `<button type="button" class="btn btn-quiet" data-other>${icon('plus')}Cadastrar outro produto com este código</button>`}`;
 
   $$('.pick-row', body).forEach((btn) => btn.addEventListener('click', () => {
     const p = products.find((x) => x.code === btn.dataset.id);
@@ -239,7 +241,7 @@ function notInCupboard({ body, close, barcode }) {
     ${head({ name: 'Produto desconhecido', code: barcode }, null)}
     <p class="sheet-text">Esse produto não está no armário. Se ele acabou de chegar, cadastre como entrada.</p>
     <div class="sheet-actions">
-      <button type="button" class="btn btn-entrada" data-switch>Cadastrar como entrada</button>
+      <button type="button" class="btn btn-entrada" data-switch>${icon('in')}Cadastrar como entrada</button>
       <button type="button" class="btn btn-quiet" data-cancel>Fechar</button>
     </div>`;
   $('[data-switch]', body).addEventListener('click', () => close({ kind: 'switch', code: barcode }));
@@ -288,7 +290,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
-    onChange: (n) => { submit.textContent = ACTION[mode](n); },
+    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); },
   });
   const other = $('[data-other]', body);
   if (other) other.addEventListener('click', () => newForm(ctx, { status: 'other' }));
@@ -364,7 +366,7 @@ async function newForm(ctx, result) {
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
-    onChange: (n) => { submit.textContent = ACTION[mode](n); },
+    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); },
   });
   const expiry = bindExpiry(body);
 

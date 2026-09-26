@@ -25,10 +25,11 @@ export default async function mountDados(root) {
       </header>
       <main class="content stack">
         <p class="lead">Seus dados ficam só neste celular${persisted ? ', protegidos contra limpeza automática do navegador' : ''}. Baixe um backup de vez em quando.</p>
+        <a class="btn btn-quiet" href="#/cupons">${icon('receipt')}Cupons das últimas sessões</a>
         <div class="stack-sm">
-          <button type="button" class="btn btn-primary" data-export>Baixar backup</button>
-          <label class="btn btn-quiet file-btn">Restaurar backup<input type="file" accept="application/json,.json" data-import class="sr-only"></label>
-          <button type="button" class="btn btn-quiet" data-csv>Baixar planilha</button>
+          <button type="button" class="btn btn-primary" data-export>${icon('download')}Baixar backup</button>
+          <label class="btn btn-quiet file-btn">${icon('upload')}Restaurar backup<input type="file" accept="application/json,.json" data-import class="sr-only"></label>
+          <button type="button" class="btn btn-quiet" data-csv>${icon('table')}Baixar planilha</button>
         </div>
 
         <section>

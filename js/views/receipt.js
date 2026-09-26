@@ -2,6 +2,7 @@
 // Serve para Entrada, Saída e Contagem. Pode ser compartilhado como texto.
 
 import { $, esc, openSheet, plural, shareText, icon, vibrate } from '../ui.js';
+import { saveReceipt } from '../store.js';
 
 const TITLE = { entrada: 'Entrada', saida: 'Saída', contagem: 'Contagem' };
 
@@ -10,17 +11,20 @@ const stampFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-di
 /**
  * lines: [{ name, value, sub? }]   value já com sinal ("+2", "−1")
  * total: { label, value }
- * Resolve quando a pessoa fecha (sempre volta ao Armário depois).
+ * Resolve quando a pessoa fecha. Sem `at`, é um cupom novo: é guardado no
+ * histórico. Com `at`, é um cupom antigo aberto de novo pelo histórico.
  */
-export function showReceipt({ mode, lines, total, note = '' }) {
-  const stamp = stampFmt.format(new Date()).replace(',', '');
+export function showReceipt({ mode, lines, total, note = '', at }) {
+  const isNew = !at;
+  const stamp = stampFmt.format(new Date(at || Date.now())).replace(',', '');
+  if (isNew) saveReceipt({ mode, lines, total }).catch(() => {});
   return openSheet({
     mode,
     label: `Cupom da ${TITLE[mode].toLowerCase()}`,
     className: 'sheet-solid',
     render(body, close) {
       body.innerHTML = `
-        <h2 class="sheet-title">Pronto</h2>
+        <h2 class="sheet-title">${isNew ? 'Pronto' : 'Cupom'}</h2>
         <div class="receipt-stage">
           <div class="printer-slot" aria-hidden="true"></div>
           <div class="ticket-clip">
@@ -47,12 +51,12 @@ export function showReceipt({ mode, lines, total, note = '' }) {
           </div>
         </div>
         <div class="sheet-actions">
-          <button type="button" class="btn btn-primary btn-lg" data-done>Voltar ao armário</button>
+          <button type="button" class="btn btn-primary btn-lg" data-done>${isNew ? `${icon('back')}Voltar ao armário` : 'Fechar'}</button>
           <button type="button" class="btn btn-quiet" data-share>${icon('share')}Compartilhar cupom</button>
         </div>`;
 
       // O cupom desce da impressora (CSS); o celular vibra de leve como o papel saindo.
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) vibrate([12, 70, 12, 70, 12]);
+      if (isNew && !matchMedia('(prefers-reduced-motion: reduce)').matches) vibrate([12, 70, 12, 70, 12]);
 
       $('[data-done]', body).addEventListener('click', () => close(true));
       $('[data-share]', body).addEventListener('click', () => {

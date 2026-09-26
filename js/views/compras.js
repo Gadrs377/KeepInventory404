@@ -9,6 +9,7 @@ import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast } from '../ui.js';
 
 const KEY = 'ki.shop';
+const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus' };
 
 function loadState() {
   try {
@@ -43,7 +44,7 @@ export default function mountCompras(root) {
           <label class="field-label" for="shop-extra">Acrescentar à lista</label>
           <div class="shop-add-row">
             <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
-            <button type="submit" class="btn btn-quiet">Acrescentar</button>
+            <button type="submit" class="btn btn-quiet">${icon('plus')}Acrescentar</button>
           </div>
         </form>
 
@@ -94,7 +95,7 @@ export default function mountCompras(root) {
 
     const groups = AREAS.map((a) => ({ ...a, rows: items.filter((i) => (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
     lists.innerHTML = groups.map((g) => `
-      <h2 class="list-title">${g.label}</h2>
+      <h2 class="list-title list-title-icon">${icon(AREA_ICON[g.id])}${g.label}</h2>
       <ul class="shop-list">${g.rows.map((i) => {
         const done = !!state.checked[i.product.code];
         return `
@@ -122,7 +123,7 @@ export default function mountCompras(root) {
         </li>`).join('')}</ul>` : '');
 
     const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
-    if (done) lists.insertAdjacentHTML('beforeend', '<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>Limpar marcados</button>');
+    if (done) lists.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>${icon('check')}Limpar marcados</button>`);
 
     askList.href = claudeUrl(listPrompt());
     askRecipes.hidden = !expiring.length;

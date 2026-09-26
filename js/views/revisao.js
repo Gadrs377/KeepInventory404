@@ -43,7 +43,7 @@ export default async function mountRevisao(root) {
         </fieldset>` : ''}
       </main>
       <footer class="floating-bar glass-regular">
-        <button type="button" class="btn btn-mode btn-lg" data-apply>Aplicar contagem</button>
+        <button type="button" class="btn btn-mode btn-lg" data-apply>${icon('check')}Aplicar contagem</button>
       </footer>
     </div>`;
 

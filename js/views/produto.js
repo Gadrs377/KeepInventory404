@@ -75,7 +75,7 @@ export default async function mountProduto(root, { code }) {
             <span class="field-label">Quantidade no armário</span>
             <div class="stepper-host stepper-sm" data-qty></div>
           </div>
-          <button type="submit" class="btn btn-primary">Salvar alterações</button>
+          <button type="submit" class="btn btn-primary">${icon('check')}Salvar alterações</button>
         </form>
 
         <section aria-labelledby="lots-title">
@@ -98,7 +98,7 @@ export default async function mountProduto(root, { code }) {
             </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
         </section>
 
-        <button type="button" class="btn btn-danger-ghost" data-delete>Remover do armário</button>
+        <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
       </main>
     </div>`;
 

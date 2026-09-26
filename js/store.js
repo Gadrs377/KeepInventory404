@@ -296,11 +296,28 @@ export async function applyCount(zeroMissing) {
   return targets.length;
 }
 
+// ---------- Cupons ----------
+// Os últimos cupons ficam em meta.receipts (mais novo primeiro).
+
+const MAX_RECEIPTS = 60;
+
+export async function listReceipts() {
+  const row = await get('meta', 'receipts');
+  return row && Array.isArray(row.value) ? row.value : [];
+}
+
+export async function saveReceipt(receipt) {
+  const list = await listReceipts();
+  const entry = { id: Date.now(), at: Date.now(), ...receipt };
+  await put('meta', { key: 'receipts', value: [entry, ...list].slice(0, MAX_RECEIPTS) });
+  return entry;
+}
+
 // ---------- Backup ----------
 
 export async function exportData() {
-  const [products, movements, lots] = await Promise.all([getAll('products'), getAll('movements'), getAll('lots')]);
-  return { app: 'KeepInventory404', version: 2, exportedAt: new Date().toISOString(), products, movements, lots };
+  const [products, movements, lots, receipts] = await Promise.all([getAll('products'), getAll('movements'), getAll('lots'), listReceipts()]);
+  return { app: 'KeepInventory404', version: 2, exportedAt: new Date().toISOString(), products, movements, lots, receipts };
 }
 
 export async function importData(data) {
@@ -312,6 +329,7 @@ export async function importData(data) {
     await promisify(s.movements.clear());
     await promisify(s.lots.clear());
     await promisify(s.meta.delete('countDraft'));
+    if (Array.isArray(data.receipts)) await promisify(s.meta.put({ key: 'receipts', value: data.receipts.slice(0, MAX_RECEIPTS) }));
     for (const p of data.products) {
       if (typeof p.code !== 'string') continue;
       const base = newProduct(p.code, p);

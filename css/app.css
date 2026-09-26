@@ -131,6 +131,13 @@ button { cursor: pointer; }
 .page-title { font-size: 34px; }
 .topbar-title { font-size: 26px; }
 .list-title { font-size: 15px; font-weight: 700; margin-block: 28px 8px; text-wrap: balance; }
+.list-title-icon { display: flex; align-items: center; gap: 8px; }
+.list-title-icon .icon { width: 18px; height: 18px; }
+
+/* Histórico de cupons */
+.cupons { border-top: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1); }
+.cupom-icon { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-thumb); background: var(--mode); color: var(--on-mode); }
+.cupom-total { flex: none; font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
 .lead { font-size: 18px; text-wrap: pretty; }
 .sheet-text, .empty, .empty-state p, .empty-filter p { color: var(--ink); text-wrap: pretty; }
 .empty { padding-block: 16px; }
@@ -623,6 +630,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 
 /* ---------- Modo rápido (faixa do leitor) ---------- */
 
+.band-switch > span { display: inline-flex; align-items: center; gap: 6px; }
+.band-switch .icon { width: 18px; height: 18px; }
 .band-switch {
   align-self: flex-start;
   display: inline-flex; align-items: center; gap: 10px;
@@ -695,6 +704,8 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   animation: ticket-print var(--print-ms, 1100ms) cubic-bezier(0.22, 1, 0.36, 1) 200ms backwards;
 }
 @keyframes ticket-print { from { transform: translateY(-100%); } }
+/* Ao fechar, o conteúdo vai para a cópia que some: o papel não pode "imprimir" de novo */
+.sheet-ghost .ticket { animation: none; }
 .ticket-head { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed var(--line); }
 .ticket-title { font-family: var(--font-num); font-stretch: 62%; font-weight: 800; font-size: 34px; line-height: 1; color: var(--mode); text-transform: uppercase; letter-spacing: 0.04em; }
 .ticket-meta { margin-top: 4px; font-size: 14px; color: var(--ink-2); }

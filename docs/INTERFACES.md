@@ -340,7 +340,18 @@ Aplicar grava os ajustes, apaga o rascunho e volta ao Armário com o aviso
 - Marcar risca o item. Quando o produto é reposto e sai da sugestão, a marca some.
 - Nada vai para o Claude sem a pessoa tocar em Enviar lá.
 
-## 7. Dados `#/dados`
+## 7. Cupons `#/cupons`
+
+Aberto por Dados. Lista os últimos 60 cupons (Entrada, Saída, Contagem), com o
+ícone do modo, a data e o total. Tocar abre o cupom de novo, sem vibrar e com
+o botão Fechar. Os cupons entram no backup.
+
+## 8. Atalhos no ícone do app
+
+Segurar o ícone do app instalado mostra Entrada, Saída, Compras e Contar
+(`shortcuts` no `manifest.webmanifest`, ícones em `icons/atalho-*.png`).
+
+## 9. Dados `#/dados`
 
 ```
 │ ← Dados                         │
