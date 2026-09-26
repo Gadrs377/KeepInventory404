@@ -90,7 +90,10 @@ export default {
             return withCors(json({ error: 'Envie uma foto JPEG, PNG ou WebP de até 1 MB' }, 400), allowed);
           }
           const model = VISION_MODELS.includes(url.searchParams.get('model')) ? url.searchParams.get('model') : VISION_MODELS[0];
-          return withCors(json(await identify(env.AI, image, model)), allowed);
+          const read = await identify(env.AI, image, model);
+          // Já devolve as sugestões das lojas, para o celular fazer uma chamada só.
+          read.results = await searchCascade(read, (q) => cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)).then((r) => r.json()));
+          return withCors(json(read), allowed);
         }
         default:
           return withCors(json({ error: 'Rota não encontrada' }, 404), allowed);
@@ -203,6 +206,24 @@ export async function identify(ai, image, model) {
   };
   if (res && res.usage) out.usage = res.usage;
   return out;
+}
+
+// Busca em cascata a partir do que a IA leu: da busca mais específica para a
+// mais larga, até juntar 6 sugestões. Validado com 22 fotos reais: o produto
+// certo aparece nas sugestões em 17 delas (docs/SYSTEM_DESIGN.md, seção 5.2).
+export async function searchCascade(read, run = search) {
+  const join = (...parts) => parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+  const queries = [read.query, join(read.brand, read.product, read.variant), join(read.brand, read.product), read.brand];
+  const tried = new Set();
+  const out = [];
+  for (const q of queries) {
+    if (!q || normalize(q).length < 2 || tried.has(normalize(q))) continue;
+    tried.add(normalize(q));
+    const r = await run(q).catch(() => ({ results: [] }));
+    for (const p of r.results || []) if (!out.some((x) => x.ean === p.ean)) out.push(p);
+    if (out.length >= 6) break;
+  }
+  return out.slice(0, 12);
 }
 
 function parseJsonLoose(text) {

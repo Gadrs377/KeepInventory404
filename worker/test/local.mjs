@@ -38,6 +38,13 @@ for (const q of ['moça 395', 'detergente ype', 'feijao camil', 'protetor solar 
   console.log(`search "${q}" (${Date.now() - t} ms): ${r.body.results.length} resultados ->`, r.body.results.slice(0, 3).map((p) => `${p.name} [${p.ean}] ${p.size}`).join(' | '));
   assert.ok(r.body.results.length > 0);
 }
+// /identify com uma IA de mentira: confere a cascata de busca.
+const fakeAI = { run: async () => ({ response: '{"marca":"Ypê","produto":"detergente","variante":"neutro","tamanho":"500ml","busca":"ype detergente neutro 500ml"}' }) };
+const idRes = await worker.fetch(new Request('https://x.dev/identify', { method: 'POST', headers: { Origin: 'https://gadrs377.github.io', 'Content-Type': 'application/json' }, body: JSON.stringify({ image: 'data:image/jpeg;base64,AAAA' }) }), { ...env, AI: fakeAI }, { waitUntil() {} });
+const idBody = await idRes.json();
+console.log('identify:', idBody.query, '->', idBody.results.length, 'sugestões:', idBody.results.slice(0, 3).map((p) => p.name).join(' | '));
+assert.ok(idBody.results.length > 0 && idBody.results.length <= 12);
+
 r = await call('/diag', null);
 console.log('diag:', r.body.storesOk, 'lojas OK de', r.body.stores.length);
 console.log('todos os testes passaram');
