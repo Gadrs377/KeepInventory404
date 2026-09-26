@@ -19,7 +19,7 @@ export default async function mountProduto(root, { code }) {
     root.innerHTML = `
       <div class="screen">
         <header class="topbar nav-bar"><a class="icon-btn glass-btn" href="#/" aria-label="Voltar">${icon('chevronLeft')}</a></header>
-        <main class="content"><p class="empty">Esse produto não está mais no armário.</p>
+        <main class="content"><p class="empty">Esse produto não está mais no armário. Ele pode ter sido removido.</p>
         <a class="btn btn-primary" href="#/">Voltar ao armário</a></main>
       </div>`;
     return;
@@ -183,7 +183,7 @@ export default async function mountProduto(root, { code }) {
         : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>
       <div class="lot-actions">
         ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
-        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Lembrete no calendário</button>' : ''}
+        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Criar lembrete</button>' : ''}
       </div>`;
   }
 

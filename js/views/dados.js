@@ -93,7 +93,7 @@ export default async function mountDados(root) {
     try {
       data = JSON.parse(await file.text());
     } catch {
-      toast('Não foi possível ler esse arquivo. Escolha um backup .json baixado por este app.');
+      toast('Não deu para ler esse arquivo. Escolha um backup .json baixado por este app.');
       return;
     }
     const ok = await confirmSheet({

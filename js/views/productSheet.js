@@ -15,8 +15,8 @@ import { beep } from '../sound.js';
 import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockNote, skeletonRows } from '../ui.js';
 
 const ACTION = {
-  entrada: (n) => `Adicionar ${n}`,
-  saida: (n) => `Dar baixa em ${n}`,
+  entrada: (n) => `Guardar ${n}`,
+  saida: (n) => `Tirar ${n}`,
   contagem: () => 'Salvar contagem',
 };
 const ACTION_ICON = { entrada: 'in', saida: 'out', contagem: 'count' };
@@ -24,7 +24,7 @@ const actionLabel = (mode, n) => `${icon(ACTION_ICON[mode])}${ACTION[mode](n)}`;
 
 const NEW_MSG = {
   found: 'Novo no armário. Confira o nome antes de salvar.',
-  notfound: 'Não encontramos esse código. Digite o nome e escolha o produto nas sugestões.',
+  notfound: 'Esse código não está nas lojas. Digite o nome e escolha o produto nas sugestões.',
   offline: 'Sem internet para buscar esse código. Digite o nome do produto para cadastrar.',
   nocode: 'Digite o nome ou tire uma foto da embalagem e escolha o produto nas sugestões.',
   other: 'Outro produto com o mesmo código de barras. Dê um nome que diferencie os dois, por exemplo o sabor.',
@@ -143,7 +143,7 @@ function localRow(p) {
 function expiryHtml() {
   return `
     <div class="expiry">
-      <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="false" aria-controls="exp-field">${icon('calendar')}Adicionar validade</button>
+      <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="false" aria-controls="exp-field">${icon('calendar')}Marcar validade</button>
       <div class="field" id="exp-field" hidden>
         <label class="field-label" for="exp-input">Validade</label>
         <input class="input input-date" id="exp-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="DD/MM/AA ou MM/AA" aria-describedby="exp-note">
@@ -324,7 +324,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
     beep('error');
     body.innerHTML = `
       ${head(local, local)}
-      <p class="sheet-text">Não tem nenhum no armário. Se ainda tem, corrija a quantidade pela contagem ou na página do produto.</p>
+      <p class="sheet-text">O armário diz que não tem nenhum. Se ainda tem, corrija a quantidade na página do produto.</p>
       <div class="sheet-actions">
         <button type="button" class="btn btn-primary" data-cancel>Fechar</button>
       </div>`;

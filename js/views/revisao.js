@@ -32,7 +32,7 @@ export default async function mountRevisao(root) {
             <span class="diff-name">${esc(c.product.name)}</span>
             <span class="diff-qty">${c.from} para ${c.to}</span>
             <span class="diff-delta ${c.to > c.from ? 'is-up' : 'is-down'}">${signed(c.to - c.from)}</span>
-          </li>`).join('')}</ul>` : '<p class="empty">Nenhuma diferença entre o armário e o sistema nos itens contados.</p>'}
+          </li>`).join('')}</ul>` : '<p class="empty">Tudo o que foi contado bate com o app.</p>'}
 
         ${missingWithStock.length ? `
         <fieldset class="choice">

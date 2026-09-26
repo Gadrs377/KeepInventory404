@@ -8,7 +8,7 @@ import { beep } from '../sound.js';
 const ERRORS = {
   denied: 'O app não tem permissão para usar a câmera. Libere a câmera para este site nas configurações do navegador, ou digite o código.',
   unsupported: 'Este navegador não dá acesso à câmera. Abra o app pelo endereço https, ou digite o código.',
-  nocamera: 'Não encontramos uma câmera neste aparelho. Digite o código.',
+  nocamera: 'Nenhuma câmera encontrada neste aparelho. Digite o código.',
   decoder: 'O leitor de código não carregou. Confira a internet e abra esta tela de novo, ou digite o código.',
 };
 

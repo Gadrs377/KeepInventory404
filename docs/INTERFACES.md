@@ -575,3 +575,18 @@ total e cada item:
   quantidade.
 - "Guardar N itens" dá entrada em tudo, guarda o preço e aprende as ligações.
   Na próxima nota do mesmo mercado os itens já vêm certos. Nota repetida avisa.
+
+## Versão 3.10: revisão de textos (better-writing)
+
+Vocabulário único: **Guardar** para entrada e **Tirar** para saída, em botões,
+menus, avisos e títulos das folhas ("Guardar 2", "Tirar 1"; saiu "Adicionar",
+"Pôr 1" e "Dar baixa"). "Marcar validade" em todo lugar. Nada de "sistema":
+o que o app sabe é "No app".
+
+- Erros dizem como resolver ("Só tem 2 no armário. Tire 2 ou menos.",
+  "A SEFAZ não respondeu. Tente de novo em instantes.") e não usam "nós".
+- Armário vazio e Cupons vazio ganharam o botão "Abrir o leitor".
+- Botões começam com verbo: "Salvar" no lugar de "Pronto", "Continuar
+  contagem", "Criar lembrete", "Pedir receitas com o que vence".
+- Campo de novo item em Compras voltou a ter rótulo visível; o texto de
+  dentro é só exemplo.

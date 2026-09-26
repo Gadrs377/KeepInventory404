@@ -83,7 +83,7 @@ export async function tx(storeNames, mode, fn) {
     let result;
     t.oncomplete = () => resolve(result);
     t.onerror = () => reject(t.error);
-    t.onabort = () => reject(t.error || new Error('Transação cancelada'));
+    t.onabort = () => reject(t.error || new Error('Não deu para salvar. Tente de novo.'));
     Promise.resolve()
       .then(() => fn(stores, t))
       .then((r) => { result = r; })

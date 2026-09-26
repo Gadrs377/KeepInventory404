@@ -32,9 +32,9 @@ export default function mountCompras(root) {
         <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
 
         <form class="shop-add" novalidate>
-          <label class="sr-only" for="shop-extra">Acrescentar à lista</label>
+          <label class="field-label" for="shop-extra">Acrescentar à lista</label>
           <div class="shop-add-row">
-            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Novo item, ex.: pão" enterkeyhint="done">
+            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
             <button type="submit" class="btn btn-quiet btn-icon" aria-label="Acrescentar à lista">${icon('plus')}</button>
           </div>
         </form>
@@ -55,7 +55,7 @@ export default function mountCompras(root) {
           <h2 class="sheet-title">Vocês fazem compras a cada</h2>
           <div class="every-row"><div class="stepper-host stepper-sm"></div><span>dias</span></div>
           <p class="sheet-text">A sugestão cobre o que vai acabar até a próxima compra, mais o mínimo de cada produto.</p>
-          <div class="sheet-actions"><button type="button" class="btn btn-primary" data-ok>Pronto</button></div>`;
+          <div class="sheet-actions"><button type="button" class="btn btn-primary" data-ok>Salvar</button></div>`;
         const step = stepper($('.stepper-host', body), { value: state.every, min: 1, max: 60, label: 'Dias entre compras' });
         $('[data-ok]', body).addEventListener('click', () => close(step.value));
       },
@@ -72,7 +72,7 @@ export default function mountCompras(root) {
       { label: `Compras a cada ${plural(state.every, 'dia', 'dias')}`, icon: 'calendar', onSelect: everySheet },
       { label: 'Revisar a lista com o Claude', icon: 'chat', onSelect: () => window.open(claudeUrl(listPrompt()), '_blank', 'noopener') },
     ];
-    if (expiring.length) items.push({ label: 'Receitas com o que vence', icon: 'pot', onSelect: () => window.open(claudeUrl(recipesPrompt()), '_blank', 'noopener') });
+    if (expiring.length) items.push({ label: 'Pedir receitas com o que vence', icon: 'pot', onSelect: () => window.open(claudeUrl(recipesPrompt()), '_blank', 'noopener') });
     openMenu(e.currentTarget, items, { label: 'Opções da lista' });
   });
 

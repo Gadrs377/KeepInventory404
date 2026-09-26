@@ -19,12 +19,12 @@ const COPY = {
   entrada: {
     title: 'Entrada', sign: '+',
     hint: 'Aponte para o código de barras',
-    fastHint: 'Cada leitura soma 1. Produto novo fica para o fim.',
+    fastHint: 'Cada leitura guarda 1. Produto novo fica para o fim.',
   },
   saida: {
     title: 'Saída', sign: '−',
     hint: 'Aponte para o código de barras',
-    fastHint: 'Cada leitura tira 1. Produto desconhecido fica para o fim.',
+    fastHint: 'Cada leitura tira 1. Produto que não está no armário fica para o fim.',
   },
 };
 
@@ -174,7 +174,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
           entry.product = restored;
           if (entry.n <= 0) session.delete(key);
           renderSession();
-          toast('Registro desfeito.', { duration: 2500 });
+          toast('Desfeito.', { duration: 2500 });
         } catch (err) {
           toast(err.message, { duration: 4000 });
         }
@@ -320,7 +320,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     fast = fastInput.checked;
     saveFast(mode, fast);
     renderHint();
-    toast(fast ? 'Modo rápido ligado. Cada leitura conta 1.' : 'Modo rápido desligado. O app pergunta a quantidade.', { duration: 2500 });
+    toast(fast ? `Modo rápido ligado. Cada leitura ${mode === 'saida' ? 'tira' : 'guarda'} 1.` : 'Modo rápido desligado. O app pergunta a quantidade.', { duration: 2500 });
   });
 
   $('[data-finish]', root).addEventListener('click', async () => {

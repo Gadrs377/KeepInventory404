@@ -169,7 +169,7 @@ export async function fetchNota(p) {
   try {
     const res = await fetch(`${API_URL}/nfce?p=${encodeURIComponent(p)}`, { signal: ctrl.signal });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.found) throw new Error(data.error || 'Não deu para ler a nota agora.');
+    if (!res.ok || !data.found) throw new Error(data.error || 'Não deu para ler a nota agora. Tente de novo em instantes.');
     return data;
   } catch (err) {
     if (err.name === 'AbortError') throw new Error('A SEFAZ demorou demais. Tente de novo em instantes.');

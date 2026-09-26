@@ -50,7 +50,7 @@ export default function mountInventario(root) {
           ${thumb(p)}
           <span class="row-main">
             <span class="row-name">${esc(p.name)}</span>
-            <span class="row-sub">${counted === undefined ? `Sistema diz ${p.qty}` : `Era ${p.qty}`}${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
+            <span class="row-sub">${counted === undefined ? `No app: ${p.qty}` : `Era ${p.qty}`}${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
           </span>
           ${counted === undefined ? '<span class="tag is-empty"><span class="sr-only">Ainda não contado</span></span>' : tag(counted, 'is-counted', 'Contados')}
         </button>
@@ -59,7 +59,7 @@ export default function mountInventario(root) {
     lists.innerHTML = `
       ${pending.length ? `<h2 class="list-title">Faltam contar</h2><ul class="rows">${pending.map((p) => row(p)).join('')}</ul>` : ''}
       ${done.length ? `<h2 class="list-title">Contados</h2><ul class="rows">${done.map((p) => row(p, counts[p.code])).join('')}</ul>` : ''}
-      ${!products.length ? '<p class="empty">O armário está vazio. Leia um código para contar e cadastrar ao mesmo tempo.</p>' : ''}
+      ${!products.length ? '<p class="empty">O armário está vazio. Leia um código para contar e cadastrar de uma vez.</p>' : ''}
       ${products.length && !pending.length ? '<p class="empty">Tudo contado. Toque em Revisar para ver as diferenças.</p>' : ''}`;
   }
 

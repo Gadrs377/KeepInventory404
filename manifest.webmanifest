@@ -49,7 +49,7 @@
     {
       "name": "Saída",
       "short_name": "Saída",
-      "description": "Dar baixa no que saiu",
+      "description": "Tirar o que saiu do armário",
       "url": "./#/saida",
       "icons": [
         {

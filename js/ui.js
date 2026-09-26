@@ -790,7 +790,7 @@ export async function shareText(title, text) {
     toast('Texto copiado. Cole onde quiser.', { duration: 3000 });
     return true;
   } catch {
-    toast('Não deu para compartilhar neste navegador.', { duration: 3000 });
+    toast('Não deu para compartilhar neste navegador. Tente pelo Chrome ou pelo Safari.', { duration: 3000 });
     return false;
   }
 }

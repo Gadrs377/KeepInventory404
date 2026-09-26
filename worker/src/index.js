@@ -81,15 +81,15 @@ export default {
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
-          if (normalize(q).length < 2) return withCors(json({ error: 'Digite pelo menos 2 letras' }, 400), allowed);
+          if (normalize(q).length < 2) return withCors(json({ error: 'Digite pelo menos 2 letras.' }, 400), allowed);
           return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)), allowed);
         }
         case '/nfce': {
           // Nota fiscal do consumidor (NFC-e) pelo parâmetro "p" do QR Code.
           const p = (url.searchParams.get('p') || '').trim();
           const key = nfceKey(p);
-          if (!key) return withCors(json({ error: 'Não parece um QR Code de nota fiscal' }, 400), allowed);
-          if (!key.startsWith('43')) return withCors(json({ error: 'Por enquanto só notas do Rio Grande do Sul', uf: key.slice(0, 2) }, 422), allowed);
+          if (!key) return withCors(json({ error: 'Esse QR Code não é de nota fiscal. Leia o QR Code no fim do cupom.' }, 400), allowed);
+          if (!key.startsWith('43')) return withCors(json({ error: 'Por enquanto o app lê só notas do Rio Grande do Sul.', uf: key.slice(0, 2) }, 422), allowed);
           return withCors(await cached(ctx, `nfce:${key}`, 30 * DAY, () => fetchNfce(p, key)), allowed);
         }
         case '/diag':
@@ -376,10 +376,10 @@ async function fetchNfce(p, key) {
     const html = await res.text();
     const nota = parseNfce(html);
     if (!nota.items.length) return { found: false, error: 'A SEFAZ não mostrou itens para esta nota. Ela pode ainda não ter sido autorizada.' };
-    if (nota.key && nota.key !== key) return { found: false, error: 'A nota devolvida não é a do QR Code' };
+    if (nota.key && nota.key !== key) return { found: false, error: 'A SEFAZ devolveu outra nota. Leia o QR Code de novo.' };
     return { found: true, ...nota, key };
   } catch (err) {
-    return { found: false, error: 'Não deu para falar com a SEFAZ agora', detail: String(err && err.message || err) };
+    return { found: false, error: 'A SEFAZ não respondeu. Tente de novo em instantes.', detail: String(err && err.message || err) };
   } finally {
     clearTimeout(timer);
   }

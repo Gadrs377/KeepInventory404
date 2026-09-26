@@ -52,8 +52,9 @@ export default async function mountCupons(root) {
           </li>`;
         }).join('') + '</ul>'
         : `<div class="empty-state">
-            <p class="empty-lead">Nenhum cupom ainda.</p>
-            <p>Os cupons aparecem aqui quando você toca em Concluir no leitor ou depois de aplicar uma contagem.</p>
+            <p class="empty-lead">Nenhum cupom ainda</p>
+            <p>Cada vez que você conclui uma leitura ou aplica uma contagem, o cupom fica guardado aqui.</p>
+            <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
           </div>`}
       </main>
       ${tabBar('cupons')}

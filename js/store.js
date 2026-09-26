@@ -87,7 +87,7 @@ async function move(code, type, delta, info, expiresAt) {
   const result = await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     let p = await promisify(s.products.get(code));
     if (!p) {
-      if (!info) throw new Error('Produto não cadastrado');
+      if (!info) throw new Error('Esse produto não está mais no armário.');
       p = newProduct(code, info);
     } else if (info && info.name) {
       // Permite corrigir nome/marca no momento da leitura.
@@ -95,7 +95,7 @@ async function move(code, type, delta, info, expiresAt) {
     }
     const qtyBefore = p.qty;
     const qtyAfter = qtyBefore + delta;
-    if (qtyAfter < 0) throw new Error(`Só tem ${qtyBefore} no armário`);
+    if (qtyAfter < 0) throw new Error(`Só tem ${qtyBefore} no armário. Tire ${qtyBefore} ou menos.`);
     const lotsBefore = await lotsOf(s, code);
     if (delta > 0 && isIsoDate(expiresAt)) {
       await promisify(s.lots.add({ code, qty: delta, expiresAt, addedAt: Date.now() }));
@@ -123,7 +123,7 @@ export function removeStock(code, n) {
 
 export async function setStock(code, n, type = 'ajuste') {
   const p = await getProduct(code);
-  if (!p) throw new Error('Produto não cadastrado');
+  if (!p) throw new Error('Esse produto não está mais no armário.');
   const target = clampInt(n);
   if (target === p.qty) return { product: p, movement: null };
   return move(code, type, target - p.qty);
@@ -139,11 +139,11 @@ export async function listLots() {
 
 // Dá validade a unidades que já estão no armário sem data.
 export async function addLot(code, n, expiresAt) {
-  if (!isIsoDate(expiresAt)) throw new Error('Escolha a data de validade');
+  if (!isIsoDate(expiresAt)) throw new Error('Digite a data de validade.');
   const qty = clampInt(n, 1);
   await tx(['products', 'lots'], 'readwrite', async (s) => {
     const p = await promisify(s.products.get(code));
-    if (!p) throw new Error('Produto não cadastrado');
+    if (!p) throw new Error('Esse produto não está mais no armário.');
     const lots = await lotsOf(s, code);
     const free = p.qty - lots.reduce((a, l) => a + l.qty, 0);
     if (qty > free) throw new Error(free ? `Só ${free} sem validade para marcar` : 'Todas as unidades já têm validade');
@@ -159,7 +159,7 @@ export async function removeLot(id) {
 
 export async function updateProduct(code, fields) {
   const p = await getProduct(code);
-  if (!p) throw new Error('Produto não cadastrado');
+  if (!p) throw new Error('Esse produto não está mais no armário.');
   const next = {
     ...p,
     name: (fields.name ?? p.name).trim() || p.name,
@@ -177,7 +177,7 @@ export async function updateProduct(code, fields) {
 // Guarda mais um código de barras num produto (embalagem nova, código trocado).
 export async function addBarcode(code, barcode) {
   const p = await getProduct(code);
-  if (!p) throw new Error('Produto não cadastrado');
+  if (!p) throw new Error('Esse produto não está mais no armário.');
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   if (barcodes.includes(barcode)) return p;
   const next = { ...p, barcodes: [...barcodes, barcode], updatedAt: Date.now() };
@@ -214,9 +214,9 @@ export async function undoMovement(id) {
     if (!m) throw new Error('Esse registro já foi desfeito');
     const all = await promisify(s.movements.index('code').getAll(m.code));
     const last = all.reduce((a, b) => (b.id > a.id ? b : a), all[0]);
-    if (last.id !== id) throw new Error('Já houve outro registro depois deste');
+    if (last.id !== id) throw new Error('Não dá para desfazer: já houve outro registro depois deste.');
     const p = await promisify(s.products.get(m.code));
-    if (!p) throw new Error('Produto não existe mais');
+    if (!p) throw new Error('Esse produto não está mais no armário.');
     const restored = { ...p, qty: m.qtyBefore, updatedAt: Date.now() };
     await promisify(s.products.put(restored));
     // Volta os lotes para como estavam antes do movimento.

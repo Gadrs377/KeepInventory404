@@ -10,7 +10,7 @@ export async function photoToDataUrl(file, max = 1024) {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não deu para abrir a foto')); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não deu para abrir a foto. Tente outra.')); };
       img.src = url;
     });
   }

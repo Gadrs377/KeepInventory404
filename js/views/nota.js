@@ -208,7 +208,7 @@ function review(body, close, data, rows, products, already) {
 
   function updateSave() {
     const on = rows.filter((r) => r.on);
-    saveBtn.innerHTML = on.length ? `${icon('in')}Guardar ${plural(on.length, 'item', 'itens')}` : 'Nada marcado';
+    saveBtn.innerHTML = on.length ? `${icon('in')}Guardar ${plural(on.length, 'item', 'itens')}` : 'Marque um item para guardar';
     saveBtn.disabled = !on.length;
   }
 
@@ -343,7 +343,7 @@ export function notaEntrySheet({ camera = false } = {}) {
         const { notaParam } = await import('../lookup.js');
         const p = notaParam(input.value);
         if (!p) {
-          error.textContent = 'Esse link não parece de uma nota fiscal. Ele começa com https e tem "p=" seguido de 44 números.';
+          error.textContent = 'Cole o link que o QR Code do cupom abre. Ele começa com https e tem "p=" seguido de 44 números.';
           error.hidden = false;
           input.setAttribute('aria-invalid', 'true');
           input.focus();

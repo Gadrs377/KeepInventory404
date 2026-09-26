@@ -96,8 +96,9 @@ export default function mountArmario(root) {
     if (!products.length) {
       shelf.innerHTML = `
         <div class="empty-state">
-          <p class="empty-lead">Comece pelo leitor.</p>
-          <p>Toque no botão do código de barras, embaixo à direita, e aponte a câmera para um pacote do armário. Ele aparece aqui com o número de unidades.</p>
+          <p class="empty-lead">Nada guardado ainda</p>
+          <p>Leia o código de barras de um pacote e ele aparece aqui com o número de unidades.</p>
+          <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
         </div>`;
       return;
     }
@@ -180,7 +181,7 @@ export default function mountArmario(root) {
     const n = draft ? Object.keys(draft.counts).length : 0;
     draftNote.hidden = !n;
     if (n) {
-      draftNote.innerHTML = `<span>Contagem em andamento, ${plural(n, 'produto contado', 'produtos contados')}.</span><a class="btn btn-quiet btn-sm" href="#/inventario">Continuar</a>`;
+      draftNote.innerHTML = `<span>Contagem em andamento, ${plural(n, 'produto contado', 'produtos contados')}.</span><a class="btn btn-quiet btn-sm" href="#/inventario">Continuar contagem</a>`;
     }
     render();
   }
@@ -198,7 +199,7 @@ export default function mountArmario(root) {
         onAction: async () => {
           try {
             await undoMovement(movement.id);
-            toast('Baixa desfeita.', { duration: 2500 });
+            toast('Desfeito.', { duration: 2500 });
           } catch (err) {
             toast(err.message, { duration: 4000 });
           }
@@ -302,7 +303,7 @@ export default function mountArmario(root) {
     keepOrder = true;
     openMenu(row, [
       { label: 'Tirar 1', icon: 'minus', onSelect: () => { if (p.qty > 0) minusOne(code, null, -1); else toast(`${p.name} já está zerado.`, { duration: 2500 }); } },
-      { label: 'Pôr 1', icon: 'plus', onSelect: () => minusOne(code, null, 1) },
+      { label: 'Guardar 1', icon: 'plus', onSelect: () => minusOne(code, null, 1) },
       { label: 'Pôr na lista de compras', icon: 'cart', onSelect: () => toast(addToShopList(p.name) ? `${p.name} está na lista de compras.` : `${p.name} já estava na lista.`, { duration: 2500 }) },
       { label: 'Ver produto', icon: 'chevron', onSelect: () => { location.hash = row.getAttribute('href'); } },
     ], { label: p.name }).then(() => row.classList.remove('is-lifted'));
