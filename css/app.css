@@ -818,7 +818,7 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
   font-weight: 700; font-size: 16px; color: var(--ink-2);
   transition-property: background-color, color; transition-duration: 150ms; transition-timing-function: var(--ease);
 }
-.segment input:checked + span { background: var(--ink); color: var(--paper); }
+.segment input:checked + span { background: var(--paper); color: var(--ink); box-shadow: 0 3px 8px rgba(22, 24, 23, 0.12), 0 0 0 0.5px rgba(22, 24, 23, 0.06); }
 .segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 1px; }
 
 /* ---------- Validade ---------- */
@@ -1185,7 +1185,11 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
    recua um terço, escurecendo. Leitor: sobe de baixo, como tela modal.
    A barra de abas não participa: fica parada. */
 .tabbar-wrap { view-transition-name: tabbar; }
+/* A barra é a mesma nas duas telas: fica viva durante a troca, e o que se
+   mexe nela (pílula, esconder) vem das transições dela mesma. */
 ::view-transition-group(tabbar) { animation-duration: 0s; }
+::view-transition-old(tabbar) { display: none; }
+::view-transition-new(tabbar) { animation: none; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; animation-timing-function: var(--ease); }
 html[data-nav="push"]::view-transition-old(root),
 html[data-nav="pop"]::view-transition-old(root),
@@ -1385,5 +1389,131 @@ html[data-nav="down"]::view-transition-new(root) { animation-name: vt-undim; }
 @keyframes num-down { from { translate: 0 -18%; opacity: 0.4; } }
 
 /* Ícone da aba escolhida dá um pulinho (como os símbolos do iPhone) */
-html[data-nav="fade"] .tab-item[aria-current="page"] .icon { animation: symbol-bounce 520ms var(--spring-bouncy); }
-@keyframes symbol-bounce { 0% { scale: 0.7; } }
+
+
+
+/* ---------- Versão 3.8: movimento como no iPhone ---------- */
+
+/* Barra de abas: uma pílula de vidro desliza entre as abas e estica no caminho.
+   Arrastando o dedo pela barra, ela vira uma lente que segue o dedo. */
+.tabbar { position: relative; }
+.tab-glide {
+  position: absolute; top: 4px; bottom: 4px; left: 0; z-index: 0;
+  border-radius: 999px; pointer-events: none; opacity: 0;
+  background: color-mix(in oklab, var(--ink) 9%, transparent);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 0 0.5px var(--glass-edge);
+  transition-property: translate, width, scale, opacity, background-color, box-shadow;
+  transition-duration: 580ms, 420ms, 520ms, 200ms, 200ms, 200ms;
+  transition-timing-function: var(--spring-bouncy), var(--spring), var(--spring-bouncy), var(--ease), var(--ease), var(--ease);
+}
+.tab-glide.no-anim { transition: none; }
+.tab-glide.is-moving { scale: 1.16 0.88; transition-duration: 580ms, 420ms, 140ms, 200ms, 200ms, 200ms; }
+.tabbar.is-scrubbing .tab-glide {
+  scale: 1.2 1.14;
+  background: color-mix(in oklab, var(--paper) 55%, transparent);
+  box-shadow: 0 8px 22px rgba(22, 24, 23, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px var(--glass-edge);
+}
+.tab-item { position: relative; z-index: 1; transition-property: scale, color; transition-duration: 380ms, 250ms; transition-timing-function: var(--spring-bouncy), var(--ease); }
+.tab-item[aria-current="page"] { background: transparent; }
+.tab-item:active { scale: 0.96; transition-duration: 90ms, 250ms; }
+.tab-item.is-over { color: var(--ink); }
+/* Ícone vazado e cheio no mesmo lugar: trocam com escala, opacidade e desfoque */
+.tab-icons { position: relative; display: grid; width: 24px; height: 24px; }
+.tab-icons > .icon { grid-area: 1 / 1; transition-property: opacity, scale, filter; transition-duration: 220ms, 460ms, 220ms; transition-timing-function: var(--ease), var(--spring-bouncy), var(--ease); }
+.tab-icons > .tab-on { opacity: 0; scale: 0.25; filter: blur(4px); }
+.tab-item[aria-current="page"] .tab-on { opacity: 1; scale: 1; filter: blur(0); }
+.tab-item[aria-current="page"] .tab-off { opacity: 0; scale: 0.25; filter: blur(4px); }
+.tab-icons .tab-badge { top: -6px; left: 14px; }
+/* Fora das abas (produto, leitor, contagem) a barra desce e some com mola */
+.tabbar-wrap { transition-property: translate, opacity; transition-duration: 520ms, 260ms; transition-timing-function: var(--spring), var(--ease); }
+.tabbar-wrap.is-hidden { translate: 0 calc(100% + 24px + var(--safe-bottom)); opacity: 0; }
+.tabbar-wrap.is-hidden .tabbar, .tabbar-wrap.is-hidden .scan-fab { pointer-events: none; }
+.scan-fab { transition-property: scale, background-color; transition-duration: 380ms, 300ms; transition-timing-function: var(--spring-bouncy), var(--ease); }
+.scan-fab:active { transition-duration: 90ms, 300ms; }
+@media (forced-colors: active) { .tab-glide { forced-color-adjust: none; background: Highlight; } }
+
+/* Seletores de cima e das folhas: o preenchimento desliza entre as opções */
+.segmented-track, .mode-switch, .tabs { position: relative; }
+.segment, .mode-opt, .tab { position: relative; z-index: 1; }
+.glide {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  transition-property: translate, width, height, scale;
+  transition-duration: 540ms, 420ms, 300ms, 480ms;
+  transition-timing-function: var(--spring-bouncy), var(--spring), var(--spring), var(--spring-bouncy);
+}
+.glide.no-anim { transition: none; }
+.glide.is-moving { scale: 1.1 0.9; transition-duration: 540ms, 420ms, 300ms, 140ms; }
+.segmented-track .glide { background: var(--paper); border-radius: calc(var(--r-control) - 4px); box-shadow: 0 3px 8px rgba(22, 24, 23, 0.12), 0 0 0 0.5px rgba(22, 24, 23, 0.06); }
+.segmented-track.has-glide .segment input:checked + span { background: transparent; box-shadow: none; }
+/* Como o seletor do iPhone: pílula clara sobre o trilho, texto sempre escuro; a escolhida fica em negrito */
+.segment span { color: var(--ink-2); font-weight: 600; }
+.segment input:checked + span { font-weight: 800; }
+@media (prefers-color-scheme: dark) {
+  .segment input:checked + span, .segmented-track .glide { background: color-mix(in oklab, var(--ink) 22%, var(--shelf)); }
+  .segmented-track.has-glide .segment input:checked + span { background: transparent; }
+}
+.mode-switch .glide { background: var(--on-mode); border-radius: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.mode-switch.has-glide .mode-opt input:checked + span { background: transparent; }
+.tabs .glide-line { background: var(--ink); border-radius: 2px; }
+.tabs.has-glide .tab[aria-pressed="true"] { box-shadow: none; }
+.tab { transition: color 250ms var(--ease); }
+.segment span, .mode-opt span { transition-property: color, background-color, scale; transition-duration: 250ms, 250ms, 380ms; transition-timing-function: var(--ease), var(--ease), var(--spring-bouncy); }
+@media (forced-colors: active) {
+  .glide { forced-color-adjust: none; background: Highlight; }
+  .has-glide input:checked + span { forced-color-adjust: none; color: HighlightText; }
+}
+
+/* Linha → produto: foto, nome e etiqueta voam da lista até o topo do produto */
+.product-hero > .thumb { view-transition-name: hero-thumb; }
+.product-hero .page-title { view-transition-name: hero-title; }
+.product-hero > .tag { view-transition-name: hero-tag; }
+::view-transition-group(hero-thumb), ::view-transition-group(hero-title), ::view-transition-group(hero-tag) {
+  animation-duration: 560ms; animation-timing-function: var(--spring);
+}
+::view-transition-old(hero-title), ::view-transition-new(hero-title) {
+  width: auto; height: 100%; object-fit: none; object-position: left top; inset-inline-start: 0;
+}
+::view-transition-group(hero-tag) { z-index: 3; }
+/* O nome antigo some logo; o novo aparece por cima, sem ficar em dobro */
+::view-transition-old(hero-title) { animation: vt-text-out 160ms ease-out both; }
+::view-transition-new(hero-title) { animation: vt-text-in 300ms ease-out 80ms both; }
+@keyframes vt-text-out { to { opacity: 0; } }
+@keyframes vt-text-in { from { opacity: 0; } }
+
+/* Linhas que continuam deslizam para o novo lugar ao trocar ambiente ou filtro */
+::view-transition-group(*.row) { animation-duration: 460ms; animation-timing-function: var(--spring); }
+::view-transition-old(home-tools) { display: none; }
+::view-transition-new(home-tools) { animation: none; }
+
+/* Folha aberta: a tela de trás recua e escurece, como um cartão empilhado */
+#app { transition-property: scale, filter; transition-duration: 560ms, 400ms; transition-timing-function: var(--spring), var(--ease); }
+body { transition: background-color 400ms var(--ease); }
+body.sheet-stack { background: #000; }
+body.sheet-stack #app { scale: 0.93; filter: brightness(0.9); clip-path: inset(0 round 18px); }
+body.sheet-stack .tabbar-wrap { translate: 0 40px; opacity: 0; }
+body.sheet-stack .mini-bar { opacity: 0; }
+
+/* Aviso sai mais suave do que entra */
+.toast.is-out { animation: toast-out 200ms ease-out forwards; }
+@keyframes toast-out { to { opacity: 0; translate: 0 12px; scale: 0.98; } }
+
+/* Menu: cada opção chega logo depois da anterior */
+.menu-root.is-open .menu-item { animation: menu-item-in 420ms var(--spring) backwards; animation-delay: calc(var(--i, 0) * 28ms + 40ms); }
+@keyframes menu-item-in { from { opacity: 0; translate: 0 -6px; } }
+
+/* Lista do Armário entra em cascata na primeira vez (depois do esqueleto) */
+.rows.is-entering > li { animation: row-in 520ms var(--spring) backwards; animation-delay: calc(var(--i, 0) * 32ms); }
+@keyframes row-in { from { opacity: 0; translate: 0 14px; } }
+
+/* Toque: aperta rápido e solta com mola (0,96, como pede o guia) */
+.btn, .icon-btn, .chip, .row-minus, .stepper-btn, .cam-tool, .cam-hint, .group-row, .menu-item {
+  transition-duration: 420ms; transition-timing-function: var(--spring-bouncy);
+}
+.btn:active:not(:disabled), .icon-btn:active, .chip:active, .row-minus:active:not(:disabled), .stepper-btn:active:not(:disabled), .cam-tool:active, .cam-hint:active {
+  transition-duration: 90ms;
+}
+.group-row { transition-property: scale, background-color; }
+.group-row:active { scale: 0.98; transition-duration: 90ms; }
+
+/* A cor da faixa do leitor troca junto com a pílula Entrada | Saída */
+.band { transition-duration: 420ms; }

@@ -39,7 +39,8 @@ let badgeRun = 0;
 export async function refreshShopBadge() {
   const run = ++badgeRun;
   const link = document.querySelector('.tab-item[href="#/compras"]');
-  if (!link) return;
+  // Barra escondida (leitor, produto): não recalcula a cada leitura.
+  if (!link || link.closest('.is-hidden')) return;
   const state = loadShop();
   const { items } = await shopSuggestions(state.every);
   if (run !== badgeRun || !link.isConnected) return;
@@ -49,7 +50,7 @@ export async function refreshShopBadge() {
   if (!badge) {
     badge = document.createElement('span');
     badge.className = 'tab-badge';
-    link.querySelector('.icon').after(badge);
+    link.querySelector('.tab-icons').append(badge);
   }
   badge.innerHTML = `<span aria-hidden="true">${n > 99 ? '99+' : n}</span><span class="sr-only">, ${n} ${n === 1 ? 'item' : 'itens'} para comprar</span>`;
 }

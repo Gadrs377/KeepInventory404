@@ -514,3 +514,34 @@ embaixo só quando ele está ligado. A câmera ganhou mais espaço.
 - Aviso quando a internet cai e quando volta.
 - O número do seletor pula para o lado do toque; o ícone da aba escolhida dá um
   pulinho; o raio do modo rápido "acende".
+
+## Versão 3.8: movimento como no iPhone
+
+**Barra de abas viva.** A barra agora fica fora das telas e não é redesenhada a
+cada troca. Uma pílula de vidro desliza até a aba tocada (sai já no toque),
+estica no caminho como uma gota e assenta com mola. Arrastando o dedo pela
+barra, a pílula vira uma lente que segue o dedo e, ao soltar, vai para a aba
+mais perto. O ícone vazado vira o cheio com escala, opacidade e desfoque. Nas
+telas de detalhe (produto, leitor, contagem) a barra desce e some com mola.
+
+**Seletores de cima.** Abas de ambiente (sublinhado), Entrada | Saída e os
+seletores "Onde fica" das folhas têm um só preenchimento que desliza e estica
+até a opção escolhida. Os seletores das folhas ficaram como os do iPhone:
+pílula clara sobre o trilho, texto sempre escuro, a escolhida em negrito.
+
+**Abrir e fechar.**
+- Linha → produto: foto, nome e etiqueta voam da lista até o topo da página do
+  produto; voltando, encolhem de volta na mesma linha.
+- Folha aberta: a tela de trás recua, escurece e arredonda os cantos, como um
+  cartão empilhado (menos no leitor e na contagem).
+- Quando o conteúdo da folha muda ou cresce, a borda sobe com mola e o
+  conteúdo novo entra esmaecendo.
+- Trocar ambiente ou filtro: as linhas que continuam deslizam para o novo
+  lugar; as que saem somem e as novas aparecem.
+- A lista entra em cascata na primeira vez; o menu abre com as opções chegando
+  uma depois da outra; o aviso sai descendo de leve.
+- O título grande esmaece ao subir e cresce um pouco quando a lista é puxada
+  além do topo.
+- Botões apertam rápido (0,96) e soltam com mola.
+
+Tudo isso desliga com "reduzir movimento".

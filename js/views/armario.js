@@ -5,11 +5,25 @@ import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, remov
 import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
-import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu, skeletonRows } from '../ui.js';
+import { $, esc, icon, plural, subtitle, tag, tagState, thumb, stockNote, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo } from '../ui.js';
 
 let savedFilter = 'todos';
 let savedArea = 'tudo';
 let savedQuery = '';
+let firstShow = true; // a lista entra em cascata só na primeira vez que aparece
+
+// Nome para a troca animada de cada linha (tem de ser um identificador de CSS).
+const vtName = (code) => `row-${[...code].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7).toString(36)}`;
+
+// A linha tocada "vira" a página do produto: foto, nome e etiqueta ganham os
+// mesmos nomes que o topo da página do produto e voam até lá.
+function markHero(li) {
+  const parts = [['.thumb', 'hero-thumb'], ['.row-name', 'hero-title'], ['.tag', 'hero-tag']];
+  for (const [sel, name] of parts) {
+    const el = li.querySelector(sel);
+    if (el) { el.style.viewTransitionName = name; el.dataset.vt = ''; }
+  }
+}
 
 export default function mountArmario(root) {
   root.innerHTML = `
@@ -65,6 +79,7 @@ export default function mountArmario(root) {
     tabs.hidden = !showTabs;
     tabs.innerHTML = showTabs ? TABS.filter((t) => t.id === 'tudo' || usedAreas.has(t.id)).map((t) => `
       <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}">${t.short}</button>`).join('') : '';
+    if (showTabs) glideTo(tabs, tabs.querySelector('[aria-pressed="true"]'), { line: true });
 
     // Filtros de estado, contados dentro do ambiente escolhido. Só aparecem quando têm algo.
     // "Vencendo" fica amarelo quando algo vence nesta semana (substitui o antigo aviso).
@@ -102,9 +117,11 @@ export default function mountArmario(root) {
     lastOrder = new Map(visible.map((p, i) => [p.code, i]));
     const moved = (p) => (lastQty.has(p.code) && lastQty.get(p.code) !== p.qty ? (p.qty > lastQty.get(p.code) ? 'is-up' : 'is-down') : '');
 
+    const entering = firstShow && visible.length;
+    firstShow = false;
     shelf.innerHTML = visible.length
-      ? `<ul class="rows">${visible.map((p) => `
-          <li class="row-item" data-code="${esc(p.code)}" data-qty="${p.qty}">
+      ? `<ul class="rows${entering ? ' is-entering' : ''}">${visible.map((p, i) => `
+          <li class="row-item" data-code="${esc(p.code)}" data-qty="${p.qty}" style="--i:${Math.min(i, 12)}">
             <span class="swipe-bg" aria-hidden="true"><span class="swipe-act swipe-plus">${icon('plus')}1</span><span class="swipe-act swipe-minus">${icon('minus')}1</span></span>
             <div class="row-slide">
             <a class="row" draggable="false" href="#/produto/${encodeURIComponent(p.code)}">
@@ -127,6 +144,12 @@ export default function mountArmario(root) {
 
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
     shelf.removeAttribute('aria-busy');
+
+    // Voltando do produto: a linha dele recebe os nomes para a página "encolher" nela.
+    let hero = '';
+    try { hero = sessionStorage.getItem('ki.hero') || ''; sessionStorage.removeItem('ki.hero'); } catch { /* sem armazenamento */ }
+    const heroLi = hero && shelf.querySelector(`.row-item[data-code="${CSS.escape(hero)}"]`);
+    if (heroLi) markHero(heroLi);
 
     if (refocus) {
       const again = shelf.querySelector(`[data-minus="${CSS.escape(refocus)}"]`);
@@ -206,14 +229,14 @@ export default function mountArmario(root) {
     if (!btn) return;
     savedArea = btn.dataset.area;
     keepOrder = false;
-    render();
+    renderAnimated();
   });
   chips.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-filter]');
     if (!btn) return;
     savedFilter = savedFilter === btn.dataset.filter ? 'todos' : btn.dataset.filter;
     keepOrder = false;
-    render();
+    renderAnimated();
   });
   search.addEventListener('input', () => {
     savedQuery = search.value;
@@ -307,8 +330,35 @@ export default function mountArmario(root) {
     rowMenu(row);
   });
   shelf.addEventListener('click', (e) => {
-    if (suppressClick) { e.preventDefault(); e.stopImmediatePropagation(); suppressClick = false; }
+    if (suppressClick) { e.preventDefault(); e.stopImmediatePropagation(); suppressClick = false; return; }
+    const row = e.target.closest('a.row');
+    if (row) {
+      const li = row.closest('.row-item');
+      markHero(li);
+      try { sessionStorage.setItem('ki.hero', li.dataset.code); } catch { /* sem armazenamento */ }
+    }
   }, true);
+
+  // Trocar de ambiente ou de filtro: as linhas que continuam deslizam para o
+  // novo lugar, as que saem somem e as novas aparecem (View Transitions).
+  function renderAnimated() {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || reduced) { render(); return; }
+    const name = () => shelf.querySelectorAll('.row-item').forEach((li, i) => {
+      if (i > 40) return;
+      li.style.viewTransitionName = vtName(li.dataset.code);
+      li.style.viewTransitionClass = 'row';
+      li.dataset.vt = '';
+    });
+    name();
+    // A faixa de busca e filtros fica viva: o sublinhado das abas desliza nela.
+    const tools = root.querySelector('.home-tools');
+    tools.style.viewTransitionName = 'home-tools';
+    tools.dataset.vt = '';
+    const t = document.startViewTransition(() => { render(); name(); });
+    t.ready.catch(() => {});
+    t.finished.catch(() => {}).then(() => root.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; }));
+  }
 
   const off = onChange(load);
   load();

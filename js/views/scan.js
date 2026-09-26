@@ -13,7 +13,7 @@ import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, set
 import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { beep } from '../sound.js';
-import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle } from '../ui.js';
+import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo } from '../ui.js';
 
 const COPY = {
   entrada: {
@@ -109,7 +109,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     fast = loadFast(mode);
     fastInput.checked = fast;
     const radio = $(`input[name=scan-mode][value="${mode}"]`, root);
-    if (radio) radio.checked = true;
+    if (radio) { radio.checked = true; glideTo($('.mode-switch', root), radio.closest('label')); }
     renderHint();
     history.replaceState(null, '', `#/${mode}`);
     try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }

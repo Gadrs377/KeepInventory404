@@ -88,18 +88,207 @@ export function lastScanMode() {
   try { return localStorage.getItem('ki.lastMode') === 'saida' ? 'saida' : 'entrada'; } catch { return 'entrada'; }
 }
 
+// A barra fica fora das telas e sobrevive à troca de aba, para a pílula de
+// vidro deslizar de uma aba para a outra (como no iOS 26). As telas só dizem
+// qual aba é a delas: tabBar('compras') marca e devolve nada.
+let wantedTab = null;
 export function tabBar(current) {
-  return `
-    <div class="tabbar-wrap">
-      <nav class="tabbar glass-regular" aria-label="Seções">
-        ${TABS.map((t) => `
-          <a class="tab-item" href="${t.href}" ${t.id === current ? 'aria-current="page"' : ''}>
-            ${icon(t.id === current ? t.active : t.icon)}<span>${t.label}</span>
-          </a>`).join('')}
-      </nav>
-      <a class="scan-fab glass-regular mode-${lastScanMode()}" href="#/${lastScanMode()}" aria-label="Ler código de barras (${lastScanMode() === 'saida' ? 'Saída' : 'Entrada'})">${icon('barcode')}</a>
-    </div>`;
+  wantedTab = current;
+  return '';
 }
+
+const HAS_LINEAR = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)');
+const SPRING_EASE_SOFT = !HAS_LINEAR ? 'cubic-bezier(0.2, 0, 0, 1)' : 'linear(0, 0.043 3.6%, 0.142 7.1%, 0.267 10.7%, 0.396 14.3%, 0.518 17.9%, 0.626 21.4%, 0.717 25%, 0.792 28.6%, 0.851 32.1%, 0.897 35.7%, 0.932 39.3%, 0.957 42.9%, 0.975 46.4%, 0.987 50%, 0.995 53.6%, 1 57.1%, 1.003 60.7%, 1.005 67.9%, 1.003 82.1%, 1)';
+export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let bar = null;
+function buildTabBar() {
+  bar = document.createElement('div');
+  bar.id = 'tabbar';
+  bar.className = 'tabbar-wrap is-hidden';
+  bar.innerHTML = `
+    <nav class="tabbar glass-regular" aria-label="Seções">
+      <span class="tab-glide" aria-hidden="true"></span>
+      ${TABS.map((t) => `
+        <a class="tab-item" href="${t.href}" data-tab="${t.id}" draggable="false">
+          <span class="tab-icons">${icon(t.icon, 'tab-off')}${icon(t.active, 'tab-on')}</span><span class="tab-label">${t.label}</span>
+        </a>`).join('')}
+    </nav>
+    <a class="scan-fab glass-regular" href="#/entrada" draggable="false">${icon('barcode')}</a>`;
+  document.body.append(bar);
+  enableScrub(bar.querySelector('.tabbar'));
+  window.addEventListener('resize', () => placeGlide(false));
+}
+
+function items() { return [...bar.querySelectorAll('.tab-item')]; }
+
+// Pílula sob a aba escolhida. Desliza com mola; no caminho estica um pouco,
+// como uma gota de vidro, e volta ao tamanho ao chegar.
+function placeGlide(animate = true, x = null) {
+  const glide = bar.querySelector('.tab-glide');
+  const nav = bar.querySelector('.tabbar');
+  const active = bar.querySelector('.tab-item[aria-current="page"]');
+  if (!active) { glide.style.opacity = '0'; return; }
+  const nr = nav.getBoundingClientRect();
+  const ar = active.getBoundingClientRect();
+  const to = x === null ? ar.left - nr.left : Math.max(4, Math.min(nr.width - ar.width - 4, x - nr.left - ar.width / 2));
+  const from = parseFloat(glide.dataset.x || 'NaN');
+  glide.style.width = `${ar.width}px`;
+  glide.style.opacity = '1';
+  if (!animate || reducedMotion()) glide.classList.add('no-anim');
+  glide.style.translate = `${to}px 0`;
+  glide.dataset.x = String(to);
+  if (!animate || reducedMotion()) { void glide.offsetWidth; glide.classList.remove('no-anim'); return; }
+  if (Number.isFinite(from) && Math.abs(from - to) > 2 && x === null) {
+    glide.classList.remove('is-moving');
+    void glide.offsetWidth;
+    glide.classList.add('is-moving');
+    clearTimeout(glide._t);
+    glide._t = setTimeout(() => glide.classList.remove('is-moving'), 180);
+  }
+}
+
+// Arrastar o dedo pela barra: a pílula vira uma lente e segue o dedo; ao
+// soltar, vai para a aba mais perto.
+function enableScrub(nav) {
+  let s = null;
+  nav.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    s = { x: e.clientX, id: e.pointerId, on: false };
+  });
+  nav.addEventListener('pointermove', (e) => {
+    if (!s || e.pointerId !== s.id) return;
+    if (!s.on) {
+      if (Math.abs(e.clientX - s.x) < 8) return;
+      s.on = true;
+      nav.classList.add('is-scrubbing');
+      try { nav.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
+    }
+    const glide = nav.querySelector('.tab-glide');
+    glide.classList.add('no-anim');
+    placeGlide(true, e.clientX);
+    const over = nearest(e.clientX);
+    items().forEach((it) => it.classList.toggle('is-over', it === over));
+  });
+  const end = (e) => {
+    if (!s) return;
+    const was = s.on;
+    s = null;
+    if (!was) return;
+    nav.classList.remove('is-scrubbing');
+    nav.querySelector('.tab-glide').classList.remove('no-anim');
+    items().forEach((it) => it.classList.remove('is-over'));
+    const target = nearest(e.clientX);
+    nav.dataset.justScrubbed = '1';
+    setTimeout(() => { delete nav.dataset.justScrubbed; }, 60);
+    if (target && location.hash !== target.getAttribute('href')) {
+      vibrate(8);
+      location.hash = target.getAttribute('href');
+    } else placeGlide(true);
+  };
+  nav.addEventListener('pointerup', end);
+  nav.addEventListener('pointercancel', (e) => end(e));
+  nav.addEventListener('click', (e) => {
+    if (nav.dataset.justScrubbed) { e.preventDefault(); return; }
+    // A pílula sai já no toque, sem esperar a tela nova ficar pronta.
+    const it = e.target.closest('.tab-item');
+    if (!it || it.getAttribute('aria-current')) return;
+    items().forEach((x) => (x === it ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current')));
+    placeGlide(true);
+    vibrate(6);
+  }, true);
+}
+function nearest(x) {
+  let best = null;
+  let dist = Infinity;
+  for (const it of items()) {
+    const r = it.getBoundingClientRect();
+    const d = Math.abs(r.left + r.width / 2 - x);
+    if (d < dist) { dist = d; best = it; }
+  }
+  return best;
+}
+
+// Chamado pelo roteador depois de cada tela: marca a aba, mostra ou esconde a
+// barra (desce com mola nas telas de detalhe) e atualiza o botão do leitor.
+export function updateTabBar() {
+  if (!bar) buildTabBar();
+  const current = wantedTab;
+  wantedTab = null;
+  const wasHidden = bar.classList.contains('is-hidden');
+  bar.classList.toggle('is-hidden', !current);
+  bar.inert = !current;
+  for (const it of items()) {
+    const on = it.dataset.tab === current;
+    if (on) it.setAttribute('aria-current', 'page'); else it.removeAttribute('aria-current');
+  }
+  const mode = lastScanMode();
+  const fab = bar.querySelector('.scan-fab');
+  fab.href = `#/${mode}`;
+  fab.classList.remove('mode-entrada', 'mode-saida');
+  fab.classList.add(`mode-${mode}`);
+  fab.setAttribute('aria-label', `Ler código de barras (${mode === 'saida' ? 'Saída' : 'Entrada'})`);
+  if (current) placeGlide(!wasHidden);
+}
+
+export function setTabBarInert(on) {
+  if (bar) bar.inert = on || bar.classList.contains('is-hidden');
+}
+
+// ---------- Indicador que desliza (seletores e abas de cima) ----------
+// Um só preenchimento por seletor, que desliza e estica até a opção escolhida
+// em vez de piscar de uma para outra. Transição CSS: pode ser interrompida.
+
+export function glideTo(container, active, { line = false } = {}) {
+  if (!container || !active) return;
+  let ind = container.querySelector(':scope > .glide');
+  const prev = container._glide;
+  const next = line
+    ? { x: active.offsetLeft, y: active.offsetTop + active.offsetHeight - 3, w: active.offsetWidth, h: 3 }
+    : { x: active.offsetLeft, y: active.offsetTop, w: active.offsetWidth, h: active.offsetHeight };
+  const put = (r) => {
+    ind.style.width = `${r.w}px`;
+    ind.style.height = `${r.h}px`;
+    ind.style.translate = `${r.x}px ${r.y}px`;
+  };
+  if (!ind) {
+    ind = document.createElement('span');
+    ind.className = `glide${line ? ' glide-line' : ''}`;
+    ind.setAttribute('aria-hidden', 'true');
+    container.prepend(ind);
+    container.classList.add('has-glide');
+    ind.classList.add('no-anim');
+    put(prev || next);
+    void ind.offsetWidth;
+    ind.classList.remove('no-anim');
+  }
+  container._glide = next;
+  if (reducedMotion()) { ind.classList.add('no-anim'); put(next); return; }
+  const moved = prev && Math.abs(prev.x - next.x) > 1;
+  put(next);
+  if (moved) {
+    ind.classList.remove('is-moving');
+    void ind.offsetWidth;
+    ind.classList.add('is-moving');
+    clearTimeout(ind._t);
+    ind._t = setTimeout(() => ind.classList.remove('is-moving'), 170);
+  }
+}
+
+// Seletores de rádio (ambiente nas folhas, Entrada | Saída): o indicador nasce
+// no primeiro toque, sobre a opção atual, e desliza quando a escolha muda.
+const SEG = '.segmented-track, .mode-switch';
+const checkedLabel = (track) => track.querySelector('input:checked')?.closest('label');
+function armSegment(e) {
+  const track = e.target.closest && e.target.closest(SEG);
+  if (track && !track.querySelector(':scope > .glide')) glideTo(track, checkedLabel(track));
+}
+document.addEventListener('pointerdown', armSegment, true);
+document.addEventListener('keydown', armSegment, true);
+document.addEventListener('change', (e) => {
+  const track = e.target.closest && e.target.closest(SEG);
+  if (track && e.target.type === 'radio') glideTo(track, e.target.closest('label'));
+});
 
 // ---------- Título grande que encolhe (como no iPhone) ----------
 // Quando o título grande sai de baixo da barra, aparece o título pequeno no
@@ -119,7 +308,20 @@ export function collapsingTitle(root) {
     screen.classList.toggle('is-collapsed', !e.isIntersecting && e.boundingClientRect.top < bar.offsetHeight);
   }, { rootMargin: `-${bar.offsetHeight}px 0px 0px 0px` });
   io.observe(h1);
-  return () => io.disconnect();
+  // O título grande reage à rolagem: esmaece subindo e cresce um pouco quando
+  // a pessoa puxa a lista para baixo além do topo (o "elástico" do iPhone).
+  let raf = 0;
+  const onScroll = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const y = window.scrollY;
+      h1.style.scale = y < 0 ? String(1 + Math.min(-y, 120) / 600) : '';
+      h1.style.opacity = y > 0 ? String(Math.max(0, 1 - y / (h1.offsetHeight * 1.3))) : '';
+    });
+  };
+  if (!reducedMotion()) window.addEventListener('scroll', onScroll, { passive: true });
+  return () => { io.disconnect(); window.removeEventListener('scroll', onScroll); };
 }
 
 // Linhas-esqueleto: o formato do que vai chegar, enquanto carrega.
@@ -164,7 +366,14 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
 
 export function hideToast() {
   const host = $('#toast');
-  if (host) { host.hidden = true; host.innerHTML = ''; }
+  if (host && !host.hidden) {
+    // Sai mais suave do que entrou: desce um pouco e some.
+    if (reducedMotion()) { host.hidden = true; host.innerHTML = ''; } else {
+      host.classList.remove('is-in');
+      host.classList.add('is-out');
+      setTimeout(() => { if (host.classList.contains('is-out')) { host.hidden = true; host.innerHTML = ''; host.classList.remove('is-out'); } }, 200);
+    }
+  }
   const live = $('#toast-live');
   if (live) live.textContent = '';
 }
@@ -200,6 +409,13 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
   document.body.classList.add('has-sheet');
   const app = $('#app');
   if (app) app.inert = true;
+  setTabBarInert(true);
+  // A tela de trás recua e escurece, como um cartão empilhado no iPhone.
+  // Não nas telas com barra fixa própria (leitor, contagem): ela pularia.
+  if (app && window.innerWidth < 640 && !app.querySelector('.floating-bar') && !reducedMotion()) {
+    app.style.transformOrigin = `50% ${window.scrollY + window.innerHeight * 0.5}px`;
+    document.body.classList.add('sheet-stack');
+  }
   const sheet = $('.sheet', root);
   const body = $('.sheet-body', root);
 
@@ -216,6 +432,7 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
       sheet.classList.add('is-open');
       if (!sheet.contains(document.activeElement)) sheet.focus({ preventScroll: true });
     });
+    state.cleanupMotion = sheetMotion(sheet, body);
   });
 }
 
@@ -224,6 +441,8 @@ export function closeSheet(value = null) {
   if (!state) return;
   openSheetState = null;
   state.cleanup && state.cleanup();
+  state.cleanupMotion && state.cleanupMotion();
+  document.body.classList.remove('sheet-stack');
   const root = state.root;
   // Saída suave: o conteúdo vai para uma cópia que desce 12px e some,
   // e a raiz fica livre na hora para a próxima folha.
@@ -243,10 +462,35 @@ export function closeSheet(value = null) {
   document.body.classList.remove('has-sheet');
   const app = $('#app');
   if (app) app.inert = false;
+  setTabBarInert(false);
   if (state.trigger && state.trigger.isConnected && typeof state.trigger.focus === 'function') {
     state.trigger.focus({ preventScroll: true });
   }
   state.resolve(value);
+}
+
+// Quando o conteúdo da folha muda (buscando → formulário) ou cresce (sugestões,
+// validade), a borda de cima sobe com mola em vez de pular, e o conteúdo novo
+// entra esmaecendo de leve.
+function sheetMotion(sheet, body) {
+  if (reducedMotion() || !('ResizeObserver' in window)) return () => {};
+  const openedAt = performance.now();
+  let lastH = 0;
+  const settled = () => performance.now() - openedAt > 540 && !sheet.classList.contains('is-dragging');
+  const ro = new ResizeObserver(() => {
+    const h = sheet.offsetHeight;
+    const d = h - lastH;
+    lastH = h;
+    if (!settled() || d < 6) return;
+    sheet.animate([{ transform: `translateY(${d}px)` }, { transform: 'translateY(0)' }], { duration: 520, easing: SPRING_EASE_SOFT });
+  });
+  ro.observe(body);
+  const mo = new MutationObserver((list) => {
+    if (!settled() || !list.some((m) => m.target === body && m.addedNodes.length)) return;
+    body.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+  });
+  mo.observe(body, { childList: true });
+  return () => { ro.disconnect(); mo.disconnect(); };
 }
 
 export function sheetIsOpen() {
@@ -331,7 +575,7 @@ export function openMenu(anchor, items, { label = 'Opções' } = {}) {
     <div class="menu-scrim"></div>
     <div class="menu glass-thick" role="menu" aria-label="${esc(label)}">
       ${items.map((it, i) => `
-        <button type="button" class="menu-item ${it.danger ? 'is-danger' : ''}" role="menuitem" data-i="${i}">
+        <button type="button" class="menu-item ${it.danger ? 'is-danger' : ''}" role="menuitem" data-i="${i}" style="--i:${i}">
           <span>${esc(it.label)}</span>${it.icon ? icon(it.icon) : ''}
         </button>`).join('')}
     </div>`;
