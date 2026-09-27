@@ -84,8 +84,11 @@ async function trimLots(s, lots, qty) {
 }
 
 // Aplica `delta` ao produto `code` e grava o movimento. `info` cria o produto se não existir.
-// `expiresAt` (AAAA-MM-DD), numa entrada, cria um lote com a validade.
+// `expiresAt`, numa entrada: uma data (AAAA-MM-DD) para todas as unidades, ou
+// uma lista [{ expiresAt, qty }] quando cada parte vence num dia.
 async function move(code, type, delta, info, expiresAt) {
+  const dated = (Array.isArray(expiresAt) ? expiresAt : [{ expiresAt, qty: delta }])
+    .filter((l) => l && isIsoDate(l.expiresAt));
   const result = await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     let p = await promisify(s.products.get(code));
     if (!p) {
@@ -99,15 +102,21 @@ async function move(code, type, delta, info, expiresAt) {
     const qtyAfter = qtyBefore + delta;
     if (qtyAfter < 0) throw new Error(`Só tem ${qtyBefore} no armário. Tire ${qtyBefore} ou menos.`);
     const lotsBefore = await lotsOf(s, code);
-    if (delta > 0 && isIsoDate(expiresAt)) {
-      await promisify(s.lots.add({ code, qty: delta, expiresAt, addedAt: Date.now() }));
+    if (delta > 0 && dated.length) {
+      let rest = delta; // a soma das datas nunca passa do que entrou
+      for (const l of dated) {
+        const qty = Math.min(clampInt(l.qty, 1), rest);
+        if (qty <= 0) break;
+        await promisify(s.lots.add({ code, qty, expiresAt: l.expiresAt, addedAt: Date.now() }));
+        rest -= qty;
+      }
     } else if (delta < 0) {
       await trimLots(s, lotsBefore, qtyAfter);
     }
     p = { ...p, qty: qtyAfter, updatedAt: Date.now() };
     await promisify(s.products.put(p));
     const movement = { code, type, delta, qtyBefore, qtyAfter, at: Date.now(), lotsBefore };
-    if (delta > 0 && isIsoDate(expiresAt)) movement.expiresAt = expiresAt;
+    if (delta > 0 && dated.length) movement.expiresAt = dated[0].expiresAt;
     movement.id = await promisify(s.movements.add(movement));
     return { product: p, movement };
   });

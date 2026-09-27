@@ -7,8 +7,8 @@ import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
-import { parseExpiry, expiryInputValue, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
-import { wireExpiryField, expiryCamButton } from './expiryCam.js';
+import { formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
+import { expiryLotsHtml, bindExpiryLots } from './expiryLots.js';
 import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -304,50 +304,33 @@ function lotSheet(p, free) {
       body.innerHTML = `
         <h2 class="sheet-title">Marcar validade</h2>
         <form class="stack" novalidate>
-          <div class="field">
-            <label class="field-label" for="lot-date">Validade</label>
-            <div class="input-row">
-              <input class="input input-date" id="lot-date" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA ou MM/AA" aria-describedby="lot-note">
-              ${expiryCamButton()}
-            </div>
-            <div class="exp-cam" hidden></div>
-            <p class="field-note" id="lot-note" aria-live="polite">Só mês e ano vale até o fim do mês.</p>
-          </div>
-          <div class="field">
-            <span class="field-label">Quantas unidades têm essa data</span>
-            <div class="stepper-host stepper-sm"></div>
-          </div>
+          ${expiryLotsHtml({ open: false })}
+          <p class="field-error" role="alert" hidden></p>
           <button type="submit" class="btn btn-primary">Salvar validade</button>
         </form>`;
-      const input = $('#lot-date', body);
-      const note = $('#lot-note', body);
-      const step = stepper($('.stepper-host', body), { value: free, min: 1, max: free, label: 'Unidades' });
-      wireExpiryField(input.closest('.field'), input);
-      input.addEventListener('input', () => {
-        input.value = expiryInputValue(input.value);
-        input.removeAttribute('aria-invalid');
-        note.classList.remove('is-error');
-        const iso = parseExpiry(input.value);
-        note.textContent = iso ? `Vence em ${formatDate(iso)}.` : 'Só mês e ano vale até o fim do mês.';
-      });
-      setTimeout(() => input.focus(), 250);
+      const err = $('.field-error', body);
+      const exp = bindExpiryLots(body, { total: () => free });
+      // Esta folha só serve para isso: já abre lendo a data.
+      setTimeout(() => { if (body.isConnected) exp.openField(); }, 300);
       $('form', body).addEventListener('submit', async (e) => {
         e.preventDefault();
-        const iso = parseExpiry(input.value);
-        if (!iso) {
-          input.setAttribute('aria-invalid', 'true');
-          note.classList.add('is-error');
-          note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
-          input.focus();
+        const lots = exp.get();
+        if (lots === null) return;
+        if (!lots.length) {
+          err.hidden = false;
+          err.textContent = 'Leia a data com a câmera ou digite.';
           return;
         }
         try {
-          await addLot(p.code, step.value, iso);
-          toast(`Validade ${formatDate(iso)} marcada em ${plural(step.value, 'unidade', 'unidades')}.`, { duration: 3000 });
+          for (const l of lots) await addLot(p.code, l.qty, l.expiresAt);
+          const units = lots.reduce((a, l) => a + l.qty, 0);
+          toast(lots.length === 1
+            ? `Validade ${formatDate(lots[0].expiresAt)} marcada em ${plural(units, 'unidade', 'unidades')}.`
+            : `${lots.length} validades marcadas em ${plural(units, 'unidade', 'unidades')}.`, { duration: 3000 });
           close(true);
-        } catch (err) {
-          note.classList.add('is-error');
-          note.textContent = err.message;
+        } catch (e2) {
+          err.hidden = false;
+          err.textContent = e2.message;
         }
       });
     },

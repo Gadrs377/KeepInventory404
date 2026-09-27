@@ -6,6 +6,11 @@
 // os pontinhos da impressão a jato). A data só é aceita quando duas leituras
 // concordam; se discordarem, a vencedora precisa estar duas na frente.
 // Medido com 32 embalagens simuladas: 30 certas, nenhuma errada.
+//
+// Enquanto não tem certeza, as datas lidas viram botões embaixo da câmera
+// (até 3). Cada botão fica no lugar em que apareceu: nada some, nada troca de
+// posição, para o dedo não acertar a data errada. Um botão recém-chegado só
+// aceita toque depois de meio segundo.
 
 import { ocrWorker, prepareFrame, readText } from '../ocr.js';
 import { findExpiry, formatDate, expiryInputValue } from '../dates.js';
@@ -14,6 +19,8 @@ import { $, icon, vibrate } from '../ui.js';
 
 // [juntar pontos, largura da imagem]: primeiro a imagem cheia, depois reduzida.
 const VARIANTS = [[1, 1000], [2, 700], [1, 550], [3, 1000], [1, 450], [0, 1000], [2, 550], [4, 1000], [1, 700]];
+const MAX_PICKS = 3;
+const PICK_GUARD_MS = 450;
 
 function claimCamera(on) {
   window.dispatchEvent(new CustomEvent('ki:camera', { detail: { claim: on } }));
@@ -48,21 +55,47 @@ export function readExpiryWithCamera(host) {
         <p class="exp-status" role="status">Abrindo a câmera</p>
         <div class="cam-tools" hidden><button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button></div>
       </div>
+      <div class="exp-picks" role="group" aria-label="Datas lidas">
+        <p class="exp-picks-hint">As datas lidas aparecem aqui</p>
+      </div>
       <div class="exp-cam-bar">
-        <span class="exp-read" aria-hidden="true"></span>
         <button type="button" class="btn btn-link btn-other" data-cancel>Cancelar</button>
       </div>`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
     const status = $('.exp-status', host);
-    const read = $('.exp-read', host);
+    const picks = $('.exp-picks', host);
     const torchBtn = $('[data-torch]', host);
     const canvas = document.createElement('canvas');
     let stream = null;
     let alive = true;
     let torchOn = false;
     const votes = {};
+    const shown = new Set();
     let turn = 0;
+
+    // Nova data lida: entra na próxima vaga livre e ali fica.
+    function addPick(iso) {
+      if (shown.has(iso) || shown.size >= MAX_PICKS) return;
+      shown.add(iso);
+      const hint = $('.exp-picks-hint', picks);
+      if (hint) hint.remove();
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'exp-pick is-new';
+      btn.dataset.iso = iso;
+      btn.dataset.born = String(performance.now());
+      btn.textContent = formatDate(iso);
+      btn.setAttribute('aria-label', `Usar ${formatDate(iso)}`);
+      picks.append(btn);
+      requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.remove('is-new')));
+    }
+    picks.addEventListener('click', (e) => {
+      const btn = e.target.closest('.exp-pick');
+      if (!btn || performance.now() - Number(btn.dataset.born) < PICK_GUARD_MS) return;
+      vibrate(20);
+      done(btn.dataset.iso);
+    });
 
     function finish(iso) {
       if (!alive) return;
@@ -100,7 +133,7 @@ export function readExpiryWithCamera(host) {
         const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
         const [iso, n] = ranked[0];
         const second = ranked[1] ? ranked[1][1] : 0;
-        read.textContent = `Lendo ${formatDate(iso)}…`;
+        addPick(found.iso);
         if (n >= 2 && n - second >= 2) {
           beep('ok');
           vibrate(40);
@@ -159,8 +192,9 @@ export function wireExpiryField(field, input) {
     btn.hidden = false;
     if (!iso) return;
     input.value = expiryInputValue(formatDate(iso));
+    // Sem focar o campo: no iPhone isso abriria o teclado à toa. O aviso de
+    // "Vence em…" já é lido pelo leitor de tela.
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.focus({ preventScroll: true });
   });
 }
 

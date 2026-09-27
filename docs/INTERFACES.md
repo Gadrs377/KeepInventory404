@@ -902,3 +902,30 @@ Agora vira um produto de verdade:
 - A mesma linha aparece em **Buscar o nome certo**, na página do produto
   (sem "Nenhuma dessas?" quando é a única opção). Produto com dados da foto não
   mostra o link "Nome estranho?".
+
+## Versão 3.28: validade em duas etapas, com datas para tocar
+
+**Datas lidas viram botões.** Embaixo da câmera da validade há três vagas
+fixas. Enquanto o leitor ainda não tem certeza, cada data diferente que ele lê
+entra na próxima vaga livre ("15/10/2026", "18/10/2026"…) e fica ali: nada
+some, nada muda de lugar nem de tamanho, e o espaço já está reservado desde o
+início ("As datas lidas aparecem aqui"), então nada empurra a tela depois.
+Tocar numa data usa essa data na hora. Um botão recém-chegado ignora toques
+por meio segundo, para o dedo que já ia tocar não acertar a data nova. Quando
+duas leituras concordam, a data continua entrando sozinha, como antes.
+
+**Primeiro a data, depois quantas.** Em "Marcar validade" (na folha de
+guardar e na página do produto):
+1. Tocar em "Marcar validade" já liga a câmera (dá para digitar também). Na
+   página do produto a folha abre lendo.
+2. Com a data, aparece **"Quantas vencem em 15/10/2026?"** com um seletor
+   (começa em todas as unidades; só pergunta se houver mais de uma).
+3. Se ficar menos que o total, aparece **"Outra data para as outras 2"**: a
+   data vai para a lista (15/10/2026, 4 unidades, com X para tirar) e a
+   câmera liga de novo para a próxima.
+4. Ao salvar, cada data vira um lote com a sua quantidade; o resto fica sem
+   data. Desfazer volta tudo.
+
+Na folha de guardar, se a pessoa muda quantas está guardando, a pergunta
+acompanha, a não ser que ela já tenha mexido nela. Depois de ler a data, o
+campo não recebe foco (no iPhone isso abria o teclado à toa).

@@ -1923,7 +1923,6 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
   font-size: 0.8824rem; font-weight: 600; text-align: center; text-wrap: balance;
 }
 .exp-cam-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
-.exp-read { font-family: var(--font-num); font-weight: 700; font-size: 1rem; color: var(--ink); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; } }
 
 /* ---------- Texto do tamanho escolhido no iPhone (Dynamic Type) ----------
@@ -2067,3 +2066,41 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .suggest-photo .row-sub { white-space: normal; text-wrap: pretty; }
 .suggest-photo .thumb img { object-fit: cover; }
 .suggest-photo .row-chevron { flex: none; width: 18px; height: 18px; color: var(--ink-2); }
+
+/* ---------- Versão 3.28: validade em duas etapas ---------- */
+/* Datas lidas: três vagas fixas, reservadas desde o início. A primeira data
+   ocupa a primeira vaga, a segunda a segunda; nada muda de lugar nem de tamanho
+   depois, para não fugir do dedo. Só aparecem, com um esmaecer curto. */
+.exp-picks {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  min-height: 48px; margin-top: 10px; align-items: stretch;
+}
+.exp-picks-hint {
+  grid-column: 1 / -1; align-self: center; margin: 0;
+  font-size: 0.8235rem; color: var(--ink-2); text-align: center;
+}
+.exp-pick {
+  min-height: 48px; padding: 0 6px; border: 0; border-radius: var(--r-control);
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-num); font-weight: 800; font-size: 0.9412rem; font-variant-numeric: tabular-nums;
+  white-space: nowrap; cursor: pointer;
+  transition-property: opacity, scale; transition-duration: 200ms, 150ms; transition-timing-function: var(--ease);
+}
+.exp-pick.is-new { opacity: 0; }
+.exp-pick:active { scale: 0.96; }
+.exp-cam-bar { justify-content: center; }
+
+/* Depois da data: quantas vencem nela */
+.exp-howmany { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding: 14px 16px; border-radius: 20px; background: color-mix(in oklab, var(--ink) 5%, transparent); }
+.exp-howmany .field-label { margin: 0; }
+.exp-howmany .stepper-host { width: 200px; }
+.exp-howmany [data-exp-more] { align-self: flex-start; }
+
+/* Datas já confirmadas nesta entrada */
+.exp-lot-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.exp-lot {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  min-height: 48px; padding-inline: 14px 4px; border-radius: 16px; background: color-mix(in oklab, var(--ink) 5%, transparent);
+}
+.exp-lot-date { font-family: var(--font-num); font-weight: 800; font-variant-numeric: tabular-nums; }
+.exp-lot-qty { color: var(--ink-2); font-size: 0.8824rem; }

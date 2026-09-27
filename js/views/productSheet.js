@@ -9,8 +9,7 @@
 import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessArea } from '../areas.js';
-import { parseExpiry, expiryInputValue, formatDate, daysUntil } from '../dates.js';
-import { wireExpiryField, expiryCamButton } from './expiryCam.js';
+import { expiryLotsHtml, bindExpiryLots } from './expiryLots.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
 import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows, photoPickRow } from '../ui.js';
@@ -179,66 +178,6 @@ function localRow(p) {
     </li>`;
 }
 
-// ---------- Validade (só na entrada) ----------
-// Escondida atrás de um botão: a maioria das leituras não precisa dela.
-// Em remédio já vem aberta: a validade é o que mais importa na caixa.
-
-function expiryHtml(open = false) {
-  return `
-    <div class="expiry">
-      <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="${open}" aria-controls="exp-field" ${open ? 'hidden' : ''}>${icon('calendar')}Marcar validade</button>
-      <div class="field" id="exp-field" ${open ? '' : 'hidden'}>
-        <label class="field-label" for="exp-input">Validade${open ? ' (opcional)' : ''}</label>
-        <div class="input-row">
-          <input class="input input-date" id="exp-input" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA ou MM/AA" aria-describedby="exp-note">
-          ${expiryCamButton()}
-        </div>
-        <div class="exp-cam" hidden></div>
-        <p class="field-note" id="exp-note" aria-live="polite">Só mês e ano vale até o fim do mês.</p>
-      </div>
-    </div>`;
-}
-
-// Liga o campo. get() devolve AAAA-MM-DD, '' (vazio) ou null (inválido, já avisado).
-function bindExpiry(body) {
-  const open = $('[data-expiry-open]', body);
-  if (!open) return { get: () => '' };
-  const field = $('#exp-field', body);
-  const input = $('#exp-input', body);
-  const note = $('#exp-note', body);
-  const HELP = note.textContent;
-  open.addEventListener('click', () => {
-    open.hidden = true;
-    open.setAttribute('aria-expanded', 'true');
-    field.hidden = false;
-    input.focus();
-  });
-  wireExpiryField(field, input);
-  input.addEventListener('input', () => {
-    input.value = expiryInputValue(input.value);
-    input.removeAttribute('aria-invalid');
-    note.classList.remove('is-error');
-    const iso = parseExpiry(input.value);
-    if (!iso) { note.textContent = HELP; return; }
-    const n = daysUntil(iso);
-    note.textContent = n < 0
-      ? `Essa data já passou (${formatDate(iso)}). Confira na embalagem.`
-      : `Vence em ${formatDate(iso)}, ${n === 0 ? 'hoje' : n === 1 ? 'amanhã' : `daqui a ${n} dias`}.`;
-  });
-  return {
-    get() {
-      if (field.hidden || !input.value.trim()) return '';
-      const iso = parseExpiry(input.value);
-      if (iso) return iso;
-      input.setAttribute('aria-invalid', 'true');
-      note.classList.add('is-error');
-      note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
-      input.focus();
-      return null;
-    },
-  };
-}
-
 // Enquanto procura: esqueleto do produto e o que está acontecendo agora.
 // Se a loja demora, a frase muda para a pessoa saber que não travou.
 function loading({ body }, code) {
@@ -396,20 +335,21 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       ${head(local, local)}
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryHtml(!!local.med) : ''}
+      ${mode === 'entrada' ? expiryLotsHtml({ open: !!local.med, optional: !!local.med }) : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
       ${canAddOther ? '<button type="button" class="btn btn-link btn-other" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
 
   const submit = $('[type=submit]', body);
+  let expiry = null;
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
-    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); },
+    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); if (expiry) expiry.refresh(); },
   });
   const other = $('[data-other]', body);
   if (other) other.addEventListener('click', () => newForm(ctx, { status: 'other' }));
-  const expiry = bindExpiry(body);
+  expiry = bindExpiryLots(body, { total: () => step.value });
 
   onSubmit(ctx, step, async (n) => {
     if (mode === 'entrada') {
@@ -466,7 +406,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       </fieldset>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryHtml(!!info.med) : ''}
+      ${mode === 'entrada' ? expiryLotsHtml({ open: !!info.med, optional: !!info.med }) : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
     </form>`;
 
@@ -478,12 +418,13 @@ async function newForm(ctx, result, { photo = null } = {}) {
   const headHost = $('[data-head]', body);
   const photoInput = $('[data-photo]', body);
   const photoBtn = $('[data-photo-btn]', body);
+  let expiry = null;
   const step = stepper($('.stepper-host', body), {
     ...limits,
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
-    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); },
+    onChange: (n) => { submit.innerHTML = actionLabel(mode, n); if (expiry) expiry.refresh(); },
   });
-  const expiry = bindExpiry(body);
+  expiry = bindExpiryLots(body, { total: () => step.value });
 
   function setArea(id, fromUser = false) {
     if (fromUser) areaTouched = true;
