@@ -795,3 +795,30 @@ Ver [APPLE_HIG.md](APPLE_HIG.md), seção 15.
   Compras, Cupons ou Mais).
 - **Rodinha dentro do botão** quando uma ação demora ("Aplicar contagem",
   "Buscar de novo", salvar a nota, salvar o produto), também nos botões claros.
+
+## Versão 3.24: revisão de todos os textos
+
+Todos os textos do app passaram pelas regras de escrita da Apple e pelos
+termos fixos do design system (seção 8). Principais trocas:
+
+| Antes | Agora |
+| --- | --- |
+| O app não tem permissão para usar a câmera… | Sem permissão para usar a câmera… |
+| Esses números não conferem: o último é um dígito de controle… | Algum número não confere. Compare com a embalagem e digite de novo. |
+| Guardar a contagem para continuar depois? / Guardar e sair | Salvar a contagem para continuar depois? / Salvar e sair |
+| O estoque só muda quando você aplicar a contagem na revisão. | O armário só muda quando você aplicar a contagem. |
+| Vocês usam cerca de 2 por semana. | Sai cerca de 2 por semana. |
+| Para quando o número do app não bate com o armário. | Use quando a quantidade não bater com o que tem no armário. |
+| Não entendi a data. Use… | Use dia/mês/ano (15/10/26) ou mês/ano (10/26). |
+| Guardar em casa / Em casa | Guardar no armário / No armário |
+| Buscando a nota na SEFAZ | Buscando a nota |
+| Ele começa com https e tem "p=" seguido de 44 números. | Esse link não é de nota fiscal. Cole o link que abre ao ler o QR Code do cupom. |
+| Tudo o que foi contado bate com o app. | As quantidades do armário já estavam certas. |
+| 0 tira esta linha da sessão e devolve o estoque. | Com 0, a linha sai e o armário volta a ter o que tinha. |
+| Rápido desligado: o app pergunta quantos | Rápido desligado: cada leitura pergunta quantos |
+| Montando a lista pelo que vocês usam / Vocês fazem compras a cada | Montando a lista pelo seu consumo / Compras a cada |
+| Acrescentar à lista / Pôr na lista de compras | Adicionar à lista / Adicionar à lista de compras |
+| Importar nota fiscal | Ler nota fiscal |
+| Escrever o nome / O app sugere o produto das lojas… | Digitar o nome / As lojas sugerem o produto enquanto você digita |
+| Quase desistindo da loja. Se não achar, você digita o nome | As lojas ainda não responderam. Se preferir, digite o nome |
+| O armário diz que não tem nenhum… | Está zerado no armário… |

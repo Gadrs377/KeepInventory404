@@ -70,14 +70,14 @@ function loadingHtml() {
       <span class="skel skel-line" style="width:46%;height:22px" aria-hidden="true"></span>
       <span class="skel skel-line skel-short" aria-hidden="true"></span>
     </div>
-    <p class="loading-note" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span data-note>Buscando a nota na SEFAZ</span></p>
+    <p class="loading-note" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span data-note>Buscando a nota</span></p>
     ${skeletonRows(5, 'nota-items')}`;
 }
 
 async function load(body, close, p) {
   body.innerHTML = loadingHtml();
   const note = $('[data-note]', body);
-  const slow = setTimeout(() => { if (note.isConnected) note.textContent = 'A SEFAZ está demorando. Mais um instante'; }, 5000);
+  const slow = setTimeout(() => { if (note.isConnected) note.textContent = 'A nota está demorando para chegar. Mais um instante'; }, 5000);
   let data;
   try {
     data = await fetchNota(p);
@@ -329,7 +329,7 @@ export function notaEntrySheet() {
     label: 'Colar o link da nota',
     render(body, close) {
       body.innerHTML = `
-        <p class="sheet-text">Leia o QR Code do cupom com a câmera do celular, copie o link que ele abre e cole aqui. Todos os itens da compra entram de uma vez.</p>
+        <p class="sheet-text">Leia o QR Code do cupom com a câmera do celular, copie o link que abrir e cole aqui. Todos os itens entram de uma vez.</p>
         <form class="stack" novalidate>
           <label class="field"><span class="field-label">Link da nota</span>
             <input class="input" name="link" inputmode="url" autocomplete="off" placeholder="https://dfe-portal.svrs.rs.gov.br/..." aria-describedby="nota-link-error"></label>
@@ -343,7 +343,7 @@ export function notaEntrySheet() {
         const { notaParam } = await import('../lookup.js');
         const p = notaParam(input.value);
         if (!p) {
-          error.textContent = 'Cole o link que o QR Code do cupom abre. Ele começa com https e tem "p=" seguido de 44 números.';
+          error.textContent = 'Esse link não é de nota fiscal. Cole o link que abre ao ler o QR Code do cupom.';
           error.hidden = false;
           input.setAttribute('aria-invalid', 'true');
           input.focus();

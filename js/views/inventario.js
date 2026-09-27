@@ -95,10 +95,10 @@ export default function mountInventario(root) {
       label: 'Sair da contagem',
       render(body, close) {
         body.innerHTML = `
-          <h2 class="sheet-title">Guardar a contagem para continuar depois?</h2>
-          <p class="sheet-text">O estoque só muda quando você aplicar a contagem na revisão.</p>
+          <h2 class="sheet-title">Salvar a contagem para continuar depois?</h2>
+          <p class="sheet-text">O armário só muda quando você aplicar a contagem.</p>
           <div class="sheet-actions">
-            <button type="button" class="btn btn-mode" data-keep>Guardar e sair</button>
+            <button type="button" class="btn btn-mode" data-keep>Salvar e sair</button>
             <button type="button" class="btn btn-danger-ghost" data-discard>Descartar contagem</button>
           </div>`;
         $('[data-keep]', body).addEventListener('click', () => close('keep'));

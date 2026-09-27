@@ -25,7 +25,7 @@ export default async function mountDados(root) {
       <main class="content stack">
         <ul class="group" aria-label="Atalhos">
           <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
-          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('receipt')}</span><span class="group-label">Importar nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
+          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('receipt')}</span><span class="group-label">Ler nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
         </ul>
 
         <h2 class="list-title">Backup</h2>
@@ -43,7 +43,7 @@ export default async function mountDados(root) {
 
         <section class="install-note">
           <h2 class="list-title">Instalar no celular</h2>
-          <p class="group-note">iPhone: Compartilhar no Safari e Adicionar à Tela de Início. Android: menu do Chrome e Instalar app.</p>
+          <p class="group-note">iPhone: no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início. Android: no Chrome, abra o menu e toque em Instalar app.</p>
         </section>
 
         <section>
@@ -93,7 +93,7 @@ export default async function mountDados(root) {
     try {
       data = JSON.parse(await file.text());
     } catch {
-      toast('Não deu para ler esse arquivo. Escolha um backup .json baixado por este app.');
+      toast('Não deu para ler esse arquivo. Escolha um backup baixado em Mais.');
       return;
     }
     const ok = await confirmSheet({

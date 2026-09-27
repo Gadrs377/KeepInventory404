@@ -77,16 +77,16 @@ export function medSheet(ean) {
               <p class="product-sub">${subtitle(p)}</p>
               <p class="product-code">${esc(ean)}</p>
             </div>
-            ${have ? `<div class="product-stock"><span class="product-stock-label">Em casa</span>${tag(have.qty, tagState(have), '')}</div>` : ''}
+            ${have ? `<div class="product-stock"><span class="product-stock-label">No armário</span>${tag(have.qty, tagState(have), '')}</div>` : ''}
           </div>
           ${medFacts(med)}
           <div class="sheet-actions">
-            <button type="button" class="btn btn-mode btn-lg mode-entrada" data-keep>${icon('in')}Guardar em casa</button>
-            ${have ? `<a class="btn btn-quiet" href="#/produto/${encodeURIComponent(have.code)}">Ver o que tem em casa</a>` : ''}
+            <button type="button" class="btn btn-mode btn-lg mode-entrada" data-keep>${icon('in')}Guardar no armário</button>
+            ${have ? `<a class="btn btn-quiet" href="#/produto/${encodeURIComponent(have.code)}">Ver no armário</a>` : ''}
           </div>`;
         $('[data-keep]', body).addEventListener('click', () => close(ean));
       }).catch(() => {
-        if (body.isConnected) body.innerHTML = '<p class="sheet-text">Sem internet para abrir a lista da Anvisa. Tente de novo quando voltar a conexão.</p>';
+        if (body.isConnected) body.innerHTML = '<p class="sheet-text">Sem internet para abrir a lista da Anvisa. Tente de novo quando a conexão voltar.</p>';
         toast('Sem internet para abrir a lista da Anvisa.', { duration: 3000 });
       });
     },

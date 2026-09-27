@@ -172,7 +172,7 @@ export function notaParam(text) {
 }
 
 export async function fetchNota(p) {
-  if (!navigator.onLine) throw new Error('Sem internet. A nota precisa ser buscada na SEFAZ.');
+  if (!navigator.onLine) throw new Error('Sem internet para buscar a nota.');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 25000);
   try {
@@ -181,7 +181,7 @@ export async function fetchNota(p) {
     if (!res.ok || !data.found) throw new Error(data.error || 'Não deu para ler a nota agora. Tente de novo em instantes.');
     return data;
   } catch (err) {
-    if (err.name === 'AbortError') throw new Error('A SEFAZ demorou demais. Tente de novo em instantes.');
+    if (err.name === 'AbortError') throw new Error('A nota demorou demais para chegar. Tente de novo em instantes.');
     // Sem conexão com o repassador ("Failed to fetch", "Load failed" no iPhone).
     if (err.name === 'TypeError') throw new Error('Não deu para buscar a nota agora. Confira a internet e tente de novo.');
     throw err;

@@ -32,11 +32,11 @@ export default async function mountRevisao(root) {
             <span class="diff-name">${esc(c.product.name)}</span>
             <span class="diff-qty">${c.from} para ${c.to}</span>
             <span class="diff-delta ${c.to > c.from ? 'is-up' : 'is-down'}">${signed(c.to - c.from)}</span>
-          </li>`).join('')}</ul>` : '<p class="empty">Tudo o que foi contado bate com o app.</p>'}
+          </li>`).join('')}</ul>` : '<p class="empty">As quantidades do armário já estavam certas.</p>'}
 
         ${missingWithStock.length ? `
         <fieldset class="choice">
-          <legend class="list-title">${plural(missingWithStock.length, 'produto com estoque não foi contado', 'produtos com estoque não foram contados')}</legend>
+          <legend class="list-title">${plural(missingWithStock.length, 'produto do armário não foi contado', 'produtos do armário não foram contados')}</legend>
           <p class="sheet-text">${missingWithStock.slice(0, 5).map((p) => esc(p.name)).join(', ')}${missingWithStock.length > 5 ? ` e mais ${missingWithStock.length - 5}` : ''}.</p>
           <label class="radio"><input type="radio" name="missing" value="keep" checked> Manter como estão</label>
           <label class="radio"><input type="radio" name="missing" value="zero"> Zerar os não contados</label>

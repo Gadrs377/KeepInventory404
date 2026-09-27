@@ -74,7 +74,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
           <h2 class="list-title">Para resolver</h2>
           <ul class="pending-list"></ul>
         </section>
-        <section class="receipt" aria-label="Registros desta sessão">
+        <section class="receipt" aria-label="Registrados agora">
           <ul class="receipt-lines"></ul>
           <p class="receipt-total"></p>
         </section>
@@ -212,7 +212,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
             <div class="field">
               <span class="field-label">${entry.mode === 'entrada' ? 'Quantidade que entrou' : 'Quantidade que saiu'}</span>
               <div class="stepper-host stepper-sm"></div>
-              <p class="field-note">0 tira esta linha da sessão e devolve o estoque.</p>
+              <p class="field-note">Com 0, a linha sai e o armário volta a ter o que tinha.</p>
             </div>
             <label class="field"><span class="field-label">Nome</span>
               <input class="input" name="name" maxlength="80" value="${esc(product.name)}" autocomplete="off"></label>
@@ -242,7 +242,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
             for (const other of session.values()) if (other.product.code === product.code) other.product = entry.product;
             renderSession();
             close(true);
-            toast(entry.n === 0 ? `${entry.product.name} saiu da sessão.` : 'Linha atualizada.', { duration: 2500 });
+            toast(entry.n === 0 ? `${entry.product.name} saiu da lista.` : 'Linha atualizada.', { duration: 2500 });
           } catch (err) {
             toast(err.message, { duration: 4000 });
           }
@@ -323,7 +323,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   fastInput.addEventListener('change', () => {
     fast = fastInput.checked;
     saveFast(mode, fast);
-    cam.notice(fast ? COPY[mode].fastNotice : 'Rápido desligado: o app pergunta quantos');
+    cam.notice(fast ? COPY[mode].fastNotice : 'Rápido desligado: cada leitura pergunta quantos');
   });
 
   $('[data-finish]', root).addEventListener('click', async () => {

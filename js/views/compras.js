@@ -28,14 +28,14 @@ export default function mountCompras(root) {
         </div>
       </header>
       <main class="content">
-        <p class="lead" data-lead>Montando a lista pelo que vocês usam</p>
+        <p class="lead" data-lead>Montando a lista pelo seu consumo</p>
         <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
 
         <form class="shop-add" novalidate>
-          <label class="field-label" for="shop-extra">Acrescentar à lista</label>
+          <label class="field-label" for="shop-extra">Adicionar à lista</label>
           <div class="shop-add-row">
             <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
-            <button type="submit" class="btn btn-quiet btn-icon" aria-label="Acrescentar à lista">${icon('plus')}</button>
+            <button type="submit" class="btn btn-quiet btn-icon" aria-label="Adicionar à lista">${icon('plus')}</button>
           </div>
         </form>
 
@@ -52,7 +52,7 @@ export default function mountCompras(root) {
       label: 'Frequência das compras',
       render(body, close) {
         body.innerHTML = `
-          <h2 class="sheet-title">Vocês fazem compras a cada</h2>
+          <h2 class="sheet-title">Compras a cada</h2>
           <div class="every-row"><div class="stepper-host stepper-sm"></div><span>dias</span></div>
           <p class="sheet-text">A sugestão cobre o que vai acabar até a próxima compra, mais o mínimo de cada produto.</p>
           <div class="sheet-actions"><button type="button" class="btn btn-primary" data-ok>Salvar</button></div>`;
@@ -212,7 +212,7 @@ export default function mountCompras(root) {
       state.extra = state.extra.filter((x) => !x.checked);
       saveState(state);
       render();
-      toast('Itens marcados tirados da lista.', { duration: 2000 });
+      toast('Itens marcados removidos da lista.', { duration: 2000 });
     }
   });
 

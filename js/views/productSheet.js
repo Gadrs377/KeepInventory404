@@ -28,8 +28,8 @@ const NEW_MSG = {
   med: 'Remédio da lista da Anvisa. Marque a validade que está na caixa.',
   notfound: 'Esse código não está nas lojas. Digite o nome e escolha o produto nas sugestões.',
   offline: 'Sem internet para buscar esse código. Digite o nome do produto para cadastrar.',
-  nocode: 'Escreva o nome e escolha o produto nas sugestões. Sem ideia do nome? Fotografe a embalagem.',
-  photo: 'O app lê a marca e o produto na foto e mostra as sugestões das lojas.',
+  nocode: 'Digite o nome e escolha o produto nas sugestões. Não sabe o nome? Fotografe a embalagem.',
+  photo: 'Fotografe a frente da embalagem. A marca e o nome viram sugestões das lojas.',
   other: 'Outro produto com o mesmo código de barras. Dê um nome que diferencie os dois, por exemplo o sabor.',
 };
 
@@ -98,17 +98,17 @@ function noCodeChoice(ctx) {
     <ul class="group choice-group">
       <li><button type="button" class="group-row" data-way="local">
         <span class="group-icon is-entrada">${icon('package')}</span>
-        <span class="group-label">Já está no armário<span class="group-sub">Escolha na lista; só soma a quantidade</span></span>
+        <span class="group-label">Já está no armário<span class="group-sub">Escolha na lista e diga quantos</span></span>
         ${icon('chevron', 'group-chevron')}
       </button></li>
       <li><button type="button" class="group-row" data-way="name">
         <span class="group-icon">${icon('keyboard')}</span>
-        <span class="group-label">Escrever o nome<span class="group-sub">O app sugere o produto das lojas enquanto você digita</span></span>
+        <span class="group-label">Digitar o nome<span class="group-sub">As lojas sugerem o produto enquanto você digita</span></span>
         ${icon('chevron', 'group-chevron')}
       </button></li>
       <li><label class="group-row file-btn" data-way="photo">
         <span class="group-icon">${icon('camera')}</span>
-        <span class="group-label">Fotografar a embalagem<span class="group-sub">Só se não souber o nome: o app lê a embalagem</span></span>
+        <span class="group-label">Fotografar a embalagem<span class="group-sub">Para quando não souber o nome</span></span>
         ${icon('chevron', 'group-chevron')}
         <input type="file" accept="image/*" capture="environment" class="sr-only" data-way-photo>
       </label></li>
@@ -232,7 +232,7 @@ function bindExpiry(body) {
       if (iso) return iso;
       input.setAttribute('aria-invalid', 'true');
       note.classList.add('is-error');
-      note.textContent = 'Não entendi a data. Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
+      note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
       input.focus();
       return null;
     },
@@ -256,7 +256,7 @@ function loading({ body }, code) {
     <span class="skel skel-block" aria-hidden="true"></span>`;
   const note = $('[data-note]', body);
   const slow = setTimeout(() => { if (note.isConnected) note.textContent = 'A loja está demorando. Mais um instante'; }, 3500);
-  const slower = setTimeout(() => { if (note.isConnected) note.textContent = 'Quase desistindo da loja. Se não achar, você digita o nome'; }, 7000);
+  const slower = setTimeout(() => { if (note.isConnected) note.textContent = 'As lojas ainda não responderam. Se preferir, digite o nome'; }, 7000);
   new MutationObserver((_, obs) => { if (!note.isConnected) { clearTimeout(slow); clearTimeout(slower); obs.disconnect(); } }).observe(body, { childList: true });
 }
 
@@ -313,7 +313,7 @@ function notInCupboard(ctx) {
     <ul class="group choice-group">
       <li><button type="button" class="group-row" data-link>
         <span class="group-icon">${icon('search')}</span>
-        <span class="group-label">É um produto que já está no armário<span class="group-sub">Escolha qual; o app passa a reconhecer este código</span></span>
+        <span class="group-label">É um produto que já está no armário<span class="group-sub">Escolha qual; da próxima vez, este código já abre ele</span></span>
         ${icon('chevron', 'group-chevron')}</button></li>
       <li><button type="button" class="group-row" data-switch>
         <span class="group-icon is-entrada">${icon('plus')}</span>
@@ -372,7 +372,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
     beep('error');
     body.innerHTML = `
       ${head(local, local)}
-      <p class="sheet-text">O armário diz que não tem nenhum. Se ainda tem, corrija a quantidade na página do produto.</p>
+      <p class="sheet-text">Está zerado no armário. Se ainda tem, corrija a quantidade na página do produto.</p>
       <div class="sheet-actions">
         <button type="button" class="btn btn-primary" data-cancel>Fechar</button>
       </div>`;

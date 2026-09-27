@@ -148,7 +148,7 @@ export async function addLot(code, n, expiresAt) {
     if (!p) throw new Error('Esse produto não está mais no armário.');
     const lots = await lotsOf(s, code);
     const free = p.qty - lots.reduce((a, l) => a + l.qty, 0);
-    if (qty > free) throw new Error(free ? `Só ${free} sem validade para marcar` : 'Todas as unidades já têm validade');
+    if (qty > free) throw new Error(free ? `Só ${free === 1 ? 'uma unidade está' : `${free} unidades estão`} sem validade.` : 'Todas as unidades já têm validade.');
     await promisify(s.lots.add({ code, qty, expiresAt, addedAt: Date.now() }));
   });
   emit();
@@ -238,7 +238,7 @@ export async function deleteProduct(code) {
 export async function undoMovement(id) {
   const result = await tx(['products', 'movements', 'lots'], 'readwrite', async (s) => {
     const m = await promisify(s.movements.get(id));
-    if (!m) throw new Error('Esse registro já foi desfeito');
+    if (!m) throw new Error('Esse registro já foi desfeito.');
     const all = await promisify(s.movements.index('code').getAll(m.code));
     const last = all.reduce((a, b) => (b.id > a.id ? b : a), all[0]);
     if (last.id !== id) throw new Error('Não dá para desfazer: já houve outro registro depois deste.');
@@ -398,7 +398,7 @@ export async function exportData() {
 
 export async function importData(data) {
   if (!data || data.app !== 'KeepInventory404' || !Array.isArray(data.products) || !Array.isArray(data.movements)) {
-    throw new Error('Esse arquivo não é um backup do KeepInventory404');
+    throw new Error('Esse arquivo não é um backup do Armário.');
   }
   await tx(['products', 'movements', 'meta', 'lots'], 'readwrite', async (s) => {
     await promisify(s.products.clear());

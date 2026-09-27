@@ -111,7 +111,7 @@ export default function mountArmario(root) {
       shelf.innerHTML = `
         <div class="empty-state">
           <p class="empty-lead">Nada guardado ainda</p>
-          <p>Leia o código de barras de um pacote e ele aparece aqui com o número de unidades.</p>
+          <p>Leia o código de barras de um produto para guardar no armário.</p>
           <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
         </div>`;
       return;
@@ -379,7 +379,7 @@ export default function mountArmario(root) {
     openMenu(row, [
       { label: 'Tirar 1', icon: 'minus', onSelect: () => { if (p.qty > 0) minusOne(code, null, -1); else toast(`${p.name} já está zerado.`, { duration: 2500 }); } },
       { label: 'Guardar 1', icon: 'plus', onSelect: () => minusOne(code, null, 1) },
-      { label: 'Pôr na lista de compras', icon: 'cart', onSelect: () => toast(addToShopList(p.name) ? `${p.name} está na lista de compras.` : `${p.name} já estava na lista.`, { duration: 2500 }) },
+      { label: 'Adicionar à lista de compras', icon: 'cart', onSelect: () => toast(addToShopList(p.name) ? `${p.name} está na lista de compras.` : `${p.name} já estava na lista.`, { duration: 2500 }) },
       { label: 'Ver produto', icon: 'chevron', onSelect: () => { location.hash = row.getAttribute('href'); } },
     ], { label: p.name }).then(() => row.classList.remove('is-lifted'));
   }

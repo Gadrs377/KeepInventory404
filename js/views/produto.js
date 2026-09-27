@@ -24,7 +24,7 @@ export default async function mountProduto(root, { code }) {
     root.innerHTML = `
       <div class="screen">
         <header class="topbar nav-bar"><a class="icon-btn glass-btn" href="#/" aria-label="Voltar">${icon('chevronLeft')}</a></header>
-        <main class="content"><p class="empty">Esse produto não está mais no armário. Ele pode ter sido removido.</p>
+        <main class="content"><p class="empty">Esse produto não está mais no armário.</p>
         <a class="btn btn-primary" href="#/">Voltar ao armário</a></main>
       </div>`;
     return;
@@ -34,7 +34,7 @@ export default async function mountProduto(root, { code }) {
   const perDay = rate && rate.used >= 2 ? rate.perDay : 0;
   const left = daysLeft(p, perDay);
   const usage = perDay
-    ? `Vocês usam ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
+    ? `Sai ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
     : 'Aparece depois de algumas saídas.';
   const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   const home = { href: '#/', label: 'Voltar ao armário' };
@@ -105,7 +105,7 @@ export default async function mountProduto(root, { code }) {
               <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
             </div>
           </div>
-          <p class="group-note">Para quando o número do app não bate com o armário.</p>
+          <p class="group-note">Use quando a quantidade não bater com o que tem no armário.</p>
         </section>
 
         <section aria-labelledby="details-title">
@@ -224,7 +224,7 @@ export default async function mountProduto(root, { code }) {
     if (r === 'delete') {
       const ok = await confirmSheet({
         title: `Remover ${cur.name}?`,
-        text: 'O produto e todo o histórico dele saem do armário. Isso não pode ser desfeito.',
+        text: 'O produto e o histórico dele saem do armário. Não dá para desfazer.',
         confirm: 'Remover produto',
         danger: true,
       });
@@ -365,7 +365,7 @@ function lotSheet(p, free) {
         if (!iso) {
           input.setAttribute('aria-invalid', 'true');
           note.classList.add('is-error');
-          note.textContent = 'Não entendi a data. Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
+          note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
           input.focus();
           return;
         }

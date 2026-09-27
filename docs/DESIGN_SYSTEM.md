@@ -194,6 +194,16 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
   "Aplicar contagem". Nunca "Enviar" ou "OK".
 - Erros dizem o que houve e o que fazer.
 - Sem travessão, sem reticências decorativas, sem adjetivos de propaganda.
+- Termos fixos (revisão da 3.24):
+  - **Guardar** é pôr no armário; **Tirar** é tirar do armário; **Contar** é
+    a contagem. Por isso rascunhos e ajustes usam **Salvar** ("Salvar e
+    sair"), e a lista de compras usa **Adicionar** e **Remover**.
+  - O lugar é sempre o **armário** (nunca "estoque" nem "em casa").
+  - Quem lê é **você**, no singular; nada de "vocês".
+  - O texto não fala de si: nada de "o app faz" nem "não entendi". Diz o que
+    acontece ou o que fazer ("Use dia/mês/ano (15/10/26)").
+  - Sem sigla nem termo técnico para quem usa: nada de "SEFAZ", "https",
+    "sessão" ou "dígito de controle".
 
 ## 9. Qualidade mínima
 
