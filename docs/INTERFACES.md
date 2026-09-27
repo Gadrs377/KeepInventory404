@@ -1050,3 +1050,20 @@ adicionamos o EasyOCR como terceiro motor.
   "escolher só os quadros mais nítidos": uma tentativa anterior piorou o
   resultado, provavelmente por descartar quadros em vez de só priorizá-los.
   Não será retentada como filtro.
+
+## Versão 3.36: foto nítida dispara sozinha durante a dica de inclinar/luz
+
+- A cada troca de dica do painel (a cada 4,2 s, já depois dos 10 s sem
+  confirmar), o app tira e lê uma foto parada sozinho, sem esperar o toque no
+  botão — mais chances de pegar o instante em que a luz ou o ângulo ajudam
+  enquanto a pessoa já está inclinando a embalagem. O botão continua para
+  tentar na hora. Nunca duas rodadas ao mesmo tempo: o ciclo seguinte só
+  segue alternando a dica enquanto uma rodada anterior ainda está lendo.
+  Nenhuma foto se mistura com outra (sem fusão de pixels entre quadros) —
+  cada rodada continua um voto independente na mesma votação de sempre.
+- Corrigido o identificador interno de "quadro" de cada tentativa da foto
+  nítida para incluir o número da rodada (`photo-<rodada>-<filtro>`, antes
+  só `photo-<filtro>`); sem isso, uma segunda rodada automática testando o
+  mesmo filtro que uma rodada anterior seria descartada como "quadro
+  repetido" da rodada anterior, perdendo um voto de uma foto genuinamente
+  nova.

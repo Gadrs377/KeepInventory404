@@ -73,9 +73,17 @@ da luz, mantendo a validade na mira — e o botão **Tirar uma foto nítida da
 validade**. Foi a próxima experiência sugerida em `TESTES_VALIDADES_REAIS.md`
 para a embalagem roxa em relevo que não confirmou em nenhum teste.
 
-Ao tocar no botão:
+A cada troca de dica (mesmo ciclo de 4,2 s), o app também tira e lê uma foto
+parada sozinho, sem esperar o toque no botão — quem está inclinando a
+embalagem ou mudando a luz tem mais chances de a leitura pegar o instante
+certo sem precisar parar para tocar em nada. O botão continua ali para
+tentar na hora, sem esperar o próximo ciclo. Enquanto uma rodada está em
+andamento (`busy = true`), o ciclo seguinte só continua alternando a dica —
+não inicia uma segunda rodada por cima da primeira.
 
-1. A leitura contínua pausa (`busy = true`; o laço só volta a rodar quando a
+Cada rodada (automática ou pelo botão):
+
+1. Pausa a leitura contínua (`busy = true`; o laço só volta a rodar quando a
    foto termina).
 2. Tenta `ImageCapture.takePhoto()` na trilha da câmera, que costuma trazer
    mais pixels do sensor que um quadro de vídeo; sem suporte, usa o próprio
@@ -86,14 +94,22 @@ Ao tocar no botão:
    `prepareFrame` ganhou `maxH`/`maxScale` para isso) e, se o Paddle já
    carregou (ou carrega agora, com aviso), os cinco filtros dele também
    (`BURST_PADDLE_VARIANTS`). Cada filtro entra na mesma votação como um
-   "quadro" à parte; confirma sozinho nos mesmos critérios de sempre.
+   "quadro" à parte, com um número de rodada crescente no identificador
+   (`photo-<rodada>-<filtro>`) para que uma nova foto nunca seja descartada
+   como "quadro repetido" de uma rodada anterior — cada tentativa segue
+   independente, sem misturar pixels entre fotos. Confirma sozinha nos
+   mesmos critérios de sempre.
 4. Sem confirmar em nenhum filtro, volta ao normal: mostra o que achou como
    opção para tocar, e a leitura contínua retoma.
 
 Testado com Tesseract simulado (Playwright): o painel aparece só depois do
 tempo certo, a dica alterna, a leitura contínua não confirma sozinha depois
-que a foto é pedida (só os quadros dela contam), confirma corretamente
-quando algum filtro acerta, e devolve o botão e a câmera quando nenhum acerta.
+que a foto é pedida (só os quadros dela contam), a foto dispara sozinha a
+cada ciclo sem exigir toque no botão, duas rodadas nunca ficam pendentes ao
+mesmo tempo (uma leitura de 900 ms por filtro, mais longa que o próprio
+ciclo de dica, não gera chamadas simultâneas), confirma corretamente quando
+algum filtro acerta (pelo toque ou sozinha), e devolve o botão e a câmera
+quando nenhum acerta.
 
 ## Por que não usamos EasyOCR
 

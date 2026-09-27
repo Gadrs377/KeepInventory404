@@ -10,6 +10,13 @@
 // (até 3), numa fileira que ocupa a largura toda. Nada some e nada troca de
 // ordem; quando chega uma data nova as outras encolhem devagar, e por meio
 // segundo nenhuma aceita toque, para o dedo não acertar a data errada.
+//
+// Sem confirmar por muito tempo, sugere inclinar a embalagem ou mudar a luz
+// e, sozinho, tira e lê fotos paradas nesse meio-tempo (sem esperar o toque
+// no botão) — uma tentativa independente a cada troca de dica, cada uma
+// entrando na mesma votação como um quadro à parte. Nunca junta pixels de
+// fotos diferentes; só dá mais chances de pegar o instante em que a luz ou
+// o ângulo ajudam.
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { createPaddleReader } from '../paddleOcr.js';
@@ -103,19 +110,25 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     let paddleTurn = 0;
     let struggleTimer = null;
     let hintPhase = 0;
+    let burstSeq = 0;
 
     // Sem confirmar por um tempo: sugere inclinar a caixa ou mudar a luz (ajuda
-    // com relevo e reflexo) e oferece tirar uma foto parada, sem o tremor do
-    // vídeo contínuo. Reaparece do zero sempre que a contagem reinicia.
+    // com relevo e reflexo) e tenta sozinho uma leitura de foto parada a cada
+    // troca de dica — sem esperar a pessoa tocar no botão. Cada tentativa é
+    // independente (nada de pixel de um quadro se misturar com outro): quem
+    // decide é a mesma votação de sempre, só que com mais chances, pegando o
+    // instante em que a luz bateu melhor enquanto a pessoa inclina. O botão
+    // continua para tentar na hora, sem esperar o próximo ciclo.
     function armStruggleHelp() {
       clearInterval(struggleTimer);
       struggle.hidden = true;
       struggleTimer = setInterval(() => {
-        if (!alive || busy) return;
+        if (!alive) return;
         if (performance.now() - activeSince < STRUGGLE_MS) return;
         hintPhase = struggle.hidden ? 0 : (hintPhase + 1) % TILT_HINTS.length;
         struggleHint.textContent = TILT_HINTS[hintPhase];
         struggle.hidden = false;
+        if (!busy) takeSharpPhoto();
       }, HINT_CYCLE_MS);
     }
 
@@ -221,6 +234,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       busy = true;
       photoBtn.disabled = true;
       status.textContent = 'Lendo a foto. Leva alguns segundos';
+      const seq = burstSeq++;
       try {
         const box = aimBox(video, aim);
         const still = await captureStill();
@@ -246,7 +260,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
           if (!alive) return;
           const candidates = findExpiryCandidates(result.text);
           recordCandidates(candidates, original);
-          const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${i}`, at: performance.now() });
+          const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${seq}-${i}`, at: performance.now() });
           if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
         }
         if (alive) status.textContent = shown.size ? 'Toque na validade certa ou continue apontando' : 'Não deu para ler. Confira a mira ou digite a data';
