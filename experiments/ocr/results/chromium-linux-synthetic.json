@@ -1,0 +1,2217 @@
+{
+  "baseCommit": "b611d76c1df2ddb313dcb12e3872d21c9bf4f10d",
+  "referenceDate": "2026-09-27",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/134.0.6998.35 Safari/537.36",
+  "hardwareConcurrency": 9,
+  "crossOriginIsolated": false,
+  "backend": "wasm, 1 thread",
+  "tesseractInitMs": 296.30000000004657,
+  "paddleInitMs": 1492.1000000000931,
+  "method": "Synthetic frozen crops, baseline up to 9 variants with 2-vote acceptance; raw Tesseract control one pass; Paddle one detection/recognition pass; unchanged findExpiry for all. Not equivalent acceptance policies, live-camera or iPhone measurements. Initialization served from localhost, not internet download time.",
+  "rows": [
+    {
+      "id": "plain",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 317.39999999990687,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/69/2026\nVAL 15/16/2026\nLOTE 123456\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 61/69/2626\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 550
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 65.30000000004657,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 499.10000000009313,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                42
+              ],
+              [
+                316,
+                42
+              ],
+              [
+                316,
+                74
+              ],
+              [
+                43,
+                74
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9963656408446175
+          },
+          {
+            "poly": [
+              [
+                42,
+                90
+              ],
+              [
+                317,
+                90
+              ],
+              [
+                317,
+                125
+              ],
+              [
+                42,
+                125
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9956249339239938
+          },
+          {
+            "poly": [
+              [
+                43,
+                141
+              ],
+              [
+                259,
+                141
+              ],
+              [
+                259,
+                173
+              ],
+              [
+                43,
+                173
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9818831519647078
+          }
+        ],
+        "metrics": {
+          "detMs": 232.19999999995343,
+          "recMs": 263.39999999990687,
+          "totalMs": 498,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "small",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 436.5999999998603,
+        "passes": [
+          {
+            "text": "FAB 01/69/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2028\nLOTE 123438\n",
+            "iso": "2028-10-15",
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 91/69/2026\nVAL 15/16/2026\nLOTE 123438\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "8 S118\nL 13/10\nTE 1334\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 0,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 56.5,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 377.10000000009313,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                41
+              ],
+              [
+                213,
+                41
+              ],
+              [
+                213,
+                64
+              ],
+              [
+                43,
+                64
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9953101277351379
+          },
+          {
+            "poly": [
+              [
+                43,
+                91
+              ],
+              [
+                213,
+                91
+              ],
+              [
+                213,
+                113
+              ],
+              [
+                43,
+                113
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9954563805035183
+          },
+          {
+            "poly": [
+              [
+                42,
+                140
+              ],
+              [
+                178,
+                140
+              ],
+              [
+                178,
+                162
+              ],
+              [
+                42,
+                162
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9864153157580983
+          }
+        ],
+        "metrics": {
+          "detMs": 137.5,
+          "recMs": 238.30000000004657,
+          "totalMs": 376.70000000018626,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "large",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 151.79999999981374,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 63.300000000046566,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 387.60000000009313,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                41,
+                37
+              ],
+              [
+                401,
+                39
+              ],
+              [
+                401,
+                84
+              ],
+              [
+                40,
+                82
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.996818116733006
+          },
+          {
+            "poly": [
+              [
+                40,
+                90
+              ],
+              [
+                400,
+                88
+              ],
+              [
+                400,
+                133
+              ],
+              [
+                41,
+                135
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9895925521850586
+          },
+          {
+            "poly": [
+              [
+                42,
+                140
+              ],
+              [
+                326,
+                140
+              ],
+              [
+                326,
+                181
+              ],
+              [
+                42,
+                181
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9808438528667797
+          }
+        ],
+        "metrics": {
+          "detMs": 135.60000000009313,
+          "recMs": 250.69999999995343,
+          "totalMs": 387.10000000009313,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "lowContrast",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 145.5999999998603,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/69/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 67.5,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 566.1999999999534,
+        "text": "FAB\n01/09/2026\nVAL\n15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                45,
+                47
+              ],
+              [
+                104,
+                47
+              ],
+              [
+                104,
+                76
+              ],
+              [
+                45,
+                76
+              ]
+            ],
+            "text": "FAB",
+            "score": 0.9984228213628134
+          },
+          {
+            "poly": [
+              [
+                114,
+                45
+              ],
+              [
+                314,
+                45
+              ],
+              [
+                314,
+                81
+              ],
+              [
+                114,
+                81
+              ]
+            ],
+            "text": "01/09/2026",
+            "score": 0.9995166480541229
+          },
+          {
+            "poly": [
+              [
+                42,
+                95
+              ],
+              [
+                114,
+                95
+              ],
+              [
+                114,
+                129
+              ],
+              [
+                42,
+                129
+              ]
+            ],
+            "text": "VAL",
+            "score": 0.9938290317853292
+          },
+          {
+            "poly": [
+              [
+                115,
+                96
+              ],
+              [
+                315,
+                94
+              ],
+              [
+                315,
+                129
+              ],
+              [
+                115,
+                131
+              ]
+            ],
+            "text": "15/10/2026",
+            "score": 0.9995161175727845
+          },
+          {
+            "poly": [
+              [
+                43,
+                144
+              ],
+              [
+                258,
+                144
+              ],
+              [
+                258,
+                177
+              ],
+              [
+                43,
+                177
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.945218107917092
+          }
+        ],
+        "metrics": {
+          "detMs": 127.4000000001397,
+          "recMs": 437.39999999990687,
+          "totalMs": 565.8000000000466,
+          "detectedBoxes": 6,
+          "recognizedCount": 5
+        }
+      }
+    },
+    {
+      "id": "dark",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 195.20000000018626,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/69/2026\nVAL 15/10/2626\nLOTE 123456\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 81/69/2626\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 550
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 112.39999999990687,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 385.80000000004657,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                42,
+                40
+              ],
+              [
+                315,
+                40
+              ],
+              [
+                315,
+                75
+              ],
+              [
+                42,
+                75
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9933580415589469
+          },
+          {
+            "poly": [
+              [
+                42,
+                91
+              ],
+              [
+                317,
+                91
+              ],
+              [
+                317,
+                126
+              ],
+              [
+                42,
+                126
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9918914181845528
+          },
+          {
+            "poly": [
+              [
+                44,
+                141
+              ],
+              [
+                258,
+                141
+              ],
+              [
+                258,
+                173
+              ],
+              [
+                44,
+                173
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9804244312373075
+          }
+        ],
+        "metrics": {
+          "detMs": 139.5,
+          "recMs": 245,
+          "totalMs": 385.30000000004657,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "shadow",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": null,
+        "ms": 217.39999999990687,
+        "passes": [
+          {
+            "text": "",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 22.800000000046566,
+        "text": ""
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 380.80000000004657,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                42
+              ],
+              [
+                316,
+                42
+              ],
+              [
+                316,
+                74
+              ],
+              [
+                43,
+                74
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9941055689539228
+          },
+          {
+            "poly": [
+              [
+                42,
+                91
+              ],
+              [
+                317,
+                91
+              ],
+              [
+                317,
+                126
+              ],
+              [
+                42,
+                126
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9884668460914067
+          },
+          {
+            "poly": [
+              [
+                44,
+                143
+              ],
+              [
+                258,
+                143
+              ],
+              [
+                258,
+                172
+              ],
+              [
+                44,
+                172
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9584788680076599
+          }
+        ],
+        "metrics": {
+          "detMs": 126.5999999998603,
+          "recMs": 252.10000000009313,
+          "totalMs": 379.70000000018626,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "tilted",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 326.19999999995343,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/69/2076\nVAL 15/10/2626\nLOTE 123456\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 81/09/2976\nVAL 15/18/2925\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "FAB 01/89/2976\nVAL 15/10/2926\nLOTE 123456\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/09/29\nVAL 15/16/2926\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123454\n",
+            "iso": "2026-10-15",
+            "blur": 0,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 49.5,
+        "text": "FAB 01/09/2926\nVAL 15/10/2026\nLOTE 123454\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 381.20000000018626,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                40
+              ],
+              [
+                314,
+                69
+              ],
+              [
+                310,
+                101
+              ],
+              [
+                39,
+                73
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9967218509742192
+          },
+          {
+            "poly": [
+              [
+                37,
+                89
+              ],
+              [
+                310,
+                118
+              ],
+              [
+                306,
+                153
+              ],
+              [
+                33,
+                123
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.995418804032462
+          },
+          {
+            "poly": [
+              [
+                33,
+                141
+              ],
+              [
+                247,
+                162
+              ],
+              [
+                243,
+                195
+              ],
+              [
+                29,
+                173
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9576354947957125
+          }
+        ],
+        "metrics": {
+          "detMs": 127.80000000004657,
+          "recMs": 251.80000000004657,
+          "totalMs": 380.60000000009313,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "blurred",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 280.5,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/16/2026\nLOTE 123456\n",
+            "iso": "2026-09-01",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/69/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 01/69/2626\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "FAB 01/69/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 3,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 59.699999999953434,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 364.19999999995343,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                42,
+                37
+              ],
+              [
+                317,
+                39
+              ],
+              [
+                317,
+                75
+              ],
+              [
+                41,
+                73
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.99361823286329
+          },
+          {
+            "poly": [
+              [
+                41,
+                88
+              ],
+              [
+                318,
+                88
+              ],
+              [
+                318,
+                127
+              ],
+              [
+                41,
+                127
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9937864329133715
+          },
+          {
+            "poly": [
+              [
+                41,
+                139
+              ],
+              [
+                260,
+                139
+              ],
+              [
+                260,
+                174
+              ],
+              [
+                41,
+                174
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9707449349490079
+          }
+        ],
+        "metrics": {
+          "detMs": 128.80000000004657,
+          "recMs": 233.60000000009313,
+          "totalMs": 363.5,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "dotted",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 147,
+        "passes": [
+          {
+            "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/69/2826\nVAL 15/10/2026\nLOTE 123456\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 13.800000000046566,
+        "text": ""
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 402.5,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nL0TE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                44
+              ],
+              [
+                315,
+                44
+              ],
+              [
+                315,
+                73
+              ],
+              [
+                43,
+                73
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9664593296391624
+          },
+          {
+            "poly": [
+              [
+                42,
+                93
+              ],
+              [
+                315,
+                93
+              ],
+              [
+                315,
+                125
+              ],
+              [
+                42,
+                125
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9294614153248923
+          },
+          {
+            "poly": [
+              [
+                43,
+                142
+              ],
+              [
+                260,
+                142
+              ],
+              [
+                260,
+                173
+              ],
+              [
+                43,
+                173
+              ]
+            ],
+            "text": "L0TE 123456",
+            "score": 0.9490137316963889
+          }
+        ],
+        "metrics": {
+          "detMs": 130.60000000009313,
+          "recMs": 270.80000000004657,
+          "totalMs": 402,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "glare",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": null,
+        "ms": 522.5,
+        "passes": [
+          {
+            "text": "FAB 01/09/2077\nVAL 15/10/:\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/09/20\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 61/69/27\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "FAB 01/09/20\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "FAB 61/09/27\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "FAB 01/09/2F7\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/69/2\nVAL 15/16/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "FAB 01/69/20\nVAL 15/10/.\nLOTE 123456\n",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "FAB 01/09/207:\nVAL 15/10/:\nLOTE 123456\n",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-09-01",
+        "ms": 67,
+        "text": "FAB 01/09/2026\nVAL 15/10/:\nLOTE 123456\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 389.20000000018626,
+        "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+        "items": [
+          {
+            "poly": [
+              [
+                42,
+                40
+              ],
+              [
+                317,
+                40
+              ],
+              [
+                317,
+                75
+              ],
+              [
+                42,
+                75
+              ]
+            ],
+            "text": "FAB 01/09/2026",
+            "score": 0.9945882941995349
+          },
+          {
+            "poly": [
+              [
+                42,
+                90
+              ],
+              [
+                317,
+                90
+              ],
+              [
+                317,
+                126
+              ],
+              [
+                42,
+                126
+              ]
+            ],
+            "text": "VAL 15/10/2026",
+            "score": 0.9951908162661961
+          },
+          {
+            "poly": [
+              [
+                43,
+                141
+              ],
+              [
+                258,
+                141
+              ],
+              [
+                258,
+                173
+              ],
+              [
+                43,
+                173
+              ]
+            ],
+            "text": "LOTE 123456",
+            "score": 0.9757132259282199
+          }
+        ],
+        "metrics": {
+          "detMs": 129.5999999998603,
+          "recMs": 256.5,
+          "totalMs": 388.5999999998603,
+          "detectedBoxes": 3,
+          "recognizedCount": 3
+        }
+      }
+    },
+    {
+      "id": "month-year",
+      "expected": "2026-10-31",
+      "tesseract": {
+        "iso": "2026-10-31",
+        "ms": 174.5,
+        "passes": [
+          {
+            "text": "VAL 10/2026\n",
+            "iso": "2026-10-31",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 16/2026\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "VAL 10/2626\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "VAL 16/2026\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "VAL 10/2626\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "VAL 10/2026\n",
+            "iso": "2026-10-31",
+            "blur": 0,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-31",
+        "ms": 24.5,
+        "text": "VAL 10/2026\n"
+      },
+      "paddle": {
+        "iso": "2026-10-31",
+        "ms": 200.5,
+        "text": "VAL 10/2026",
+        "items": [
+          {
+            "poly": [
+              [
+                41,
+                42
+              ],
+              [
+                258,
+                40
+              ],
+              [
+                258,
+                73
+              ],
+              [
+                42,
+                75
+              ]
+            ],
+            "text": "VAL 10/2026",
+            "score": 0.9925448027524081
+          }
+        ],
+        "metrics": {
+          "detMs": 128.10000000009313,
+          "recMs": 70.89999999990687,
+          "totalMs": 199.89999999990687,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "named-month",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 71.69999999995343,
+        "passes": [
+          {
+            "text": "VAL 15 OUT 2026\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15 OUT 2026\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 29.5,
+        "text": "VAL 15 OUT 2026\n"
+      },
+      "paddle": {
+        "iso": null,
+        "ms": 230.69999999995343,
+        "text": "VAL 15 0UT 2026",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                41
+              ],
+              [
+                334,
+                41
+              ],
+              [
+                334,
+                73
+              ],
+              [
+                43,
+                73
+              ]
+            ],
+            "text": "VAL 15 0UT 2026",
+            "score": 0.983343776067098
+          }
+        ],
+        "metrics": {
+          "detMs": 130.4000000001397,
+          "recMs": 99,
+          "totalMs": 230.29999999981374,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "short-year",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 178.5999999998603,
+        "passes": [
+          {
+            "text": "VAL 15/10/26\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15/18/26\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "VAL 15/18/26\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "VAL 15/18/26\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15/18/26\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "VAL 15/10/26\n",
+            "iso": "2026-10-15",
+            "blur": 0,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 25.5,
+        "text": "VAL 15/10/26\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 219.80000000004657,
+        "text": "VAL 15/10/26",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                42
+              ],
+              [
+                277,
+                42
+              ],
+              [
+                277,
+                74
+              ],
+              [
+                43,
+                74
+              ]
+            ],
+            "text": "VAL 15/10/26",
+            "score": 0.9929702778657278
+          }
+        ],
+        "metrics": {
+          "detMs": 134.9000000001397,
+          "recMs": 83.39999999990687,
+          "totalMs": 219.10000000009313,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "compact",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": "2026-10-15",
+        "ms": 81.79999999981374,
+        "passes": [
+          {
+            "text": "VAL 15102026\n",
+            "iso": "2026-10-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15102026\n",
+            "iso": "2026-10-15",
+            "blur": 2,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-15",
+        "ms": 25.800000000046566,
+        "text": "VAL 15102026\n"
+      },
+      "paddle": {
+        "iso": "2026-10-15",
+        "ms": 214.80000000004657,
+        "text": "VAL 15102026",
+        "items": [
+          {
+            "poly": [
+              [
+                42,
+                42
+              ],
+              [
+                275,
+                41
+              ],
+              [
+                276,
+                71
+              ],
+              [
+                42,
+                72
+              ]
+            ],
+            "text": "VAL 15102026",
+            "score": 0.9841695626576742
+          }
+        ],
+        "metrics": {
+          "detMs": 127.5,
+          "recMs": 86,
+          "totalMs": 214.5,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "iso-date",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": null,
+        "ms": 309.4000000001397,
+        "passes": [
+          {
+            "text": "VAL 2026-10-15\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 2026-10-15\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "VAL 2026-16-15\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "VAL 2026-10-15\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "VAL 2026-10-15\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "VAL 2026-10-15\n",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "VAL 2026-16-15\n",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "VAL 2626-10-15\n",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "VAL 2026-16-15\n",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 28.799999999813735,
+        "text": "VAL 2026-10-15\n"
+      },
+      "paddle": {
+        "iso": null,
+        "ms": 239,
+        "text": "VAL 2026-10-15",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                42
+              ],
+              [
+                314,
+                41
+              ],
+              [
+                314,
+                71
+              ],
+              [
+                43,
+                72
+              ]
+            ],
+            "text": "VAL 2026-10-15",
+            "score": 0.9947773558752877
+          }
+        ],
+        "metrics": {
+          "detMs": 137.19999999995343,
+          "recMs": 100.4000000001397,
+          "totalMs": 238.5999999998603,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "lost-separators",
+      "expected": "2026-10-15",
+      "tesseract": {
+        "iso": null,
+        "ms": 323.19999999995343,
+        "passes": [
+          {
+            "text": "VAL 15 10 2026\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15 18 2026\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "VAL 15 16 2626\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "VAL 15 10 2026\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15 16 2026\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "VAL 15 10 2026\n",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15 10 2026\n",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "VAL 15 10 2026\n",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "VAL 15 16 2026\n",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 28.800000000046566,
+        "text": "VAL 15 10 2026\n"
+      },
+      "paddle": {
+        "iso": null,
+        "ms": 225.5999999998603,
+        "text": "VAL 15 10 2026",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                41
+              ],
+              [
+                316,
+                41
+              ],
+              [
+                316,
+                73
+              ],
+              [
+                43,
+                73
+              ]
+            ],
+            "text": "VAL 15 10 2026",
+            "score": 0.9883970064776284
+          }
+        ],
+        "metrics": {
+          "detMs": 127.89999999990687,
+          "recMs": 96.10000000009313,
+          "totalMs": 225.10000000009313,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "manufacture-only",
+      "expected": null,
+      "tesseract": {
+        "iso": "2026-09-15",
+        "ms": 169.0999999998603,
+        "passes": [
+          {
+            "text": "FAB 15/09/2026\n",
+            "iso": "2026-09-15",
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "FAB 15/69/2026\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "FAB 15/69/2626\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "FAB 15/69/2026\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "FAB 15/09/2026\n",
+            "iso": "2026-09-15",
+            "blur": 1,
+            "width": 450
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-09-15",
+        "ms": 28.300000000046566,
+        "text": "FAB 15/09/2026\n"
+      },
+      "paddle": {
+        "iso": "2026-09-15",
+        "ms": 227.5,
+        "text": "FAB 15/09/2026",
+        "items": [
+          {
+            "poly": [
+              [
+                44,
+                43
+              ],
+              [
+                315,
+                43
+              ],
+              [
+                315,
+                72
+              ],
+              [
+                44,
+                72
+              ]
+            ],
+            "text": "FAB 15/09/2026",
+            "score": 0.9801255209105355
+          }
+        ],
+        "metrics": {
+          "detMs": 126,
+          "recMs": 100.19999999995343,
+          "totalMs": 227.10000000009313,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "lot-only",
+      "expected": null,
+      "tesseract": {
+        "iso": "2026-10-31",
+        "ms": 181.89999999990687,
+        "passes": [
+          {
+            "text": "LOTE 106/26\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "LOTE 16/26\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "LOTE 18/26\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "LOTE 106/26\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "LOTE 10/26\n",
+            "iso": "2026-10-31",
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "LOTE 10/26\n",
+            "iso": "2026-10-31",
+            "blur": 0,
+            "width": 1000
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": "2026-10-31",
+        "ms": 23.600000000093132,
+        "text": "LOTE 10/26\n"
+      },
+      "paddle": {
+        "iso": "2026-10-31",
+        "ms": 197.39999999990687,
+        "text": "LOTE 10/26",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                41
+              ],
+              [
+                239,
+                41
+              ],
+              [
+                239,
+                74
+              ],
+              [
+                43,
+                74
+              ]
+            ],
+            "text": "LOTE 10/26",
+            "score": 0.9616808116436004
+          }
+        ],
+        "metrics": {
+          "detMs": 126.0999999998603,
+          "recMs": 69.60000000009313,
+          "totalMs": 196.69999999995343,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    },
+    {
+      "id": "no-date",
+      "expected": null,
+      "tesseract": {
+        "iso": null,
+        "ms": 394.39999999990687,
+        "passes": [
+          {
+            "text": "ARROZ TIPO 1\nPESO 500 G6\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 560 G\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 500 G\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 560 G\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 560 G\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 500 G\n",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 560 G\n",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 500 G\n",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "ARROZ TIPO 1\nPESO 500 G\n",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 40.5,
+        "text": "ARROZ TIPO 1\nPESO 500 G\n"
+      },
+      "paddle": {
+        "iso": null,
+        "ms": 274.39999999990687,
+        "text": "ARROZ TIPO 1\nPES0 500 G",
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                41
+              ],
+              [
+                279,
+                41
+              ],
+              [
+                279,
+                73
+              ],
+              [
+                43,
+                73
+              ]
+            ],
+            "text": "ARROZ TIPO 1",
+            "score": 0.9612108121315638
+          },
+          {
+            "poly": [
+              [
+                43,
+                90
+              ],
+              [
+                240,
+                90
+              ],
+              [
+                240,
+                123
+              ],
+              [
+                43,
+                123
+              ]
+            ],
+            "text": "PES0 500 G",
+            "score": 0.92046018242836
+          }
+        ],
+        "metrics": {
+          "detMs": 124.10000000009313,
+          "recMs": 148.89999999990687,
+          "totalMs": 273.80000000004657,
+          "detectedBoxes": 2,
+          "recognizedCount": 2
+        }
+      }
+    },
+    {
+      "id": "invalid-date",
+      "expected": null,
+      "tesseract": {
+        "iso": null,
+        "ms": 314.0999999998603,
+        "passes": [
+          {
+            "text": "VAL 31/02/2027\n",
+            "iso": null,
+            "blur": 1,
+            "width": 1000
+          },
+          {
+            "text": "VAL 31/02/2027\n",
+            "iso": null,
+            "blur": 2,
+            "width": 700
+          },
+          {
+            "text": "VAL 31/62/2027\n",
+            "iso": null,
+            "blur": 1,
+            "width": 550
+          },
+          {
+            "text": "VAL 31/62/2027\n",
+            "iso": null,
+            "blur": 3,
+            "width": 1000
+          },
+          {
+            "text": "VAL 31/62/2027\n",
+            "iso": null,
+            "blur": 1,
+            "width": 450
+          },
+          {
+            "text": "VAL 31/02/2027\n",
+            "iso": null,
+            "blur": 0,
+            "width": 1000
+          },
+          {
+            "text": "VAL 31/02/2027\n",
+            "iso": null,
+            "blur": 2,
+            "width": 550
+          },
+          {
+            "text": "VAL 31/62/2027\n",
+            "iso": null,
+            "blur": 4,
+            "width": 1000
+          },
+          {
+            "text": "VAL 31/02/2027\n",
+            "iso": null,
+            "blur": 1,
+            "width": 700
+          }
+        ]
+      },
+      "tesseractRaw": {
+        "iso": null,
+        "ms": 29.100000000093132,
+        "text": "VAL 31/02/2027\n"
+      },
+      "paddle": {
+        "iso": null,
+        "ms": 238,
+        "text": "VAL 31/02/2027",
+        "items": [
+          {
+            "poly": [
+              [
+                44,
+                43
+              ],
+              [
+                313,
+                43
+              ],
+              [
+                313,
+                72
+              ],
+              [
+                44,
+                72
+              ]
+            ],
+            "text": "VAL 31/02/2027",
+            "score": 0.9938229194709233
+          }
+        ],
+        "metrics": {
+          "detMs": 127.10000000009313,
+          "recMs": 109.30000000004657,
+          "totalMs": 237.30000000004657,
+          "detectedBoxes": 1,
+          "recognizedCount": 1
+        }
+      }
+    }
+  ],
+  "summary": {
+    "tesseract": {
+      "cases": 20,
+      "correct": 14,
+      "wrongDate": 2,
+      "missed": 4,
+      "medianMs": 217.39999999990687
+    },
+    "tesseractRaw": {
+      "cases": 20,
+      "correct": 13,
+      "wrongDate": 3,
+      "missed": 4,
+      "medianMs": 29.5
+    },
+    "paddle": {
+      "cases": 20,
+      "correct": 15,
+      "wrongDate": 2,
+      "missed": 3,
+      "medianMs": 364.19999999995343
+    }
+  },
+  "externalRequestsBlocked": []
+}

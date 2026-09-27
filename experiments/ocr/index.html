@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comparar leitores de validade</title>
+<style>body{font:16px system-ui;max-width:1000px;margin:auto;padding:24px;background:#fafafa;color:#17232b}button,input{font:inherit;padding:12px;margin:8px 8px 8px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}pre{white-space:pre-wrap}canvas{max-width:100%;border:1px solid #ddd}button:disabled{opacity:.5}</style>
+<h1>Comparar leitores de validade</h1>
+<p>Experimento separado do Armário. As imagens são processadas neste dispositivo. Não altera seu estoque.</p>
+<p>Os exemplos automáticos são simulados: não comprovam a precisão em embalagens reais. O primeiro carregamento baixa os motores e modelos.</p>
+<button id="run">Testar exemplos simulados</button>
+<label>Ou escolha uma foto recortada da validade: <input id="photo" type="file" accept="image/*"></label>
+<button id="export" disabled>Baixar resultados</button>
+<p id="status" role="status">Pronto para começar.</p><div id="preview"></div>
+<table><thead><tr><th>Exemplo</th><th>Esperado</th><th>Tesseract atual</th><th>Tesseract sem filtro (controle)</th><th>PaddleOCR</th></tr></thead><tbody id="rows"></tbody></table>
+<pre id="summary"></pre><script type="module" src="/main.js"></script></html>
