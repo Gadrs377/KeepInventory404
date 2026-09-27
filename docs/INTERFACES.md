@@ -929,3 +929,44 @@ guardar e na página do produto):
 Na folha de guardar, se a pessoa muda quantas está guardando, a pergunta
 acompanha, a não ser que ela já tenha mexido nela. Depois de ler a data, o
 campo não recebe foco (no iPhone isso abria o teclado à toa).
+
+## Versão 3.29: marcar validade como num app da Apple
+
+Refeito o fluxo todo, no molde de "adicionar cartão" da Carteira: uma página
+só para ler, uma para confirmar, dentro da mesma folha e com "‹" para voltar.
+
+**Folha de guardar.** A validade virou uma linha, como nos Ajustes:
+**[calendário] Validade · Nenhuma ›**. Depois de marcar: "18/10/2026",
+"18/10/2026 (2 de 3)" ou "2 datas". Remédio usa a mesma linha.
+
+**Leitura.** Tocar na linha empilha a página **Validade**: câmera grande (4:3,
+cantos concêntricos com a folha), a cápsula "Aponte para a data de validade",
+as datas lidas em cápsulas claras com calendário (três vagas fixas) e
+**Digitar a data** embaixo. O X da barra vira "‹".
+
+**Digitar.** Página própria com campo grande e teclado numérico; a nota mostra
+a data por extenso enquanto digita; **Continuar** só acende com data válida.
+
+**Confirmação.** Ícone de calendário, a data por extenso grande ("18 de
+outubro de 2026") e "Daqui a 21 dias". Data vencida: ícone de alerta e
+"Venceu há 12 dias. Confira na embalagem." em vermelho. Com mais de uma
+unidade: **Quantas vencem nesse dia?** num cartão, "de 3 unidades" embaixo.
+Botão **Pronto** (na cor do modo) e, se sobrar unidade, **Outra data para as
+outras N**, que volta à leitura.
+
+**Leitura de novo não repete.** Datas já escolhidas ou já mostradas na
+confirmação não entram sozinhas de novo (a câmera costuma estar na mesma
+embalagem); continuam aparecendo para tocar.
+
+**Lista.** Com datas escolhidas, tocar na linha mostra as datas (com X para
+tirar), **Outra data** e "N unidades ficam sem data".
+
+**Página do produto.** O cartão Validade virou lista: uma linha por data
+("01/10/2026 · 2 unidades · daqui a 4 dias"; a que vence logo em amarelo; a
+vencida em vermelho) com lixeira, e as ações como linhas: **+ Marcar
+validade · 1 sem data** e **Lembrete no calendário**. "Marcar validade" abre a
+folha já lendo; a confirmação salva com **Salvar**.
+
+**Movimento.** A página nova desliza 28 px e esmaece; a folha acompanha a
+altura com mola. O esmaecer geral da folha não roda por cima (antes eram
+três movimentos juntos).

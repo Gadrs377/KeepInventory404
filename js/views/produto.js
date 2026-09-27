@@ -7,8 +7,8 @@ import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
-import { formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
-import { expiryLotsHtml, bindExpiryLots } from './expiryLots.js';
+import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
+import { expirySheet } from './expiryLots.js';
 import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -73,7 +73,7 @@ export default async function mountProduto(root, { code }) {
 
         <section aria-labelledby="lots-title">
           <h2 class="list-title" id="lots-title">Validade</h2>
-          <div class="group-card" data-lots></div>
+          <div data-lots></div>
         </section>
 
         <section aria-labelledby="use-title">
@@ -221,27 +221,29 @@ export default async function mountProduto(root, { code }) {
     if (!cur || !lotsHost.isConnected) return;
     const dated = lots.reduce((a, l) => a + l.qty, 0);
     const free = cur.qty - dated;
+    // Lista como nos Ajustes: uma linha por data (a que vence logo em amarelo),
+    // e as ações como linhas em destaque no fim.
     lotsHost.innerHTML = `
-      ${lots.length ? `<ul class="lots">${lots.map((l) => {
-        const n = daysUntil(l.expiresAt);
-        return `
-        <li class="lot ${n <= SOON_DAYS ? 'is-soon' : ''}">
-          <span class="lot-main">
-            <span class="lot-date">${formatDate(l.expiresAt)}</span>
-            <span class="lot-sub">${plural(l.qty, 'unidade', 'unidades')}, ${n < 0 ? 'já venceu' : n === 0 ? 'vence hoje' : n === 1 ? 'vence amanhã' : `daqui a ${n} dias`}</span>
-          </span>
-          <button type="button" class="icon-btn" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
-        </li>`;
-      }).join('')}</ul>` : ''}
-      ${lots.length && lots.length + (free > 0 ? 1 : 0) < 2 ? '' : `<p class="sheet-text">${lots.length
-        ? (free > 0
-          ? `Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} unidades sem data`}, depois a que vence antes.`
-          : 'Ao tirar, sai primeiro o que vence antes.')
-        : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>`}
-      <div class="lot-actions">
-        ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
-        ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Criar lembrete</button>' : ''}
-      </div>`;
+      <ul class="form-rows lot-rows">
+        ${lots.map((l) => {
+          const n = daysUntil(l.expiresAt);
+          const state = n < 0 ? 'is-past' : n <= SOON_DAYS ? 'is-soon' : '';
+          return `
+          <li class="form-row is-static lot-row ${state}">
+            <span class="form-row-label">
+              <span class="exp-lot-date">${formatDate(l.expiresAt)}</span>
+              <span class="exp-lot-sub">${plural(l.qty, 'unidade', 'unidades')} · ${esc(relativeDays(l.expiresAt).toLowerCase())}</span>
+            </span>
+            <button type="button" class="icon-btn exp-lot-drop" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
+          </li>`;
+        }).join('')}
+        ${!lots.length && !cur.qty ? '<li class="form-row is-static"><span class="form-row-label is-muted">Sem unidades no armário.</span></li>' : ''}
+        ${free > 0 ? `<li><button type="button" class="form-row is-action" data-add-lot>${icon('plus')}<span class="form-row-label">Marcar validade</span>${lots.length ? `<span class="form-row-value">${free} sem data</span>` : ''}</button></li>` : ''}
+        ${lots.length ? `<li><button type="button" class="form-row is-action" data-ics>${icon('calendar')}<span class="form-row-label">Lembrete no calendário</span></button></li>` : ''}
+      </ul>
+      ${lots.length && lots.length + (free > 0 ? 1 : 0) >= 2 ? `<p class="group-note">${free > 0
+        ? `Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} unidades sem data`}, depois a que vence antes.`
+        : 'Ao tirar, sai primeiro o que vence antes.'}</p>` : ''}`;
   }
 
   lotsHost.addEventListener('click', async (e) => {
@@ -260,7 +262,17 @@ export default async function mountProduto(root, { code }) {
     if (e.target.closest('[data-add-lot]')) {
       const cur = await getProduct(code);
       const free = cur.qty - lots.reduce((a, l) => a + l.qty, 0);
-      await lotSheet(cur, free);
+      const picked = await expirySheet({ free });
+      if (!picked || !picked.length) return;
+      try {
+        for (const l of picked) await addLot(code, l.qty, l.expiresAt);
+        const units = picked.reduce((a, l) => a + l.qty, 0);
+        toast(picked.length === 1
+          ? `Validade ${formatDate(picked[0].expiresAt)} marcada em ${plural(units, 'unidade', 'unidades')}.`
+          : `${picked.length} validades marcadas em ${plural(units, 'unidade', 'unidades')}.`, { duration: 3000 });
+      } catch (err) {
+        toast(err.message, { duration: 4000 });
+      }
     }
   });
 
@@ -297,46 +309,6 @@ export default async function mountProduto(root, { code }) {
 }
 
 // Dá validade a unidades que já estão no armário sem data.
-function lotSheet(p, free) {
-  return openSheet({
-    label: 'Marcar validade',
-    render(body, close) {
-      body.innerHTML = `
-        <h2 class="sheet-title">Marcar validade</h2>
-        <form class="stack" novalidate>
-          ${expiryLotsHtml({ open: false })}
-          <p class="field-error" role="alert" hidden></p>
-          <button type="submit" class="btn btn-primary">Salvar validade</button>
-        </form>`;
-      const err = $('.field-error', body);
-      const exp = bindExpiryLots(body, { total: () => free });
-      // Esta folha só serve para isso: já abre lendo a data.
-      setTimeout(() => { if (body.isConnected) exp.openField(); }, 300);
-      $('form', body).addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const lots = exp.get();
-        if (lots === null) return;
-        if (!lots.length) {
-          err.hidden = false;
-          err.textContent = 'Leia a data com a câmera ou digite.';
-          return;
-        }
-        try {
-          for (const l of lots) await addLot(p.code, l.qty, l.expiresAt);
-          const units = lots.reduce((a, l) => a + l.qty, 0);
-          toast(lots.length === 1
-            ? `Validade ${formatDate(lots[0].expiresAt)} marcada em ${plural(units, 'unidade', 'unidades')}.`
-            : `${lots.length} validades marcadas em ${plural(units, 'unidade', 'unidades')}.`, { duration: 3000 });
-          close(true);
-        } catch (e2) {
-          err.hidden = false;
-          err.textContent = e2.message;
-        }
-      });
-    },
-  });
-}
-
 function editSheet(p, focusQty = false) {
   return openSheet({
     label: 'Editar detalhes',

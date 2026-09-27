@@ -13,7 +13,7 @@
 // aceita toque depois de meio segundo.
 
 import { ocrWorker, prepareFrame, readText } from '../ocr.js';
-import { findExpiry, formatDate, expiryInputValue } from '../dates.js';
+import { findExpiry, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { $, icon, vibrate } from '../ui.js';
 
@@ -44,9 +44,15 @@ function aimBox(video, aim) {
   return { x: clamp(x), y: clamp(y), w: Math.min(w, 1 - clamp(x)), h: Math.min(h, 1 - clamp(y)) };
 }
 
-/** Monta a câmera em `host`. Resolve com AAAA-MM-DD, ou null se cancelar. */
-export function readExpiryWithCamera(host) {
-  return new Promise((resolve) => {
+/**
+ * Monta a câmera em `host`. Resolve com AAAA-MM-DD, ou null se cancelar.
+ * A promessa tem `.stop()` para desligar a câmera por fora (ao sair da página).
+ * `skip`: datas já escolhidas; não entram sozinhas de novo (a câmera ainda pode
+ * estar na mesma embalagem), mas aparecem para tocar.
+ */
+export function readExpiryWithCamera(host, { skip = [] } = {}) {
+  let stop = () => {};
+  const promise = new Promise((resolve) => {
     host.hidden = false;
     host.innerHTML = `
       <div class="viewfinder is-compact exp-vf">
@@ -57,9 +63,6 @@ export function readExpiryWithCamera(host) {
       </div>
       <div class="exp-picks" role="group" aria-label="Datas lidas">
         <p class="exp-picks-hint">As datas lidas aparecem aqui</p>
-      </div>
-      <div class="exp-cam-bar">
-        <button type="button" class="btn btn-link btn-other" data-cancel>Cancelar</button>
       </div>`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
@@ -85,7 +88,7 @@ export function readExpiryWithCamera(host) {
       btn.className = 'exp-pick is-new';
       btn.dataset.iso = iso;
       btn.dataset.born = String(performance.now());
-      btn.textContent = formatDate(iso);
+      btn.innerHTML = `${icon('calendar')}<span>${formatDate(iso)}</span>`;
       btn.setAttribute('aria-label', `Usar ${formatDate(iso)}`);
       picks.append(btn);
       requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.remove('is-new')));
@@ -111,7 +114,7 @@ export function readExpiryWithCamera(host) {
     gone.observe(document.body, { childList: true, subtree: true });
     const done = (iso) => { gone.disconnect(); finish(iso); };
 
-    $('[data-cancel]', host).addEventListener('click', () => done(null));
+    stop = () => done(null);
     torchBtn.addEventListener('click', async () => {
       const track = stream && stream.getVideoTracks()[0];
       if (!track) return;
@@ -134,7 +137,7 @@ export function readExpiryWithCamera(host) {
         const [iso, n] = ranked[0];
         const second = ranked[1] ? ranked[1][1] : 0;
         addPick(found.iso);
-        if (n >= 2 && n - second >= 2) {
+        if (n >= 2 && n - second >= 2 && !skip.includes(iso)) {
           beep('ok');
           vibrate(40);
           done(iso);
@@ -175,30 +178,6 @@ export function readExpiryWithCamera(host) {
       loop();
     })();
   });
-}
-
-/**
- * Liga o botão de câmera de um campo de validade. Também entende texto colado
- * ou vindo do "Escanear texto" do iPhone ("VAL 15/10/26 L123" vira 15/10/2026).
- */
-export function wireExpiryField(field, input) {
-  const btn = $('[data-exp-cam]', field);
-  const host = $('.exp-cam', field);
-  if (!btn || !host) return;
-  btn.addEventListener('click', async () => {
-    if (!host.hidden) return;
-    btn.hidden = true;
-    const iso = await readExpiryWithCamera(host);
-    btn.hidden = false;
-    if (!iso) return;
-    input.value = expiryInputValue(formatDate(iso));
-    // Sem focar o campo: no iPhone isso abriria o teclado à toa. O aviso de
-    // "Vence em…" já é lido pelo leitor de tela.
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-}
-
-// HTML do campo de digitar com o botão de câmera ao lado.
-export function expiryCamButton() {
-  return `<button type="button" class="icon-btn input-cam" data-exp-cam aria-label="Ler a validade com a câmera">${icon('camera')}</button>`;
+  promise.stop = () => stop();
+  return promise;
 }

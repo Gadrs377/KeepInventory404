@@ -65,6 +65,23 @@ export function formatDate(iso, withYear = true) {
   return withYear ? `${d}/${m}/${y}` : `${d}/${m}`;
 }
 
+// "18 de outubro de 2026": a data grande da confirmação, como o iPhone escreve.
+const longFmt = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+export function formatDateLong(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return longFmt.format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+// "Daqui a 21 dias", "Vence hoje", "Venceu há 3 dias": a linha embaixo da data.
+export function relativeDays(iso) {
+  const n = daysUntil(iso);
+  if (n < -1) return `Venceu há ${-n} dias`;
+  if (n === -1) return 'Venceu ontem';
+  if (n === 0) return 'Vence hoje';
+  if (n === 1) return 'Vence amanhã';
+  return `Daqui a ${n} dias`;
+}
+
 // "Venceu 12/09", "Vence hoje", "Vence amanhã", "Vence em 5 dias", "Vence 15/10"
 export function expiryText(iso) {
   const n = daysUntil(iso);

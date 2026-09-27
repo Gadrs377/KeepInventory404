@@ -9,7 +9,7 @@
 import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessArea } from '../areas.js';
-import { expiryLotsHtml, bindExpiryLots } from './expiryLots.js';
+import { expiryRowHtml, bindExpiryRow } from './expiryLots.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
 import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows, photoPickRow } from '../ui.js';
@@ -335,7 +335,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       ${head(local, local)}
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryLotsHtml({ open: !!local.med, optional: !!local.med }) : ''}
+      ${mode === 'entrada' ? expiryRowHtml() : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
       ${canAddOther ? '<button type="button" class="btn btn-link btn-other" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
@@ -349,7 +349,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
   });
   const other = $('[data-other]', body);
   if (other) other.addEventListener('click', () => newForm(ctx, { status: 'other' }));
-  expiry = bindExpiryLots(body, { total: () => step.value });
+  expiry = bindExpiryRow(body, { total: () => step.value, form: $('form', body) });
 
   onSubmit(ctx, step, async (n) => {
     if (mode === 'entrada') {
@@ -406,7 +406,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       </fieldset>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
-      ${mode === 'entrada' ? expiryLotsHtml({ open: !!info.med, optional: !!info.med }) : ''}
+      ${mode === 'entrada' ? expiryRowHtml() : ''}
       <button type="submit" class="btn btn-mode btn-lg"></button>
     </form>`;
 
@@ -424,7 +424,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     label: mode === 'contagem' ? 'Quantos tem' : 'Quantidade',
     onChange: (n) => { submit.innerHTML = actionLabel(mode, n); if (expiry) expiry.refresh(); },
   });
-  expiry = bindExpiryLots(body, { total: () => step.value });
+  expiry = bindExpiryRow(body, { total: () => step.value, form: $('form', body) });
 
   function setArea(id, fromUser = false) {
     if (fromUser) areaTouched = true;

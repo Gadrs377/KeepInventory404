@@ -583,7 +583,9 @@ function sheetMotion(sheet, body) {
   });
   ro.observe(body);
   const mo = new MutationObserver((list) => {
-    if (!settled() || !list.some((m) => m.target === body && m.addedNodes.length)) return;
+    const added = list.filter((m) => m.target === body).flatMap((m) => [...m.addedNodes]).filter((n) => n.nodeType === 1);
+    // Página nova da folha (Validade) já desliza sozinha: sem um segundo esmaecer por cima.
+    if (!settled() || !added.length || added.every((n) => n.classList.contains('sheet-page'))) return;
     body.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
   });
   mo.observe(body, { childList: true });

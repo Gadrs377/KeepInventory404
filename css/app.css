@@ -830,17 +830,6 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 /* Marcador pequeno com a mesma linguagem da etiqueta: amarelo, tracejado, calendário */
 .chip::before { content: ''; width: 12px; height: 12px; border-radius: 3px; flex: none; }
 .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-/* ---------- Produto: validades ---------- */
-
-.lots { border-top: 1px solid var(--line); }
-.lot { display: flex; align-items: center; gap: 12px; padding-block: 8px; border-bottom: 1px solid var(--line); }
-.lot-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.lot-date { font-family: var(--font-num); font-weight: 800; line-height: 1.1; }
-.lot.is-soon .lot-date { padding-inline: 6px; border-radius: var(--r-tag); background: var(--acabando); color: #161817; }
-.lot-sub { font-size: 0.8824rem; color: var(--ink-2); }
-.lots + .sheet-text { margin-top: 8px; }
-.lot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.lot-actions:empty { display: none; }
 
 /* ---------- Compras ---------- */
 
@@ -1047,7 +1036,7 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 /* ---------- Versão 3.6: movimento e detalhes como no iPhone ---------- */
 
 /* Números: Urbanist tem algarismos de largura igual, a coluna não "dança" */
-.tag, .stepper-value, .shop-qty, .cupom-total, .ticket-n, .receipt-n, .diff-delta, .lot-date { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.tag, .stepper-value, .shop-qty, .cupom-total, .ticket-n, .receipt-n, .diff-delta { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .empty-lead { letter-spacing: -0.02em; }
 
 /* Folha arremessada para baixo: continua o gesto e sai pela borda */
@@ -1563,10 +1552,8 @@ body.sheet-stack .mini-bar { opacity: 0; }
 .group-card .facts { margin: 0; border-top: 0; }
 .group-card .fact:last-child { border-bottom: 0; }
 .group-card > .btn { margin-block: 4px 12px; }
-.group-card .lot-actions:not(:empty) { padding-bottom: 12px; }
 .group-note { padding: 6px 16px 0; font-size: 0.7647rem; color: var(--ink-2); text-wrap: pretty; }
-.screen-product .history li:last-child, .screen-product .lot:last-child { border-bottom: 0; }
-.screen-product .lots { border-top: 0; }
+.screen-product .history li:last-child { border-bottom: 0; }
 .screen-product .btn-quiet { background: var(--paper); }
 
 /* Compras: "novo item" como uma linha no fim da lista */
@@ -1902,14 +1889,6 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .head-pill:active { scale: 0.96; background: color-mix(in oklab, var(--ink) 14%, transparent); }
 
 /* ---------- Validade pela câmera (leitura no aparelho) ---------- */
-/* Campo de data com o botão de câmera ao lado, como o número do cartão na Carteira */
-.input-row { display: flex; gap: 8px; align-items: stretch; }
-.input-row .input { flex: 1; min-width: 0; }
-.input-cam {
-  flex: none; width: 52px; min-height: 44px; border-radius: var(--r-control);
-  background: color-mix(in oklab, var(--mode, var(--ink)) 12%, transparent); color: var(--mode, var(--ink));
-}
-.input-cam .icon { width: 22px; height: 22px; }
 .exp-cam { margin-top: 10px; }
 .exp-vf { min-height: 190px; }
 .exp-vf .aim { top: 50%; height: 38%; }
@@ -1922,7 +1901,6 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
   background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
   font-size: 0.8824rem; font-weight: 600; text-align: center; text-wrap: balance;
 }
-.exp-cam-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; } }
 
 /* ---------- Texto do tamanho escolhido no iPhone (Dynamic Type) ----------
@@ -1932,7 +1910,6 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .product-hero .page-title { font-size: calc(24px + (1rem - 17px) * 0.8); }
 .sheet-title { font-size: calc(30px + (1rem - 17px) * 0.6); }
 .empty-lead { font-size: calc(28px + (1rem - 17px) * 0.6); }
-.lot-date { font-size: calc(28px + (1rem - 17px) * 0.6); }
 .nota-store { font-size: calc(24px + (1rem - 17px) * 0.8); }
 /* Texto grande: o que fica lado a lado vira uma coluna, em vez de espremer */
 .text-large .summary { grid-template-columns: 1fr; }
@@ -2067,40 +2044,86 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .suggest-photo .thumb img { object-fit: cover; }
 .suggest-photo .row-chevron { flex: none; width: 18px; height: 18px; color: var(--ink-2); }
 
-/* ---------- Versão 3.28: validade em duas etapas ---------- */
+/* ---------- Versão 3.29: marcar validade como num app da Apple ---------- */
+
+/* Linhas de formulário (como nos Ajustes): bloco arredondado, linhas de 52 px,
+   fio entre elas começando depois da margem. Usadas na linha "Validade" da
+   folha de guardar e na lista de validades da página do produto. */
+.form-rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; background: var(--shelf); border-radius: 20px; overflow: hidden; }
+.form-rows > li { position: relative; }
+.form-rows > li + li::before { content: ''; position: absolute; top: 0; left: 16px; right: 0; height: 1px; background: var(--line); }
+.form-row {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 52px; padding: 10px 16px;
+  border: 0; background: none; color: var(--ink); text-align: start;
+  font: inherit; font-size: 1rem; cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+.form-row:active:not(.is-static) { background: color-mix(in oklab, var(--ink) 8%, transparent); }
+.form-row.is-static { cursor: default; padding-inline-end: 4px; }
+.form-row-icon { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--mode, var(--ink)); color: var(--on-mode, var(--paper)); }
+.form-row-icon .icon { width: 18px; height: 18px; }
+.form-row-label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.form-row-label.is-muted { color: var(--ink-2); }
+.form-row-value { flex: none; color: var(--ink-2); font-weight: 400; font-variant-numeric: tabular-nums; }
+.form-row.has-value .form-row-value { color: var(--ink); font-weight: 700; }
+.form-row-chevron { flex: none; width: 16px; height: 16px; color: var(--ink-2); }
+.form-row.is-action { color: var(--mode, var(--entrada)); font-weight: 700; }
+.form-row.is-action > .icon { flex: none; width: 20px; height: 20px; }
+.form-rows + .group-note { padding: 6px 16px 0; }
+
+/* Uma data por linha; a que vence logo leva o amarelo de "vencendo" */
+.exp-lot-date { font-family: var(--font-num); font-weight: 800; font-size: 1.0588rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.exp-lot-sub { font-size: 0.8824rem; color: var(--ink-2); }
+.lot-row.is-soon .exp-lot-date { align-self: flex-start; padding-inline: 6px; border-radius: 6px; background: var(--acabando); color: #161817; }
+.lot-row.is-past .exp-lot-sub { color: var(--danger); }
+.exp-lot-drop { flex: none; color: var(--ink-2); }
+.exp-lot-drop .icon { width: 20px; height: 20px; }
+
+/* Páginas dentro da folha (Validade), com "‹" no lugar do X */
+.sheet-page { display: flex; flex-direction: column; gap: 14px; }
+
+/* Leitura: a câmera grande, as datas lidas logo embaixo e "Digitar a data" */
+.exp-scan .exp-cam { margin: 0; }
+.exp-scan .exp-vf { min-height: 0; aspect-ratio: 4 / 3; border-radius: 22px; }  /* folha 38 − margem 16 */
+.exp-type-btn { align-self: center; }
+
 /* Datas lidas: três vagas fixas, reservadas desde o início. A primeira data
    ocupa a primeira vaga, a segunda a segunda; nada muda de lugar nem de tamanho
-   depois, para não fugir do dedo. Só aparecem, com um esmaecer curto. */
+   depois, para não fugir do dedo. Cápsulas claras, como as datas que o iPhone
+   reconhece num texto: não competem com o botão principal. */
 .exp-picks {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
-  min-height: 48px; margin-top: 10px; align-items: stretch;
+  min-height: 44px; margin-top: 12px; align-items: stretch;
 }
-.exp-picks-hint {
-  grid-column: 1 / -1; align-self: center; margin: 0;
-  font-size: 0.8235rem; color: var(--ink-2); text-align: center;
-}
+.exp-picks-hint { grid-column: 1 / -1; align-self: center; margin: 0; font-size: 0.8235rem; color: var(--ink-2); text-align: center; }
 .exp-pick {
-  min-height: 48px; padding: 0 6px; border: 0; border-radius: var(--r-control);
-  background: var(--ink); color: var(--paper);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 8px; border: 0; border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink);
   font-family: var(--font-num); font-weight: 800; font-size: 0.9412rem; font-variant-numeric: tabular-nums;
   white-space: nowrap; cursor: pointer;
-  transition-property: opacity, scale; transition-duration: 200ms, 150ms; transition-timing-function: var(--ease);
+  transition-property: opacity, scale, background-color; transition-duration: 200ms, 150ms, 150ms; transition-timing-function: var(--ease);
 }
+.exp-pick .icon { flex: none; width: 16px; height: 16px; }
 .exp-pick.is-new { opacity: 0; }
-.exp-pick:active { scale: 0.96; }
-.exp-cam-bar { justify-content: center; }
+.exp-pick:active { scale: 0.96; background: color-mix(in oklab, var(--ink) 14%, transparent); }
+@media (max-width: 374px) { .exp-pick .icon { display: none; } }
+.text-large .exp-picks { grid-template-columns: 1fr; }
 
-/* Depois da data: quantas vencem nela */
-.exp-howmany { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding: 14px 16px; border-radius: 20px; background: color-mix(in oklab, var(--ink) 5%, transparent); }
-.exp-howmany .field-label { margin: 0; }
-.exp-howmany .stepper-host { width: 200px; }
-.exp-howmany [data-exp-more] { align-self: flex-start; }
-
-/* Datas já confirmadas nesta entrada */
-.exp-lot-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.exp-lot {
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
-  min-height: 48px; padding-inline: 14px 4px; border-radius: 16px; background: color-mix(in oklab, var(--ink) 5%, transparent);
+/* Confirmação: a data por extenso, grande, e quantas vencem nela */
+.exp-confirm { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-block: 8px 4px; text-align: center; }
+.exp-confirm-icon {
+  display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 8px; border-radius: 50%;
+  background: color-mix(in oklab, var(--mode, var(--ink)) 14%, transparent); color: var(--mode, var(--ink));
 }
-.exp-lot-date { font-family: var(--font-num); font-weight: 800; font-variant-numeric: tabular-nums; }
-.exp-lot-qty { color: var(--ink-2); font-size: 0.8824rem; }
+.exp-confirm-icon .icon { width: 28px; height: 28px; }
+.exp-confirm-icon.is-past { background: color-mix(in oklab, var(--danger) 14%, transparent); color: var(--danger); }
+.exp-confirm-date { margin: 0; font-family: var(--font-num); font-weight: 800; font-size: calc(26px + (1rem - 17px) * 0.6); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
+.exp-confirm-rel { margin: 0; color: var(--ink-2); text-wrap: balance; }
+.exp-confirm-rel.is-past { color: var(--danger); }
+.exp-howmany { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; border-radius: 22px; background: var(--shelf); }
+.exp-howmany-label { margin: 0; font-weight: 700; text-wrap: balance; text-align: center; }
+.exp-howmany .stepper-host { width: 220px; }
+.exp-howmany-of { margin: -4px 0 0; font-size: 0.8235rem; color: var(--ink-2); }
+.exp-actions { display: flex; flex-direction: column; gap: 4px; }
