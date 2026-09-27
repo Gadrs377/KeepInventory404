@@ -995,3 +995,13 @@ três movimentos juntos).
   nunca encostar na borda (medido: pelo menos 13 px em 320 px com três datas).
 - Quando chega uma data, ela cresce e as outras encolhem devagar (300 ms), e
   por meio segundo nenhuma aceita toque, para o dedo não acertar a errada.
+
+## Versão 3.32: voltar para onde estava
+
+- Cada tela guarda até onde estava rolada. Voltar (botão "‹", gesto da borda,
+  fechar o leitor, ou a aba) devolve a mesma posição; abrir uma tela nova
+  começa do topo. O roteador espera a lista sair de "carregando" antes de
+  rolar, então a troca animada já mostra a lista no lugar certo.
+- Voltando de um produto, a linha dele fica marcada e apaga devagar (700 ms),
+  como a linha tocada numa lista do iPhone; a foto, o nome e a quantidade
+  "encolhem" de volta nela.

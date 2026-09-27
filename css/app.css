@@ -2146,3 +2146,13 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-howmany .stepper-host { width: 220px; }
 .exp-howmany-of { margin: -4px 0 0; font-size: 0.8235rem; color: var(--ink-2); }
 .exp-actions { display: flex; flex-direction: column; gap: 4px; }
+
+/* ---------- Versão 3.32: voltar para onde estava ---------- */
+/* A linha do produto de onde se voltou fica marcada e apaga devagar (a lista
+   também volta para a mesma posição, em js/app.js) */
+.row-item::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in oklab, var(--ink) 9%, transparent);
+  opacity: 0; transition: opacity 700ms ease-out;
+}
+.row-item.is-return::after { opacity: 1; transition: none; }

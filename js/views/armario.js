@@ -28,7 +28,9 @@ function markHero(li) {
   }
 }
 
-export default function mountArmario(root) {
+export default function mountArmario(root, m = {}) {
+  // Voltando de um produto (botão, gesto da borda ou fechar o leitor)?
+  const returning = m.nav === 'pop' || m.nav === 'fade';
   root.innerHTML = `
     <div class="screen screen-home has-tabbar">
       <header class="home-head">
@@ -181,11 +183,17 @@ export default function mountArmario(root) {
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
     shelf.removeAttribute('aria-busy');
 
-    // Voltando do produto: a linha dele recebe os nomes para a página "encolher" nela.
+    // Voltando do produto: a linha dele recebe os nomes para a página "encolher"
+    // nela e fica marcada um instante, apagando devagar, como a linha tocada
+    // numa lista do iPhone. É assim que se vê de onde se saiu.
     let hero = '';
     try { hero = sessionStorage.getItem('ki.hero') || ''; sessionStorage.removeItem('ki.hero'); } catch { /* sem armazenamento */ }
-    const heroLi = hero && shelf.querySelector(`.row-item[data-code="${CSS.escape(hero)}"]`);
-    if (heroLi) markHero(heroLi);
+    const heroLi = returning && hero && shelf.querySelector(`.row-item[data-code="${CSS.escape(hero)}"]`);
+    if (heroLi) {
+      markHero(heroLi);
+      heroLi.classList.add('is-return');
+      setTimeout(() => heroLi.classList.remove('is-return'), 450);
+    }
 
     if (refocus) {
       const again = shelf.querySelector(`[data-minus="${CSS.escape(refocus)}"]`);

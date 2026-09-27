@@ -220,5 +220,5 @@ A interface precisa aguentar o texto aumentado até **200%**.
 | Conteúdo não aparece atrás das barras | Barras presas no topo com vidro quase opaco quando a lista passa por baixo | Corrigido na 3.25 |
 | Desfazer sem travar a tela | Aviso com Desfazer some sozinho em 8 s e espera enquanto o dedo ou o foco estiver nele; sem X | Corrigido na 3.25 |
 | Permissão na hora de usar | Câmera pedida ao abrir o leitor | Ok |
-| Voltar onde parou | O app instalado abre na última aba usada | Corrigido na 3.23 |
+| Voltar onde parou | O app instalado abre na última aba usada; voltar para uma lista devolve a mesma posição e marca a linha de onde se saiu | Corrigido na 3.23 e 3.32 |
 | Atalhos na tela inicial | `manifest` tem atalhos, mas o iPhone não mostra para app web | Limite da plataforma |

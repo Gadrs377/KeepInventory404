@@ -52,9 +52,25 @@ function navKind(from, to) {
   return 'tab';
 }
 let prevPath = null;
+// Onde cada tela estava rolada: voltar para ela devolve a mesma posição, como
+// nas listas do iPhone (a do Armário, a de Compras…). Abrir uma tela nova
+// começa do topo.
+const scrollMem = new Map();
 // Voltar pelo gesto da borda: a tela já saiu com o dedo, a de trás só esmaece.
 let swipedBack = false;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+// A lista chega um instante depois da tela (vem do banco do aparelho): espera
+// ela sair de "carregando" (aria-busy) e ter altura para a posição guardada,
+// no máximo 700 ms, e só então rola. Assim a troca animada já mostra a tela
+// no lugar certo.
+async function settleScroll(y) {
+  if (!y) { window.scrollTo(0, 0); return; }
+  const until = performance.now() + 700;
+  const ready = () => !root.querySelector('[aria-busy="true"]') && document.documentElement.scrollHeight - window.innerHeight >= y;
+  while (!ready() && performance.now() < until) await new Promise((r) => setTimeout(r, 16));
+  window.scrollTo(0, y);
+}
 
 async function route() {
   const id = ++navId;
@@ -66,6 +82,8 @@ async function route() {
   }
   const kind = swipedBack ? 'fade' : navKind(prevPath, path);
   swipedBack = false;
+  if (prevPath !== null) scrollMem.set(prevPath, window.scrollY);
+  const restoreY = kind === 'push' || kind === 'up' ? 0 : scrollMem.get(path) || 0;
   prevPath = path;
   rememberTab(path);
   closeMenu();
@@ -80,7 +98,7 @@ async function route() {
     cleanup = null;
     const [m, view] = match;
     document.body.dataset.screen = view === mountArmario ? 'home' : 'other';
-    const result = await view(root, m);
+    const result = await view(root, Object.assign(m, { nav: kind }));
     if (id !== navId) {
       if (typeof result === 'function') result();
       return;
@@ -90,7 +108,7 @@ async function route() {
     cleanup = () => { offTitle(); if (typeof result === 'function') result(); };
     const heading = root.querySelector('h1');
     if (heading) document.title = `${heading.textContent} | Armário`;
-    window.scrollTo(0, 0);
+    await settleScroll(restoreY);
     refreshShopBadge();
   }
 
