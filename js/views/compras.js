@@ -203,7 +203,16 @@ export default function mountCompras(root) {
     }
     saveState(state);
     render();
-    lists.querySelector(box.dataset.code ? `[data-code="${CSS.escape(box.dataset.code)}"]` : `[data-extra="${box.dataset.extra}"]`)?.focus();
+    const fresh = lists.querySelector(box.dataset.code ? `[data-code="${CSS.escape(box.dataset.code)}"]` : `[data-extra="${box.dataset.extra}"]`);
+    if (fresh) {
+      fresh.focus();
+      // A lista foi redesenhada: o visto nasce escondido e aparece com transição,
+      // só na caixa que acabou de ser marcada.
+      if (fresh.checked) {
+        fresh.classList.add('is-fresh');
+        requestAnimationFrame(() => requestAnimationFrame(() => fresh.classList.remove('is-fresh')));
+      }
+    }
   });
 
   lists.addEventListener('click', (e) => {

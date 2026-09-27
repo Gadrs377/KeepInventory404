@@ -845,3 +845,33 @@ termos fixos do design system (seção 8). Principais trocas:
 - **Mais**: "Instalar no celular" some quando o app já está instalado; "Ler
   nota fiscal" usa o mesmo ícone de QR Code da tela inicial.
 - Contagem: "No app: 6" virou "No armário: 6".
+
+## Versão 3.26: acabamento e simplificação
+
+**Mais simples**
+- Página do produto: a seção "Corrigir a quantidade" saiu. A quantidade se
+  corrige na folha **Editar**, que agora começa por "Quantidade no armário";
+  tocar no número grande abre essa folha já no número. Continua com Desfazer.
+- "Detalhes" mostra só o código de barras e onde fica (marca e tamanho já
+  estão embaixo do nome).
+- Validade: a frase "Ao tirar, sai primeiro…" só aparece quando há mais de uma
+  data (ou unidades sem data) para escolher.
+- Mais: "Ler nota fiscal" saiu (fica no botão "Nota fiscal" do Armário).
+
+**Acabamento**
+- Raios concêntricos: cartões de grupo 28 px, listas de Mais 20 px, blocos do
+  Armário 26 px, folhas 38 px, aviso com ícone 27 px, botões dentro de cartão 12 px.
+- Visto da lista de compras aparece com escala 0,25 → 1, desfoque 4 → 0 e
+  opacidade, só na caixa que acabou de ser marcada.
+- "+1/−1" do arrastar a linha aparece do mesmo jeito.
+- Pressionar: caixa de marcar e "Rápido" encolhem para 0,96 (antes 0,88 e 0,94).
+- "Remover do armário" com fundo vermelho claro, sem borda.
+- Abas de ambiente e Entrada/Saída com área de toque de 44 px.
+- Alto contraste do Windows: a aba atual volta a ter o fundo de destaque.
+
+**Código**
+- CSS de 2141 para 2055 linhas: 159 declarações que outra regra já
+  sobrescrevia, 29 regras vazias e 13 classes sem uso (filtros antigos em
+  pílula, X do aviso, interruptor antigo). Conferido comparando o estilo
+  calculado de todos os elementos em 54 estados (claro, escuro e letra
+  grande): nenhuma diferença.

@@ -59,7 +59,7 @@ export default async function mountProduto(root, { code }) {
 
         <div class="quick-actions">
           <button type="button" class="btn btn-quiet btn-stack" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
-          <div class="hero-qty">${tag(p.qty, `${tagState(p)} tag-lg`)}<span class="hero-qty-label">no armário</span></div>
+          <button type="button" class="hero-qty" data-edit-qty aria-label="Corrigir a quantidade">${tag(p.qty, `${tagState(p)} tag-lg`)}<span class="hero-qty-label">no armário</span></button>
           <button type="button" class="btn btn-quiet btn-stack" data-use="1">${icon('plus')}Guardar 1</button>
         </div>
 
@@ -97,24 +97,11 @@ export default async function mountProduto(root, { code }) {
           </div>
         </section>
 
-        <section class="stock-fix" aria-labelledby="stock-title">
-          <h2 class="list-title" id="stock-title">Corrigir a quantidade</h2>
-          <div class="group-card">
-            <div class="stock-fix-row">
-              <div class="stepper-host stepper-sm" data-qty></div>
-              <button type="button" class="btn btn-quiet" data-fix hidden>${icon('check')}<span></span></button>
-            </div>
-          </div>
-          <p class="group-note">Use quando a quantidade não bater com o que tem no armário.</p>
-        </section>
-
         <section aria-labelledby="details-title">
           <h2 class="list-title" id="details-title">Detalhes</h2>
           <div class="group-card">
             <dl class="facts">
               <div class="fact"><dt>Código de barras</dt><dd class="fact-num">${esc(barcodes.length ? barcodes.join(', ') : 'Sem código')}</dd></div>
-              ${p.brand && !p.med ? `<div class="fact"><dt>Marca</dt><dd>${esc(p.brand)}</dd></div>` : ''}
-              ${p.size ? `<div class="fact"><dt>Tamanho</dt><dd>${esc(p.size)}</dd></div>` : ''}
               <div class="fact"><dt>Onde fica</dt><dd>${esc(areaLabel(p.area))}</dd></div>
             </dl>
           </div>
@@ -131,22 +118,8 @@ export default async function mountProduto(root, { code }) {
   const navIo = new IntersectionObserver(([e]) => screenEl.classList.toggle('is-scrolled', !e.isIntersecting && e.boundingClientRect.top < 60), { rootMargin: '-56px 0px 0px 0px' });
   navIo.observe(heroTitle);
 
-  // Correção de estoque separada dos detalhes: só grava quando a pessoa confirma.
-  let currentQty = p.qty;
-  const fixBtn = $('[data-fix]', root);
-  const qtyStep = stepper($('[data-qty]', root), {
-    value: p.qty, min: 0, max: 9999, label: 'Quantidade no armário',
-    onChange: (n) => {
-      if (!fixBtn) return;
-      fixBtn.hidden = n === currentQty;
-      $('span', fixBtn).textContent = `Corrigir para ${n}`;
-    },
-  });
-  // Mostra a quantidade nova no topo, no botão Tirar 1 e no seletor de correção.
+  // Mostra a quantidade nova no meio e no botão Tirar 1.
   function showQty(product, dir = '') {
-    currentQty = product.qty;
-    qtyStep.set(product.qty);
-    fixBtn.hidden = true;
     $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
     const pills = $('.hero-pills', root);
     if (pills) pills.innerHTML = stockPill(product);
@@ -190,37 +163,28 @@ export default async function mountProduto(root, { code }) {
     });
   }
 
-  fixBtn.addEventListener('click', async () => {
-    const target = qtyStep.value;
-    try {
-      const { product, movement } = await setStock(code, target, 'ajuste');
-      currentQty = product.qty;
-      fixBtn.hidden = true;
-      $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg`);
-      toast(`Quantidade corrigida para ${product.qty}.`, {
-        action: movement ? 'Desfazer' : undefined,
-        onAction: async () => {
-          try {
-            const restored = await undoMovement(movement.id);
-            currentQty = restored.qty;
-            qtyStep.set(restored.qty);
-            $('.hero-qty .tag', root).outerHTML = tag(restored.qty, `${tagState(restored)} tag-lg`);
-            toast('Correção desfeita.', { duration: 2500 });
-          } catch (err) {
-            toast(err.message, { duration: 4000 });
-          }
-        },
-      });
-    } catch (err) {
-      toast(err.message);
-    }
-  });
+  // Quantidade corrigida na folha Editar: grava como ajuste, com Desfazer.
+  async function fixQty(target) {
+    const { product, movement } = await setStock(code, target, 'ajuste');
+    showQty(product);
+    toast(`Quantidade corrigida para ${product.qty}.`, {
+      action: movement ? 'Desfazer' : undefined,
+      onAction: async () => {
+        try {
+          showQty(await undoMovement(movement.id));
+          toast('Correção desfeita.', { duration: 2500 });
+        } catch (err) {
+          toast(err.message, { duration: 4000 });
+        }
+      },
+    });
+  }
 
-  // Detalhes numa folha "Editar", como nos Contatos do iPhone: a página fica
-  // para consultar, e o que é raro (renomear, apagar) sai do caminho.
-  $('[data-edit]', root).addEventListener('click', async () => {
+  // Tudo o que se corrige numa folha "Editar", como nos Contatos do iPhone: a
+  // página fica para consultar. Tocar no número grande abre a mesma folha.
+  async function openEdit(focusQty) {
     const cur = (await getProduct(code)) || p;
-    const r = await editSheet(cur);
+    const r = await editSheet(cur, focusQty);
     if (r === 'delete') {
       const ok = await confirmSheet({
         title: `Remover ${cur.name}?`,
@@ -233,11 +197,19 @@ export default async function mountProduto(root, { code }) {
       toast(`${cur.name} removido.`, { duration: 3000 });
       location.hash = home.href;
     } else if (r) {
-      toast('Detalhes salvos.', { duration: 2500 });
-      // Desenha a página de novo pelo roteador (limpa os ouvintes da versão antiga).
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      const qtyChanged = r.qty !== cur.qty;
+      if (qtyChanged) {
+        try { await fixQty(r.qty); } catch (err) { toast(err.message); return; }
+      }
+      if (r.details) {
+        if (!qtyChanged) toast('Detalhes salvos.', { duration: 2500 });
+        // Desenha a página de novo pelo roteador (limpa os ouvintes da versão antiga).
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      }
     }
-  });
+  }
+  $('[data-edit]', root).addEventListener('click', () => openEdit(false));
+  $('[data-edit-qty]', root).addEventListener('click', () => openEdit(true));
 
   // ---------- Validades ----------
   const lotsHost = $('[data-lots]', root);
@@ -261,11 +233,11 @@ export default async function mountProduto(root, { code }) {
           <button type="button" class="icon-btn" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
         </li>`;
       }).join('')}</ul>` : ''}
-      <p class="sheet-text">${lots.length
+      ${lots.length && lots.length + (free > 0 ? 1 : 0) < 2 ? '' : `<p class="sheet-text">${lots.length
         ? (free > 0
           ? `Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} unidades sem data`}, depois a que vence antes.`
           : 'Ao tirar, sai primeiro o que vence antes.')
-        : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>
+        : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>`}
       <div class="lot-actions">
         ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
         ${lots.length ? '<button type="button" class="btn btn-quiet btn-sm" data-ics>' + icon('calendar') + 'Criar lembrete</button>' : ''}
@@ -382,13 +354,17 @@ function lotSheet(p, free) {
   });
 }
 
-function editSheet(p) {
+function editSheet(p, focusQty = false) {
   return openSheet({
     label: 'Editar detalhes',
     render(body, close) {
       body.innerHTML = `
         <h2 class="sheet-title">Editar</h2>
         <form class="stack" novalidate>
+          <div class="field">
+            <span class="field-label">Quantidade no armário</span>
+            <div class="stepper-host stepper-sm" data-qty></div>
+          </div>
           <label class="field"><span class="field-label">Nome</span>
             <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
           <div class="field-row">
@@ -414,21 +390,26 @@ function editSheet(p) {
             <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
           </div>
         </form>`;
+      const qtyStep = stepper($('[data-qty]', body), { value: p.qty, min: 0, max: 9999, label: 'Quantidade no armário' });
       const minStep = stepper($('[data-min]', body), { value: p.minQty, min: 0, max: 999, label: 'Avisar com' });
+      if (focusQty) setTimeout(() => $('[data-qty] .stepper-value', body)?.focus({ preventScroll: true }), 350);
       const err = $('.field-error', body);
       $('[data-delete]', body).addEventListener('click', () => close('delete'));
       $('form', body).addEventListener('submit', async (e) => {
         e.preventDefault();
         const val = (n) => $(`[name=${n}]`, body).value;
+        const fields = {
+          name: val('name'),
+          brand: val('brand'),
+          size: val('size'),
+          minQty: minStep.value,
+          area: $('input[name=area]:checked', body)?.value,
+        };
+        const details = fields.name.trim() !== p.name || fields.brand !== (p.brand || '') || fields.size !== (p.size || '')
+          || fields.minQty !== p.minQty || fields.area !== (p.area || 'cozinha');
         try {
-          await updateProduct(p.code, {
-            name: val('name'),
-            brand: val('brand'),
-            size: val('size'),
-            minQty: minStep.value,
-            area: $('input[name=area]:checked', body)?.value,
-          });
-          close('saved');
+          if (details) await updateProduct(p.code, fields);
+          close({ details, qty: qtyStep.value });
         } catch (e2) {
           err.hidden = false;
           err.textContent = e2.message;

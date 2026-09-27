@@ -27,7 +27,6 @@ export default async function mountDados(root) {
       <main class="content stack">
         <ul class="group" aria-label="Atalhos">
           <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
-          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('qrCode')}</span><span class="group-label">Ler nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
         </ul>
 
         <h2 class="list-title">Backup</h2>
@@ -60,12 +59,6 @@ export default async function mountDados(root) {
       </main>
       ${tabBar('mais')}
     </div>`;
-
-  // Importar nota: abre o leitor já no modo QR Code (colar o link fica lá).
-  $('[data-nota]', root).addEventListener('click', () => {
-    try { sessionStorage.setItem('ki.qr', '1'); } catch { /* sem armazenamento */ }
-    location.hash = '#/entrada';
-  });
 
   $('[data-sound]', root).addEventListener('change', (e) => {
     setSoundEnabled(e.target.checked);
