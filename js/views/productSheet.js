@@ -11,9 +11,9 @@ import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getPro
 import { AREAS, guessArea } from '../areas.js';
 import { parseExpiry, expiryInputValue, formatDate, daysUntil } from '../dates.js';
 import { wireExpiryField, expiryCamButton } from './expiryCam.js';
-import { photoToDataUrl } from '../photo.js';
+import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
-import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows } from '../ui.js';
+import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows, photoPickRow } from '../ui.js';
 
 const ACTION = {
   entrada: (n) => `Guardar ${n}`,
@@ -503,11 +503,14 @@ async function newForm(ctx, result, { photo = null } = {}) {
   let suggestions = [];
   let timer = 0;
   let ctrl = null;
+  // O que a foto leu (nome, marca, tamanho, miniatura), se houve foto.
+  let fromPhoto = null;
+  const photoRow = (alone) => (fromPhoto && result.status !== 'from-photo' ? photoPickRow(fromPhoto, alone) : '');
 
   function showSuggestions(items, query, from = 'lojas') {
     suggestions = items;
     const mine = noCode && query ? matchLocal(locals, query).slice(0, 3) : [];
-    list.hidden = !items.length && !mine.length;
+    list.hidden = !items.length && !mine.length && !photoRow();
     list.innerHTML = mine.map((p) => localRow(p)).join('') + items.map((p, i) => `
       <li>
         <button type="button" class="pick-row suggest-row" data-i="${i}">
@@ -517,11 +520,28 @@ async function newForm(ctx, result, { photo = null } = {}) {
             <span class="row-sub">${subtitle(p) || '&nbsp;'}</span>
           </span>
         </button>
-      </li>`).join('');
+      </li>`).join('') + photoRow(!items.length && !mine.length);
     const n = items.length + mine.length;
     status.textContent = n
       ? `${plural(n, 'sugestão', 'sugestões')}${mine.length ? ', primeiro o que já está no armário' : ` ${from === 'foto' ? 'pela foto' : 'das lojas'}`}.`
-      : `Nada encontrado para “${query}”. Dá para salvar só com o nome.`;
+      : `Nada encontrado para “${query}”. ${fromPhoto ? 'Dá para usar o que a foto leu.' : 'Dá para salvar só com o nome.'}`;
+  }
+
+  // Usa o que a foto leu: nome, marca, tamanho e a própria foto como miniatura.
+  function usePhoto(auto = false) {
+    info = { ...fromPhoto };
+    result = { status: 'from-photo', info };
+    nameInput.value = info.name;
+    nameInput.removeAttribute('aria-invalid');
+    nameError.hidden = true;
+    list.hidden = true;
+    status.textContent = '';
+    setArea(guessArea(info));
+    headHost.innerHTML = head({ ...info, code: barcode }, null);
+    $('[data-msg]', body).textContent = auto
+      ? 'As lojas não têm esse produto. Nome, marca e tamanho vieram da foto: confira antes de salvar.'
+      : 'Nome, marca e tamanho vieram da foto. Confira antes de salvar.';
+    submit.focus({ preventScroll: true });
   }
 
   async function runSearch(query) {
@@ -559,6 +579,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
   });
 
   list.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-photo-use]')) { usePhoto(); return; }
     const localBtn = e.target.closest('[data-local]');
     if (localBtn) {
       const p = locals.find((x) => x.code === localBtn.dataset.local);
@@ -601,13 +622,20 @@ async function newForm(ctx, result, { photo = null } = {}) {
       status.textContent = 'Lendo a embalagem. Leva uns 5 segundos.';
       list.hidden = true;
       try {
-        const read = await identifyPhoto(await photoToDataUrl(file));
+        const [read, mini] = await Promise.all([identifyPhoto(await photoToDataUrl(file)), photoThumb(file).catch(() => '')]);
         if (!body.isConnected) return;
-        const guess = [read.brand, read.product, read.variant, read.size].filter(Boolean).join(' ');
-        if (guess && !nameInput.value.trim()) nameInput.value = guess.charAt(0).toLocaleUpperCase('pt-BR') + guess.slice(1);
-        setArea(guessArea({ name: `${read.product} ${read.variant}`, brand: read.brand }));
-        if (read.results.length) showSuggestions(read.results, guess, 'foto');
-        else status.textContent = guess ? `A foto parece ser “${guess}”, mas as lojas não têm. Confira o nome e salve.` : 'Não deu para ler a embalagem. Tente outra foto, mais de perto e com luz, ou digite o nome.';
+        fromPhoto = photoProduct(read, mini);
+        if (result.status === 'from-photo') { info = {}; result = { status: 'notfound', info }; }
+        if (fromPhoto && !nameInput.value.trim()) nameInput.value = fromPhoto.name;
+        if (fromPhoto) setArea(guessArea(fromPhoto));
+        // Lojas acharam: a lista mostra, e no fim dá para usar o que a foto leu.
+        // Não acharam: o que a foto leu é a única opção e já entra no formulário.
+        if (read.results.length) {
+          showSuggestions(read.results, fromPhoto ? fromPhoto.name : '', 'foto');
+          if (fromPhoto) $('[data-msg]', body).textContent = 'Toque no produto certo ou, no fim da lista, use o que a foto leu.';
+        }
+        else if (fromPhoto) usePhoto(true);
+        else status.textContent = 'Não deu para ler a embalagem. Tente outra foto, mais de perto e com luz, ou digite o nome.';
       } catch {
         if (body.isConnected) status.textContent = 'Não deu para enviar a foto agora. Confira a internet ou digite o nome.';
       } finally {
@@ -652,14 +680,20 @@ async function newForm(ctx, result, { photo = null } = {}) {
     const expiresAt = mode === 'entrada' ? expiry.get() : '';
     if (expiresAt === null) return undefined;
     const id = barcode.startsWith('SEM-') ? barcode : await newProductId(barcode);
+    if (fromPhoto && result.status !== 'found' && result.status !== 'from-photo' && nameInput.value.trim() === fromPhoto.name) {
+      info = { ...fromPhoto };
+      result = { status: 'from-photo', info };
+    }
     const { ean, ...rest } = info;
     const newInfo = {
       ...(result.status === 'other' ? {} : rest),
       name: nameInput.value.trim(),
       area,
       barcodes: barcode.startsWith('SEM-') ? [] : [barcode],
-      source: result.status === 'found' ? (info.source || 'off') : 'manual',
+      source: result.status === 'found' ? (info.source || 'off') : result.status === 'from-photo' ? 'foto' : 'manual',
     };
+    // Remédio nunca guarda foto (regra da Anvisa).
+    if (area === 'remedios') newInfo.image = '';
     if (mode === 'entrada') return { kind: 'entrada', ...(await addStock(id, n, newInfo, expiresAt)), n };
     const product = await ensureProduct(id, newInfo);
     await setCounted(id, n);

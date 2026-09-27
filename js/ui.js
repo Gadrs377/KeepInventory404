@@ -63,6 +63,23 @@ export function thumb(p, size = 'sm') {
   return `<span class="thumb thumb-${size}${med ? ' thumb-med' : ''}" aria-hidden="true">${icon(med ? 'pill' : 'package')}${img}</span>`;
 }
 
+// Fim da lista de sugestões quando houve foto: nenhuma serve? Usa o que a foto
+// leu. A própria foto aparece, com o nome lido embaixo, para conferir antes.
+export function photoPickRow(p, alone = false) {
+  return `
+    ${alone ? '' : '<li class="pick-caption" aria-hidden="true">Nenhuma dessas?</li>'}
+    <li>
+      <button type="button" class="pick-row suggest-row suggest-photo" data-photo-use>
+        ${thumb(p)}
+        <span class="row-main">
+          <span class="row-name">Usar o que a foto leu</span>
+          <span class="row-sub">${esc(p.name)}</span>
+        </span>
+        ${icon('chevron', 'row-chevron')}
+      </button>
+    </li>`;
+}
+
 // Marca e tamanho. Em remédio, o princípio ativo vem antes (o nome comercial
 // não diz o que é), a não ser que o nome já seja o princípio ativo (genérico).
 export function subtitle(p) {

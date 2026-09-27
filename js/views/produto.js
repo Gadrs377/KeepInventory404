@@ -2,14 +2,14 @@
 
 import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
-import { photoToDataUrl } from '../photo.js';
+import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, expiryInputValue, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
 import { wireExpiryField, expiryCamButton } from './expiryCam.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar } from '../ui.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -53,7 +53,7 @@ export default async function mountProduto(root, { code }) {
             <h1 class="page-title">${esc(p.name)}</h1>
             ${subtitle(p) ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
-            ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
+            ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' || p.source === 'foto' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
         </section>
 
@@ -445,6 +445,7 @@ function fixNameSheet(p) {
       const list = $('.suggest', body);
       const camHost = $('.fix-cam', body);
       let items = [];
+      let fromPhoto = null; // o que a foto leu, para o fim da lista
       const busy = (text) => { spinner.hidden = false; status.textContent = text; list.hidden = true; };
       const done = (text) => { spinner.hidden = true; status.textContent = text; };
       const show = (found, from) => {
@@ -453,9 +454,11 @@ function fixNameSheet(p) {
           <li><button type="button" class="pick-row suggest-row" data-i="${i}">
             ${thumb(x)}
             <span class="row-main"><span class="row-name">${esc(x.name)}</span><span class="row-sub">${subtitle(x) || '&nbsp;'}</span></span>
-          </button></li>`).join('');
-        list.hidden = !items.length;
-        done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}.` : `Nada encontrado ${from}. Leia o código ou fotografe a embalagem.`);
+          </button></li>`).join('') + (fromPhoto ? photoPickRow(fromPhoto, !items.length) : '');
+        list.hidden = !items.length && !fromPhoto;
+        done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}.`
+          : fromPhoto ? 'As lojas não têm esse produto. Dá para usar o que a foto leu.'
+            : `Nada encontrado ${from}. Leia o código ou fotografe a embalagem.`);
       };
       async function byCode(code) {
         busy(`Procurando o código ${code} nas lojas`);
@@ -488,17 +491,20 @@ function fixNameSheet(p) {
         if (!file) return;
         busy('Lendo a embalagem. Leva uns 5 segundos.');
         try {
-          const read = await identifyPhoto(await photoToDataUrl(file));
-          if (body.isConnected) show(read.results, 'pela foto');
+          const [read, mini] = await Promise.all([identifyPhoto(await photoToDataUrl(file)), photoThumb(file).catch(() => '')]);
+          if (!body.isConnected) return;
+          fromPhoto = photoProduct(read, p.med || p.area === 'remedios' ? '' : mini);
+          if (read.results.length || fromPhoto) show(read.results, 'pela foto');
+          else done('Não deu para ler a embalagem. Tente outra foto, mais de perto e com luz.');
         } catch {
           if (body.isConnected) done('Não deu para enviar a foto agora. Confira a internet e tente de novo.');
         }
       });
       list.addEventListener('click', async (e) => {
-        const btn = e.target.closest('[data-i]');
+        const btn = e.target.closest('[data-i], [data-photo-use]');
         if (!btn) return;
         try {
-          await applyInfo(p.code, items[Number(btn.dataset.i)], scanned);
+          await applyInfo(p.code, btn.dataset.photoUse !== undefined ? fromPhoto : items[Number(btn.dataset.i)], scanned);
           close(true);
         } catch (err) {
           done(err.message);

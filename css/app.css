@@ -2053,3 +2053,17 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 @media (forced-colors: active) {
   .tab-item[aria-current="page"] { background: Highlight; }
 }
+
+/* ---------- Versão 3.27: usar o que a foto leu ---------- */
+/* Fim da lista de sugestões: separador "Nenhuma dessas?" e a linha de ação,
+   com a própria foto e o nome lido. */
+.pick > .pick-caption {
+  padding: 14px var(--gutter) 6px; border-bottom: 0;
+  font-size: 0.8235rem; font-weight: 700; color: var(--ink-2);
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+.suggest-photo { background: color-mix(in oklab, var(--ink) 4%, transparent); }
+.suggest-photo .row-name { font-weight: 800; }
+.suggest-photo .row-sub { white-space: normal; text-wrap: pretty; }
+.suggest-photo .thumb img { object-fit: cover; }
+.suggest-photo .row-chevron { flex: none; width: 18px; height: 18px; color: var(--ink-2); }

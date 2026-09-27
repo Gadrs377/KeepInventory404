@@ -875,3 +875,30 @@ termos fixos do design system (seção 8). Principais trocas:
   pílula, X do aviso, interruptor antigo). Conferido comparando o estilo
   calculado de todos os elementos em 54 estados (claro, escuro e letra
   grande): nenhuma diferença.
+
+## Versão 3.27: usar o que a foto leu
+
+Quando o código não está nas lojas e a pessoa fotografa a embalagem, a IA lê
+tipo, marca, variante e tamanho. Antes, isso só virava texto no campo de nome.
+Agora vira um produto de verdade:
+
+- **Com sugestões das lojas**: a lista mostra as sugestões e termina em
+  "Nenhuma dessas?" com a linha **Usar o que a foto leu**, que mostra a própria
+  foto e o nome lido ("Achocolatado em pó Nescau 400g"). A mensagem do topo
+  diz: "Toque no produto certo ou, no fim da lista, use o que a foto leu."
+- **Sem sugestões**: o que a foto leu é a única opção e já entra no
+  formulário: "As lojas não têm esse produto. Nome, marca e tamanho vieram da
+  foto: confira antes de salvar."
+- **Salvar sem escolher**: se o nome no campo é o que a foto leu, marca,
+  tamanho e foto vão junto.
+- Ao usar, o cabeçalho da folha mostra a foto, o nome, "marca, tamanho" e o
+  código; "Fotografar de novo" continua disponível.
+- O produto fica com a foto recortada no meio (quadrada, 240 px, uns 3 a 10 KB)
+  como miniatura, marca e tamanho separados e origem "foto". Remédio nunca
+  guarda a foto.
+- O nome segue o jeito das lojas: tipo, marca, variante e tamanho; marca em
+  caixa alta vira só a inicial maiúscula ("NESCAU" vira "Nescau"); "400g" no
+  campo tamanho vira "400 g".
+- A mesma linha aparece em **Buscar o nome certo**, na página do produto
+  (sem "Nenhuma dessas?" quando é a única opção). Produto com dados da foto não
+  mostra o link "Nome estranho?".
