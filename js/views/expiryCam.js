@@ -8,9 +8,9 @@
 // Medido com 32 embalagens simuladas: 30 certas, nenhuma errada.
 //
 // Enquanto não tem certeza, as datas lidas viram botões embaixo da câmera
-// (até 3). Cada botão fica no lugar em que apareceu: nada some, nada troca de
-// posição, para o dedo não acertar a data errada. Um botão recém-chegado só
-// aceita toque depois de meio segundo.
+// (até 3), numa fileira que ocupa a largura toda. Nada some e nada troca de
+// ordem; quando chega uma data nova as outras encolhem devagar, e por meio
+// segundo nenhuma aceita toque, para o dedo não acertar a data errada.
 
 import { ocrWorker, prepareFrame, readText } from '../ocr.js';
 import { findExpiry, formatDate } from '../dates.js';
@@ -87,15 +87,18 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
       btn.type = 'button';
       btn.className = 'exp-pick is-new';
       btn.dataset.iso = iso;
-      btn.dataset.born = String(performance.now());
-      btn.innerHTML = `${icon('calendar')}<span>${formatDate(iso)}</span>`;
+      // Data inteira e curta ("15/10/26"): o CSS mostra a que cabe com respiro.
+      const [y, m, d] = iso.split('-');
+      btn.innerHTML = `${icon('calendar')}<span class="exp-pick-long">${formatDate(iso)}</span><span class="exp-pick-short" aria-hidden="true">${d}/${m}/${y.slice(2)}</span>`;
       btn.setAttribute('aria-label', `Usar ${formatDate(iso)}`);
       picks.append(btn);
+      picks.dataset.changed = String(performance.now());
       requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.remove('is-new')));
     }
     picks.addEventListener('click', (e) => {
       const btn = e.target.closest('.exp-pick');
-      if (!btn || performance.now() - Number(btn.dataset.born) < PICK_GUARD_MS) return;
+      // Logo depois de uma data nova, as vagas ainda estão se ajeitando: ignora.
+      if (!btn || performance.now() - Number(picks.dataset.changed || 0) < PICK_GUARD_MS) return;
       vibrate(20);
       done(btn.dataset.iso);
     });

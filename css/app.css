@@ -2099,28 +2099,35 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-alt { align-self: center; min-height: 44px; padding-inline: 12px; border: 0; background: none; color: var(--mode, var(--ink)); font-weight: 700; text-decoration: none; }
 .exp-alt:active:not(:disabled) { background: color-mix(in oklab, currentColor 10%, transparent); }
 
-/* Datas lidas: três vagas fixas, reservadas desde o início. A primeira data
-   ocupa a primeira vaga, a segunda a segunda; nada muda de lugar nem de tamanho
-   depois, para não fugir do dedo. Cápsulas claras, como as datas que o iPhone
-   reconhece num texto: não competem com o botão principal. */
-.exp-picks {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
-  min-height: 44px; margin-top: 12px; align-items: stretch;
-}
-.exp-picks-hint { grid-column: 1 / -1; align-self: center; margin: 0; font-size: 0.8235rem; color: var(--ink-2); text-align: center; }
+/* Datas lidas: uma fileira em flexbox que vai de borda a borda. Uma data
+   ocupa a largura toda, duas dividem ao meio, três em terços. A que chega
+   cresce devagar (flex-grow em transição de 300 ms) enquanto as outras
+   encolhem, sem pulo, e por meio segundo nenhuma aceita toque (js). Espaço
+   reservado desde o início, então a fileira não empurra nada. Cápsulas claras
+   com respiro dentro, como as datas que o iPhone reconhece num texto. */
+.exp-picks { display: flex; gap: 8px; min-height: 48px; margin-top: 12px; }
+.exp-picks-hint { flex: 1; align-self: center; margin: 0; font-size: 0.8235rem; color: var(--ink-2); text-align: center; }
 .exp-pick {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 44px; padding: 0 8px; border: 0; border-radius: 999px;
+  flex: 1 1 0; min-width: 0; container-type: inline-size;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding-inline: 14px; border: 0; border-radius: 999px; overflow: hidden;
   background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink);
   font-family: var(--font-num); font-weight: 800; font-size: 0.9412rem; font-variant-numeric: tabular-nums;
   white-space: nowrap; cursor: pointer;
-  transition-property: opacity, scale, background-color; transition-duration: 200ms, 150ms, 150ms; transition-timing-function: var(--ease);
+  transition-property: opacity, flex-grow, scale, background-color;
+  transition-duration: 200ms, 300ms, 150ms, 150ms;
+  transition-timing-function: var(--ease), cubic-bezier(0.2, 0, 0, 1), var(--ease), var(--ease);
 }
 .exp-pick .icon { flex: none; width: 16px; height: 16px; }
-.exp-pick.is-new { opacity: 0; }
+.exp-pick.is-new { opacity: 0; flex-grow: 0; }
 .exp-pick:active { scale: 0.96; background: color-mix(in oklab, var(--ink) 14%, transparent); }
-@media (max-width: 374px) { .exp-pick .icon { display: none; } }
-.text-large .exp-picks { grid-template-columns: 1fr; }
+/* Sem espaço com respiro: primeiro sai o calendário, depois o ano fica com
+   dois dígitos (três datas numa tela estreita) */
+.exp-pick-short { display: none; }
+@container (max-width: 116px) { .exp-pick .icon { display: none; } }
+@container (max-width: 92px) { .exp-pick-long { display: none; } .exp-pick-short { display: inline; } }
+@media (prefers-reduced-motion: reduce) { .exp-pick { transition-property: opacity, background-color; } .exp-pick.is-new { flex-grow: 1; } }
+.text-large .exp-picks { flex-direction: column; }
 
 /* Confirmação: a data por extenso, grande, e quantas vencem nela */
 .exp-confirm { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-block: 8px 4px; text-align: center; }

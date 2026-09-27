@@ -985,3 +985,13 @@ três movimentos juntos).
   "Use dia/mês/ano (15/10/26) ou mês/ano (10/26)." em vermelho, marca o campo
   e volta o foco para ele.
 - As datas lidas pela câmera são anunciadas ao leitor de tela.
+
+## Versão 3.31: datas lidas de borda a borda
+
+- A fileira das datas lidas virou flexbox e vai até a borda direita: uma data
+  ocupa a largura toda, duas dividem ao meio, três em terços.
+- Respiro dentro de cada cápsula (14 px dos lados). Sem espaço, primeiro sai o
+  calendário e depois o ano fica com dois dígitos ("15/10/26"), para a data
+  nunca encostar na borda (medido: pelo menos 13 px em 320 px com três datas).
+- Quando chega uma data, ela cresce e as outras encolhem devagar (300 ms), e
+  por meio segundo nenhuma aceita toque, para o dedo não acertar a errada.
