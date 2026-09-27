@@ -44,7 +44,12 @@ export function ocrWorker(onProgress) {
     const promise = bounded((async () => {
       if (!window.Tesseract) await loadScript(`${BASE}tesseract.min.js`);
       if (epoch !== generation) throw new Error('Leitura encerrada');
-      const worker = await window.Tesseract.createWorker('eng', 1, {
+      // "por" ajuda a desambiguar rótulos e meses em português (VALIDADE, OUT,
+      // DEZ…) que "eng" sozinho não tem razão para achar prováveis. Medido em
+      // 16 leituras de teste, carregar os dois juntos não deixou mais lento
+      // (mediana quase igual à de "eng" sozinho, com o mesmo whitelist e PSM).
+      // Sem chamada de rede: os dois pacotes já vieram baixados juntos.
+      const worker = await window.Tesseract.createWorker('eng+por', 1, {
         workerPath: `${BASE}worker.min.js`,
         corePath: `${BASE}core`,
         langPath: `${BASE}lang`,

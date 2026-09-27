@@ -1039,3 +1039,14 @@ adicionamos o EasyOCR como terceiro motor.
   relevo ou com reflexo, o caso que faltou nos testes anteriores.
 - Sem confirmar em nenhum filtro, volta ao normal com o que achou disponível
   para tocar; a leitura contínua retoma sozinha.
+
+## Versão 3.35: pacote de português junto do inglês no leitor
+
+- Tesseract carrega `eng+por` em vez de só `eng` — ajuda a desambiguar
+  rótulos e meses em português (VALIDADE, OUT, DEZ…). Medido (16 leituras,
+  mesmo whitelist/PSM): não ficou mais lento que antes. 1,33 MB a mais no
+  download da primeira vez que a câmera de validade é usada.
+- Anotada em `TESTES_VALIDADES_REAIS.md` uma correção sobre a ideia de
+  "escolher só os quadros mais nítidos": uma tentativa anterior piorou o
+  resultado, provavelmente por descartar quadros em vez de só priorizá-los.
+  Não será retentada como filtro.

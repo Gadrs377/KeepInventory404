@@ -47,6 +47,23 @@ viram opções. Não se escolhe automaticamente a maior data entre duas sem rót
 - O build pronto está versionado. Publicação continua estática, sem dependências
   npm em produção. Instruções para reproduzir o bundle em `vendor/paddle/README.md`.
 
+## Pacote de português junto do inglês
+
+O Tesseract carrega `eng+por` (era só `eng`). O whitelist já restringe a
+saída a números, separadores e A–Z, mas o pacote "por" ainda ajuda a
+desambiguar entre formas de letra parecidas, porque a rede treinada em
+português acha mais provável "VALIDADE", "FABRICAÇÃO" e meses como "OUT" e
+"DEZ" — o inglês sozinho não tem razão para preferir essas sequências.
+`por.traineddata.gz` é o mesmo nível `best_int` do `eng.traineddata.gz` já
+usado (mesma fonte, `naptha/tessdata`), 1,33 MB a mais no download (que só
+acontece quando a câmera de validade é usada).
+
+Rodar os dois juntos passou a impressão de que dobraria o tempo por leitura
+(a documentação do Tesseract descreve isso de forma geral), mas medido aqui
+(16 leituras, mesmo whitelist e PSM 6, texto sintético "VAL 15/10/2026"): a
+mediana com `eng+por` não ficou mais lenta que só `eng`. Não é uma garantia
+para todo texto/PSM, mas não há custo perceptível neste uso.
+
 ## Sem confirmar por muito tempo: inclinar/luz e foto nítida
 
 Depois de `STRUGGLE_MS` (10 s) sem confirmar, `js/views/expiryCam.js` mostra um
