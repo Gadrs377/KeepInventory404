@@ -748,3 +748,9 @@ parado na tela.
 - **Mais → Últimos registros:** nome do produto em cima; tipo (na cor do
   movimento) e hora embaixo; "ficou N" à direita.
 
+## Versão 3.20: Nota fiscal no Armário
+
+- Botão "Nota fiscal" (ícone de QR Code e texto) no canto de cima do Armário,
+  ao lado do título: abre o leitor já no modo nota. Continua também no leitor
+  (botão de QR na Entrada) e em Mais.
+

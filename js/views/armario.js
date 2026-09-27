@@ -33,6 +33,9 @@ export default function mountArmario(root) {
     <div class="screen screen-home has-tabbar">
       <header class="home-head">
         <h1 class="page-title">Armário</h1>
+        <div class="head-actions">
+          <button type="button" class="head-pill" data-nota>${icon('qrCode')}Nota fiscal</button>
+        </div>
       </header>
       <div class="home-tools glass-thick">
         <label class="search">
@@ -440,6 +443,13 @@ export default function mountArmario(root) {
     const r = await showProductSheet({ mode: 'entrada', barcode: chosen });
     if (r && r.kind === 'entrada') toast(`${r.product.name} guardado. Agora tem ${r.product.qty}.`, { mode: 'entrada', duration: 3000 });
   }
+
+  // Nota fiscal: ação da tela no canto de cima, como a Apple faz; abre o leitor
+  // já no modo QR Code.
+  $('[data-nota]', root).addEventListener('click', () => {
+    try { sessionStorage.setItem('ki.qr', '1'); } catch { /* sem armazenamento */ }
+    location.hash = '#/entrada';
+  });
 
   const off = onChange(load);
   load();

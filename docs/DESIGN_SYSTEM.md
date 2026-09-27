@@ -266,3 +266,84 @@ on-mode a 18%, raio 18 com 4 px de espaço e itens de raio 14), lista agrupada
 (`.group`, fundo `--shelf`, linhas de 56 px, ícone em quadrado de 32 px com raio
 8). Vidro: folhas abertas nas telas com câmera ficam sólidas; as camadas de vidro
 continuam no máximo 2 por tela (busca fixa e barra de modos no Armário).
+
+## 12. Diretrizes da Apple (Human Interface Guidelines) aplicadas
+
+Critério para qualquer tela nova ou mudança. Cada item diz a regra da Apple e
+como ela vale aqui.
+
+### Princípios
+
+- **Hierarquia:** o conteúdo vem primeiro; a interface fica em volta dele.
+  Aqui: a quantidade (etiqueta) é o que mais pesa na linha; botões e textos de
+  apoio são leves.
+- **Uma ação principal por tela ou folha**, em destaque (botão cheio na cor do
+  modo). As outras são texto ou botões discretos ("Não é este?").
+- **Sem texto de manual fixo na tela.** O controle se explica sozinho; se
+  precisar de dica, ela aparece na hora e some (cápsula sobre a câmera).
+- **Revelar aos poucos:** o raro fica atrás de um toque (Editar, menu de
+  toque longo, "Marcar validade" fechado na entrada comum).
+- **Retorno em toda ação:** bip, vibração, número que rola, aviso com
+  Desfazer. Nada muda em silêncio.
+
+### Navegação
+
+- **Barra de abas** para as áreas do app (3 a 5; aqui 4). Não é lugar de
+  filtro nem de tipo de produto: Remédios é ambiente do Armário, não aba.
+- **Empurrar (push)** para ver detalhe (produto): entra pela direita, a tela
+  de trás recua e escurece; voltar é o inverso.
+- **Tela modal ou folha** para uma tarefa fechada (ler códigos, guardar,
+  contar): sobe de baixo e tem fechar à esquerda.
+- **Ação da tela no canto de cima**, ao lado do título grande (Nota fiscal no
+  Armário, compartilhar em Compras, Editar no produto).
+- **Título grande** que encolhe para a barra ao rolar.
+
+### Layout
+
+- Margem lateral de 16 px; espaços em múltiplos de 4 e 8.
+- **Área de toque mínima de 44 × 44 px**, mesmo quando o desenho é menor.
+- **Listas agrupadas (como os Ajustes):** título da seção fora do cartão,
+  linhas dentro, nota de rodapé embaixo em 13 px.
+- Informação técnica (código de barras, registro) vai para "Detalhes", no fim.
+- Respeitar as áreas seguras (entalhe, Dynamic Island, barra de gestos).
+
+### Tipografia (escala do iOS)
+
+| Uso | Tamanho |
+| --- | --- |
+| Título grande | 34 |
+| Título de seção | 20 a 22 |
+| Corpo, nome na linha | 17 |
+| Secundário (marca, tamanho) | 15 |
+| Nota, legenda | 13 |
+| Rótulo da barra de abas | 10 a 11 |
+
+### Cor e material
+
+- **Cor com significado:** verde é Entrada, beterraba é Saída, azul é
+  Contagem, amarelo é "acabando". Cor nunca é o único sinal: sempre há texto.
+- Botão de texto na cor do modo (como a cor de destaque do iOS), sem
+  sublinhado.
+- Modo escuro com as mesmas regras; contraste AA.
+- Vidro (liquid glass) só na camada de navegação que flutua (barra de abas,
+  barra do leitor), nunca no conteúdo.
+
+### Ícones
+
+- Ícone só quando é universal (lupa, lanterna, câmera, QR Code, lixeira).
+  Quando nenhum desenho diz a ação, **texto** ("Produto sem código de barras",
+  "Nota fiscal").
+
+### Movimento
+
+- Toda troca de tela mostra de onde veio e para onde vai (empurrar, subir,
+  esmaecer), com molas e interrompível.
+- O mesmo objeto voa entre telas (foto, nome e etiqueta da linha para o
+  produto).
+- Movimento curto: 150 a 520 ms. Com "reduzir movimento" ligado, nada anima.
+
+### Escrita
+
+- Frases curtas, na voz de quem usa ("Guardar", "Tirar"), sem jargão.
+- Botões começam com verbo. Erros dizem o que fazer.
+
