@@ -86,6 +86,37 @@ novamente com luz lateral, mudando levemente o ângulo e evitando o reflexo sobr
 os números, e enviar um vídeo curto para avaliar foco e escolha de quadros.
 Não há evidência para prometer que outro filtro recuperará essa foto específica.
 
+## Sétimo teste: lata com validade gravada a laser (vídeo real) — 27/09/2026
+
+Vídeo de 15s (1080×1920, filmado à mão) de uma lata de metal com a validade
+gravada a laser na tampa (sem tinta, mesma cor do metal), testando o próprio
+gesto de inclinar a embalagem para pegar luz rasante. Referência visual (lida
+num quadro bem iluminado do vídeo): `FAB: 29/DEZ/25`, **`VAL: 29/DEZ/28`**,
+`LOTE: 1291225`. A um ângulo de luz melhor a gravação fica legível a olho nu,
+confirmando que a técnica de inclinar ajuda a visão humana nesse caso.
+
+Dois testes, ambos com Tesseract e Paddle reais (sem mock), sem resposta
+fornecida ao OCR:
+
+1. **Fluxo completo real**, vídeo alimentando `getUserMedia` de verdade (sem
+   marcação manual de região — a mira da própria câmera decide o recorte),
+   até 75s: não confirmou sozinho. Uma sugestão errada (`2025-12-31`, perto
+   da data de fabricação) apareceu como botão para tocar, mas **não foi
+   confirmada automaticamente** — a proteção contra confirmar sozinho com
+   poucos votos/baixa confiança funcionou como esperado.
+2. **Controle com recorte manual generoso** (38%–62% da altura do quadro,
+   mais largo que a mira real, para descartar desalinhamento como causa),
+   60s: nenhuma sugestão surgiu, nem certa nem errada.
+
+Mesmo com bastante tempo e as duas tentativas, nenhum quadro do vídeo virou
+uma leitura confiável. Diferente da embalagem roxa (plástico com relevo e
+alguma cor), esta é gravação a laser em metal uniforme — sem nenhum contraste
+de tinta, só sombra da própria gravação, e mais suscetível a tremor de mão
+gerar desfoque de movimento. É um caso mais difícil que os já documentados,
+não uma falha do código: nenhum motor devolveu texto reconhecível nem no
+recorte bem centralizado. Ainda não há evidência de que outro filtro
+recupere esta lata especificamente; permanece como limite conhecido.
+
 ## Reproduzir e auditar
 
 As fotos originais não entram no repositório/pacote. Coloque-as em
