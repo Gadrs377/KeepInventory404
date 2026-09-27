@@ -90,12 +90,14 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       <div class="exp-cam"></div>
       <button type="button" class="btn exp-alt" data-type>${icon('keyboard')}Digitar a data</button>`, 'exp-scan');
     let reading = null;
+    let evidence = null;
     const onShow = () => {
       if (reading) return;
-      reading = readExpiryWithCamera($('.exp-cam', el), { skip: [...confirmed, ...lots.map((l) => l.expiresAt)] });
+      evidence = null;
+      reading = readExpiryWithCamera($('.exp-cam', el), { skip: [...confirmed, ...lots.map((l) => l.expiresAt)], onEvidence:value => { evidence=value; } });
       reading.then((iso) => {
         reading = null;
-        if (iso && el.isConnected && !el.hidden) confirmPage(iso);
+        if (iso && el.isConnected && !el.hidden) confirmPage(iso, evidence);
       });
     };
     const onHide = () => { if (reading) reading.stop(); reading = null; };
@@ -146,7 +148,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   }
 
   // Página 2: a data por extenso e quantas vencem nela.
-  function confirmPage(iso) {
+  function confirmPage(iso, evidence = null) {
     if (!confirmed.includes(iso)) confirmed.push(iso);
     const max = left();
     const past = daysUntil(iso) < 0;
@@ -166,6 +168,13 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(doneLabel)}</button>
         <button type="button" class="btn exp-alt" data-more hidden></button>
       </div>`, 'exp-confirm-page');
+    if (evidence?.image) {
+      const figure=document.createElement('figure'); figure.className='exp-evidence';
+      const image=document.createElement('img'); image.src=evidence.image; image.alt='Trecho da embalagem usado na leitura';
+      const caption=document.createElement('figcaption');
+      caption.textContent=evidence.monthOnly?'Confira na embalagem. Como ela informa só mês e ano, usamos o último dia do mês.':'Confira a data impressa antes de salvar.';
+      figure.append(image,caption); $('.exp-confirm',el).append(figure);
+    }
     const more = $('[data-more]', el);
     let step = null;
     const qty = () => (step ? step.value : Math.max(1, max));

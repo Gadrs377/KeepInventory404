@@ -1,0 +1,76 @@
+[
+  {
+    "file": "IMG_0A69DCC6-AEEB-44FB-8925-88B4401435BE.jpeg",
+    "expected": "2028-05-31",
+    "accepted": "2028-05-31",
+    "ms": 1683,
+    "evidence": true,
+    "monthOnly": true,
+    "evidenceSize": [
+      640,
+      515
+    ],
+    "stopped": true
+  },
+  {
+    "file": "IMG_6E3DA4FB-ADAA-42D5-AEDD-872BA566CADC.jpeg",
+    "expected": "2027-02-28",
+    "accepted": "2027-02-28",
+    "ms": 10247,
+    "evidence": true,
+    "monthOnly": true,
+    "evidenceSize": [
+      640,
+      387
+    ],
+    "stopped": true
+  },
+  {
+    "file": "IMG_AE3B28D3-426F-4C52-9F86-F751E7E0D16B.jpeg",
+    "expected": "2028-04-30",
+    "accepted": "2028-04-30",
+    "ms": 1733,
+    "evidence": true,
+    "monthOnly": true,
+    "evidenceSize": [
+      640,
+      441
+    ],
+    "stopped": true
+  },
+  {
+    "file": "IMG_55A0B869-1E43-47D1-9D82-0548A1B57097.jpeg",
+    "expected": "2028-07-31",
+    "accepted": null,
+    "ms": 30003,
+    "evidence": false,
+    "evidenceSize": null,
+    "stopped": true
+  },
+  {
+    "file": "IMG_9B7E26FB-2845-412F-82E6-272228A00AB9.jpeg",
+    "expected": "2028-03-31",
+    "accepted": "2028-03-31",
+    "ms": 1351,
+    "evidence": true,
+    "monthOnly": true,
+    "evidenceSize": [
+      640,
+      485
+    ],
+    "stopped": true
+  },
+  {
+    "file": "IMG_D8D3A28A-A43C-423A-933D-533C2FB5AB39.jpeg",
+    "expected": "2027-06-30",
+    "accepted": "2027-06-30",
+    "ms": 14634,
+    "evidence": true,
+    "monthOnly": true,
+    "evidenceSize": [
+      640,
+      281
+    ],
+    "stopped": true
+  }
+]

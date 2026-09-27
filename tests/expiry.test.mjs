@@ -43,3 +43,15 @@ test('conflicts, skips and uncertain results cannot auto-confirm', () => {
   assert.equal(needsPaddle(3,7000),true);
   assert.equal(needsPaddle(6,500),true);
 });
+test('real packages: spaced and compact month/year preserve expiry labels', () => {
+  for (const text of ['F02 25\nV02 27','F0225\nV0227','F:02/25\nV:02 27'])
+    assert.equal(findExpiry(text,'2026-09-27')?.iso,'2027-02-28',text);
+  assert.equal(findExpiry('F04 26\nVO4 28','2026-09-27')?.iso,'2028-04-30');
+  for(const text of ['F0225','L0227','LOTE 0227','V02\n27','VAL 31 02 2027','V 02 27 123'])
+    assert.equal(findExpiry(text,'2026-09-27'),null,text);
+  assert.equal(findExpiry('F.:05.2025','2026-09-27'),null);
+});
+test('unlabeled manufacture cannot auto-confirm even with repeated confident readings', () => {
+  const c=createExpiryConsensus();
+  for(let frame=0;frame<6;frame++)assert.equal(c.add({candidates:findExpiryCandidates('06/25','2026-09-27'),engine:'paddle',frame,at:frame,confidence:95}),null);
+});

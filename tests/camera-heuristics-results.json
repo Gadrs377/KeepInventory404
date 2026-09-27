@@ -1,0 +1,305 @@
+{
+  "sharpness": [
+    {
+      "file": "IMG_0A69DCC6-AEEB-44FB-8925-88B4401435BE.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 3920.2230227502664
+        },
+        {
+          "blur": 2,
+          "score": 1232.3423097903942
+        },
+        {
+          "blur": 5,
+          "score": 153.79051916581443
+        },
+        {
+          "blur": 9,
+          "score": 10.122953397581545
+        }
+      ],
+      "selectedBlur": 0
+    },
+    {
+      "file": "IMG_6E3DA4FB-ADAA-42D5-AEDD-872BA566CADC.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 547.6569462111062
+        },
+        {
+          "blur": 2,
+          "score": 142.0428586525412
+        },
+        {
+          "blur": 5,
+          "score": 28.212254763230224
+        },
+        {
+          "blur": 9,
+          "score": 2.9861466919827553
+        }
+      ],
+      "selectedBlur": 0
+    },
+    {
+      "file": "IMG_AE3B28D3-426F-4C52-9F86-F751E7E0D16B.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 4321.594821206297
+        },
+        {
+          "blur": 2,
+          "score": 1935.557870072141
+        },
+        {
+          "blur": 5,
+          "score": 386.6065691032104
+        },
+        {
+          "blur": 9,
+          "score": 32.828092043642144
+        }
+      ],
+      "selectedBlur": 0
+    },
+    {
+      "file": "IMG_55A0B869-1E43-47D1-9D82-0548A1B57097.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 1320.1943096462908
+        },
+        {
+          "blur": 2,
+          "score": 118.4576643953055
+        },
+        {
+          "blur": 5,
+          "score": 9.430031440067717
+        },
+        {
+          "blur": 9,
+          "score": 1.512776737422234
+        }
+      ],
+      "selectedBlur": 0
+    },
+    {
+      "file": "IMG_9B7E26FB-2845-412F-82E6-272228A00AB9.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 1827.969629899309
+        },
+        {
+          "blur": 2,
+          "score": 738.2851892111238
+        },
+        {
+          "blur": 5,
+          "score": 193.51272065889964
+        },
+        {
+          "blur": 9,
+          "score": 21.892057335952405
+        }
+      ],
+      "selectedBlur": 0
+    },
+    {
+      "file": "IMG_D8D3A28A-A43C-423A-933D-533C2FB5AB39.jpeg",
+      "values": [
+        {
+          "blur": 0,
+          "score": 260.67656519049353
+        },
+        {
+          "blur": 2,
+          "score": 80.68825860320045
+        },
+        {
+          "blur": 5,
+          "score": 13.3666940024569
+        },
+        {
+          "blur": 9,
+          "score": 2.012385319723832
+        }
+      ],
+      "selectedBlur": 0
+    }
+  ],
+  "motion": [
+    {
+      "file": "IMG_0A69DCC6-AEEB-44FB-8925-88B4401435BE.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.05845843545751634
+    },
+    {
+      "file": "IMG_6E3DA4FB-ADAA-42D5-AEDD-872BA566CADC.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.0567453022875817
+    },
+    {
+      "file": "IMG_AE3B28D3-426F-4C52-9F86-F751E7E0D16B.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.11344975490196078
+    },
+    {
+      "file": "IMG_55A0B869-1E43-47D1-9D82-0548A1B57097.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.03959865196078431
+    },
+    {
+      "file": "IMG_9B7E26FB-2845-412F-82E6-272228A00AB9.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.09411509395424836
+    },
+    {
+      "file": "IMG_D8D3A28A-A43C-423A-933D-533C2FB5AB39.jpeg",
+      "shiftFraction": 0.03,
+      "difference": 0.03509752859477124
+    }
+  ],
+  "transitions": [
+    {
+      "from": 1,
+      "to": 2,
+      "difference": 0.43070874183006536,
+      "detected": true
+    },
+    {
+      "from": 1,
+      "to": 3,
+      "difference": 0.29753114787581697,
+      "detected": true
+    },
+    {
+      "from": 1,
+      "to": 4,
+      "difference": 0.17964154411764705,
+      "detected": true
+    },
+    {
+      "from": 1,
+      "to": 5,
+      "difference": 0.09685712826797385,
+      "detected": false
+    },
+    {
+      "from": 1,
+      "to": 6,
+      "difference": 0.09241217320261438,
+      "detected": false
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "difference": 0.41534671160130715,
+      "detected": true
+    },
+    {
+      "from": 2,
+      "to": 4,
+      "difference": 0.3149050245098039,
+      "detected": true
+    },
+    {
+      "from": 2,
+      "to": 5,
+      "difference": 0.4001148897058823,
+      "detected": true
+    },
+    {
+      "from": 2,
+      "to": 6,
+      "difference": 0.5060202205882353,
+      "detected": true
+    },
+    {
+      "from": 3,
+      "to": 4,
+      "difference": 0.24234323937908495,
+      "detected": true
+    },
+    {
+      "from": 3,
+      "to": 5,
+      "difference": 0.2950878267973856,
+      "detected": true
+    },
+    {
+      "from": 3,
+      "to": 6,
+      "difference": 0.350594873366013,
+      "detected": true
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "difference": 0.18087979983660132,
+      "detected": true
+    },
+    {
+      "from": 4,
+      "to": 6,
+      "difference": 0.22701184640522876,
+      "detected": true
+    },
+    {
+      "from": 5,
+      "to": 6,
+      "difference": 0.12685100081699346,
+      "detected": false
+    }
+  ],
+  "sceneThreshold": 0.15,
+  "scheduling": [
+    {
+      "file": "IMG_0A69DCC6-AEEB-44FB-8925-88B4401435BE.jpeg",
+      "fixedAttempts": 3,
+      "adaptiveAttempts": 3,
+      "preferred": 2,
+      "correct": true
+    },
+    {
+      "file": "IMG_6E3DA4FB-ADAA-42D5-AEDD-872BA566CADC.jpeg",
+      "fixedAttempts": 2,
+      "adaptiveAttempts": 1,
+      "preferred": 2,
+      "correct": true
+    },
+    {
+      "file": "IMG_AE3B28D3-426F-4C52-9F86-F751E7E0D16B.jpeg",
+      "fixedAttempts": 1,
+      "adaptiveAttempts": 1,
+      "preferred": 2,
+      "correct": true
+    },
+    {
+      "file": "IMG_55A0B869-1E43-47D1-9D82-0548A1B57097.jpeg",
+      "fixedAttempts": 10,
+      "adaptiveAttempts": 10,
+      "preferred": 2,
+      "correct": true
+    },
+    {
+      "file": "IMG_9B7E26FB-2845-412F-82E6-272228A00AB9.jpeg",
+      "fixedAttempts": 1,
+      "adaptiveAttempts": 1,
+      "preferred": 2,
+      "correct": true
+    },
+    {
+      "file": "IMG_D8D3A28A-A43C-423A-933D-533C2FB5AB39.jpeg",
+      "fixedAttempts": 10,
+      "adaptiveAttempts": 10,
+      "preferred": 2,
+      "correct": true
+    }
+  ]
+}

@@ -13,7 +13,7 @@
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { createPaddleReader } from '../paddleOcr.js';
-import { TESSERACT_VARIANTS, needsPaddle, createExpiryConsensus } from '../expiryRecognition.js';
+import { TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus } from '../expiryRecognition.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { $, icon, vibrate } from '../ui.js';
@@ -49,7 +49,7 @@ function aimBox(video, aim) {
  * `skip`: datas já escolhidas; não entram sozinhas de novo (a câmera ainda pode
  * estar na mesma embalagem), mas aparecem para tocar.
  */
-export function readExpiryWithCamera(host, { skip = [] } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } = {}) {
   let stop = () => {};
   const promise = new Promise((resolve) => {
     host.hidden = false;
@@ -69,6 +69,8 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
     const picks = $('.exp-picks', host);
     const torchBtn = $('[data-torch]', host);
     const canvas = document.createElement('canvas');
+    const original = document.createElement('canvas');
+    const evidence = new Map();
     let stream = null;
     let alive = true;
     let torchOn = false;
@@ -86,6 +88,7 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
     document.addEventListener('visibilitychange', visibilityChanged);
     const shown = new Set();
     let turn = 0;
+    let paddleTurn = 0;
 
     // Nova data lida: entra na próxima vaga livre e ali fica.
     function addPick(iso) {
@@ -115,6 +118,7 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
 
     function finish(iso) {
       if (!alive) return;
+      if (iso) { try { onEvidence(evidence.get(iso) || null); } catch { /* confirmação ainda funciona */ } }
       alive = false;
       gone.disconnect();
       paddle.dispose();
@@ -168,9 +172,10 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
         lastEngine = engine;
         const frame = video.currentTime; frameTime = frame;
         const epoch = visibilityEpoch;
-        const variant = engine === 'paddle' ? { mode: 'raw', blur: 0, width: 1000 } : TESSERACT_VARIANTS[turn++ % TESSERACT_VARIANTS.length];
+        const variant = engine === 'paddle' ? PADDLE_VARIANTS[paddleTurn++ % PADDLE_VARIANTS.length] : TESSERACT_VARIANTS[turn++ % TESSERACT_VARIANTS.length];
         let result;
         try {
+          prepareFrame(video, { mode:'raw', width:640, box:aimBox(video, aim) }, original);
           prepareFrame(video, { ...variant, box: aimBox(video, aim) }, canvas);
           result = engine === 'paddle' ? await paddle.read(canvas) : await readResult(canvas, { psm: variant.psm });
           if (engine === 'tesseract') tessErrors = 0;
@@ -185,7 +190,13 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
         if (!alive) return;
         if (document.hidden || epoch !== visibilityEpoch) continue;
         const candidates = findExpiryCandidates(result.text);
-        for (const found of candidates) addPick(found.iso);
+        for (const found of candidates) {
+          if (!evidence.has(found.iso) && evidence.size < MAX_PICKS) evidence.set(found.iso, {
+            image:original.toDataURL('image/jpeg', .8), raw:found.raw,
+            monthOnly:/^\d{1,2}\s*[/.\- ]\s*\d{2,4}$|^\d{4}$/.test(found.raw),
+          });
+          addPick(found.iso);
+        }
         const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
         if (accepted) {
           beep('ok'); vibrate(40); done(accepted); return;

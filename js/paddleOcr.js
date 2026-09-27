@@ -1,5 +1,6 @@
 // Lazy per-camera worker. Closing the reader terminates it and releases WASM.
 // Its JS, models and runtime are self-hosted and cached by sw.js after use.
+import { textRows } from './ocrLayout.js';
 export function createPaddleReader() {
   let worker;
   let init;
@@ -45,7 +46,7 @@ export function createPaddleReader() {
     const image = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, canvas.width, canvas.height);
     const result = await request('read', { width: image.width, height: image.height, pixels: image.data.buffer }, [image.data.buffer]);
     const items = result.items || [];
-    return { text: items.map(item => item.text).join('\n'), confidence: items.length ? 100 * Math.min(...items.map(item => item.score)) : 0, items };
+    return { text: textRows(items).map(row => row.text).join('\n'), confidence: items.length ? 100 * Math.min(...items.map(item => item.score)) : 0, items };
   }
   return { ready, read, dispose };
 }

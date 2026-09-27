@@ -17,6 +17,8 @@ export function needsPaddle(attempts, elapsedMs) {
   return attempts >= 6 || (attempts >= 3 && elapsedMs >= 7000);
 }
 
+export const PADDLE_VARIANTS = ['raw', 'gray', 'otsu', 'red', 'blue'].map(mode => ({mode, blur:0, width:900}));
+
 export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
   let samples = [];
   return {
@@ -27,7 +29,9 @@ export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
       if (samples.some(s => s.engine === engine && s.frame === frame)) return null;
       const single = candidates.length === 1 && !candidates[0].ambiguous;
       const candidate = single ? candidates[0] : null;
-      if (!candidate || confidence < 40) return null;
+      // A missing F on embossed packaging can turn manufacture into an
+      // apparently unambiguous date. Unlabeled dates remain manual choices.
+      if (!candidate || !candidate.labeled || confidence < 40) return null;
       samples.push({ ...candidate, engine, frame, at });
       const counts = new Map();
       for (const s of samples) {

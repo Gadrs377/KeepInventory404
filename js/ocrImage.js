@@ -17,6 +17,20 @@ function otsu(hist, total) {
 }
 
 export function filterPixels(pixels, w, h, { mode = 'otsu', blur = 0 } = {}) {
+  // Printed/embossed marks sometimes separate from the background in one
+  // color channel. Stretch percentiles, so glare doesn't set the whole range.
+  if (mode === 'red' || mode === 'blue') {
+    const channel = mode === 'red' ? 0 : 2;
+    const values = new Uint8Array(w * h);
+    for (let i=0;i<values.length;i++) values[i]=pixels[i*4+channel];
+    const sorted=values.slice().sort();
+    const lo=sorted[Math.floor(sorted.length*.01)],hi=sorted[Math.floor(sorted.length*.99)];
+    for(let i=0;i<values.length;i++) {
+      const v=255*(values[i]-lo)/Math.max(1,hi-lo);
+      pixels[i*4]=pixels[i*4+1]=pixels[i*4+2]=v; pixels[i*4+3]=255;
+    }
+    return;
+  }
   let gray = new Float32Array(w * h);
   for (let j = 0; j < gray.length; j++) gray[j] = pixels[j * 4] * .299 + pixels[j * 4 + 1] * .587 + pixels[j * 4 + 2] * .114;
   for (let r = 0; r < Math.min(3, blur); r++) {

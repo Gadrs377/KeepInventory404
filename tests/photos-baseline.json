@@ -1,0 +1,7327 @@
+[
+  {
+    "file": "IMG_0A69DCC6-AEEB-44FB-8925-88B4401435BE.jpeg",
+    "expected": "2028-05-31",
+    "region": [
+      0.14,
+      0.23,
+      0.63,
+      0.38
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "V:\n05.2028\nFADE 05.2025\n          ARLWAS\nL:\n1   Y\n",
+        "confidence": 27,
+        "ms": 600,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "V:\n05.2028\nF: 05.2025\n          ARLWAS\nL:\n. Y\n",
+        "confidence": 31,
+        "ms": 180,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "NN\nV:\n15.2028\nF: 95.2325\n:         ARLWAB\nL:\n Y\n",
+        "confidence": 25,
+        "ms": 125,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "HR\nV:\n05.2028\nF. 05.2025\nRRLWAS\nI L:\n  3\n",
+        "confidence": 30,
+        "ms": 130,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 6,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "ET                 .\nV:\n\n05.2028\n\nF: 05.2025\n\nARLWAS\n\nL:            E\n\nBEER        EB T\n",
+        "confidence": 20,
+        "ms": 225,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 25,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "PN\nV:\n35.2328\nF.:    35.2325\nARLWAS\nL:\n Y\n",
+        "confidence": 19,
+        "ms": 132,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "05.2028\n\nF.:\n\n05.2025\n\nARLWAS\n\nL:\n",
+        "confidence": 42,
+        "ms": 137,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 0,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": true
+          },
+          {
+            "iso": "2025-05-31",
+            "raw": "05.2025",
+            "index": 14,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": true
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": " -\n",
+        "confidence": 0,
+        "ms": 121,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 46,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "E\n",
+        "confidence": 0,
+        "ms": 51,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 91.5141761302948,
+        "items": [
+          {
+            "poly": [
+              [
+                80,
+                143
+              ],
+              [
+                134,
+                143
+              ],
+              [
+                134,
+                185
+              ],
+              [
+                80,
+                185
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9730364829301834
+          },
+          {
+            "poly": [
+              [
+                194,
+                178
+              ],
+              [
+                334,
+                181
+              ],
+              [
+                333,
+                219
+              ],
+              [
+                194,
+                217
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9869844743183681
+          },
+          {
+            "poly": [
+              [
+                78,
+                225
+              ],
+              [
+                147,
+                227
+              ],
+              [
+                145,
+                272
+              ],
+              [
+                76,
+                269
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.915141761302948
+          },
+          {
+            "poly": [
+              [
+                194,
+                230
+              ],
+              [
+                332,
+                232
+              ],
+              [
+                331,
+                270
+              ],
+              [
+                194,
+                267
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9904627799987793
+          },
+          {
+            "poly": [
+              [
+                194,
+                288
+              ],
+              [
+                312,
+                288
+              ],
+              [
+                312,
+                324
+              ],
+              [
+                194,
+                324
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9886566897233328
+          },
+          {
+            "poly": [
+              [
+                77,
+                310
+              ],
+              [
+                146,
+                313
+              ],
+              [
+                144,
+                357
+              ],
+              [
+                75,
+                354
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9853705286979675
+          }
+        ],
+        "ms": 2726,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "Val:\n05.2028\nFab.\n05.2025\nARLWA8\nLote:",
+        "confidence": 89.2060711979866,
+        "items": [
+          {
+            "poly": [
+              [
+                78,
+                140
+              ],
+              [
+                135,
+                142
+              ],
+              [
+                133,
+                187
+              ],
+              [
+                76,
+                185
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9794265180826187
+          },
+          {
+            "poly": [
+              [
+                195,
+                179
+              ],
+              [
+                334,
+                183
+              ],
+              [
+                333,
+                218
+              ],
+              [
+                194,
+                215
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9909420354025704
+          },
+          {
+            "poly": [
+              [
+                78,
+                226
+              ],
+              [
+                150,
+                228
+              ],
+              [
+                148,
+                271
+              ],
+              [
+                76,
+                268
+              ]
+            ],
+            "text": "Fab.",
+            "score": 0.892060711979866
+          },
+          {
+            "poly": [
+              [
+                195,
+                231
+              ],
+              [
+                331,
+                233
+              ],
+              [
+                330,
+                269
+              ],
+              [
+                195,
+                266
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9869564771652222
+          },
+          {
+            "poly": [
+              [
+                194,
+                289
+              ],
+              [
+                313,
+                289
+              ],
+              [
+                313,
+                324
+              ],
+              [
+                194,
+                324
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9875340163707733
+          },
+          {
+            "poly": [
+              [
+                77,
+                309
+              ],
+              [
+                147,
+                312
+              ],
+              [
+                145,
+                357
+              ],
+              [
+                75,
+                354
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.978143572807312
+          }
+        ],
+        "ms": 874,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 86.03081345558167,
+        "items": [
+          {
+            "poly": [
+              [
+                79,
+                143
+              ],
+              [
+                134,
+                143
+              ],
+              [
+                134,
+                186
+              ],
+              [
+                79,
+                186
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9884278178215027
+          },
+          {
+            "poly": [
+              [
+                195,
+                179
+              ],
+              [
+                333,
+                182
+              ],
+              [
+                332,
+                217
+              ],
+              [
+                195,
+                215
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9950992805617196
+          },
+          {
+            "poly": [
+              [
+                78,
+                227
+              ],
+              [
+                149,
+                229
+              ],
+              [
+                147,
+                272
+              ],
+              [
+                76,
+                269
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.8603081345558167
+          },
+          {
+            "poly": [
+              [
+                194,
+                230
+              ],
+              [
+                333,
+                232
+              ],
+              [
+                332,
+                270
+              ],
+              [
+                194,
+                267
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9954203026635307
+          },
+          {
+            "poly": [
+              [
+                193,
+                288
+              ],
+              [
+                313,
+                290
+              ],
+              [
+                312,
+                325
+              ],
+              [
+                193,
+                322
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9348715841770172
+          },
+          {
+            "poly": [
+              [
+                77,
+                310
+              ],
+              [
+                147,
+                313
+              ],
+              [
+                145,
+                357
+              ],
+              [
+                75,
+                354
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9906285405158997
+          }
+        ],
+        "ms": 836,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 88.96284401416779,
+        "items": [
+          {
+            "poly": [
+              [
+                80,
+                144
+              ],
+              [
+                134,
+                144
+              ],
+              [
+                134,
+                186
+              ],
+              [
+                80,
+                186
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.8896284401416779
+          },
+          {
+            "poly": [
+              [
+                195,
+                178
+              ],
+              [
+                334,
+                182
+              ],
+              [
+                333,
+                219
+              ],
+              [
+                194,
+                216
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9760234696524483
+          },
+          {
+            "poly": [
+              [
+                78,
+                226
+              ],
+              [
+                149,
+                229
+              ],
+              [
+                147,
+                273
+              ],
+              [
+                76,
+                270
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.9162592768669129
+          },
+          {
+            "poly": [
+              [
+                195,
+                232
+              ],
+              [
+                331,
+                232
+              ],
+              [
+                331,
+                270
+              ],
+              [
+                195,
+                270
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9967918395996094
+          },
+          {
+            "poly": [
+              [
+                193,
+                288
+              ],
+              [
+                313,
+                290
+              ],
+              [
+                312,
+                326
+              ],
+              [
+                193,
+                323
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9546293616294861
+          },
+          {
+            "poly": [
+              [
+                77,
+                310
+              ],
+              [
+                148,
+                314
+              ],
+              [
+                145,
+                358
+              ],
+              [
+                74,
+                354
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9865480661392212
+          }
+        ],
+        "ms": 1073,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 82.80015468597412,
+        "items": [
+          {
+            "poly": [
+              [
+                80,
+                143
+              ],
+              [
+                135,
+                143
+              ],
+              [
+                135,
+                185
+              ],
+              [
+                80,
+                185
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9842641800642014
+          },
+          {
+            "poly": [
+              [
+                194,
+                178
+              ],
+              [
+                334,
+                181
+              ],
+              [
+                333,
+                218
+              ],
+              [
+                194,
+                216
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9967090487480164
+          },
+          {
+            "poly": [
+              [
+                77,
+                225
+              ],
+              [
+                150,
+                229
+              ],
+              [
+                148,
+                271
+              ],
+              [
+                75,
+                268
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.8280015468597413
+          },
+          {
+            "poly": [
+              [
+                194,
+                230
+              ],
+              [
+                332,
+                232
+              ],
+              [
+                331,
+                270
+              ],
+              [
+                194,
+                267
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9931191461426871
+          },
+          {
+            "poly": [
+              [
+                194,
+                289
+              ],
+              [
+                312,
+                289
+              ],
+              [
+                312,
+                324
+              ],
+              [
+                194,
+                324
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9235935608545939
+          },
+          {
+            "poly": [
+              [
+                77,
+                310
+              ],
+              [
+                147,
+                313
+              ],
+              [
+                145,
+                356
+              ],
+              [
+                75,
+                353
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9883826375007629
+          }
+        ],
+        "ms": 838,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "V:\n05.2028\nF.:   05.2025\nARLWAS\nL:\n",
+        "confidence": 38,
+        "ms": 256,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "V:\n05.2028\nF.:   0S. Z2UZ5\nARLWAS\nL:\n",
+        "confidence": 28,
+        "ms": 172,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "V:\n05.2028\nF.:   05.2025\nARLWAS\nL:\n",
+        "confidence": 41,
+        "ms": 91,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "V:\n05.2028\nF.. 05.2025\nARLWAS\nL:\n",
+        "confidence": 39,
+        "ms": 99,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "   I TT\nV:\n\nLC 05.2028\nF: 05.2025\nCC E ARLUAS\n",
+        "confidence": 11,
+        "ms": 187,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 15,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "V:\n05.2028\nF.:   05.2025\nARLWAS\nL:\n",
+        "confidence": 35,
+        "ms": 94,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 3,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "05.2028\n\nF.:\n\n05.2025\n\nARLWAS\n\nL:\n",
+        "confidence": 48,
+        "ms": 207,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 0,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": true
+          },
+          {
+            "iso": "2025-05-31",
+            "raw": "05.2025",
+            "index": 14,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": true
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "",
+        "confidence": 0,
+        "ms": 79,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 55,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "",
+        "confidence": 0,
+        "ms": 53,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 91.32284164428711,
+        "items": [
+          {
+            "poly": [
+              [
+                45,
+                11
+              ],
+              [
+                185,
+                11
+              ],
+              [
+                185,
+                126
+              ],
+              [
+                45,
+                126
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9773821830749512
+          },
+          {
+            "poly": [
+              [
+                350,
+                108
+              ],
+              [
+                712,
+                115
+              ],
+              [
+                710,
+                216
+              ],
+              [
+                348,
+                209
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9913582716669355
+          },
+          {
+            "poly": [
+              [
+                42,
+                240
+              ],
+              [
+                218,
+                240
+              ],
+              [
+                218,
+                350
+              ],
+              [
+                42,
+                350
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.9132284164428711
+          },
+          {
+            "poly": [
+              [
+                347,
+                240
+              ],
+              [
+                710,
+                246
+              ],
+              [
+                708,
+                348
+              ],
+              [
+                345,
+                342
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9920285258974347
+          },
+          {
+            "poly": [
+              [
+                350,
+                399
+              ],
+              [
+                655,
+                399
+              ],
+              [
+                655,
+                489
+              ],
+              [
+                350,
+                489
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.989835649728775
+          },
+          {
+            "poly": [
+              [
+                39,
+                460
+              ],
+              [
+                221,
+                466
+              ],
+              [
+                217,
+                574
+              ],
+              [
+                36,
+                569
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.985511577129364
+          }
+        ],
+        "ms": 1096,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 94.25534844398499,
+        "items": [
+          {
+            "poly": [
+              [
+                43,
+                18
+              ],
+              [
+                184,
+                18
+              ],
+              [
+                184,
+                132
+              ],
+              [
+                43,
+                132
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9840739369392395
+          },
+          {
+            "poly": [
+              [
+                348,
+                116
+              ],
+              [
+                713,
+                122
+              ],
+              [
+                711,
+                220
+              ],
+              [
+                346,
+                214
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9911779846463885
+          },
+          {
+            "poly": [
+              [
+                41,
+                242
+              ],
+              [
+                219,
+                242
+              ],
+              [
+                219,
+                355
+              ],
+              [
+                41,
+                355
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.9425534844398499
+          },
+          {
+            "poly": [
+              [
+                346,
+                248
+              ],
+              [
+                713,
+                253
+              ],
+              [
+                712,
+                358
+              ],
+              [
+                344,
+                353
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9944421819278172
+          },
+          {
+            "poly": [
+              [
+                349,
+                403
+              ],
+              [
+                658,
+                403
+              ],
+              [
+                658,
+                493
+              ],
+              [
+                349,
+                493
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9800387223561605
+          },
+          {
+            "poly": [
+              [
+                38,
+                462
+              ],
+              [
+                221,
+                466
+              ],
+              [
+                218,
+                579
+              ],
+              [
+                35,
+                575
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9809724450111389
+          }
+        ],
+        "ms": 1034,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 96.53387268384299,
+        "items": [
+          {
+            "poly": [
+              [
+                41,
+                12
+              ],
+              [
+                188,
+                12
+              ],
+              [
+                188,
+                130
+              ],
+              [
+                41,
+                130
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9864218682050705
+          },
+          {
+            "poly": [
+              [
+                351,
+                110
+              ],
+              [
+                710,
+                116
+              ],
+              [
+                708,
+                217
+              ],
+              [
+                349,
+                211
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9965178881372724
+          },
+          {
+            "poly": [
+              [
+                41,
+                237
+              ],
+              [
+                221,
+                242
+              ],
+              [
+                218,
+                355
+              ],
+              [
+                38,
+                351
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.975669002532959
+          },
+          {
+            "poly": [
+              [
+                347,
+                242
+              ],
+              [
+                709,
+                247
+              ],
+              [
+                708,
+                349
+              ],
+              [
+                345,
+                344
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9969920430864606
+          },
+          {
+            "poly": [
+              [
+                351,
+                399
+              ],
+              [
+                653,
+                399
+              ],
+              [
+                653,
+                490
+              ],
+              [
+                351,
+                490
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9653387268384298
+          },
+          {
+            "poly": [
+              [
+                39,
+                463
+              ],
+              [
+                219,
+                466
+              ],
+              [
+                218,
+                576
+              ],
+              [
+                37,
+                573
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.994390344619751
+          }
+        ],
+        "ms": 1046,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 92.09900259971619,
+        "items": [
+          {
+            "poly": [
+              [
+                41,
+                12
+              ],
+              [
+                188,
+                12
+              ],
+              [
+                188,
+                130
+              ],
+              [
+                41,
+                130
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.9915852248668671
+          },
+          {
+            "poly": [
+              [
+                350,
+                109
+              ],
+              [
+                710,
+                115
+              ],
+              [
+                708,
+                217
+              ],
+              [
+                348,
+                211
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.9960009966577802
+          },
+          {
+            "poly": [
+              [
+                40,
+                240
+              ],
+              [
+                220,
+                240
+              ],
+              [
+                220,
+                352
+              ],
+              [
+                40,
+                352
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.9209900259971618
+          },
+          {
+            "poly": [
+              [
+                347,
+                241
+              ],
+              [
+                710,
+                246
+              ],
+              [
+                708,
+                351
+              ],
+              [
+                345,
+                346
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9978458881378174
+          },
+          {
+            "poly": [
+              [
+                348,
+                399
+              ],
+              [
+                654,
+                396
+              ],
+              [
+                655,
+                491
+              ],
+              [
+                349,
+                494
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9242127537727356
+          },
+          {
+            "poly": [
+              [
+                39,
+                462
+              ],
+              [
+                221,
+                466
+              ],
+              [
+                218,
+                576
+              ],
+              [
+                36,
+                572
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9927474379539489
+          }
+        ],
+        "ms": 1061,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "Val:\n05.2028\nFab.:\n05.2025\nARLWA8\nLote:",
+        "confidence": 83.58071804046631,
+        "items": [
+          {
+            "poly": [
+              [
+                41,
+                12
+              ],
+              [
+                187,
+                15
+              ],
+              [
+                185,
+                127
+              ],
+              [
+                39,
+                124
+              ]
+            ],
+            "text": "Val:",
+            "score": 0.968735933303833
+          },
+          {
+            "poly": [
+              [
+                351,
+                109
+              ],
+              [
+                711,
+                116
+              ],
+              [
+                709,
+                217
+              ],
+              [
+                349,
+                210
+              ]
+            ],
+            "text": "05.2028",
+            "score": 0.996421217918396
+          },
+          {
+            "poly": [
+              [
+                43,
+                237
+              ],
+              [
+                220,
+                244
+              ],
+              [
+                215,
+                353
+              ],
+              [
+                38,
+                345
+              ]
+            ],
+            "text": "Fab.:",
+            "score": 0.8358071804046631
+          },
+          {
+            "poly": [
+              [
+                348,
+                241
+              ],
+              [
+                709,
+                247
+              ],
+              [
+                707,
+                348
+              ],
+              [
+                346,
+                342
+              ]
+            ],
+            "text": "05.2025",
+            "score": 0.9970659698758807
+          },
+          {
+            "poly": [
+              [
+                352,
+                401
+              ],
+              [
+                653,
+                401
+              ],
+              [
+                653,
+                488
+              ],
+              [
+                352,
+                488
+              ]
+            ],
+            "text": "ARLWA8",
+            "score": 0.9873886406421661
+          },
+          {
+            "poly": [
+              [
+                43,
+                463
+              ],
+              [
+                220,
+                469
+              ],
+              [
+                216,
+                572
+              ],
+              [
+                40,
+                567
+              ]
+            ],
+            "text": "Lote:",
+            "score": 0.9945046901702881
+          }
+        ],
+        "ms": 1029,
+        "candidates": [
+          {
+            "iso": "2028-05-31",
+            "raw": "05.2028",
+            "index": 5,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "IMG_6E3DA4FB-ADAA-42D5-AEDD-872BA566CADC.jpeg",
+    "expected": "2027-02-28",
+    "region": [
+      0.18,
+      0.37,
+      0.53,
+      0.24
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "WS\nJ\n",
+        "confidence": 11,
+        "ms": 210,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "W A\nEB\n",
+        "confidence": 32,
+        "ms": 83,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "EE\nW\n",
+        "confidence": 15,
+        "ms": 55,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "N\nEE\nB25A1199\nFO2 25\nVQ2 27\nNR TT\n",
+        "confidence": 37,
+        "ms": 201,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "NW J\n Z\n",
+        "confidence": 3,
+        "ms": 73,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "EE\n7\n",
+        "confidence": 29,
+        "ms": 58,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "J\n",
+        "confidence": 22,
+        "ms": 115,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "F I       .   5\n",
+        "confidence": 11,
+        "ms": 95,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "  -\n",
+        "confidence": 0,
+        "ms": 60,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "",
+        "confidence": 0,
+        "ms": 58,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "B25A1199\nF0225\nV0227",
+        "confidence": 98.10802102088928,
+        "items": [
+          {
+            "poly": [
+              [
+                86,
+                225
+              ],
+              [
+                313,
+                225
+              ],
+              [
+                313,
+                276
+              ],
+              [
+                86,
+                276
+              ]
+            ],
+            "text": "B25A1199",
+            "score": 0.9981527477502823
+          },
+          {
+            "poly": [
+              [
+                92,
+                264
+              ],
+              [
+                261,
+                267
+              ],
+              [
+                261,
+                319
+              ],
+              [
+                91,
+                317
+              ]
+            ],
+            "text": "F0225",
+            "score": 0.9837771892547608
+          },
+          {
+            "poly": [
+              [
+                92,
+                309
+              ],
+              [
+                258,
+                300
+              ],
+              [
+                261,
+                354
+              ],
+              [
+                94,
+                362
+              ]
+            ],
+            "text": "V0227",
+            "score": 0.9810802102088928
+          }
+        ],
+        "ms": 2762,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "B25A1199\nF0225\nV02 27",
+        "confidence": 91.23563667138419,
+        "items": [
+          {
+            "poly": [
+              [
+                86,
+                223
+              ],
+              [
+                314,
+                225
+              ],
+              [
+                313,
+                276
+              ],
+              [
+                85,
+                274
+              ]
+            ],
+            "text": "B25A1199",
+            "score": 0.9980152398347855
+          },
+          {
+            "poly": [
+              [
+                91,
+                264
+              ],
+              [
+                263,
+                269
+              ],
+              [
+                261,
+                318
+              ],
+              [
+                90,
+                313
+              ]
+            ],
+            "text": "F0225",
+            "score": 0.9916516304016113
+          },
+          {
+            "poly": [
+              [
+                93,
+                309
+              ],
+              [
+                260,
+                300
+              ],
+              [
+                263,
+                353
+              ],
+              [
+                96,
+                361
+              ]
+            ],
+            "text": "V02 27",
+            "score": 0.9123563667138418
+          }
+        ],
+        "ms": 673,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 317,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "$2$\nA1199\n25\nV02\n27",
+        "confidence": 50.21334489186605,
+        "items": [
+          {
+            "poly": [
+              [
+                72,
+                213
+              ],
+              [
+                200,
+                210
+              ],
+              [
+                203,
+                327
+              ],
+              [
+                75,
+                330
+              ]
+            ],
+            "text": "$2$",
+            "score": 0.5021334489186605
+          },
+          {
+            "poly": [
+              [
+                169,
+                220
+              ],
+              [
+                316,
+                220
+              ],
+              [
+                316,
+                281
+              ],
+              [
+                169,
+                281
+              ]
+            ],
+            "text": "A1199",
+            "score": 0.9933202743530274
+          },
+          {
+            "poly": [
+              [
+                191,
+                257
+              ],
+              [
+                265,
+                261
+              ],
+              [
+                261,
+                320
+              ],
+              [
+                187,
+                315
+              ]
+            ],
+            "text": "25",
+            "score": 0.9848917424678802
+          },
+          {
+            "poly": [
+              [
+                92,
+                304
+              ],
+              [
+                196,
+                302
+              ],
+              [
+                197,
+                355
+              ],
+              [
+                93,
+                358
+              ]
+            ],
+            "text": "V02",
+            "score": 0.9388043681780497
+          },
+          {
+            "poly": [
+              [
+                182,
+                304
+              ],
+              [
+                265,
+                304
+              ],
+              [
+                265,
+                355
+              ],
+              [
+                182,
+                355
+              ]
+            ],
+            "text": "27",
+            "score": 0.9943618476390839
+          }
+        ],
+        "ms": 777,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "B25A1199\nF0225\nV02 27",
+        "confidence": 89.85790014266968,
+        "items": [
+          {
+            "poly": [
+              [
+                85,
+                221
+              ],
+              [
+                313,
+                218
+              ],
+              [
+                314,
+                274
+              ],
+              [
+                86,
+                278
+              ]
+            ],
+            "text": "B25A1199",
+            "score": 0.997565932571888
+          },
+          {
+            "poly": [
+              [
+                89,
+                262
+              ],
+              [
+                264,
+                265
+              ],
+              [
+                264,
+                318
+              ],
+              [
+                88,
+                316
+              ]
+            ],
+            "text": "F0225",
+            "score": 0.9794083356857299
+          },
+          {
+            "poly": [
+              [
+                92,
+                305
+              ],
+              [
+                265,
+                305
+              ],
+              [
+                265,
+                358
+              ],
+              [
+                92,
+                358
+              ]
+            ],
+            "text": "V02 27",
+            "score": 0.8985790014266968
+          }
+        ],
+        "ms": 657,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "B                195\nTY       :     3   -  -\n5       X        5 5   FALE 0  2   E       E\nR WE     REE P        SR\nEI    PF                 ASHI FW 4           P            2\nLC L 2 PL    2 AS   2      OE\nRE MC RS RE      5        NR\nSH   SE A  S SE ES L:      SS\nPR   BY      RE 3     REA  AREY A  SA\nA YY TB      2       RIEREIT0\nXY LT YE    S\nRR 0        NF   A TP SR    EP\nS AR       LS EAL DOLE    020     ET\nRR    I 4 SK   AZ RR\nRAR ARS   Y A  CE      :\nSR Y TSC 4\nPR A SS    PTT  PS         Y\nSRT SH AES  SE   HE. PA E22 R LER    3\nEER   X   ES SR       :\nNATE  ST  ST B       A\nRS\n",
+        "confidence": 14,
+        "ms": 2238,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "B25A1199\nE02 45\nV2 27\n",
+        "confidence": 49,
+        "ms": 310,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "B25A1199\nFO02 25\nV02 27\n",
+        "confidence": 66,
+        "ms": 117,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "-\nL3\n",
+        "confidence": 42,
+        "ms": 47,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "CE EC HES LE              A\n3\n3\n. .\n\n-\n\n                      PRC\n\n7G ER\n\n3                                    :                       FASB\n\n                                                RTE\n\nE. 3                   AE -\n\nNS.\n\n3                          PRT\n\n                         PAY\n",
+        "confidence": 22,
+        "ms": 501,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "B25A1196\nF002 25\nVQ02 27\n",
+        "confidence": 58,
+        "ms": 74,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "B2\n\n199\n\nEN\n\n2\n\n5\n\nAN\n\nV\n\n.\n\nPF\n\nPRR\n\n4\n\n43\n\n05\n\n.\n\n2\n\n5\n\nTS\n\nRL\n\nRS\n\nR\n\nREP\n\n157\n\nTA\n",
+        "confidence": 17,
+        "ms": 519,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "",
+        "confidence": 0,
+        "ms": 105,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "-    .-\n",
+        "confidence": 46,
+        "ms": 79,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "-     .\n",
+        "confidence": 44,
+        "ms": 61,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "5A1199\nB\nF0225\n-\nV02",
+        "confidence": 36.79009675979614,
+        "items": [
+          {
+            "poly": [
+              [
+                263,
+                14
+              ],
+              [
+                963,
+                14
+              ],
+              [
+                963,
+                231
+              ],
+              [
+                263,
+                231
+              ]
+            ],
+            "text": "5A1199",
+            "score": 0.9968653718630472
+          },
+          {
+            "poly": [
+              [
+                64,
+                72
+              ],
+              [
+                157,
+                72
+              ],
+              [
+                157,
+                202
+              ],
+              [
+                64,
+                202
+              ]
+            ],
+            "text": "B",
+            "score": 0.72697913646698
+          },
+          {
+            "poly": [
+              [
+                52,
+                190
+              ],
+              [
+                742,
+                187
+              ],
+              [
+                743,
+                395
+              ],
+              [
+                52,
+                397
+              ]
+            ],
+            "text": "F0225",
+            "score": 0.9910995364189148
+          },
+          {
+            "poly": [
+              [
+                254,
+                259
+              ],
+              [
+                271,
+                259
+              ],
+              [
+                271,
+                267
+              ],
+              [
+                254,
+                267
+              ]
+            ],
+            "text": "-",
+            "score": 0.3679009675979614
+          },
+          {
+            "poly": [
+              [
+                74,
+                374
+              ],
+              [
+                475,
+                380
+              ],
+              [
+                472,
+                562
+              ],
+              [
+                72,
+                557
+              ]
+            ],
+            "text": "V02",
+            "score": 0.9881274302800497
+          }
+        ],
+        "ms": 1467,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "A1199\n25\nE\nV02",
+        "confidence": 46.68671488761902,
+        "items": [
+          {
+            "poly": [
+              [
+                392,
+                18
+              ],
+              [
+                960,
+                15
+              ],
+              [
+                961,
+                226
+              ],
+              [
+                393,
+                228
+              ]
+            ],
+            "text": "A1199",
+            "score": 0.9982228755950928
+          },
+          {
+            "poly": [
+              [
+                447,
+                204
+              ],
+              [
+                734,
+                201
+              ],
+              [
+                736,
+                381
+              ],
+              [
+                449,
+                384
+              ]
+            ],
+            "text": "25",
+            "score": 0.9958830177783966
+          },
+          {
+            "poly": [
+              [
+                83,
+                227
+              ],
+              [
+                182,
+                227
+              ],
+              [
+                182,
+                357
+              ],
+              [
+                83,
+                357
+              ]
+            ],
+            "text": "E",
+            "score": 0.4668671488761902
+          },
+          {
+            "poly": [
+              [
+                67,
+                374
+              ],
+              [
+                447,
+                374
+              ],
+              [
+                447,
+                560
+              ],
+              [
+                67,
+                560
+              ]
+            ],
+            "text": "V02",
+            "score": 0.9860071539878845
+          }
+        ],
+        "ms": 1146,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "B25A1199\nF02\n25\nV02\n27",
+        "confidence": 98.35347334543863,
+        "items": [
+          {
+            "poly": [
+              [
+                22,
+                27
+              ],
+              [
+                961,
+                11
+              ],
+              [
+                965,
+                229
+              ],
+              [
+                25,
+                245
+              ]
+            ],
+            "text": "B25A1199",
+            "score": 0.9993486925959587
+          },
+          {
+            "poly": [
+              [
+                52,
+                194
+              ],
+              [
+                492,
+                194
+              ],
+              [
+                492,
+                399
+              ],
+              [
+                52,
+                399
+              ]
+            ],
+            "text": "F02",
+            "score": 0.9835347334543864
+          },
+          {
+            "poly": [
+              [
+                455,
+                202
+              ],
+              [
+                731,
+                202
+              ],
+              [
+                731,
+                384
+              ],
+              [
+                455,
+                384
+              ]
+            ],
+            "text": "25",
+            "score": 0.9980862736701965
+          },
+          {
+            "poly": [
+              [
+                80,
+                380
+              ],
+              [
+                454,
+                380
+              ],
+              [
+                454,
+                558
+              ],
+              [
+                80,
+                558
+              ]
+            ],
+            "text": "V02",
+            "score": 0.9839783509572347
+          },
+          {
+            "poly": [
+              [
+                482,
+                377
+              ],
+              [
+                750,
+                377
+              ],
+              [
+                750,
+                549
+              ],
+              [
+                482,
+                549
+              ]
+            ],
+            "text": "27",
+            "score": 0.9987102746963501
+          }
+        ],
+        "ms": 1078,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 649,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "B25A1199\nF02\n25\nV02\n27",
+        "confidence": 95.14081080754599,
+        "items": [
+          {
+            "poly": [
+              [
+                21,
+                24
+              ],
+              [
+                966,
+                5
+              ],
+              [
+                971,
+                231
+              ],
+              [
+                26,
+                250
+              ]
+            ],
+            "text": "B25A1199",
+            "score": 0.9981236308813095
+          },
+          {
+            "poly": [
+              [
+                50,
+                193
+              ],
+              [
+                429,
+                193
+              ],
+              [
+                429,
+                399
+              ],
+              [
+                50,
+                399
+              ]
+            ],
+            "text": "F02",
+            "score": 0.9514081080754598
+          },
+          {
+            "poly": [
+              [
+                476,
+                201
+              ],
+              [
+                736,
+                201
+              ],
+              [
+                736,
+                389
+              ],
+              [
+                476,
+                389
+              ]
+            ],
+            "text": "25",
+            "score": 0.9991644322872162
+          },
+          {
+            "poly": [
+              [
+                84,
+                372
+              ],
+              [
+                441,
+                377
+              ],
+              [
+                439,
+                562
+              ],
+              [
+                82,
+                558
+              ]
+            ],
+            "text": "V02",
+            "score": 0.9940033753712972
+          },
+          {
+            "poly": [
+              [
+                517,
+                377
+              ],
+              [
+                741,
+                377
+              ],
+              [
+                741,
+                555
+              ],
+              [
+                517,
+                555
+              ]
+            ],
+            "text": "27",
+            "score": 0.9990896284580231
+          }
+        ],
+        "ms": 1351,
+        "candidates": []
+      }
+    ]
+  },
+  {
+    "file": "IMG_AE3B28D3-426F-4C52-9F86-F751E7E0D16B.jpeg",
+    "expected": "2028-04-30",
+    "region": [
+      0.27,
+      0.26,
+      0.6,
+      0.31
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "B26D0776\n\nFO04 26\n\nVO4 28\n       3\n",
+        "confidence": 64,
+        "ms": 187,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "B26D0776\nFO4 26\nV04 28\n",
+        "confidence": 77,
+        "ms": 113,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "B26D0776\nFO4 26\nV04 28\n",
+        "confidence": 76,
+        "ms": 56,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "F04J26\nV04328\nAN\n",
+        "confidence": 22,
+        "ms": 83,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "BD 5600776\n\nF426 B\n4 2\nYN\n",
+        "confidence": 20,
+        "ms": 147,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "B26D0776\nFO4 26\nVO4 28\n",
+        "confidence": 69,
+        "ms": 55,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": ". W.\n\n82600776\n\nFO4 26\n\nV04 28\n\n.\n\n N\n",
+        "confidence": 39,
+        "ms": 287,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": " BE\n",
+        "confidence": 15,
+        "ms": 72,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "LJ\n",
+        "confidence": 36,
+        "ms": 54,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "-\n",
+        "confidence": 0,
+        "ms": 53,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "B26D0776\nF0426\nV04 28",
+        "confidence": 85.01475552717844,
+        "items": [
+          {
+            "poly": [
+              [
+                131,
+                164
+              ],
+              [
+                390,
+                159
+              ],
+              [
+                391,
+                213
+              ],
+              [
+                132,
+                218
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9974498599767685
+          },
+          {
+            "poly": [
+              [
+                126,
+                222
+              ],
+              [
+                313,
+                220
+              ],
+              [
+                314,
+                276
+              ],
+              [
+                127,
+                279
+              ]
+            ],
+            "text": "F0426",
+            "score": 0.9904041528701782
+          },
+          {
+            "poly": [
+              [
+                125,
+                279
+              ],
+              [
+                314,
+                277
+              ],
+              [
+                315,
+                336
+              ],
+              [
+                126,
+                339
+              ]
+            ],
+            "text": "V04 28",
+            "score": 0.8501475552717844
+          }
+        ],
+        "ms": 2443,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "B26D0776\nF0426\nV04 28",
+        "confidence": 89.9605909983317,
+        "items": [
+          {
+            "poly": [
+              [
+                131,
+                163
+              ],
+              [
+                389,
+                158
+              ],
+              [
+                390,
+                213
+              ],
+              [
+                132,
+                218
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9978719651699066
+          },
+          {
+            "poly": [
+              [
+                126,
+                218
+              ],
+              [
+                316,
+                218
+              ],
+              [
+                316,
+                281
+              ],
+              [
+                126,
+                281
+              ]
+            ],
+            "text": "F0426",
+            "score": 0.9898908972740174
+          },
+          {
+            "poly": [
+              [
+                125,
+                276
+              ],
+              [
+                316,
+                276
+              ],
+              [
+                316,
+                339
+              ],
+              [
+                125,
+                339
+              ]
+            ],
+            "text": "V04 28",
+            "score": 0.899605909983317
+          }
+        ],
+        "ms": 621,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "B26D0776\nF0426\nV0428",
+        "confidence": 89.07668948173523,
+        "items": [
+          {
+            "poly": [
+              [
+                125,
+                156
+              ],
+              [
+                395,
+                152
+              ],
+              [
+                396,
+                217
+              ],
+              [
+                126,
+                221
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9989460334181786
+          },
+          {
+            "poly": [
+              [
+                121,
+                204
+              ],
+              [
+                325,
+                210
+              ],
+              [
+                323,
+                289
+              ],
+              [
+                119,
+                283
+              ]
+            ],
+            "text": "F0426",
+            "score": 0.9014528155326843
+          },
+          {
+            "poly": [
+              [
+                116,
+                265
+              ],
+              [
+                324,
+                262
+              ],
+              [
+                325,
+                344
+              ],
+              [
+                117,
+                347
+              ]
+            ],
+            "text": "V0428",
+            "score": 0.8907668948173523
+          }
+        ],
+        "ms": 653,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "B26D0716\nV04\n:",
+        "confidence": 69.34430599212646,
+        "items": [
+          {
+            "poly": [
+              [
+                117,
+                157
+              ],
+              [
+                394,
+                146
+              ],
+              [
+                397,
+                218
+              ],
+              [
+                119,
+                229
+              ]
+            ],
+            "text": "B26D0716",
+            "score": 0.9295355081558228
+          },
+          {
+            "poly": [
+              [
+                117,
+                255
+              ],
+              [
+                251,
+                263
+              ],
+              [
+                246,
+                351
+              ],
+              [
+                112,
+                343
+              ]
+            ],
+            "text": "V04",
+            "score": 0.7606227298577627
+          },
+          {
+            "poly": [
+              [
+                91,
+                581
+              ],
+              [
+                107,
+                568
+              ],
+              [
+                116,
+                579
+              ],
+              [
+                100,
+                591
+              ]
+            ],
+            "text": ":",
+            "score": 0.6934430599212646
+          }
+        ],
+        "ms": 638,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "B26D0776\nF0426\nV0428",
+        "confidence": 94.13980722427368,
+        "items": [
+          {
+            "poly": [
+              [
+                129,
+                161
+              ],
+              [
+                391,
+                154
+              ],
+              [
+                392,
+                214
+              ],
+              [
+                131,
+                221
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9984337091445923
+          },
+          {
+            "poly": [
+              [
+                126,
+                218
+              ],
+              [
+                316,
+                218
+              ],
+              [
+                316,
+                282
+              ],
+              [
+                126,
+                282
+              ]
+            ],
+            "text": "F0426",
+            "score": 0.9756839156150818
+          },
+          {
+            "poly": [
+              [
+                121,
+                278
+              ],
+              [
+                315,
+                267
+              ],
+              [
+                320,
+                339
+              ],
+              [
+                126,
+                350
+              ]
+            ],
+            "text": "V0428",
+            "score": 0.9413980722427369
+          }
+        ],
+        "ms": 715,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "B26D07/ 76\nFO4 26\nVO4 28\n",
+        "confidence": 54,
+        "ms": 642,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "B26D07/ 76\nFO4 26\nVO4 28\n",
+        "confidence": 70,
+        "ms": 220,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "B26D0/ 76\nFO4 26\nVO4 28\n",
+        "confidence": 76,
+        "ms": 96,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "B26D0/ 76\nFO4 26\nV04 28\n",
+        "confidence": 71,
+        "ms": 102,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "B26D0776\nFO4 26\nVO4 28 I\n",
+        "confidence": 46,
+        "ms": 127,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "B26D0/ 76\nFO4 26\nVO4 28\n",
+        "confidence": 62,
+        "ms": 74,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "B26D07/ 76\n\nFO4 26\n\nVO4 28\n",
+        "confidence": 54,
+        "ms": 431,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "0 1\n",
+        "confidence": 45,
+        "ms": 213,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 101,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "0\n",
+        "confidence": 16,
+        "ms": 92,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "B26D0776\nF04\n26\n28\nV04",
+        "confidence": 93.13433965047201,
+        "items": [
+          {
+            "poly": [
+              [
+                30,
+                31
+              ],
+              [
+                870,
+                12
+              ],
+              [
+                871,
+                187
+              ],
+              [
+                34,
+                206
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9978948682546616
+          },
+          {
+            "poly": [
+              [
+                33,
+                225
+              ],
+              [
+                349,
+                230
+              ],
+              [
+                347,
+                390
+              ],
+              [
+                31,
+                386
+              ]
+            ],
+            "text": "F04",
+            "score": 0.9918047189712524
+          },
+          {
+            "poly": [
+              [
+                395,
+                219
+              ],
+              [
+                622,
+                219
+              ],
+              [
+                622,
+                388
+              ],
+              [
+                395,
+                388
+              ]
+            ],
+            "text": "26",
+            "score": 0.9981092214584351
+          },
+          {
+            "poly": [
+              [
+                388,
+                407
+              ],
+              [
+                619,
+                407
+              ],
+              [
+                619,
+                578
+              ],
+              [
+                388,
+                578
+              ]
+            ],
+            "text": "28",
+            "score": 0.9981622099876404
+          },
+          {
+            "poly": [
+              [
+                28,
+                418
+              ],
+              [
+                341,
+                407
+              ],
+              [
+                347,
+                576
+              ],
+              [
+                34,
+                587
+              ]
+            ],
+            "text": "V04",
+            "score": 0.9313433965047201
+          }
+        ],
+        "ms": 1002,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "B26D0776\nF04\n26\nV04\n28",
+        "confidence": 95.34903566042581,
+        "items": [
+          {
+            "poly": [
+              [
+                33,
+                38
+              ],
+              [
+                867,
+                19
+              ],
+              [
+                871,
+                186
+              ],
+              [
+                37,
+                205
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9978583306074142
+          },
+          {
+            "poly": [
+              [
+                23,
+                231
+              ],
+              [
+                354,
+                231
+              ],
+              [
+                354,
+                390
+              ],
+              [
+                23,
+                390
+              ]
+            ],
+            "text": "F04",
+            "score": 0.9865834911664327
+          },
+          {
+            "poly": [
+              [
+                383,
+                224
+              ],
+              [
+                623,
+                224
+              ],
+              [
+                623,
+                393
+              ],
+              [
+                383,
+                393
+              ]
+            ],
+            "text": "26",
+            "score": 0.9971117079257965
+          },
+          {
+            "poly": [
+              [
+                17,
+                422
+              ],
+              [
+                342,
+                417
+              ],
+              [
+                345,
+                581
+              ],
+              [
+                20,
+                586
+              ]
+            ],
+            "text": "V04",
+            "score": 0.9534903566042582
+          },
+          {
+            "poly": [
+              [
+                390,
+                413
+              ],
+              [
+                616,
+                416
+              ],
+              [
+                613,
+                580
+              ],
+              [
+                387,
+                577
+              ]
+            ],
+            "text": "28",
+            "score": 0.9990602135658264
+          }
+        ],
+        "ms": 1006,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "B26D0776\nF04\n26\nV04\n28",
+        "confidence": 92.69436995188394,
+        "items": [
+          {
+            "poly": [
+              [
+                32,
+                29
+              ],
+              [
+                869,
+                9
+              ],
+              [
+                871,
+                191
+              ],
+              [
+                37,
+                211
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9976155906915665
+          },
+          {
+            "poly": [
+              [
+                34,
+                221
+              ],
+              [
+                354,
+                230
+              ],
+              [
+                348,
+                396
+              ],
+              [
+                28,
+                386
+              ]
+            ],
+            "text": "F04",
+            "score": 0.9708553353945414
+          },
+          {
+            "poly": [
+              [
+                392,
+                221
+              ],
+              [
+                618,
+                221
+              ],
+              [
+                618,
+                391
+              ],
+              [
+                392,
+                391
+              ]
+            ],
+            "text": "26",
+            "score": 0.9996882081031799
+          },
+          {
+            "poly": [
+              [
+                28,
+                416
+              ],
+              [
+                347,
+                411
+              ],
+              [
+                350,
+                580
+              ],
+              [
+                31,
+                586
+              ]
+            ],
+            "text": "V04",
+            "score": 0.9269436995188395
+          },
+          {
+            "poly": [
+              [
+                391,
+                410
+              ],
+              [
+                613,
+                410
+              ],
+              [
+                613,
+                579
+              ],
+              [
+                391,
+                579
+              ]
+            ],
+            "text": "28",
+            "score": 0.9997720122337341
+          }
+        ],
+        "ms": 987,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "B26D0776\nF04\n26\nV04\n28",
+        "confidence": 96.37368321418762,
+        "items": [
+          {
+            "poly": [
+              [
+                31,
+                27
+              ],
+              [
+                871,
+                7
+              ],
+              [
+                871,
+                192
+              ],
+              [
+                36,
+                213
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9987429901957512
+          },
+          {
+            "poly": [
+              [
+                33,
+                220
+              ],
+              [
+                363,
+                229
+              ],
+              [
+                358,
+                397
+              ],
+              [
+                28,
+                387
+              ]
+            ],
+            "text": "F04",
+            "score": 0.978939414024353
+          },
+          {
+            "poly": [
+              [
+                386,
+                220
+              ],
+              [
+                619,
+                220
+              ],
+              [
+                619,
+                392
+              ],
+              [
+                386,
+                392
+              ]
+            ],
+            "text": "26",
+            "score": 0.999618262052536
+          },
+          {
+            "poly": [
+              [
+                28,
+                413
+              ],
+              [
+                357,
+                413
+              ],
+              [
+                357,
+                585
+              ],
+              [
+                28,
+                585
+              ]
+            ],
+            "text": "V04",
+            "score": 0.9637368321418762
+          },
+          {
+            "poly": [
+              [
+                385,
+                410
+              ],
+              [
+                613,
+                410
+              ],
+              [
+                613,
+                578
+              ],
+              [
+                385,
+                578
+              ]
+            ],
+            "text": "28",
+            "score": 0.9994995892047882
+          }
+        ],
+        "ms": 977,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "B26D0776\nF04\n26\nV04\n28",
+        "confidence": 94.84958251317343,
+        "items": [
+          {
+            "poly": [
+              [
+                30,
+                25
+              ],
+              [
+                871,
+                7
+              ],
+              [
+                871,
+                196
+              ],
+              [
+                34,
+                214
+              ]
+            ],
+            "text": "B26D0776",
+            "score": 0.9966740906238556
+          },
+          {
+            "poly": [
+              [
+                31,
+                220
+              ],
+              [
+                369,
+                225
+              ],
+              [
+                366,
+                396
+              ],
+              [
+                29,
+                392
+              ]
+            ],
+            "text": "F04",
+            "score": 0.9536970059076945
+          },
+          {
+            "poly": [
+              [
+                394,
+                216
+              ],
+              [
+                622,
+                228
+              ],
+              [
+                613,
+                397
+              ],
+              [
+                384,
+                385
+              ]
+            ],
+            "text": "26",
+            "score": 0.9995236992835999
+          },
+          {
+            "poly": [
+              [
+                29,
+                413
+              ],
+              [
+                372,
+                413
+              ],
+              [
+                372,
+                584
+              ],
+              [
+                29,
+                584
+              ]
+            ],
+            "text": "V04",
+            "score": 0.9484958251317342
+          },
+          {
+            "poly": [
+              [
+                387,
+                408
+              ],
+              [
+                613,
+                411
+              ],
+              [
+                611,
+                578
+              ],
+              [
+                385,
+                576
+              ]
+            ],
+            "text": "28",
+            "score": 0.9997372329235077
+          }
+        ],
+        "ms": 992,
+        "candidates": []
+      }
+    ]
+  },
+  {
+    "file": "IMG_55A0B869-1E43-47D1-9D82-0548A1B57097.jpeg",
+    "expected": "2028-07-31",
+    "region": [
+      0.16,
+      0.24,
+      0.8,
+      0.21
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "O. 7 AP\nRI RA WRG TRON SN\n",
+        "confidence": 26,
+        "ms": 289,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "P                Z\n -                      SS.\nVA\nSO 5 RSTISN\nSVRSO SO\n:   E\n",
+        "confidence": 3,
+        "ms": 255,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "-\nES\nCODIASDINAOS SOL\n\nCL     -.\nI\n",
+        "confidence": 5,
+        "ms": 184,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": " 4\n\nES\n\nC07 5\n\n7\n\n.\n- -                N\nJ\n4   J\n",
+        "confidence": 18,
+        "ms": 206,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "",
+        "confidence": 0,
+        "ms": 35,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": " JEU\n          -\nZZ    LL\nOVE A SLT\nA\n-.\n.  A\n",
+        "confidence": 13,
+        "ms": 191,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "7.\n\nSOPNSINIS SOL\n",
+        "confidence": 7,
+        "ms": 140,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "  .\n",
+        "confidence": 0,
+        "ms": 110,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 38,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "",
+        "confidence": 0,
+        "ms": 37,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "3\n261",
+        "confidence": 43.610867857933044,
+        "items": [
+          {
+            "poly": [
+              [
+                288,
+                164
+              ],
+              [
+                321,
+                164
+              ],
+              [
+                321,
+                205
+              ],
+              [
+                288,
+                205
+              ]
+            ],
+            "text": "3",
+            "score": 0.43610867857933044
+          },
+          {
+            "poly": [
+              [
+                138,
+                219
+              ],
+              [
+                276,
+                214
+              ],
+              [
+                278,
+                245
+              ],
+              [
+                140,
+                251
+              ]
+            ],
+            "text": "261",
+            "score": 0.6775447626908621
+          }
+        ],
+        "ms": 2333,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 433,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "SOPSaAa.",
+        "confidence": 52.32882350683212,
+        "items": [
+          {
+            "poly": [
+              [
+                103,
+                393
+              ],
+              [
+                305,
+                393
+              ],
+              [
+                305,
+                413
+              ],
+              [
+                103,
+                413
+              ]
+            ],
+            "text": "SOPSaAa.",
+            "score": 0.5232882350683212
+          }
+        ],
+        "ms": 422,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 284,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 285,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "-            NN\n\nE           -  0\n\nF           2\n\nOR\n\n15      -3\n\nWO 7 TPN\n\n.   -  4  P   P\n\n  N   3  C:\n",
+        "confidence": 14,
+        "ms": 444,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "J                            RX N\nA                           A     0\n\nKE                         55   PA\n:    BS                 EF\n\n/       3        I 2     P       -\n1    SG 7\n\n             -        -\n\n-     -       -      - .\n",
+        "confidence": 21,
+        "ms": 392,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "- 7                     .\nL 20\n7  -\nTY      -\n    R S        -   DT\nL-    -        -    .\n.     S.    S      -      L4 .\n",
+        "confidence": 19,
+        "ms": 353,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": ":   -    P\nPF  CJ P4  7  PP\n:   /  -  R\n-  -    -     J\n-     -  .\n",
+        "confidence": 21,
+        "ms": 180,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "4.      .   -   B\nRQ           -  SIRE A           - MRL\n   2 -          - P    .        EN\nLEO RN   .\nNE   Z8    TT - S    JEON   -             SET\nRE    A   I  .          LX  A\n-    .   A 5 SE     7.   I\n\n.          .           -                    -\n\n   EN    4      -     I   -     -     F\n\n     4\n\nSE    -     -    S\nBE NR. 1 CREAT DIL 1        PC\n",
+        "confidence": 19,
+        "ms": 856,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "          F .\n\nB E -   5 4  SL\n- -     .   .\n.    -      -  P\n      -\n",
+        "confidence": 34,
+        "ms": 130,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "-\n\nP-\n\nF\n\n--\n\n-\n",
+        "confidence": 16,
+        "ms": 128,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "  - E    Y\n",
+        "confidence": 19,
+        "ms": 161,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 45,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": ": /    RB      :          E              -\n",
+        "confidence": 14,
+        "ms": 71,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "NN1O\n000)\nON\n6",
+        "confidence": 55.938684940338135,
+        "items": [
+          {
+            "poly": [
+              [
+                589,
+                48
+              ],
+              [
+                683,
+                42
+              ],
+              [
+                701,
+                296
+              ],
+              [
+                607,
+                302
+              ]
+            ],
+            "text": "NN1O",
+            "score": 0.7422846853733063
+          },
+          {
+            "poly": [
+              [
+                707,
+                52
+              ],
+              [
+                801,
+                36
+              ],
+              [
+                847,
+                291
+              ],
+              [
+                754,
+                307
+              ]
+            ],
+            "text": "000)",
+            "score": 0.7112274989485741
+          },
+          {
+            "poly": [
+              [
+                207,
+                80
+              ],
+              [
+                298,
+                97
+              ],
+              [
+                255,
+                306
+              ],
+              [
+                164,
+                290
+              ]
+            ],
+            "text": "ON",
+            "score": 0.6198544353246689
+          },
+          {
+            "poly": [
+              [
+                332,
+                194
+              ],
+              [
+                405,
+                194
+              ],
+              [
+                405,
+                293
+              ],
+              [
+                332,
+                293
+              ]
+            ],
+            "text": "6",
+            "score": 0.5593868494033813
+          }
+        ],
+        "ms": 781,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "NN\nE\n6",
+        "confidence": 43.14235746860504,
+        "items": [
+          {
+            "poly": [
+              [
+                583,
+                60
+              ],
+              [
+                673,
+                46
+              ],
+              [
+                698,
+                188
+              ],
+              [
+                608,
+                203
+              ]
+            ],
+            "text": "NN",
+            "score": 0.6328559219837189
+          },
+          {
+            "poly": [
+              [
+                613,
+                194
+              ],
+              [
+                685,
+                194
+              ],
+              [
+                685,
+                287
+              ],
+              [
+                613,
+                287
+              ]
+            ],
+            "text": "E",
+            "score": 0.519756555557251
+          },
+          {
+            "poly": [
+              [
+                324,
+                204
+              ],
+              [
+                409,
+                204
+              ],
+              [
+                409,
+                289
+              ],
+              [
+                324,
+                289
+              ]
+            ],
+            "text": "6",
+            "score": 0.4314235746860504
+          }
+        ],
+        "ms": 687,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 353,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 699,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "",
+        "confidence": 0,
+        "items": [],
+        "ms": 337,
+        "candidates": []
+      }
+    ]
+  },
+  {
+    "file": "IMG_9B7E26FB-2845-412F-82E6-272228A00AB9.jpeg",
+    "expected": "2028-03-31",
+    "region": [
+      0.29,
+      0.33,
+      0.44,
+      0.25
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "TE   A\nF03/26        16\nV03/28\nL26C4HS5\n",
+        "confidence": 59,
+        "ms": 147,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 27,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "A\nF03/26 18\nV03/28\nL26C4H5\n",
+        "confidence": 49,
+        "ms": 153,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 15,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "-\nF03/26    16\nV03/28\nL26C4H5\n",
+        "confidence": 44,
+        "ms": 94,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 18,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "F03/26      16.\n\nV03/28\n\nL26C4H5\nTL         Y/\n",
+        "confidence": 40,
+        "ms": 91,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 20,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "F03/26       16:\nV03/28\nL26C4H5\n",
+        "confidence": 69,
+        "ms": 96,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 20,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "-\nF03/26     18\nV03/24\nL26C4H5\n",
+        "confidence": 43,
+        "ms": 88,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "A\n\nF03/26\n\n16\n\nV03/28\n\nL26C4H5\n\n:\n",
+        "confidence": 57,
+        "ms": 256,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 18,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "",
+        "confidence": 0,
+        "ms": 54,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 40,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "E\n",
+        "confidence": 0,
+        "ms": 65,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "Hd\nF03/26\n16\nV03/28\nL26C4H5\nprat\ndonadu",
+        "confidence": 61.51490956544876,
+        "items": [
+          {
+            "poly": [
+              [
+                250,
+                28
+              ],
+              [
+                435,
+                23
+              ],
+              [
+                436,
+                72
+              ],
+              [
+                251,
+                76
+              ]
+            ],
+            "text": "Hd",
+            "score": 0.6151490956544876
+          },
+          {
+            "poly": [
+              [
+                142,
+                202
+              ],
+              [
+                289,
+                208
+              ],
+              [
+                287,
+                249
+              ],
+              [
+                140,
+                243
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9789220988750458
+          },
+          {
+            "poly": [
+              [
+                400,
+                212
+              ],
+              [
+                450,
+                212
+              ],
+              [
+                450,
+                255
+              ],
+              [
+                400,
+                255
+              ]
+            ],
+            "text": "16",
+            "score": 0.9952298700809479
+          },
+          {
+            "poly": [
+              [
+                144,
+                248
+              ],
+              [
+                293,
+                253
+              ],
+              [
+                291,
+                292
+              ],
+              [
+                142,
+                288
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9846343894799551
+          },
+          {
+            "poly": [
+              [
+                138,
+                294
+              ],
+              [
+                322,
+                298
+              ],
+              [
+                321,
+                336
+              ],
+              [
+                137,
+                331
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9991032140595573
+          },
+          {
+            "poly": [
+              [
+                346,
+                392
+              ],
+              [
+                450,
+                389
+              ],
+              [
+                450,
+                447
+              ],
+              [
+                348,
+                449
+              ]
+            ],
+            "text": "prat",
+            "score": 0.9946278482675552
+          },
+          {
+            "poly": [
+              [
+                386,
+                436
+              ],
+              [
+                450,
+                440
+              ],
+              [
+                449,
+                461
+              ],
+              [
+                384,
+                458
+              ]
+            ],
+            "text": "donadu",
+            "score": 0.9962645769119263
+          }
+        ],
+        "ms": 3095,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 16,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "+d\nF03/26\n16\nV03/28\nL26C4H5\nprat\ndonadu",
+        "confidence": 51.35405287146568,
+        "items": [
+          {
+            "poly": [
+              [
+                250,
+                26
+              ],
+              [
+                435,
+                20
+              ],
+              [
+                436,
+                73
+              ],
+              [
+                251,
+                78
+              ]
+            ],
+            "text": "+d",
+            "score": 0.5135405287146568
+          },
+          {
+            "poly": [
+              [
+                142,
+                202
+              ],
+              [
+                287,
+                209
+              ],
+              [
+                285,
+                248
+              ],
+              [
+                140,
+                241
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9832057158152262
+          },
+          {
+            "poly": [
+              [
+                399,
+                211
+              ],
+              [
+                450,
+                211
+              ],
+              [
+                450,
+                255
+              ],
+              [
+                399,
+                255
+              ]
+            ],
+            "text": "16",
+            "score": 0.9951377213001251
+          },
+          {
+            "poly": [
+              [
+                143,
+                248
+              ],
+              [
+                294,
+                254
+              ],
+              [
+                292,
+                293
+              ],
+              [
+                141,
+                287
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9867727061112722
+          },
+          {
+            "poly": [
+              [
+                138,
+                294
+              ],
+              [
+                321,
+                299
+              ],
+              [
+                320,
+                337
+              ],
+              [
+                137,
+                331
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9991732239723206
+          },
+          {
+            "poly": [
+              [
+                344,
+                391
+              ],
+              [
+                449,
+                387
+              ],
+              [
+                450,
+                449
+              ],
+              [
+                347,
+                454
+              ]
+            ],
+            "text": "prat",
+            "score": 0.9932185858488083
+          },
+          {
+            "poly": [
+              [
+                385,
+                438
+              ],
+              [
+                449,
+                438
+              ],
+              [
+                449,
+                460
+              ],
+              [
+                385,
+                460
+              ]
+            ],
+            "text": "donadu",
+            "score": 0.9963338077068329
+          }
+        ],
+        "ms": 1152,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 16,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "F03/26\n16\nV03/28\nL26C4H5\nprat\ndonadu",
+        "confidence": 95.78399360179901,
+        "items": [
+          {
+            "poly": [
+              [
+                141,
+                200
+              ],
+              [
+                290,
+                207
+              ],
+              [
+                288,
+                249
+              ],
+              [
+                139,
+                242
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9931330581506094
+          },
+          {
+            "poly": [
+              [
+                398,
+                211
+              ],
+              [
+                450,
+                211
+              ],
+              [
+                450,
+                255
+              ],
+              [
+                398,
+                255
+              ]
+            ],
+            "text": "16",
+            "score": 0.9971546232700348
+          },
+          {
+            "poly": [
+              [
+                140,
+                246
+              ],
+              [
+                296,
+                251
+              ],
+              [
+                294,
+                292
+              ],
+              [
+                138,
+                288
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9578399360179901
+          },
+          {
+            "poly": [
+              [
+                136,
+                292
+              ],
+              [
+                323,
+                297
+              ],
+              [
+                322,
+                338
+              ],
+              [
+                135,
+                332
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9995883873530796
+          },
+          {
+            "poly": [
+              [
+                335,
+                392
+              ],
+              [
+                450,
+                386
+              ],
+              [
+                450,
+                446
+              ],
+              [
+                338,
+                452
+              ]
+            ],
+            "text": "prat",
+            "score": 0.9621358662843704
+          },
+          {
+            "poly": [
+              [
+                383,
+                433
+              ],
+              [
+                450,
+                438
+              ],
+              [
+                449,
+                462
+              ],
+              [
+                381,
+                457
+              ]
+            ],
+            "text": "donadu",
+            "score": 0.97904105981191
+          }
+        ],
+        "ms": 1061,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 13,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "a\nF03/26\n16\nV03/28\nL26C4H5\nprat\ndonadu",
+        "confidence": 64.49869275093079,
+        "items": [
+          {
+            "poly": [
+              [
+                317,
+                30
+              ],
+              [
+                434,
+                24
+              ],
+              [
+                437,
+                75
+              ],
+              [
+                320,
+                82
+              ]
+            ],
+            "text": "a",
+            "score": 0.6449869275093079
+          },
+          {
+            "poly": [
+              [
+                141,
+                201
+              ],
+              [
+                289,
+                208
+              ],
+              [
+                287,
+                249
+              ],
+              [
+                139,
+                242
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9876188337802887
+          },
+          {
+            "poly": [
+              [
+                399,
+                212
+              ],
+              [
+                450,
+                212
+              ],
+              [
+                450,
+                255
+              ],
+              [
+                399,
+                255
+              ]
+            ],
+            "text": "16",
+            "score": 0.99839848279953
+          },
+          {
+            "poly": [
+              [
+                140,
+                246
+              ],
+              [
+                294,
+                252
+              ],
+              [
+                292,
+                294
+              ],
+              [
+                138,
+                288
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9860562086105347
+          },
+          {
+            "poly": [
+              [
+                138,
+                291
+              ],
+              [
+                323,
+                298
+              ],
+              [
+                321,
+                339
+              ],
+              [
+                136,
+                332
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.999569697039468
+          },
+          {
+            "poly": [
+              [
+                348,
+                394
+              ],
+              [
+                447,
+                390
+              ],
+              [
+                450,
+                443
+              ],
+              [
+                350,
+                446
+              ]
+            ],
+            "text": "prat",
+            "score": 0.9361565709114075
+          },
+          {
+            "poly": [
+              [
+                384,
+                437
+              ],
+              [
+                449,
+                439
+              ],
+              [
+                448,
+                460
+              ],
+              [
+                383,
+                458
+              ]
+            ],
+            "text": "donadu",
+            "score": 0.98219566543897
+          }
+        ],
+        "ms": 955,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 15,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "a\nF03/26\n16\nV03/28\nL26C4H5\nprat\ndonadu",
+        "confidence": 79.82658743858337,
+        "items": [
+          {
+            "poly": [
+              [
+                351,
+                22
+              ],
+              [
+                439,
+                22
+              ],
+              [
+                439,
+                77
+              ],
+              [
+                351,
+                77
+              ]
+            ],
+            "text": "a",
+            "score": 0.7982658743858337
+          },
+          {
+            "poly": [
+              [
+                141,
+                200
+              ],
+              [
+                289,
+                207
+              ],
+              [
+                287,
+                249
+              ],
+              [
+                139,
+                242
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9912201960881551
+          },
+          {
+            "poly": [
+              [
+                399,
+                210
+              ],
+              [
+                450,
+                214
+              ],
+              [
+                448,
+                255
+              ],
+              [
+                396,
+                252
+              ]
+            ],
+            "text": "16",
+            "score": 0.9968752562999725
+          },
+          {
+            "poly": [
+              [
+                141,
+                246
+              ],
+              [
+                294,
+                251
+              ],
+              [
+                292,
+                292
+              ],
+              [
+                139,
+                288
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9797440071900686
+          },
+          {
+            "poly": [
+              [
+                138,
+                292
+              ],
+              [
+                323,
+                298
+              ],
+              [
+                321,
+                340
+              ],
+              [
+                136,
+                333
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9995788080351693
+          },
+          {
+            "poly": [
+              [
+                336,
+                393
+              ],
+              [
+                448,
+                389
+              ],
+              [
+                450,
+                446
+              ],
+              [
+                338,
+                450
+              ]
+            ],
+            "text": "prat",
+            "score": 0.9741294085979462
+          },
+          {
+            "poly": [
+              [
+                384,
+                437
+              ],
+              [
+                449,
+                439
+              ],
+              [
+                448,
+                460
+              ],
+              [
+                383,
+                458
+              ]
+            ],
+            "text": "donadu",
+            "score": 0.9927485585212708
+          }
+        ],
+        "ms": 942,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 15,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "F03/26\nV03/28\nL26C4H5\n",
+        "confidence": 68,
+        "ms": 370,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "F03/26\nV03/28\nL26C4H5\n",
+        "confidence": 65,
+        "ms": 221,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "F03/26\nV03/28\nL26C4H5\n",
+        "confidence": 72,
+        "ms": 94,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "F03/26\nV03/28\nL 26C4H5\n",
+        "confidence": 55,
+        "ms": 92,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "F03/26 8\n03/28 5\nL26C4H5\n",
+        "confidence": 25,
+        "ms": 120,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "F03/26\nV03/28\nL26C4H5\n",
+        "confidence": 59,
+        "ms": 80,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "F03/26\n\nV03/28\n\nL26C4H5\n",
+        "confidence": 66,
+        "ms": 343,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 11,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "",
+        "confidence": 0,
+        "ms": 86,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 57,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "",
+        "confidence": 0,
+        "ms": 58,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "F03/26\nV03/28\nL26C4H5",
+        "confidence": 98.18878968556723,
+        "items": [
+          {
+            "poly": [
+              [
+                54,
+                15
+              ],
+              [
+                628,
+                46
+              ],
+              [
+                619,
+                206
+              ],
+              [
+                45,
+                175
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9818878968556722
+          },
+          {
+            "poly": [
+              [
+                59,
+                205
+              ],
+              [
+                647,
+                226
+              ],
+              [
+                641,
+                383
+              ],
+              [
+                54,
+                362
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9840260048707327
+          },
+          {
+            "poly": [
+              [
+                45,
+                388
+              ],
+              [
+                763,
+                407
+              ],
+              [
+                759,
+                557
+              ],
+              [
+                41,
+                538
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.998001618044717
+          }
+        ],
+        "ms": 861,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "F03/26\nV03/28\nL26C4H5",
+        "confidence": 96.73227369785309,
+        "items": [
+          {
+            "poly": [
+              [
+                56,
+                21
+              ],
+              [
+                625,
+                47
+              ],
+              [
+                618,
+                204
+              ],
+              [
+                48,
+                177
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9673227369785309
+          },
+          {
+            "poly": [
+              [
+                56,
+                209
+              ],
+              [
+                644,
+                230
+              ],
+              [
+                639,
+                381
+              ],
+              [
+                51,
+                361
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9800780912240347
+          },
+          {
+            "poly": [
+              [
+                42,
+                387
+              ],
+              [
+                764,
+                408
+              ],
+              [
+                759,
+                558
+              ],
+              [
+                37,
+                537
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9982381122452872
+          }
+        ],
+        "ms": 838,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "F03/26\nV03/28\nL26C4H5",
+        "confidence": 97.83051411310831,
+        "items": [
+          {
+            "poly": [
+              [
+                54,
+                15
+              ],
+              [
+                628,
+                46
+              ],
+              [
+                619,
+                210
+              ],
+              [
+                45,
+                179
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9963379005591074
+          },
+          {
+            "poly": [
+              [
+                60,
+                210
+              ],
+              [
+                647,
+                228
+              ],
+              [
+                642,
+                383
+              ],
+              [
+                55,
+                365
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9783051411310831
+          },
+          {
+            "poly": [
+              [
+                40,
+                387
+              ],
+              [
+                766,
+                406
+              ],
+              [
+                762,
+                561
+              ],
+              [
+                36,
+                542
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9996863944189889
+          }
+        ],
+        "ms": 915,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "F03/26\nV03/28\nL26C4H5",
+        "confidence": 98.35951228936514,
+        "items": [
+          {
+            "poly": [
+              [
+                53,
+                17
+              ],
+              [
+                626,
+                47
+              ],
+              [
+                618,
+                208
+              ],
+              [
+                45,
+                178
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9893647730350494
+          },
+          {
+            "poly": [
+              [
+                59,
+                209
+              ],
+              [
+                646,
+                227
+              ],
+              [
+                641,
+                383
+              ],
+              [
+                54,
+                365
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9835951228936514
+          },
+          {
+            "poly": [
+              [
+                41,
+                387
+              ],
+              [
+                766,
+                406
+              ],
+              [
+                762,
+                561
+              ],
+              [
+                36,
+                542
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9994008881705148
+          }
+        ],
+        "ms": 804,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "F03/26\nV03/28\nL26C4H5",
+        "confidence": 98.9696353673935,
+        "items": [
+          {
+            "poly": [
+              [
+                56,
+                16
+              ],
+              [
+                624,
+                46
+              ],
+              [
+                616,
+                207
+              ],
+              [
+                47,
+                177
+              ]
+            ],
+            "text": "F03/26",
+            "score": 0.9957405428091685
+          },
+          {
+            "poly": [
+              [
+                64,
+                212
+              ],
+              [
+                643,
+                231
+              ],
+              [
+                638,
+                380
+              ],
+              [
+                59,
+                361
+              ]
+            ],
+            "text": "V03/28",
+            "score": 0.9896963536739349
+          },
+          {
+            "poly": [
+              [
+                45,
+                387
+              ],
+              [
+                766,
+                407
+              ],
+              [
+                762,
+                561
+              ],
+              [
+                40,
+                541
+              ]
+            ],
+            "text": "L26C4H5",
+            "score": 0.9996302723884583
+          }
+        ],
+        "ms": 939,
+        "candidates": [
+          {
+            "iso": "2028-03-31",
+            "raw": "03/28",
+            "index": 10,
+            "score": 5,
+            "labeled": true,
+            "ambiguous": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "file": "IMG_D8D3A28A-A43C-423A-933D-533C2FB5AB39.jpeg",
+    "expected": "2027-06-30",
+    "region": [
+      0.14,
+      0.36,
+      0.76,
+      0.25
+    ],
+    "results": [
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": ". JV\nON\n",
+        "confidence": 9,
+        "ms": 175,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": "403\n",
+        "confidence": 64,
+        "ms": 66,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "NA A\nLY\n",
+        "confidence": 17,
+        "ms": 66,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "N .\n403\nYC\nO 0\nEEN\n",
+        "confidence": 24,
+        "ms": 111,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "403\n L:2524345\nF:06725\nM106/727\n:       N\n",
+        "confidence": 18,
+        "ms": 97,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "QA\nWY\n",
+        "confidence": 4,
+        "ms": 55,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "",
+        "confidence": 0,
+        "ms": 69,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "          403\n",
+        "confidence": 64,
+        "ms": 52,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": "",
+        "confidence": 0,
+        "ms": 53,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "Z :\n",
+        "confidence": 0,
+        "ms": 66,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "403\n2524345\n06/25\n:06127",
+        "confidence": 84.95004872481027,
+        "items": [
+          {
+            "poly": [
+              [
+                385,
+                125
+              ],
+              [
+                450,
+                125
+              ],
+              [
+                450,
+                167
+              ],
+              [
+                385,
+                167
+              ]
+            ],
+            "text": "403",
+            "score": 0.9961762626965841
+          },
+          {
+            "poly": [
+              [
+                135,
+                221
+              ],
+              [
+                395,
+                227
+              ],
+              [
+                394,
+                268
+              ],
+              [
+                134,
+                261
+              ]
+            ],
+            "text": "2524345",
+            "score": 0.9426790646144322
+          },
+          {
+            "poly": [
+              [
+                140,
+                263
+              ],
+              [
+                323,
+                269
+              ],
+              [
+                322,
+                306
+              ],
+              [
+                139,
+                301
+              ]
+            ],
+            "text": "06/25",
+            "score": 0.91240234375
+          },
+          {
+            "poly": [
+              [
+                99,
+                304
+              ],
+              [
+                321,
+                309
+              ],
+              [
+                320,
+                347
+              ],
+              [
+                98,
+                341
+              ]
+            ],
+            "text": ":06127",
+            "score": 0.8495004872481028
+          }
+        ],
+        "ms": 2461,
+        "candidates": [
+          {
+            "iso": "2025-06-30",
+            "raw": "06/25",
+            "index": 12,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "403\nL82524345\nF:06/25\nV:06127",
+        "confidence": 85.55903605052403,
+        "items": [
+          {
+            "poly": [
+              [
+                386,
+                125
+              ],
+              [
+                450,
+                128
+              ],
+              [
+                450,
+                167
+              ],
+              [
+                384,
+                164
+              ]
+            ],
+            "text": "403",
+            "score": 0.9805689255396525
+          },
+          {
+            "poly": [
+              [
+                67,
+                218
+              ],
+              [
+                394,
+                227
+              ],
+              [
+                393,
+                268
+              ],
+              [
+                66,
+                258
+              ]
+            ],
+            "text": "L82524345",
+            "score": 0.8879101011488173
+          },
+          {
+            "poly": [
+              [
+                70,
+                258
+              ],
+              [
+                324,
+                266
+              ],
+              [
+                323,
+                307
+              ],
+              [
+                69,
+                300
+              ]
+            ],
+            "text": "F:06/25",
+            "score": 0.9315237743513924
+          },
+          {
+            "poly": [
+              [
+                71,
+                302
+              ],
+              [
+                322,
+                307
+              ],
+              [
+                321,
+                348
+              ],
+              [
+                70,
+                342
+              ]
+            ],
+            "text": "V:06127",
+            "score": 0.8555903605052403
+          }
+        ],
+        "ms": 656,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "4",
+        "confidence": 36.9833379983902,
+        "items": [
+          {
+            "poly": [
+              [
+                389,
+                133
+              ],
+              [
+                450,
+                133
+              ],
+              [
+                450,
+                162
+              ],
+              [
+                389,
+                162
+              ]
+            ],
+            "text": "4",
+            "score": 0.369833379983902
+          }
+        ],
+        "ms": 386,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "403\n76",
+        "confidence": 37.913013994693756,
+        "items": [
+          {
+            "poly": [
+              [
+                389,
+                131
+              ],
+              [
+                450,
+                134
+              ],
+              [
+                450,
+                164
+              ],
+              [
+                387,
+                161
+              ]
+            ],
+            "text": "403",
+            "score": 0.9890401760737101
+          },
+          {
+            "poly": [
+              [
+                80,
+                301
+              ],
+              [
+                213,
+                308
+              ],
+              [
+                211,
+                343
+              ],
+              [
+                78,
+                336
+              ]
+            ],
+            "text": "76",
+            "score": 0.37913013994693756
+          }
+        ],
+        "ms": 552,
+        "candidates": []
+      },
+      {
+        "scope": "full",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "403\n200\n566\n2.11\n422\n3\n45\n5\n7\n2",
+        "confidence": 38.439393043518066,
+        "items": [
+          {
+            "poly": [
+              [
+                389,
+                131
+              ],
+              [
+                450,
+                134
+              ],
+              [
+                450,
+                164
+              ],
+              [
+                387,
+                161
+              ]
+            ],
+            "text": "403",
+            "score": 0.9926657478014628
+          },
+          {
+            "poly": [
+              [
+                144,
+                219
+              ],
+              [
+                187,
+                220
+              ],
+              [
+                183,
+                346
+              ],
+              [
+                140,
+                345
+              ]
+            ],
+            "text": "200",
+            "score": 0.8030213912328085
+          },
+          {
+            "poly": [
+              [
+                178,
+                220
+              ],
+              [
+                221,
+                220
+              ],
+              [
+                221,
+                345
+              ],
+              [
+                178,
+                345
+              ]
+            ],
+            "text": "566",
+            "score": 0.8650288780530294
+          },
+          {
+            "poly": [
+              [
+                216,
+                221
+              ],
+              [
+                259,
+                222
+              ],
+              [
+                254,
+                347
+              ],
+              [
+                211,
+                345
+              ]
+            ],
+            "text": "2.11",
+            "score": 0.8021067455410957
+          },
+          {
+            "poly": [
+              [
+                251,
+                225
+              ],
+              [
+                295,
+                225
+              ],
+              [
+                295,
+                346
+              ],
+              [
+                251,
+                346
+              ]
+            ],
+            "text": "422",
+            "score": 0.8741483489672343
+          },
+          {
+            "poly": [
+              [
+                295,
+                229
+              ],
+              [
+                333,
+                229
+              ],
+              [
+                333,
+                266
+              ],
+              [
+                295,
+                266
+              ]
+            ],
+            "text": "3",
+            "score": 0.8902915120124817
+          },
+          {
+            "poly": [
+              [
+                317,
+                229
+              ],
+              [
+                396,
+                231
+              ],
+              [
+                395,
+                268
+              ],
+              [
+                316,
+                265
+              ]
+            ],
+            "text": "45",
+            "score": 0.991801530122757
+          },
+          {
+            "poly": [
+              [
+                292,
+                257
+              ],
+              [
+                323,
+                257
+              ],
+              [
+                323,
+                310
+              ],
+              [
+                292,
+                310
+              ]
+            ],
+            "text": "5",
+            "score": 0.9846609234809875
+          },
+          {
+            "poly": [
+              [
+                292,
+                311
+              ],
+              [
+                319,
+                311
+              ],
+              [
+                319,
+                341
+              ],
+              [
+                292,
+                341
+              ]
+            ],
+            "text": "7",
+            "score": 0.9857296943664551
+          },
+          {
+            "poly": [
+              [
+                335,
+                378
+              ],
+              [
+                342,
+                378
+              ],
+              [
+                342,
+                383
+              ],
+              [
+                335,
+                383
+              ]
+            ],
+            "text": "2",
+            "score": 0.38439393043518066
+          }
+        ],
+        "ms": 1335,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 0,
+        "text": "852524345\n806/25\nXL 06/727\n",
+        "confidence": 4,
+        "ms": 422,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 1,
+        "text": " 5 2 524345\n806/25\nX12 06/27\n",
+        "confidence": 23,
+        "ms": 290,
+        "candidates": [
+          {
+            "iso": "2027-06-30",
+            "raw": "06/27",
+            "index": 23,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 2,
+        "text": "B2:2524345\nEN. 06/725\nE0627\n",
+        "confidence": 0,
+        "ms": 126,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 3,
+        "text": "  : /\nR\nYO\n",
+        "confidence": 5,
+        "ms": 75,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 4,
+        "text": "L2524345\n 06/25\nL.06727\n",
+        "confidence": 0,
+        "ms": 134,
+        "candidates": [
+          {
+            "iso": "2025-06-30",
+            "raw": "06/25",
+            "index": 11,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 5,
+        "text": "3:2524345\n06/725\n06/727\n",
+        "confidence": 6,
+        "ms": 90,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 6,
+        "text": "524524345\n\n06/725\n\n06/727\n",
+        "confidence": 64,
+        "ms": 284,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 7,
+        "text": "",
+        "confidence": 0,
+        "ms": 115,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 8,
+        "text": " .\n",
+        "confidence": 0,
+        "ms": 75,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "tesseract",
+        "variant": 9,
+        "text": "  A    / /\n",
+        "confidence": 21,
+        "ms": 78,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "raw",
+        "text": "82524545\n:06/25\nY:06127",
+        "confidence": 87.92169349534171,
+        "items": [
+          {
+            "poly": [
+              [
+                133,
+                7
+              ],
+              [
+                976,
+                38
+              ],
+              [
+                972,
+                160
+              ],
+              [
+                129,
+                129
+              ]
+            ],
+            "text": "82524545",
+            "score": 0.8983585014939308
+          },
+          {
+            "poly": [
+              [
+                139,
+                139
+              ],
+              [
+                758,
+                147
+              ],
+              [
+                756,
+                267
+              ],
+              [
+                137,
+                259
+              ]
+            ],
+            "text": ":06/25",
+            "score": 0.8921999533971151
+          },
+          {
+            "poly": [
+              [
+                13,
+                222
+              ],
+              [
+                772,
+                259
+              ],
+              [
+                764,
+                424
+              ],
+              [
+                5,
+                387
+              ]
+            ],
+            "text": "Y:06127",
+            "score": 0.8792169349534171
+          }
+        ],
+        "ms": 792,
+        "candidates": [
+          {
+            "iso": "2025-06-30",
+            "raw": "06/25",
+            "index": 10,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "gray",
+        "text": "82524345\nL\nL\n:06/25\nY:06127",
+        "confidence": 42.33305752277374,
+        "items": [
+          {
+            "poly": [
+              [
+                93,
+                11
+              ],
+              [
+                972,
+                42
+              ],
+              [
+                968,
+                160
+              ],
+              [
+                89,
+                129
+              ]
+            ],
+            "text": "82524345",
+            "score": 0.8998247534036636
+          },
+          {
+            "poly": [
+              [
+                29,
+                26
+              ],
+              [
+                108,
+                26
+              ],
+              [
+                108,
+                130
+              ],
+              [
+                29,
+                130
+              ]
+            ],
+            "text": "L",
+            "score": 0.8690157532691956
+          },
+          {
+            "poly": [
+              [
+                34,
+                124
+              ],
+              [
+                108,
+                124
+              ],
+              [
+                108,
+                240
+              ],
+              [
+                34,
+                240
+              ]
+            ],
+            "text": "L",
+            "score": 0.4233305752277374
+          },
+          {
+            "poly": [
+              [
+                139,
+                147
+              ],
+              [
+                753,
+                154
+              ],
+              [
+                752,
+                259
+              ],
+              [
+                138,
+                252
+              ]
+            ],
+            "text": ":06/25",
+            "score": 0.8958499034245809
+          },
+          {
+            "poly": [
+              [
+                18,
+                233
+              ],
+              [
+                764,
+                270
+              ],
+              [
+                756,
+                419
+              ],
+              [
+                10,
+                382
+              ]
+            ],
+            "text": "Y:06127",
+            "score": 0.844433673790523
+          }
+        ],
+        "ms": 880,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "otsu",
+        "text": "2524345\n06/25\n06/27",
+        "confidence": 83.22630643844604,
+        "items": [
+          {
+            "poly": [
+              [
+                259,
+                7
+              ],
+              [
+                985,
+                31
+              ],
+              [
+                980,
+                166
+              ],
+              [
+                255,
+                142
+              ]
+            ],
+            "text": "2524345",
+            "score": 0.993572975908007
+          },
+          {
+            "poly": [
+              [
+                255,
+                134
+              ],
+              [
+                772,
+                143
+              ],
+              [
+                770,
+                272
+              ],
+              [
+                253,
+                264
+              ]
+            ],
+            "text": "06/25",
+            "score": 0.8322630643844604
+          },
+          {
+            "poly": [
+              [
+                256,
+                256
+              ],
+              [
+                766,
+                269
+              ],
+              [
+                763,
+                390
+              ],
+              [
+                253,
+                377
+              ]
+            ],
+            "text": "06/27",
+            "score": 0.9057082891464233
+          }
+        ],
+        "ms": 868,
+        "candidates": [
+          {
+            "iso": "2027-06-30",
+            "raw": "06/27",
+            "index": 14,
+            "score": 1,
+            "labeled": false,
+            "ambiguous": true
+          },
+          {
+            "iso": "2025-06-30",
+            "raw": "06/25",
+            "index": 8,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": true
+          }
+        ]
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "sauvola",
+        "text": "（）",
+        "confidence": 58.77029597759247,
+        "items": [
+          {
+            "poly": [
+              [
+                359,
+                307
+              ],
+              [
+                427,
+                307
+              ],
+              [
+                427,
+                359
+              ],
+              [
+                359,
+                359
+              ]
+            ],
+            "text": "（）",
+            "score": 0.5877029597759247
+          }
+        ],
+        "ms": 656,
+        "candidates": []
+      },
+      {
+        "scope": "aim",
+        "engine": "paddle",
+        "mode": "adaptive",
+        "text": "2524315\n[\n06/25\n06127",
+        "confidence": 42.981722950935364,
+        "items": [
+          {
+            "poly": [
+              [
+                182,
+                7
+              ],
+              [
+                982,
+                33
+              ],
+              [
+                978,
+                160
+              ],
+              [
+                178,
+                135
+              ]
+            ],
+            "text": "2524315",
+            "score": 0.9195840358734131
+          },
+          {
+            "poly": [
+              [
+                659,
+                73
+              ],
+              [
+                690,
+                73
+              ],
+              [
+                690,
+                80
+              ],
+              [
+                659,
+                80
+              ]
+            ],
+            "text": "[",
+            "score": 0.42981722950935364
+          },
+          {
+            "poly": [
+              [
+                202,
+                142
+              ],
+              [
+                767,
+                147
+              ],
+              [
+                766,
+                271
+              ],
+              [
+                201,
+                266
+              ]
+            ],
+            "text": "06/25",
+            "score": 0.9334277749061585
+          },
+          {
+            "poly": [
+              [
+                244,
+                259
+              ],
+              [
+                763,
+                275
+              ],
+              [
+                760,
+                388
+              ],
+              [
+                241,
+                373
+              ]
+            ],
+            "text": "06127",
+            "score": 0.9062054753303528
+          }
+        ],
+        "ms": 781,
+        "candidates": [
+          {
+            "iso": "2025-06-30",
+            "raw": "06/25",
+            "index": 10,
+            "score": 0,
+            "labeled": false,
+            "ambiguous": false
+          }
+        ]
+      }
+    ]
+  }
+]

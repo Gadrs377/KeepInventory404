@@ -2156,3 +2156,7 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   opacity: 0; transition: opacity 700ms ease-out;
 }
 .row-item.is-return::after { opacity: 1; transition: none; }
+/* A captura fica apenas na confirmação; não é enviada nem salva no produto. */
+.exp-evidence { margin: 16px 0; }
+.exp-evidence img { display: block; width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; }
+.exp-evidence figcaption { font-size: .85rem; line-height: 1.4; margin-top: 8px; }

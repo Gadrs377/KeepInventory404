@@ -156,6 +156,9 @@ export function findExpiryCandidates(text, today = todayIso()) {
   // "15 OUT 2026", "OUT/26", "15OUT26" -> meses em número
   t = t.replace(/(?:(\d{1,2})\s*[\/.\-]?\s*)?(?<![A-Z])(JAN|FEV|FEB|MAR|ABR|APR|MAI|MAY|JUN|JUL|AGO|AUG|SET|SEP|OUT|OCT|NOV|DEZ|DEC)[A-Z]*\.?\s*[\/.\-]?\s*(\d{2,4})\b/g,
     (_, d, mon, y) => `${d ? `${d}/` : ''}${String(MONTH_NAMES[mon]).padStart(2, '0')}/${y}`);
+  // A correção O -> 0 fica restrita ao início de uma data após V/F.
+  t = t.replace(/\b([VF])O(?=\d[ \t/.-])/g, (_, label) => `${label}0`);
+  t = t.replace(/\b([VF])\s*\.:/g, '$1:');
   // Rótulo grudado no número ("V25/03/27", "VAL10/26"): separa.
   t = t.replace(/\b(VAL(?:IDADE)?|VENC|VCTO|VTO|EXP|FAB|LOTE|LT|V|F|L|P)(?=\d)/g, '$1 ');
   // Corrige letras dentro de trechos com cara de data (tem dígito e separador).
@@ -211,7 +214,7 @@ export function findExpiryCandidates(text, today = todayIso()) {
     add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}`));
   }
   // Tudo junto só com rótulo de validade na frente: "VAL 151026" ou "VAL15102026"
-  const compact = /(?<![\dA-Z])(\d{8}|\d{6})(?!\d)/g;
+  const compact = /(?<![\dA-Z])(\d{8}|\d{6}|\d{4})(?![\dA-Z])/g;
   while ((m = compact.exec(t))) {
     if (labelAt(m.index) !== 'expiry') continue;
     add(m[0], m.index, parseExpiry(m[1]));
@@ -219,7 +222,14 @@ export function findExpiryCandidates(text, today = todayIso()) {
   // Missing separators: only accept under an explicit validity label.
   const spaced = /(?<![\dA-Z])(\d{1,2})[ \t]+(\d{1,2})[ \t]+(20\d{2}|\d{2})(?!\d)/g;
   while ((m = spaced.exec(t))) {
+    used.push([m.index, m.index + m[0].length]);
     if (labelAt(m.index) === 'expiry') add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}/${m[3]}`));
+  }
+  // Mês e ano separados por espaço; não cruza linhas nem extrai sufixo D M A.
+  const spacedMonth = /(?<![\dA-Z/.\-])(\d{1,2})[ \t]+(20\d{2}|\d{2})(?![\dA-Z]|[ \t]+\d)/g;
+  while ((m = spacedMonth.exec(t))) {
+    if (used.some(([a, b]) => m.index >= a && m.index < b)) continue;
+    if (labelAt(m.index) === 'expiry') add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}`));
   }
   if (!found.length) return [];
   found.sort((a, b) => b.score - a.score || b.iso.localeCompare(a.iso));
