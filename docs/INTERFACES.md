@@ -822,3 +822,26 @@ termos fixos do design system (seção 8). Principais trocas:
 | Escrever o nome / O app sugere o produto das lojas… | Digitar o nome / As lojas sugerem o produto enquanto você digita |
 | Quase desistindo da loja. Se não achar, você digita o nome | As lojas ainda não responderam. Se preferir, digite o nome |
 | O armário diz que não tem nenhum… | Está zerado no armário… |
+
+## Versão 3.25: alinhamento e retorno
+
+- **Telas vazias no centro**, com um símbolo grande num círculo, título, uma
+  frase e o botão do próximo passo: Armário vazio ("Nada guardado ainda"),
+  busca sem resultado, Compras ("Nada para comprar"), Cupons ("Nenhum cupom
+  ainda") e a lista do leitor.
+- **Página do produto no centro**, como um contato: foto, nome, marca e
+  estado centralizados; a quantidade grande fica no meio, entre **Tirar 1** e
+  **Guardar 1** (ícone em cima, texto embaixo), com "no armário" abaixo do
+  número. Com letra grande, a quantidade vem primeiro e os botões ficam um
+  embaixo do outro.
+- **Aviso** com o ícone do gesto (seta para dentro, para fora, contagem), o que
+  aconteceu em negrito (até 2 linhas) e o resto menor embaixo. "Desfazer" em
+  texto, sem moldura e sem o X; some sozinho em 8 s e espera enquanto o dedo
+  estiver nele.
+- **Barras do topo** do Armário quase opacas quando a lista passa por baixo:
+  nada aparece atrás do título e da busca.
+- **Títulos de seção** alinhados com o texto de dentro dos cartões (produto e
+  Mais), como nos Ajustes do iPhone.
+- **Mais**: "Instalar no celular" some quando o app já está instalado; "Ler
+  nota fiscal" usa o mesmo ícone de QR Code da tela inicial.
+- Contagem: "No app: 6" virou "No armário: 6".

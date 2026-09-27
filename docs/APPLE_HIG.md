@@ -216,7 +216,9 @@ A interface precisa aguentar o texto aumentado até **200%**.
 | Não animar o frequente | Cascata só na primeira vez; números rolam discretos | Ok |
 | Reduzir movimento = esmaecer | Trocas de tela viram esmaecimento de 180 ms | Corrigido na 3.21 |
 | Sem alerta ao abrir; sem alerta para o que se desfaz | Avisos com Desfazer; sem alertas na abertura | Ok |
-| Tela vazia com próximo passo | Armário e Cupons com "Abrir o leitor" | Ok |
+| Tela vazia com próximo passo | No centro, com símbolo grande, título, uma frase e o botão (como o ContentUnavailableView): Armário, busca sem resultado, Compras, Cupons, leitor | Corrigido na 3.25 |
+| Conteúdo não aparece atrás das barras | Barras presas no topo com vidro quase opaco quando a lista passa por baixo | Corrigido na 3.25 |
+| Desfazer sem travar a tela | Aviso com Desfazer some sozinho em 8 s e espera enquanto o dedo ou o foco estiver nele; sem X | Corrigido na 3.25 |
 | Permissão na hora de usar | Câmera pedida ao abrir o leitor | Ok |
 | Voltar onde parou | O app instalado abre na última aba usada | Corrigido na 3.23 |
 | Atalhos na tela inicial | `manifest` tem atalhos, mas o iPhone não mostra para app web | Limite da plataforma |

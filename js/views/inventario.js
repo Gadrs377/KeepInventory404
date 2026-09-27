@@ -50,7 +50,7 @@ export default function mountInventario(root) {
           ${thumb(p)}
           <span class="row-main">
             <span class="row-name">${esc(p.name)}</span>
-            <span class="row-sub">${counted === undefined ? `No app: ${p.qty}` : `Era ${p.qty}`}${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
+            <span class="row-sub">${counted === undefined ? `No armário: ${p.qty}` : `Era ${p.qty}`}${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
           </span>
           ${counted === undefined ? '<span class="tag is-empty"><span class="sr-only">Ainda não contado</span></span>' : tag(counted, 'is-counted', 'Contados')}
         </button>

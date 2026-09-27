@@ -82,7 +82,8 @@ export default function mountCompras(root) {
     const all = items.length + state.extra.length;
     lead.textContent = all
       ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}, pensando em ${plural(state.every, 'dia', 'dias')}.` : 'Tudo marcado. Boas compras.')
-      : 'Nada para comprar agora. O que estiver acabando aparece aqui.';
+      : '';
+    lead.hidden = !all;
 
     const groups = AREAS.map((a) => ({ ...a, rows: items.filter((i) => (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
     lists.innerHTML = groups.map((g) => `
@@ -109,9 +110,15 @@ export default function mountCompras(root) {
           <div class="shop-item ${x.checked ? 'is-done' : ''}">
             <input type="checkbox" class="check" id="x-${x.id}" data-extra="${x.id}" ${x.checked ? 'checked' : ''}>
             <label class="row-main" for="x-${x.id}"><span class="row-name">${esc(x.name)}</span></label>
-            <button type="button" class="icon-btn" data-remove="${x.id}" aria-label="Tirar ${esc(x.name)} da lista">${icon('close')}</button>
+            <button type="button" class="icon-btn" data-remove="${x.id}" aria-label="Remover ${esc(x.name)} da lista">${icon('close')}</button>
           </div>
-        </li>`).join('')}</ul>` : '');
+        </li>`).join('')}</ul>` : '')
+      + (all ? '' : `
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">${icon('cart')}</span>
+        <p class="empty-lead">Nada para comprar</p>
+        <p>O que estiver acabando aparece aqui.</p>
+      </div>`);
 
     const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
     if (done) lists.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>${icon('check')}Limpar marcados</button>`);

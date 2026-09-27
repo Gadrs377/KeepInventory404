@@ -2050,3 +2050,59 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
    sombra na borda, e por baixo o fundo escurece como a tela de trás */
 html.swiping body { background: color-mix(in oklab, var(--ink) 12%, var(--paper)); transition: none; }
 html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0 / 0.12); min-height: 100dvh; will-change: translate; }
+
+/* ---------- Versão 3.25: alinhamento e retorno (como a Apple faz) ---------- */
+
+/* Tela vazia no centro, com um símbolo grande e o próximo passo, como o
+   ContentUnavailableView do iOS */
+.empty-state, .empty-filter { align-items: center; text-align: center; }
+.empty-state { justify-content: center; min-height: 52dvh; padding: 40px 32px; gap: 6px; }
+.empty-state p:not(.empty-lead), .empty-filter p { max-width: 30ch; }
+.empty-state .btn { margin-top: 14px; min-width: 220px; }
+.empty-filter { padding-block: 40px; }
+.empty-icon {
+  display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 10px;
+  border-radius: 50%; background: color-mix(in oklab, var(--ink) 6%, transparent); color: var(--ink-2);
+}
+.empty-icon .icon { width: 34px; height: 34px; }
+.empty-icon.is-small { width: 52px; height: 52px; margin-bottom: 4px; }
+.empty-icon.is-small .icon { width: 24px; height: 24px; }
+.receipt-empty { text-align: center; padding-block: 28px; }
+
+/* Página do produto: cabeçalho no centro, como um contato; a quantidade fica
+   no meio, entre Tirar e Guardar */
+.product-hero { grid-template-columns: 1fr; grid-template-areas: "foto" "info"; justify-items: center; text-align: center; gap: 12px; }
+.product-hero .page-title { text-wrap: balance; }
+.product-hero .hero-pills { justify-content: center; flex-wrap: wrap; }
+.product-hero .product-sub { text-wrap: balance; }
+.quick-actions { grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 10px; }
+.btn-stack { flex-direction: column; gap: 4px; min-height: 76px; padding: 10px 6px; font-size: 0.8824rem; }
+.btn-stack .icon { width: 22px; height: 22px; }
+.hero-qty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 76px; }
+.hero-qty-label { font-size: 0.7647rem; color: var(--ink-2); white-space: nowrap; }
+.hero-qty > .tag { view-transition-name: hero-tag; }
+.text-large .quick-actions { grid-template-columns: 1fr; }
+.text-large .hero-qty { order: -1; }
+
+/* Barras presas no topo: o que passa por baixo some no vidro, sem aparecer
+   atrás do texto (o "scroll edge" do iOS) */
+.screen-home.is-collapsed .home-tools.glass-thick, .mini-bar { background: color-mix(in oklab, var(--paper) 97%, transparent); }
+
+/* Títulos de seção alinhados com o texto de dentro dos cartões, como nos Ajustes */
+.screen-product main > section:not(.product-hero) > .list-title { padding-inline: 16px; }
+.screen-data .list-title { font-size: var(--text-headline); padding-inline: 12px; margin-block: 24px 8px; }
+.screen-data .group-note { padding-inline: 12px; }
+
+/* Aviso: ícone do gesto, o que aconteceu em uma linha e o resto embaixo */
+.toast:has(.toast-icon) { padding-left: 10px; gap: 10px; }
+.toast-icon {
+  flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+}
+.toast-icon .icon { width: 18px; height: 18px; }
+.toast-text { min-width: 0; }
+.toast-head { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-weight: 700; }
+/* Desfazer como texto, sem moldura (como no Mail): sobra espaço para a frase */
+.toast-action { border-color: transparent; padding-inline: 10px; text-decoration: underline; text-underline-offset: 3px; }
+.toast-sub { display: block; margin-top: 1px; font-size: 0.8235rem; opacity: 0.88; }
+.text-large .btn-stack { flex-direction: row; gap: 8px; min-height: 56px; }

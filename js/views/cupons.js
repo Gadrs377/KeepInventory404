@@ -52,6 +52,7 @@ export default async function mountCupons(root) {
           </li>`;
         }).join('') + '</ul>'
         : `<div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">${icon('receipt')}</span>
             <p class="empty-lead">Nenhum cupom ainda</p>
             <p>Ao tocar em Concluir no leitor ou aplicar uma contagem, o cupom fica aqui.</p>
             <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>

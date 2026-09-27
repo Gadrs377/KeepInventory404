@@ -8,6 +8,8 @@ export default async function mountDados(root) {
   const [products, movements] = await Promise.all([listProducts(), recentMovements(60)]);
   const names = Object.fromEntries(products.map((p) => [p.code, p.name]));
   let persisted = false;
+  // Já instalado na tela de início: a explicação de como instalar sobra.
+  const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
   try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false; } catch { /* sem suporte */ }
 
   const label = (m) => ({
@@ -25,7 +27,7 @@ export default async function mountDados(root) {
       <main class="content stack">
         <ul class="group" aria-label="Atalhos">
           <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
-          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('receipt')}</span><span class="group-label">Ler nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
+          <li><button type="button" class="group-row" data-nota><span class="group-icon is-entrada">${icon('qrCode')}</span><span class="group-label">Ler nota fiscal</span>${icon('chevron', 'group-chevron')}</button></li>
         </ul>
 
         <h2 class="list-title">Backup</h2>
@@ -41,7 +43,7 @@ export default async function mountDados(root) {
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
         </ul>
 
-        <section class="install-note">
+        <section class="install-note" ${installed ? 'hidden' : ''}>
           <h2 class="list-title">Instalar no celular</h2>
           <p class="group-note">iPhone: no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início. Android: no Chrome, abra o menu e toque em Instalar app.</p>
         </section>

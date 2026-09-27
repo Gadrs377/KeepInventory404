@@ -376,10 +376,16 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
   clearTimeout(toastTimer);
   toastAt = Date.now();
   host.className = `toast ${mode ? `mode-${mode} has-mode` : ''}`;
+  // Como os avisos do sistema: o que aconteceu em destaque, numa linha, e o
+  // resto embaixo, menor. O ícone repete o gesto (guardar, tirar, contar).
+  const cut = message.indexOf('. ');
+  const head = cut > 0 && cut < 80 ? message.slice(0, cut) : message;
+  const rest = cut > 0 && cut < 80 ? message.slice(cut + 2) : '';
+  const glyph = { entrada: 'in', saida: 'out', contagem: 'count' }[mode];
   host.innerHTML = `
-    <span class="toast-text">${esc(message)}</span>
-    ${action ? `<button type="button" class="toast-action">${esc(action)}</button>
-      <button type="button" class="toast-close" aria-label="Fechar aviso">${icon('close')}</button>` : ''}`;
+    ${glyph ? `<span class="toast-icon" aria-hidden="true">${icon(glyph)}</span>` : ''}
+    <span class="toast-text"><span class="toast-head">${esc(head)}</span>${rest ? `<span class="toast-sub">${esc(rest)}</span>` : ''}</span>
+    ${action ? `<button type="button" class="toast-action">${esc(action)}</button>` : ''}`;
   host.hidden = false;
   // Entra com mola, como os avisos do sistema; reinicia a cada aviso novo.
   host.classList.remove('is-in');
@@ -392,8 +398,15 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
       hideToast();
       onAction && onAction();
     }, { once: true });
-    $('.toast-close', host).addEventListener('click', hideToast);
+    // Como o Desfazer do Mail: some sozinho, com mais tempo, e espera enquanto
+    // o dedo ou o foco do teclado estiver no aviso.
+    const wait = Math.max(duration, 8000);
+    const arm = () => { clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, wait); };
+    host.onpointerenter = host.onfocusin = () => clearTimeout(toastTimer);
+    host.onpointerleave = host.onfocusout = arm;
+    arm();
   } else {
+    host.onpointerenter = host.onfocusin = host.onpointerleave = host.onfocusout = null;
     toastTimer = setTimeout(hideToast, duration);
   }
 }

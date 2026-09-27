@@ -110,6 +110,7 @@ export default function mountArmario(root) {
     if (!products.length) {
       shelf.innerHTML = `
         <div class="empty-state">
+          <span class="empty-icon" aria-hidden="true">${icon('package')}</span>
           <p class="empty-lead">Nada guardado ainda</p>
           <p>Leia o código de barras de um produto para guardar no armário.</p>
           <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
@@ -172,6 +173,7 @@ export default function mountArmario(root) {
     shelf.innerHTML = (visible.length
       ? listHtml
       : `<div class="empty-filter">
+          <span class="empty-icon is-small" aria-hidden="true">${icon(q ? 'search' : 'check')}</span>
           <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
         </div>`) + medsHtml(visible.length);

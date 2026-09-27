@@ -55,12 +55,12 @@ export default async function mountProduto(root, { code }) {
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
             ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
-          ${tag(p.qty, `${tagState(p)} tag-lg`)}
         </section>
 
         <div class="quick-actions">
-          <button type="button" class="btn btn-quiet" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
-          <button type="button" class="btn btn-quiet" data-use="1">${icon('plus')}Guardar 1</button>
+          <button type="button" class="btn btn-quiet btn-stack" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
+          <div class="hero-qty">${tag(p.qty, `${tagState(p)} tag-lg`)}<span class="hero-qty-label">no armário</span></div>
+          <button type="button" class="btn btn-quiet btn-stack" data-use="1">${icon('plus')}Guardar 1</button>
         </div>
 
         <div data-med-offer hidden></div>
@@ -147,7 +147,7 @@ export default async function mountProduto(root, { code }) {
     currentQty = product.qty;
     qtyStep.set(product.qty);
     fixBtn.hidden = true;
-    $('.product-hero .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
+    $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
     const pills = $('.hero-pills', root);
     if (pills) pills.innerHTML = stockPill(product);
     $('[data-use="-1"]', root).disabled = product.qty === 0;
@@ -196,7 +196,7 @@ export default async function mountProduto(root, { code }) {
       const { product, movement } = await setStock(code, target, 'ajuste');
       currentQty = product.qty;
       fixBtn.hidden = true;
-      $('.product-hero .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg`);
+      $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg`);
       toast(`Quantidade corrigida para ${product.qty}.`, {
         action: movement ? 'Desfazer' : undefined,
         onAction: async () => {
@@ -204,7 +204,7 @@ export default async function mountProduto(root, { code }) {
             const restored = await undoMovement(movement.id);
             currentQty = restored.qty;
             qtyStep.set(restored.qty);
-            $('.product-hero .tag', root).outerHTML = tag(restored.qty, `${tagState(restored)} tag-lg`);
+            $('.hero-qty .tag', root).outerHTML = tag(restored.qty, `${tagState(restored)} tag-lg`);
             toast('Correção desfeita.', { duration: 2500 });
           } catch (err) {
             toast(err.message, { duration: 4000 });
