@@ -150,7 +150,7 @@ function review(body, close, data, rows, products, already) {
       <p class="nota-meta">${esc([when, plural(data.items.length, 'item', 'itens'), money.format(data.total)].filter(Boolean).join(', '))}</p>
     </div>
     ${already ? `<p class="nota-warn">${icon('receipt')}<span>Esta nota já entrou no armário em ${esc(dayFmt.format(new Date(already.at)))}. Guardar de novo soma outra vez.</span></p>` : ''}
-    <p class="field-note">Toque num item para trocar o nome, dizer qual produto do armário é ou mudar a quantidade. Da próxima vez, os itens deste mercado já vêm certos.</p>
+    <p class="field-note">Toque num item para corrigir. Na próxima nota deste mercado, ele já vem certo.</p>
     <ul class="nota-items">${rows.map((r, i) => `<li class="nota-item" data-i="${i}"></li>`).join('')}</ul>
     <div class="sheet-footer"><button type="button" class="btn btn-mode btn-lg" data-save></button></div>`;
 

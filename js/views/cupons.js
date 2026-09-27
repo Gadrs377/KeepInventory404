@@ -53,7 +53,7 @@ export default async function mountCupons(root) {
         }).join('') + '</ul>'
         : `<div class="empty-state">
             <p class="empty-lead">Nenhum cupom ainda</p>
-            <p>Cada vez que você conclui uma leitura ou aplica uma contagem, o cupom fica guardado aqui.</p>
+            <p>Ao concluir uma leitura ou uma contagem, o cupom fica aqui.</p>
             <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
           </div>`}
       </main>

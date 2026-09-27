@@ -776,3 +776,22 @@ Ver [APPLE_HIG.md](APPLE_HIG.md), seção 15.
 - Lanterna aparece quando a câmera tem.
 - Colar "VAL 20/12/27 L0425" no campo também funciona.
 
+## Versão 3.23: texto do jeito da Apple
+
+- **Tamanho do texto do iPhone.** O app segue o tamanho escolhido em Ajustes
+  (Tela e Brilho → Tamanho do Texto, ou Acessibilidade), de 14 a 34 px de
+  base. Todos os textos são em rem; títulos grandes crescem menos que o corpo,
+  como no iOS. Com letra grande, os blocos Acabando/Zerados/Vencendo viram uma
+  coluna, o botão "Nota fiscal" fica só com o ícone (o nome segue para o
+  VoiceOver) e o nome do produto usa até 4 linhas antes das reticências.
+- **Textos mais curtos e diretos**, sem explicar o óbvio. Exemplos: "Ao tirar,
+  sai primeiro o que vence antes."; "Toque num item para corrigir. Na próxima
+  nota deste mercado, ele já vem certo."; "Ao concluir uma leitura ou uma
+  contagem, o cupom fica aqui."; "Itens marcados tirados da lista."
+- **Voltar arrastando da borda** no app instalado (produto, revisão): a tela
+  acompanha o dedo, com sombra; soltando depois de um terço da largura ou num
+  puxão rápido, volta; antes disso, retorna ao lugar.
+- **Abre onde parou**: o app instalado abre na última aba usada (Armário,
+  Compras, Cupons ou Mais).
+- **Rodinha dentro do botão** quando uma ação demora ("Aplicar contagem",
+  "Buscar de novo", salvar a nota, salvar o produto), também nos botões claros.

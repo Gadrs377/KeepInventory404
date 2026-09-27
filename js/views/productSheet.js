@@ -194,7 +194,7 @@ function expiryHtml(open = false) {
           ${expiryCamButton()}
         </div>
         <div class="exp-cam" hidden></div>
-        <p class="field-note" id="exp-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
+        <p class="field-note" id="exp-note" aria-live="polite">Só mês e ano vale até o fim do mês.</p>
       </div>
     </div>`;
 }
@@ -520,8 +520,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
       </li>`).join('');
     const n = items.length + mine.length;
     status.textContent = n
-      ? `${plural(n, 'sugestão', 'sugestões')}${mine.length ? ', primeiro o que já está no armário' : ` ${from === 'foto' ? 'pela foto' : 'das lojas'}`}. Toque na certa ou continue digitando.`
-      : `Nada encontrado para “${query}”. Pode salvar só com o nome.`;
+      ? `${plural(n, 'sugestão', 'sugestões')}${mine.length ? ', primeiro o que já está no armário' : ` ${from === 'foto' ? 'pela foto' : 'das lojas'}`}.`
+      : `Nada encontrado para “${query}”. Dá para salvar só com o nome.`;
   }
 
   async function runSearch(query) {
@@ -537,7 +537,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       if (!body.isConnected) return;
       if (noCode && matchLocal(locals, query).length) { showSuggestions([], query); return; }
       list.hidden = true;
-      status.textContent = 'Sem conexão com as lojas agora. Pode salvar só com o nome.';
+      status.textContent = 'Sem conexão com as lojas. Dá para salvar só com o nome.';
     }
   }
 
@@ -635,7 +635,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
   if (retry) {
     retry.addEventListener('click', async () => {
       retry.disabled = true;
-      retry.textContent = 'Buscando';
+      retry.setAttribute('aria-busy', 'true');
       const again = await lookupRemote(barcode);
       if (body.isConnected) newForm(ctx, again);
     });

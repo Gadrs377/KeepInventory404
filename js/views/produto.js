@@ -263,8 +263,8 @@ export default async function mountProduto(root, { code }) {
       }).join('')}</ul>` : ''}
       <p class="sheet-text">${lots.length
         ? (free > 0
-          ? `${free === 1 ? 'A unidade sem data sai' : `As ${free} unidades sem data saem`} primeiro na baixa, depois o que vence antes.`
-          : 'Na baixa, sai primeiro o que vence antes.')
+          ? `Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} unidades sem data`}, depois a que vence antes.`
+          : 'Ao tirar, sai primeiro o que vence antes.')
         : (cur.qty ? 'Sem validade marcada.' : 'Sem unidades no armário.')}</p>
       <div class="lot-actions">
         ${free > 0 ? '<button type="button" class="btn btn-quiet btn-sm" data-add-lot>' + icon('calendar') + 'Marcar validade</button>' : ''}
@@ -339,7 +339,7 @@ function lotSheet(p, free) {
               ${expiryCamButton()}
             </div>
             <div class="exp-cam" hidden></div>
-            <p class="field-note" id="lot-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
+            <p class="field-note" id="lot-note" aria-live="polite">Só mês e ano vale até o fim do mês.</p>
           </div>
           <div class="field">
             <span class="field-label">Quantas unidades têm essa data</span>
@@ -356,7 +356,7 @@ function lotSheet(p, free) {
         input.removeAttribute('aria-invalid');
         note.classList.remove('is-error');
         const iso = parseExpiry(input.value);
-        note.textContent = iso ? `Vence em ${formatDate(iso)}.` : 'Como está na embalagem. Só mês e ano vale até o fim do mês.';
+        note.textContent = iso ? `Vence em ${formatDate(iso)}.` : 'Só mês e ano vale até o fim do mês.';
       });
       setTimeout(() => input.focus(), 250);
       $('form', body).addEventListener('submit', async (e) => {
@@ -474,7 +474,7 @@ function fixNameSheet(p) {
             <span class="row-main"><span class="row-name">${esc(x.name)}</span><span class="row-sub">${subtitle(x) || '&nbsp;'}</span></span>
           </button></li>`).join('');
         list.hidden = !items.length;
-        done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}. Toque na certa.` : `Nada encontrado ${from}. Tente ler o código ou fotografar a embalagem.`);
+        done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}.` : `Nada encontrado ${from}. Leia o código ou fotografe a embalagem.`);
       };
       async function byCode(code) {
         busy(`Procurando o código ${code} nas lojas`);

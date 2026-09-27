@@ -11,7 +11,7 @@ function loadScript(src) {
     const s = document.createElement('script');
     s.src = src;
     s.onload = resolve;
-    s.onerror = () => reject(new Error('Não deu para carregar o leitor de validade.'));
+    s.onerror = () => reject(new Error('O leitor de validade não carregou. Confira a internet e tente de novo.'));
     document.head.append(s);
   });
 }

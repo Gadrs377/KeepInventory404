@@ -34,7 +34,7 @@ export default function mountArmario(root) {
       <header class="home-head">
         <h1 class="page-title">Armário</h1>
         <div class="head-actions">
-          <button type="button" class="head-pill" data-nota>${icon('qrCode')}Nota fiscal</button>
+          <button type="button" class="head-pill" data-nota>${icon('qrCode')}<span class="head-pill-label">Nota fiscal</span></button>
         </div>
       </header>
       <div class="home-tools glass-thick">

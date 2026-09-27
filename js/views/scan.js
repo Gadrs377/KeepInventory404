@@ -80,7 +80,6 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
         </section>
         <section class="quick-out" aria-labelledby="quick-out-title" hidden>
           <h2 class="list-title" id="quick-out-title">Usados com frequência</h2>
-          <p class="field-note">Para o que não tem código, como o rolo de papel toalha.</p>
           <ul class="quick-list"></ul>
           <button type="button" class="btn btn-quiet btn-sm" data-quick-search>${icon('search')}Procurar outro no armário</button>
         </section>

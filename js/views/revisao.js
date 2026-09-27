@@ -50,6 +50,7 @@ export default async function mountRevisao(root) {
   const applyBtn = $('[data-apply]', root);
   applyBtn.addEventListener('click', async () => {
     applyBtn.disabled = true;
+    applyBtn.setAttribute('aria-busy', 'true');
     const zero = $('input[name=missing]:checked', root)?.value === 'zero';
     try {
       const n = await applyCount(zero);
@@ -68,6 +69,7 @@ export default async function mountRevisao(root) {
       location.hash = '#/';
     } catch (err) {
       applyBtn.disabled = false;
+      applyBtn.removeAttribute('aria-busy');
       toast(err.message);
     }
   });

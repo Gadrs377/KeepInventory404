@@ -200,15 +200,15 @@ A interface precisa aguentar o texto aumentado até **200%**.
 | Selo só para o crítico, vermelho | Compras mostra a quantidade a comprar, em amarelo | Desvio consciente: amarelo é "acabando" no app; vermelho é só erro |
 | Título grande que encolhe | Armário, Compras, Cupons, Mais | Ok |
 | Voltar/Fechar com símbolo | Seta e X em círculo de vidro | Ok |
-| Voltar arrastando da borda | No app instalado não existe | **Falta** |
+| Voltar arrastando da borda | No app instalado, arrastar da borda esquerda leva a tela junto e volta (`js/swipeBack.js`) | Corrigido na 3.23 |
 | Uma folha por vez; fechar à esquerda | `openSheet` fecha a anterior; X à esquerda; arrastar para baixo fecha | Ok |
 | Menu de contexto espelha a interface | Tirar 1, Guardar 1, lista de compras, ver produto | Ok |
 | 44 pt de toque | "−" da linha voltou a 44 pt | Corrigido na 3.21 |
 | Estado pressionado em todo botão | Escala 0,96 ou fundo | Ok |
 | 1 ou 2 botões de destaque | Folhas com um botão cheio | Ok |
-| Indicador dentro do botão | Botões ficam `aria-busy`; falta o giro visível em alguns | Parcial |
+| Indicador dentro do botão | Botão ocupado mostra a rodinha no lugar do texto (depois de 300 ms), também nos botões claros | Corrigido na 3.23 |
 | Texto mínimo 11 pt | Menor texto: 11 px na barra de abas | Ok |
-| Texto maior até 200% | Tamanhos fixos em px; o iOS não aumenta | **Falta** (usar `-apple-system-body` como base) |
+| Texto maior até 200% | Base do texto vem de `-apple-system-body` (14 a 34 px); textos em rem; títulos crescem menos; com letra grande, blocos lado a lado viram coluna | Corrigido na 3.23 |
 | Contraste 4,5:1 | Medido no design system (seções 3 e 10) | Ok |
 | Vidro só em controles | Barra de abas, busca presa no topo, barra da câmera, folhas | Ok |
 | Cor não é o único sinal | Pílulas com texto; tarja com nome | Ok |
@@ -218,5 +218,5 @@ A interface precisa aguentar o texto aumentado até **200%**.
 | Sem alerta ao abrir; sem alerta para o que se desfaz | Avisos com Desfazer; sem alertas na abertura | Ok |
 | Tela vazia com próximo passo | Armário e Cupons com "Abrir o leitor" | Ok |
 | Permissão na hora de usar | Câmera pedida ao abrir o leitor | Ok |
-| Voltar onde parou | Abre sempre no Armário | **Falta** (lembrar a última aba) |
+| Voltar onde parou | O app instalado abre na última aba usada | Corrigido na 3.23 |
 | Atalhos na tela inicial | `manifest` tem atalhos, mas o iPhone não mostra para app web | Limite da plataforma |

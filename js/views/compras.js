@@ -212,7 +212,7 @@ export default function mountCompras(root) {
       state.extra = state.extra.filter((x) => !x.checked);
       saveState(state);
       render();
-      toast('Marcados limpos.', { duration: 2000 });
+      toast('Itens marcados tirados da lista.', { duration: 2000 });
     }
   });
 
