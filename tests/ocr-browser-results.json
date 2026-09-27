@@ -1,0 +1,661 @@
+{
+  "paddleText": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+  "rows": [
+    {
+      "id": "plain",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "small",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 94
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 94
+        }
+      ]
+    },
+    {
+      "id": "large",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 94
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 95
+        }
+      ]
+    },
+    {
+      "id": "lowContrast",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "dark",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "shadow",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 92
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "I\nFAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 80
+        }
+      ]
+    },
+    {
+      "id": "tilted",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123454\n",
+          "confidence": 78
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123454\n",
+          "confidence": 77
+        }
+      ]
+    },
+    {
+      "id": "blurred",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "dotted",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "CAD    IAN BEF ATWA TAY F\nWE.    AF ANF LLNS\n",
+          "confidence": 26
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "CAD    IAN BE ATWA TAY F\nWE.    AF ANF LLNS\n",
+          "confidence": 24
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 77
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "EAT NE JG STRTIS\nPHS WEF LBA0\nVAD TRIO SINTIE\nWAAL. LGR LU AWE\nLOTE 1234585\n",
+          "confidence": 24
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 81
+        }
+      ]
+    },
+    {
+      "id": "glare",
+      "expected": "2026-10-15",
+      "accepted": null,
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/Z\nLOTE 123456\n",
+          "confidence": 78
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/:\nLOTE 123456\n",
+          "confidence": 75
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 01/09/2077\nVAL 15/10/:\nLOTE 123456\n",
+          "confidence": 79
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2C\nLOTE 123456\n",
+          "confidence": 78
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "FAB 01/09/2026\nVAL 15/10/2025\nLOTE 123456\n",
+          "confidence": 90
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 01/69/20\nVAL 15/10/.\nLOTE 123456\n",
+          "confidence": 84
+        },
+        {
+          "mode": "raw",
+          "psm": 11,
+          "text": "FAB 01/09/2026\n\nVAL 15/10/72\n\nLOTE 123456\n",
+          "confidence": 83
+        },
+        {
+          "mode": "gray",
+          "psm": 7,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "",
+          "confidence": 0
+        }
+      ]
+    },
+    {
+      "id": "month-year",
+      "expected": "2026-10-31",
+      "accepted": "2026-10-31",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 10/2026\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 10/2026\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "named-month",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 15 OUT 2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 15 OUT 2026\n",
+          "confidence": 95
+        }
+      ]
+    },
+    {
+      "id": "short-year",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 15/10/26\n",
+          "confidence": 87
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 15/10/26\n",
+          "confidence": 84
+        }
+      ]
+    },
+    {
+      "id": "compact",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 15102026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 15102026\n",
+          "confidence": 95
+        }
+      ]
+    },
+    {
+      "id": "iso-date",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 2026-10-15\n",
+          "confidence": 95
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 2026-10-15\n",
+          "confidence": 95
+        }
+      ]
+    },
+    {
+      "id": "lost-separators",
+      "expected": "2026-10-15",
+      "accepted": "2026-10-15",
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 15 10 2026\n",
+          "confidence": 96
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 15 10 2026\n",
+          "confidence": 96
+        }
+      ]
+    },
+    {
+      "id": "manufacture-only",
+      "expected": null,
+      "accepted": null,
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 96
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 15/69/2026\n",
+          "confidence": 91
+        },
+        {
+          "mode": "raw",
+          "psm": 11,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "gray",
+          "psm": 7,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 95
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 94
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "FAB 15/09/2026\n",
+          "confidence": 86
+        }
+      ]
+    },
+    {
+      "id": "lot-only",
+      "expected": null,
+      "accepted": null,
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "LOTE 10/26\n",
+          "confidence": 92
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "LOTE 10/26\n",
+          "confidence": 92
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "LOTE 106/26\n",
+          "confidence": 82
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "LOTE 10/26\n",
+          "confidence": 92
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "LOTE 16/26\n",
+          "confidence": 84
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "LOTE 16/26\n",
+          "confidence": 89
+        },
+        {
+          "mode": "raw",
+          "psm": 11,
+          "text": "LOTE 10/26\n",
+          "confidence": 92
+        },
+        {
+          "mode": "gray",
+          "psm": 7,
+          "text": "LOTE 10/26\n",
+          "confidence": 92
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "LOTE 10/26\n",
+          "confidence": 94
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "LOTE 10/26\n",
+          "confidence": 93
+        }
+      ]
+    },
+    {
+      "id": "no-date",
+      "expected": null,
+      "accepted": null,
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 500 G\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 500 G\n",
+          "confidence": 93
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 500 G6\n",
+          "confidence": 86
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 500 G\n",
+          "confidence": 91
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 500 G6\n",
+          "confidence": 89
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "ARROZ TIPO 1\nPESO 560 G\n",
+          "confidence": 88
+        },
+        {
+          "mode": "raw",
+          "psm": 11,
+          "text": "ARROZ TIPO 1\n\nPESO 500 G\n",
+          "confidence": 93
+        },
+        {
+          "mode": "gray",
+          "psm": 7,
+          "text": "PES0 560 6\n",
+          "confidence": 48
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "",
+          "confidence": 0
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "ES0 500 5\n",
+          "confidence": 18
+        }
+      ]
+    },
+    {
+      "id": "invalid-date",
+      "expected": null,
+      "accepted": null,
+      "attempts": [
+        {
+          "mode": "raw",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 82
+        },
+        {
+          "mode": "gray",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 83
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 95
+        },
+        {
+          "mode": "sauvola",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 93
+        },
+        {
+          "mode": "adaptive",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 96
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 94
+        },
+        {
+          "mode": "raw",
+          "psm": 11,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 82
+        },
+        {
+          "mode": "gray",
+          "psm": 7,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 83
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 95
+        },
+        {
+          "mode": "sauvola",
+          "psm": 7,
+          "text": "VAL 31/02/2027\n",
+          "confidence": 93
+        }
+      ]
+    }
+  ]
+}

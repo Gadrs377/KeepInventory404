@@ -1,0 +1,11 @@
+{
+  "name": "keepinventory-paddle-build",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": {
+    "@paddleocr/paddleocr-js": "0.4.2",
+    "onnxruntime-web": "1.24.3",
+    "esbuild": "0.25.12"
+  }
+}

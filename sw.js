@@ -4,13 +4,14 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v46';
+const VERSION = 'v47';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
 // Leitor de validade (Tesseract, uns 7 MB): baixa uma vez e fica no aparelho.
 // Arquivos com nome fixo por versão: cache primeiro, sem rede.
 const OCR_CACHE = 'ocr-v1';
+const PADDLE_CACHE = 'paddle-v1';
 
 const APP_FILES = [
   './',
@@ -30,6 +31,9 @@ const APP_FILES = [
   './js/lookup.js',
   './js/remedios.js',
   './js/ocr.js',
+  './js/ocrImage.js',
+  './js/paddleOcr.js',
+  './js/expiryRecognition.js',
   './js/swipeBack.js',
   './js/scanner.js',
   './js/ui.js',
@@ -83,7 +87,14 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.endsWith('openfoodfacts.org') && url.pathname.startsWith('/api/')) return;
 
   if (url.origin === self.location.origin && url.pathname.includes('/vendor/tesseract/')) {
-    event.respondWith(cacheFirst(request, OCR_CACHE));
+    event.respondWith(cacheFirst(request, OCR_CACHE, event));
+    return;
+  }
+
+  // Large optional engine: downloaded only when Tesseract cannot confirm.
+  // Versioned immutable URLs avoid mixing old WASM/JS with a newer model.
+  if (url.origin === self.location.origin && url.pathname.includes('/vendor/paddle/v1/')) {
+    event.respondWith(cacheFirst(request, PADDLE_CACHE, event));
     return;
   }
 
@@ -138,11 +149,15 @@ async function staleWhileRevalidate(request, event) {
   return fresh;
 }
 
-async function cacheFirst(request, name = ASSET_CACHE) {
+async function cacheFirst(request, name = ASSET_CACHE, event) {
   const cache = await caches.open(name);
   const hit = await cache.match(request);
   if (hit) return hit;
   const res = await fetch(request);
-  if (res.ok || res.type === 'opaque') cache.put(request, res.clone());
+  if (res.ok || res.type === 'opaque') {
+    // Cache full, quota denied, or private mode must not break online OCR.
+    const saved = cache.put(request, res.clone()).catch(() => {});
+    if (event) event.waitUntil(saved);
+  }
   return res;
 }

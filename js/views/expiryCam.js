@@ -2,23 +2,22 @@
 // leitor de texto roda no celular (js/ocr.js) e js/dates.js acha a validade no
 // meio do texto (ignora lote e fabricação).
 //
-// Cada quadro passa por um ajuste diferente da imagem (tamanho e quanto juntar
-// os pontinhos da impressão a jato). A data só é aceita quando duas leituras
-// concordam; se discordarem, a vencedora precisa estar duas na frente.
-// Medido com 32 embalagens simuladas: 30 certas, nenhuma errada.
+// Tesseract tenta filtros/segmentações diferentes. Quando não confirma, ativa
+// Paddle local e alterna os dois motores. Ambos alimentam sugestões e votos
+// recentes; a pessoa continua conferindo a data antes de salvar.
 //
 // Enquanto não tem certeza, as datas lidas viram botões embaixo da câmera
 // (até 3), numa fileira que ocupa a largura toda. Nada some e nada troca de
 // ordem; quando chega uma data nova as outras encolhem devagar, e por meio
 // segundo nenhuma aceita toque, para o dedo não acertar a data errada.
 
-import { ocrWorker, prepareFrame, readText } from '../ocr.js';
-import { findExpiry, formatDate } from '../dates.js';
+import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
+import { createPaddleReader } from '../paddleOcr.js';
+import { TESSERACT_VARIANTS, needsPaddle, createExpiryConsensus } from '../expiryRecognition.js';
+import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { $, icon, vibrate } from '../ui.js';
 
-// [juntar pontos, largura da imagem]: primeiro a imagem cheia, depois reduzida.
-const VARIANTS = [[1, 1000], [2, 700], [1, 550], [3, 1000], [1, 450], [0, 1000], [2, 550], [4, 1000], [1, 700]];
 const MAX_PICKS = 3;
 const PICK_GUARD_MS = 450;
 
@@ -73,7 +72,18 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
     let stream = null;
     let alive = true;
     let torchOn = false;
-    const votes = {};
+    const consensus = createExpiryConsensus({ skip });
+    const paddle = createPaddleReader();
+    let paddleState = 'idle';
+    let loadingPaddle = null;
+    let tessFailed = false;
+    let tessErrors = 0;
+    let frameTime = -1;
+    let activeSince = performance.now();
+    let lastEngine = 'paddle';
+    let visibilityEpoch = 0;
+    const visibilityChanged = () => { consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; };
+    document.addEventListener('visibilitychange', visibilityChanged);
     const shown = new Set();
     let turn = 0;
 
@@ -106,6 +116,10 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
     function finish(iso) {
       if (!alive) return;
       alive = false;
+      gone.disconnect();
+      paddle.dispose();
+      releaseOcr();
+      document.removeEventListener('visibilitychange', visibilityChanged);
       if (stream) stream.getTracks().forEach((t) => t.stop());
       claimCamera(false);
       host.innerHTML = '';
@@ -126,26 +140,60 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
       torchBtn.setAttribute('aria-pressed', String(torchOn));
     });
 
-    async function loop() {
-      while (alive) {
-        if (video.readyState < 2 || !video.videoWidth) { await new Promise((r) => setTimeout(r, 120)); continue; }
-        const [blur, width] = VARIANTS[turn++ % VARIANTS.length];
-        let text = '';
-        try { text = await readText(prepareFrame(video, { box: aimBox(video, aim), blur, width }, canvas)); } catch { /* quadro ruim */ }
-        if (!alive) return;
-        const found = findExpiry(text);
-        if (!found) continue;
-        votes[found.iso] = (votes[found.iso] || 0) + 1;
-        const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-        const [iso, n] = ranked[0];
-        const second = ranked[1] ? ranked[1][1] : 0;
-        addPick(found.iso);
-        if (n >= 2 && n - second >= 2 && !skip.includes(iso)) {
-          beep('ok');
-          vibrate(40);
-          done(iso);
-          return;
+    function startPaddle() {
+      if (paddleState !== 'idle' || !alive) return;
+      paddleState = 'loading';
+      status.textContent = 'Preparando uma leitura mais detalhada';
+      loadingPaddle = paddle.ready().then(() => {
+        if (alive) { paddleState = 'ready'; status.textContent = 'Mantenha a validade na mira'; }
+      }).catch(() => {
+        if (alive) {
+          paddleState = 'failed';
+          status.textContent = tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data';
         }
+        paddle.dispose();
+      });
+    }
+
+    async function loop() {
+      const pause = ms => new Promise(r => setTimeout(r, ms));
+      while (alive) {
+        if (document.hidden || video.readyState < 2 || !video.videoWidth || video.currentTime === frameTime) { await pause(150); continue; }
+        if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddle();
+        // Do not run inference while Paddle is compiling its models: that
+        // peak is already expensive on a phone. Cancellation terminates it.
+        if (paddleState === 'loading') { await loadingPaddle; continue; }
+        if (tessFailed && paddleState !== 'ready') return;
+        const engine = paddleState === 'ready' && (tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
+        lastEngine = engine;
+        const frame = video.currentTime; frameTime = frame;
+        const epoch = visibilityEpoch;
+        const variant = engine === 'paddle' ? { mode: 'raw', blur: 0, width: 1000 } : TESSERACT_VARIANTS[turn++ % TESSERACT_VARIANTS.length];
+        let result;
+        try {
+          prepareFrame(video, { ...variant, box: aimBox(video, aim) }, canvas);
+          result = engine === 'paddle' ? await paddle.read(canvas) : await readResult(canvas, { psm: variant.psm });
+          if (engine === 'tesseract') tessErrors = 0;
+        } catch {
+          if (!alive) return;
+          if (engine === 'paddle') { paddleState = 'failed'; paddle.dispose(); }
+          else if (++tessErrors >= 3) tessFailed = true;
+          status.textContent = 'Tente outro ângulo ou digite a data';
+          await pause(250);
+          continue;
+        }
+        if (!alive) return;
+        if (document.hidden || epoch !== visibilityEpoch) continue;
+        const candidates = findExpiryCandidates(result.text);
+        for (const found of candidates) addPick(found.iso);
+        const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
+        if (accepted) {
+          beep('ok'); vibrate(40); done(accepted); return;
+        }
+        if (candidates.some(c => c.ambiguous)) status.textContent = 'Há mais de uma data. Toque na validade correta';
+        // Yield to camera/interaction and avoid immediately rereading the same
+        // decoded frame. The next pass uses a fresh frame and another variant.
+        await pause(engine === 'paddle' ? 220 : 120);
       }
     }
 
@@ -173,12 +221,13 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
       try {
         await ocrWorker((p) => { if (alive) status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`; });
       } catch {
-        status.textContent = 'O leitor não carregou. Confira a internet ou digite a data.';
-        return;
+        tessFailed = true;
+        if (alive) startPaddle();
       }
       if (!alive) return;
       status.textContent = 'Aponte para a data de validade';
-      loop();
+      activeSince = performance.now();
+      loop().catch(() => { if (alive) status.textContent = 'Não foi possível ler. Digite a data.'; });
     })();
   });
   promise.stop = () => stop();

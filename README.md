@@ -104,6 +104,12 @@ endereço precisa de HTTPS.
 ## Créditos
 
 - Leitura da validade: [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache-2.0), em `vendor/tesseract/`.
+- Leitura complementar de validade: [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
+  (Apache-2.0), ONNX Runtime Web (MIT) e OpenCV.js, em `vendor/paddle/`.
+  O Tesseract tenta filtros e segmentações diferentes; se não confirmar,
+  o Paddle entra e os dois alternam leituras locais. Os arquivos maiores só
+  são baixados quando necessários e ficam no cache para uso offline.
+  Veja [o funcionamento e os testes](docs/LEITURA_VALIDADE.md).
 - Leitura de código de barras: [barcode-detector](https://github.com/Sec-ant/barcode-detector)
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).

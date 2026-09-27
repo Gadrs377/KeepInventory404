@@ -128,9 +128,9 @@ const MONTH_NAMES = {
   AGO: 8, AUG: 8, SET: 9, SEP: 9, OUT: 10, OCT: 10, NOV: 11, DEZ: 12, DEC: 12,
 };
 // Rótulos que vêm antes da data na embalagem.
-const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|BEST|BB|USE)\b|\bV\s*[:.]/g;
-const FAB_LABEL = /\b(FAB(R(ICACAO|ICADO)?)?|PROD(UCAO|UZIDO)?|EMB(ALADO)?|MFG|MFD|F\s*[:.]|P\s*[:.]|D\s*[:.]?\s*F)\b/g;
-const LOT_LABEL = /\b(LOTE?|LT|L\s*[:.])\b/g;
+const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|BEST|BB|USE)\b|\bV(?=\s*[:.]?\s*\d)/g;
+const FAB_LABEL = /\b(FAB(R(ICACAO|ICADO)?)?|PROD(UCAO|UZIDO)?|EMB(ALADO)?|MFG|MFD)\b|\b[FP](?=\s*[:.]?\s*\d)/g;
+const LOT_LABEL = /\b(LOTE?|LT)\b|\bL(?=\s*[:.]?\s*\d)/g;
 
 // Leitor confunde letras e números: só dentro de trechos que já têm número.
 const OCR_DIGIT = { O: '0', Q: '0', D: '0', I: '1', L: '1', '|': '1', T: '7', S: '5', B: '8', Z: '2', G: '6' };
@@ -144,11 +144,15 @@ function labelsBefore(re, text) {
 }
 
 /**
- * Resolve com { iso, raw } da validade encontrada no texto, ou null.
+ * Candidatos de validade. Rótulos FAB/LOTE excluem a data, não apenas reduzem
+ * sua pontuação. Se houver ambiguidade, a câmera oferece escolha manual.
  * `today` (AAAA-MM-DD) serve para os testes.
  */
-export function findExpiry(text, today = todayIso()) {
+export function findExpiryCandidates(text, today = todayIso()) {
   let t = String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  // Confusão observada no Paddle: OUT -> 0UT. Correção limitada a nomes de
+  // meses junto de ano; não transforma palavras/lotes arbitrários em datas.
+  t = t.replace(/\b(0UT|0CT|N0V)(?=\s*[/.\-]?\s*\d{2,4}\b)/g, m => m.replace('0', 'O'));
   // "15 OUT 2026", "OUT/26", "15OUT26" -> meses em número
   t = t.replace(/(?:(\d{1,2})\s*[\/.\-]?\s*)?(?<![A-Z])(JAN|FEV|FEB|MAR|ABR|APR|MAI|MAY|JUN|JUL|AGO|AUG|SET|SEP|OUT|OCT|NOV|DEZ|DEC)[A-Z]*\.?\s*[\/.\-]?\s*(\d{2,4})\b/g,
     (_, d, mon, y) => `${d ? `${d}/` : ''}${String(MONTH_NAMES[mon]).padStart(2, '0')}/${y}`);
@@ -160,7 +164,14 @@ export function findExpiry(text, today = todayIso()) {
   const exp = labelsBefore(EXP_LABEL, t);
   const fab = labelsBefore(FAB_LABEL, t);
   const lot = labelsBefore(LOT_LABEL, t);
-  const near = (list, i) => list.some((p) => p <= i && i - p <= 6);
+  const labelAt = (i) => {
+    const labels = [...exp.map(p => [p, 'expiry']), ...fab.map(p => [p, 'manufacture']), ...lot.map(p => [p, 'lot'])]
+      .filter(([p]) => p <= i && i - p <= 48).sort((a, b) => b[0] - a[0]);
+    if (!labels.length) return null;
+    const [p, label] = labels[0];
+    // Another number between label and candidate breaks that association.
+    return /\d/.test(t.slice(p, i)) ? null : label;
+  };
 
   const [ty, tm, td] = today.split('-').map(Number);
   const now = Date.UTC(ty, tm - 1, td);
@@ -170,19 +181,25 @@ export function findExpiry(text, today = todayIso()) {
     const [y, m, d] = iso.split('-').map(Number);
     const days = (Date.UTC(y, m - 1, d) - now) / 86400000;
     if (days < -730 || days > 3650) return; // fora do razoável para validade
-    let score = 0;
-    if (near(exp, index)) score += 4;
-    if (near(fab, index)) score -= 4;
-    if (near(lot, index)) score -= 6;
+    const label = labelAt(index);
+    if (label === 'manufacture' || label === 'lot') return;
+    let score = label === 'expiry' ? 4 : 0;
     if (days >= -30) score += 1;
-    found.push({ iso, raw, index, score });
+    found.push({ iso, raw: raw.trim(), index, score, labeled: label === 'expiry' });
   };
   const SEP = '\\s*[\\/.\\-]\\s*';
   // dia/mês/ano (ano com 2 ou 4 números)
   const dmy = new RegExp(`(?<![0-9])(\\d{1,2})${SEP}(\\d{1,2})${SEP}(\\d{4}|\\d{2})(?![0-9])`, 'g');
   let m;
   const used = [];
+  // Recognize ISO first, so a suffix cannot be interpreted as month/year.
+  const ymd = /(?<![\dA-Z])(20\d{2})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{1,2})(?!\d)/g;
+  while ((m = ymd.exec(t))) {
+    used.push([m.index, m.index + m[0].length]);
+    add(m[0], m.index, parseExpiry(`${m[3]}/${m[2]}/${m[1]}`));
+  }
   while ((m = dmy.exec(t))) {
+    if (used.some(([a, b]) => m.index >= a && m.index < b)) continue;
     used.push([m.index, m.index + m[0].length]);
     add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}/${m[3]}`));
   }
@@ -194,15 +211,29 @@ export function findExpiry(text, today = todayIso()) {
     add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}`));
   }
   // Tudo junto só com rótulo de validade na frente: "VAL 151026" ou "VAL15102026"
-  const compact = /(\d{6}|\d{8})(?!\d)/g;
+  const compact = /(?<![\dA-Z])(\d{8}|\d{6})(?!\d)/g;
   while ((m = compact.exec(t))) {
-    if (!near(exp, m.index)) continue;
+    if (labelAt(m.index) !== 'expiry') continue;
     add(m[0], m.index, parseExpiry(m[1]));
   }
-  if (!found.length) return null;
-  // Maior pontuação; empate fica com a data mais distante (fabricação vem antes).
+  // Missing separators: only accept under an explicit validity label.
+  const spaced = /(?<![\dA-Z])(\d{1,2})[ \t]+(\d{1,2})[ \t]+(20\d{2}|\d{2})(?!\d)/g;
+  while ((m = spaced.exec(t))) {
+    if (labelAt(m.index) === 'expiry') add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}/${m[3]}`));
+  }
+  if (!found.length) return [];
   found.sort((a, b) => b.score - a.score || b.iso.localeCompare(a.iso));
-  return { iso: found[0].iso, raw: found[0].raw.trim() };
+  const byIso = new Map();
+  for (const f of found) if (!byIso.has(f.iso)) byIso.set(f.iso, f);
+  const unique = [...byIso.values()];
+  const preferred = unique.filter(f => f.labeled);
+  const choices = preferred.length ? preferred : unique;
+  return choices.map(f => ({ ...f, ambiguous: choices.length > 1 }));
+}
+
+export function findExpiry(text, today = todayIso()) {
+  const choices = findExpiryCandidates(text, today);
+  return choices.length === 1 ? { iso: choices[0].iso, raw: choices[0].raw } : null;
 }
 
 // O que vai no campo de validade enquanto a pessoa digita. Texto com letras ou
@@ -216,7 +247,8 @@ export function expiryInputValue(raw) {
       const [y, m, d] = found.iso.split('-');
       return `${d}/${m}/${y}`;
     }
+    // Do not strip a rejected FAB/LOTE label and accidentally accept its digits.
+    if (/[A-Za-z]/.test(v)) return '';
   }
   return maskExpiry(v);
 }
-
