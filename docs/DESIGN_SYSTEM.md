@@ -270,7 +270,8 @@ continuam no máximo 2 por tela (busca fixa e barra de modos no Armário).
 ## 12. Diretrizes da Apple (Human Interface Guidelines) aplicadas
 
 Critério para qualquer tela nova ou mudança. Cada item diz a regra da Apple e
-como ela vale aqui.
+como ela vale aqui. O guia completo, com os números oficiais, os links das
+páginas da Apple e a auditoria do app, está em [APPLE_HIG.md](APPLE_HIG.md).
 
 ### Princípios
 

@@ -8,7 +8,7 @@ import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate } from '../ui.js';
+import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Entrada de ${m.delta}`,
@@ -39,7 +39,7 @@ export default async function mountProduto(root, { code }) {
   const home = { href: '#/', label: 'Voltar ao armário' };
 
   root.innerHTML = `
-    <div class="screen screen-product">
+    <div class="screen screen-product has-tabbar">
       <header class="topbar nav-bar">
         <a class="icon-btn glass-btn" href="${home.href}" aria-label="${home.label}">${icon('chevronLeft')}</a>
         <span class="nav-title" aria-hidden="true">${esc(p.name)}</span>
@@ -120,6 +120,7 @@ export default async function mountProduto(root, { code }) {
         </section>
 
       </main>
+      ${tabBar('armario')}
     </div>`;
 
   // Barra do topo como no iPhone: transparente sobre o topo da página; quando o

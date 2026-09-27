@@ -754,3 +754,13 @@ parado na tela.
   ao lado do título: abre o leitor já no modo nota. Continua também no leitor
   (botão de QR na Entrada) e em Mais.
 
+## Versão 3.21: auditoria pelas diretrizes da Apple
+
+Ver [APPLE_HIG.md](APPLE_HIG.md), seção 15.
+
+- A barra de abas continua visível na página do produto (com Armário
+  marcado): a Apple pede que ela só suma por baixo de telas modais.
+- Com "Reduzir movimento", as trocas de tela esmaecem em 180 ms em vez de
+  cortar seco.
+- O "−" da linha voltou a ter 44 pt de área de toque.
+

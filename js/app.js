@@ -88,13 +88,15 @@ async function route() {
     refreshShopBadge();
   }
 
-  if (kind && document.startViewTransition && !reducedMotion.matches) {
+  if (kind && document.startViewTransition) {
     const html = document.documentElement;
-    html.dataset.nav = kind;
+    // "Reduzir movimento" ligado: no lugar de deslizar, um esmaecimento curto
+    // (é o que a Apple recomenda: trocar movimento em x, y e z por fade).
+    html.dataset.nav = reducedMotion.matches ? 'fade' : kind;
     const t = document.startViewTransition(render);
     t.ready.catch(() => {});
     t.finished.catch(() => {}).then(() => {
-      if (html.dataset.nav === kind) delete html.dataset.nav;
+      if (html.dataset.nav === kind || html.dataset.nav === 'fade') delete html.dataset.nav;
       // Nomes de troca animada postos só para esta navegação (linha → produto).
       document.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; });
     });

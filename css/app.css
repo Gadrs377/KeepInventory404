@@ -1250,7 +1250,10 @@ html[data-nav="down"]::view-transition-new(root) { animation-name: vt-rise; anim
 html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-transition { background: #000; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  html[data-nav="fade"]::view-transition-old(root) { animation: vt-fade-out 180ms ease both !important; }
+  html[data-nav="fade"]::view-transition-new(root) { animation: vt-fade-in 180ms ease both !important; }
 }
+@keyframes vt-fade-in { from { opacity: 0; } }
 
 /* Em 320 px, nomes em Urbanist um pouco menores para não sobrar "L" sozinho na segunda linha */
 @media (max-width: 359px) {
@@ -1949,11 +1952,11 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 
 /* "−" da linha: glifo leve num círculo, sem borda; a etiqueta é quem pesa */
 .row-minus {
-  width: 40px; height: 40px; margin-inline-end: calc(var(--gutter) - 4px);
+  width: 44px; height: 44px; margin-inline-end: calc(var(--gutter) - 6px);
   border: 0; border-radius: 50%;
   background: color-mix(in oklab, var(--ink) 6%, transparent); color: var(--ink-2);
 }
-.row-minus-space { width: 40px; margin-inline-end: calc(var(--gutter) - 4px); }
+.row-minus-space { width: 44px; margin-inline-end: calc(var(--gutter) - 6px); }
 .row-minus .icon { width: 18px; height: 18px; }
 .row-minus:active:not(:disabled) { background: color-mix(in oklab, var(--ink) 14%, transparent); }
 .row-item .row { padding-inline-end: 10px; }
