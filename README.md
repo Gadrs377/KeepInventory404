@@ -16,8 +16,10 @@ para o código de barras, o app descobre o que é o produto e guarda a quantidad
   o bip. O que o app não conhece fica em "Para resolver" até o fim.
 - **Cupom:** ao concluir, a sessão sai impressa num cupom com a borda rasgada,
   que dá para compartilhar.
-- **Validade (opcional):** digite como vem na embalagem (`15/10/26` ou `10/26`).
-  O app avisa o que vence na semana, gasta primeiro o que vence antes e gera um
+- **Validade (opcional):** digite como vem na embalagem (`15/10/26` ou `10/26`)
+  ou toque na câmera ao lado do campo e aponte para a data impressa: o app lê
+  no próprio celular, sem internet e sem IA, e ignora lote e fabricação. O app
+  avisa o que vence na semana, gasta primeiro o que vence antes e gera um
   lembrete para o calendário.
 - **Compras:** lista sugerida pelo mínimo de cada produto e pelo ritmo de
   consumo, com itens soltos, compartilhar e **Perguntar ao Claude** (revisar a
@@ -101,6 +103,7 @@ endereço precisa de HTTPS.
 
 ## Créditos
 
+- Leitura da validade: [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache-2.0), em `vendor/tesseract/`.
 - Leitura de código de barras: [barcode-detector](https://github.com/Sec-ant/barcode-detector)
   e [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) (MIT), em `vendor/`.
 - Dados de produtos: [Open Food Facts](https://world.openfoodfacts.org) (ODbL).

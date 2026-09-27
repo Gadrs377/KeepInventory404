@@ -424,8 +424,41 @@ docs/                   Este documento, interfaces e design system
   a pergunta e abre `claude.ai/new?q=`).
 - **Aviso de validade no celular:** hoje o aviso aparece ao abrir o app e pelo
   lembrete `.ics` no calendário; notificação push precisaria de servidor.
-- **Validade pela foto:** a IA poderia ler a data impressa; ainda não validado
-  com fotos reais, por isso a data é digitada.
+- **Validade pela câmera:** feita sem IA (seção 11).
+
+## 11. Validade pela câmera, no aparelho (`ocr.js`, `views/expiryCam.js`)
+
+A câmera ao lado do campo de validade lê a data impressa com o Tesseract.js
+(leitor de texto de código aberto, Apache-2.0) rodando no próprio celular. Não
+usa internet nem a IA do repassador.
+
+- **Arquivos:** `vendor/tesseract/` (motor LSTM em WebAssembly, com e sem SIMD,
+  e o modelo `eng` 4.0.0_best_int). Uns 7 MB baixados só no primeiro uso; o
+  service worker guarda em `ocr-v1` (cache primeiro) e o Tesseract guarda o
+  modelo no IndexedDB. Depois funciona sem internet.
+- **Imagem:** recorta só a faixa da mira (levando em conta o corte do vídeo),
+  passa para cinza, junta os pontinhos da impressão a jato com desfoque em
+  caixa e separa tinta de fundo pelo limiar de Otsu. Data clara em fundo
+  escuro é invertida.
+- **Leitura:** um bloco de texto, só números, separadores e maiúsculas.
+- **Achar a data (`findExpiry` em `dates.js`):** troca meses por número (OUT,
+  NOV…), corrige letras lidas no lugar de números só dentro de trechos com cara
+  de data (O→0, S→5, I→1…), acha dia/mês/ano, mês/ano e, depois de "VAL", datas
+  juntas (151026). Pontua: rótulo de validade (VAL, VENC, V:, EXP, CONSUMIR)
+  soma; fabricação (FAB, F:, P:) e lote (L:, LOTE) subtraem; fora de 2 anos
+  atrás a 10 à frente é descartada. Empate: a data mais distante.
+- **Decisão:** cada quadro usa um ajuste diferente (tamanho e quanto juntar os
+  pontos), começando pela imagem cheia. Aceita quando duas leituras concordam
+  e, se houver discordância, a vencedora está duas à frente. Aí bipa, vibra e
+  preenche o campo; a pessoa confere antes de salvar.
+- **Medição:** 32 embalagens simuladas (letra comum, pontinhos de impressora a
+  jato, claro sobre escuro, borrada), com lote e fabricação juntos: 30 certas,
+  nenhuma errada, 2 sem resposta (pontinhos). Uns 4 quadros por data; 21 casos
+  de texto real no teste de `findExpiry`.
+- **Câmera emprestada:** o iPhone não abre a mesma câmera duas vezes. O leitor
+  de validade avisa (`ki:camera`) e o leitor de códigos para; ao fechar, volta.
+- **Texto colado:** o campo também entende texto colado ou vindo do "Escanear
+  texto" do iPhone ("VAL 20/12/27 L0425" vira 20/12/2027).
 
 ## 10. Publicação
 

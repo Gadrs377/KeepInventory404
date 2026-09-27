@@ -1992,3 +1992,28 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 .head-pill .icon { width: 18px; height: 18px; }
 .head-pill:active { scale: 0.96; background: color-mix(in oklab, var(--ink) 14%, transparent); }
 
+/* ---------- Validade pela câmera (leitura no aparelho) ---------- */
+/* Campo de data com o botão de câmera ao lado, como o número do cartão na Carteira */
+.input-row { display: flex; gap: 8px; align-items: stretch; }
+.input-row .input { flex: 1; min-width: 0; }
+.input-cam {
+  flex: none; width: 52px; min-height: 44px; border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--mode, var(--ink)) 12%, transparent); color: var(--mode, var(--ink));
+}
+.input-cam .icon { width: 22px; height: 22px; }
+.exp-cam { margin-top: 10px; }
+.exp-vf { min-height: 190px; }
+.exp-vf .aim { top: 50%; height: 38%; }
+.exp-vf .aim-line { display: none; }
+/* Instrução sobre a imagem, na mesma cápsula dos outros avisos da câmera */
+.exp-status {
+  position: absolute; z-index: 2; top: 10px; left: 50%; translate: -50% 0;
+  width: max-content; max-width: calc(100% - 20px);
+  padding: 8px 14px; border-radius: 999px;
+  background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
+  font-size: 15px; font-weight: 600; text-align: center; text-wrap: balance;
+}
+.exp-cam-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.exp-read { font-family: var(--font-num); font-weight: 700; font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; } }
+

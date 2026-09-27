@@ -4,10 +4,13 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v35';
+const VERSION = 'v36';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
+// Leitor de validade (Tesseract, uns 7 MB): baixa uma vez e fica no aparelho.
+// Arquivos com nome fixo por versão: cache primeiro, sem rede.
+const OCR_CACHE = 'ocr-v1';
 
 const APP_FILES = [
   './',
@@ -26,6 +29,7 @@ const APP_FILES = [
   './js/store.js',
   './js/lookup.js',
   './js/remedios.js',
+  './js/ocr.js',
   './js/scanner.js',
   './js/ui.js',
   './js/icons.js',
@@ -42,6 +46,7 @@ const APP_FILES = [
   './js/views/nota.js',
   './js/views/receipt.js',
   './js/views/remedioInfo.js',
+  './js/views/expiryCam.js',
   './js/views/revisao.js',
   './js/views/scan.js',
   './vendor/barcode-detector/ponyfill.js',
@@ -74,6 +79,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.hostname.endsWith('openfoodfacts.org') && url.pathname.startsWith('/api/')) return;
+
+  if (url.origin === self.location.origin && url.pathname.includes('/vendor/tesseract/')) {
+    event.respondWith(cacheFirst(request, OCR_CACHE));
+    return;
+  }
 
   if (url.origin === self.location.origin && url.pathname.includes('/data/remedios/')) {
     event.respondWith(staleWhileRevalidate(request, event));
@@ -126,8 +136,8 @@ async function staleWhileRevalidate(request, event) {
   return fresh;
 }
 
-async function cacheFirst(request) {
-  const cache = await caches.open(ASSET_CACHE);
+async function cacheFirst(request, name = ASSET_CACHE) {
+  const cache = await caches.open(name);
   const hit = await cache.match(request);
   if (hit) return hit;
   const res = await fetch(request);

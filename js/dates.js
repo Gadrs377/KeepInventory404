@@ -100,3 +100,106 @@ export function icsFor(items) {
   });
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//KeepInventory404//Armario//PT', 'CALSCALE:GREGORIAN', ...events, 'END:VCALENDAR', ''].join('\r\n');
 }
+
+// ---------- Validade lida da embalagem (câmera ou texto colado) ----------
+// O texto vem do leitor de texto (OCR) ou do "Escanear texto" do iPhone e
+// traz ruído: lote, fabricação, hora, letras trocadas por números. Acha as
+// datas, descarta o que é fabricação ou lote e fica com a validade.
+
+const MONTH_NAMES = {
+  JAN: 1, FEV: 2, FEB: 2, MAR: 3, ABR: 4, APR: 4, MAI: 5, MAY: 5, JUN: 6, JUL: 7,
+  AGO: 8, AUG: 8, SET: 9, SEP: 9, OUT: 10, OCT: 10, NOV: 11, DEZ: 12, DEC: 12,
+};
+// Rótulos que vêm antes da data na embalagem.
+const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|BEST|BB|USE)\b|\bV\s*[:.]/g;
+const FAB_LABEL = /\b(FAB(R(ICACAO|ICADO)?)?|PROD(UCAO|UZIDO)?|EMB(ALADO)?|MFG|MFD|F\s*[:.]|P\s*[:.]|D\s*[:.]?\s*F)\b/g;
+const LOT_LABEL = /\b(LOTE?|LT|L\s*[:.])\b/g;
+
+// Leitor confunde letras e números: só dentro de trechos que já têm número.
+const OCR_DIGIT = { O: '0', Q: '0', D: '0', I: '1', L: '1', '|': '1', T: '7', S: '5', B: '8', Z: '2', G: '6' };
+
+function labelsBefore(re, text) {
+  const at = [];
+  re.lastIndex = 0;
+  let m;
+  while ((m = re.exec(text))) at.push(m.index + m[0].length);
+  return at;
+}
+
+/**
+ * Resolve com { iso, raw } da validade encontrada no texto, ou null.
+ * `today` (AAAA-MM-DD) serve para os testes.
+ */
+export function findExpiry(text, today = todayIso()) {
+  let t = String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  // "15 OUT 2026", "OUT/26", "15OUT26" -> meses em número
+  t = t.replace(/(?:(\d{1,2})\s*[\/.\-]?\s*)?(?<![A-Z])(JAN|FEV|FEB|MAR|ABR|APR|MAI|MAY|JUN|JUL|AGO|AUG|SET|SEP|OUT|OCT|NOV|DEZ|DEC)[A-Z]*\.?\s*[\/.\-]?\s*(\d{2,4})\b/g,
+    (_, d, mon, y) => `${d ? `${d}/` : ''}${String(MONTH_NAMES[mon]).padStart(2, '0')}/${y}`);
+  // Rótulo grudado no número ("V25/03/27", "VAL10/26"): separa.
+  t = t.replace(/\b(VAL(?:IDADE)?|VENC|VCTO|VTO|EXP|FAB|LOTE|LT|V|F|L|P)(?=\d)/g, '$1 ');
+  // Corrige letras dentro de trechos com cara de data (tem dígito e separador).
+  t = t.replace(/(?<![A-Z])[0-9OQDILTSBZG|]{1,4}(?:\s*[\/.\-]\s*[0-9OQDILTSBZG|]{1,4}){1,2}/g, (m) => (/\d/.test(m) ? m.replace(/[OQDILTSBZG|]/g, (c) => OCR_DIGIT[c]) : m));
+
+  const exp = labelsBefore(EXP_LABEL, t);
+  const fab = labelsBefore(FAB_LABEL, t);
+  const lot = labelsBefore(LOT_LABEL, t);
+  const near = (list, i) => list.some((p) => p <= i && i - p <= 6);
+
+  const [ty, tm, td] = today.split('-').map(Number);
+  const now = Date.UTC(ty, tm - 1, td);
+  const found = [];
+  const add = (raw, index, iso) => {
+    if (!iso) return;
+    const [y, m, d] = iso.split('-').map(Number);
+    const days = (Date.UTC(y, m - 1, d) - now) / 86400000;
+    if (days < -730 || days > 3650) return; // fora do razoável para validade
+    let score = 0;
+    if (near(exp, index)) score += 4;
+    if (near(fab, index)) score -= 4;
+    if (near(lot, index)) score -= 6;
+    if (days >= -30) score += 1;
+    found.push({ iso, raw, index, score });
+  };
+  const SEP = '\\s*[\\/.\\-]\\s*';
+  // dia/mês/ano (ano com 2 ou 4 números)
+  const dmy = new RegExp(`(?<![0-9])(\\d{1,2})${SEP}(\\d{1,2})${SEP}(\\d{4}|\\d{2})(?![0-9])`, 'g');
+  let m;
+  const used = [];
+  while ((m = dmy.exec(t))) {
+    used.push([m.index, m.index + m[0].length]);
+    add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}/${m[3]}`));
+  }
+  // mês/ano, fora do que já virou dia/mês/ano ("10/26", "10/2026")
+  const my = new RegExp(`(?<![0-9/.\\-])(\\d{1,2})${SEP}(\\d{4}|\\d{2})(?![0-9/.\\-]*\\d)`, 'g');
+  while ((m = my.exec(t))) {
+    if (used.some(([a, b]) => m.index >= a && m.index < b)) continue;
+    if (Number(m[1]) < 1 || Number(m[1]) > 12) continue;
+    add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}`));
+  }
+  // Tudo junto só com rótulo de validade na frente: "VAL 151026" ou "VAL15102026"
+  const compact = /(\d{6}|\d{8})(?!\d)/g;
+  while ((m = compact.exec(t))) {
+    if (!near(exp, m.index)) continue;
+    add(m[0], m.index, parseExpiry(m[1]));
+  }
+  if (!found.length) return null;
+  // Maior pontuação; empate fica com a data mais distante (fabricação vem antes).
+  found.sort((a, b) => b.score - a.score || b.iso.localeCompare(a.iso));
+  return { iso: found[0].iso, raw: found[0].raw.trim() };
+}
+
+// O que vai no campo de validade enquanto a pessoa digita. Texto com letras ou
+// comprido (colado, ou do "Escanear texto" do iPhone) passa por findExpiry;
+// números digitados só ganham as barras.
+export function expiryInputValue(raw) {
+  const v = String(raw || '');
+  if (/[A-Za-z]/.test(v) || v.replace(/\s/g, '').length > 10) {
+    const found = findExpiry(v);
+    if (found) {
+      const [y, m, d] = found.iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+  }
+  return maskExpiry(v);
+}
+

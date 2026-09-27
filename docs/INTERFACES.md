@@ -764,3 +764,15 @@ Ver [APPLE_HIG.md](APPLE_HIG.md), seção 15.
   cortar seco.
 - O "−" da linha voltou a ter 44 pt de área de toque.
 
+## Versão 3.22: validade pela câmera, sem IA
+
+- Ao lado do campo de validade (folha de guardar e "Marcar validade" no
+  produto) há um botão de câmera. Tocar abre a câmera dentro do campo, com a
+  mira em faixa e a cápsula "Aponte para a data de validade"; embaixo aparece
+  o que está sendo lido ("Lendo 15/10/2026…") e "Cancelar".
+- Quando duas leituras concordam: bip, vibração, a câmera fecha e o campo fica
+  preenchido com a nota "Vence em …" para conferir antes de salvar.
+- Primeira vez: "Preparando o leitor de validade (só na primeira vez) N%".
+- Lanterna aparece quando a câmera tem.
+- Colar "VAL 20/12/27 L0425" no campo também funciona.
+

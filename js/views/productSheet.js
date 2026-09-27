@@ -9,7 +9,8 @@
 import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessArea } from '../areas.js';
-import { parseExpiry, maskExpiry, formatDate, daysUntil } from '../dates.js';
+import { parseExpiry, expiryInputValue, formatDate, daysUntil } from '../dates.js';
+import { wireExpiryField, expiryCamButton } from './expiryCam.js';
 import { photoToDataUrl } from '../photo.js';
 import { beep } from '../sound.js';
 import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows } from '../ui.js';
@@ -188,7 +189,11 @@ function expiryHtml(open = false) {
       <button type="button" class="btn btn-link btn-expiry" data-expiry-open aria-expanded="${open}" aria-controls="exp-field" ${open ? 'hidden' : ''}>${icon('calendar')}Marcar validade</button>
       <div class="field" id="exp-field" ${open ? '' : 'hidden'}>
         <label class="field-label" for="exp-input">Validade${open ? ' (opcional)' : ''}</label>
-        <input class="input input-date" id="exp-input" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="DD/MM/AA ou MM/AA" aria-describedby="exp-note">
+        <div class="input-row">
+          <input class="input input-date" id="exp-input" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA ou MM/AA" aria-describedby="exp-note">
+          ${expiryCamButton()}
+        </div>
+        <div class="exp-cam" hidden></div>
         <p class="field-note" id="exp-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
       </div>
     </div>`;
@@ -208,8 +213,9 @@ function bindExpiry(body) {
     field.hidden = false;
     input.focus();
   });
+  wireExpiryField(field, input);
   input.addEventListener('input', () => {
-    input.value = maskExpiry(input.value);
+    input.value = expiryInputValue(input.value);
     input.removeAttribute('aria-invalid');
     note.classList.remove('is-error');
     const iso = parseExpiry(input.value);

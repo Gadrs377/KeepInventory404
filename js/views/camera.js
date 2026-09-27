@@ -164,8 +164,19 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
   // Sem código: a folha abre direto na busca pelo nome.
   hintBtn.addEventListener('click', () => handle(`SEM-${Date.now()}`));
 
-  const onVisibility = () => {
+  // O leitor de validade pede a câmera emprestada (o iPhone não abre a mesma
+  // câmera duas vezes): para aqui e volta quando ele devolve.
+  let lent = false;
+  const onClaim = (e) => {
     if (!alive) return;
+    lent = !!(e.detail && e.detail.claim);
+    if (lent) scanner.stop();
+    else if (!document.hidden) start();
+  };
+  window.addEventListener('ki:camera', onClaim);
+
+  const onVisibility = () => {
+    if (!alive || lent) return;
     if (document.hidden) scanner.stop();
     else if (!scanner.running) start();
   };
@@ -219,6 +230,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
       alive = false;
       clearTimeout(hintTimer);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('ki:camera', onClaim);
       scanner.stop();
     },
   };

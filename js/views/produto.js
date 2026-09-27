@@ -7,7 +7,8 @@ import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
 import { medFacts } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
-import { parseExpiry, maskExpiry, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
+import { parseExpiry, expiryInputValue, formatDate, daysUntil, icsFor, SOON_DAYS } from '../dates.js';
+import { wireExpiryField, expiryCamButton } from './expiryCam.js';
 import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -333,7 +334,11 @@ function lotSheet(p, free) {
         <form class="stack" novalidate>
           <div class="field">
             <label class="field-label" for="lot-date">Validade</label>
-            <input class="input input-date" id="lot-date" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="DD/MM/AA ou MM/AA" aria-describedby="lot-note">
+            <div class="input-row">
+              <input class="input input-date" id="lot-date" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA ou MM/AA" aria-describedby="lot-note">
+              ${expiryCamButton()}
+            </div>
+            <div class="exp-cam" hidden></div>
             <p class="field-note" id="lot-note" aria-live="polite">Como está na embalagem. Só mês e ano vale até o fim do mês.</p>
           </div>
           <div class="field">
@@ -345,8 +350,9 @@ function lotSheet(p, free) {
       const input = $('#lot-date', body);
       const note = $('#lot-note', body);
       const step = stepper($('.stepper-host', body), { value: free, min: 1, max: free, label: 'Unidades' });
+      wireExpiryField(input.closest('.field'), input);
       input.addEventListener('input', () => {
-        input.value = maskExpiry(input.value);
+        input.value = expiryInputValue(input.value);
         input.removeAttribute('aria-invalid');
         note.classList.remove('is-error');
         const iso = parseExpiry(input.value);
