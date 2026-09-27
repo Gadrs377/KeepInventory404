@@ -1005,3 +1005,22 @@ três movimentos juntos).
 - Voltando de um produto, a linha dele fica marcada e apaga devagar (700 ms),
   como a linha tocada numa lista do iPhone; a foto, o nome e a quantidade
   "encolhem" de volta nela.
+
+## Versão 3.33: leitor de validade combinado (Tesseract + PaddleOCR local)
+
+Trazido de `codex/hybrid-expiry-reader` (commits `a807cd1`, `a7f1361`,
+`4379417`). Ver `docs/LEITURA_VALIDADE.md` e `docs/TESTES_VALIDADES_REAIS.md`
+para o fluxo completo e as medições.
+
+- Tesseract continua sendo o primeiro leitor; quando não confirma depois de
+  algumas tentativas, um segundo motor local (PaddleOCR, rodando num Web
+  Worker, sem rede) entra como reforço. Os dois alimentam a mesma votação.
+- A confirmação mostra o recorte da imagem que gerou a leitura, como prova
+  antes de salvar ("Confira a data impressa antes de salvar."). Ajustei o
+  encaixe visual desse recorte (`.exp-evidence` em `css/app.css`) para o
+  mesmo raio, contorno de imagem (claro/escuro) e escala de texto do resto
+  do app — a versão trazida usava valores soltos.
+- PaddleOCR fica em `vendor/paddle/` (uns 17 MB) e só baixa por trás quando
+  precisa, do mesmo jeito que o Tesseract (`OCR não carrega no app inicial`).
+- `experiments/ocr/` e `scripts/paddle/` trazem o ambiente Node usado para
+  medir e gerar os modelos; não fazem parte do app publicado.

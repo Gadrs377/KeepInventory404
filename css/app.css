@@ -2157,6 +2157,12 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 }
 .row-item.is-return::after { opacity: 1; transition: none; }
 /* A captura fica apenas na confirmação; não é enviada nem salva no produto. */
-.exp-evidence { margin: 16px 0; }
-.exp-evidence img { display: block; width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; }
-.exp-evidence figcaption { font-size: .85rem; line-height: 1.4; margin-top: 8px; }
+/* Recorte do quadro usado na leitura, como prova antes de salvar: mesma
+   moldura clara e contorno de imagem do resto do app (thumb, foto do produto) */
+.exp-evidence { margin-block: 4px 0; }
+.exp-evidence img {
+  display: block; width: 100%; max-height: 170px; object-fit: contain;
+  padding: 10px; box-sizing: border-box; background: var(--shelf);
+  border-radius: var(--r-thumb); outline: 1px solid var(--img-outline); outline-offset: -1px;
+}
+.exp-evidence figcaption { margin-top: 8px; color: var(--ink-2); font-size: 0.8235rem; line-height: 1.4; text-wrap: pretty; }
