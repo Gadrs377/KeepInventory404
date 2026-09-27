@@ -61,7 +61,7 @@ export function readExpiryWithCamera(host, { skip = [] } = {}) {
         <p class="exp-status" role="status">Abrindo a câmera</p>
         <div class="cam-tools" hidden><button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button></div>
       </div>
-      <div class="exp-picks" role="group" aria-label="Datas lidas">
+      <div class="exp-picks" role="group" aria-label="Datas lidas" aria-live="polite">
         <p class="exp-picks-hint">As datas lidas aparecem aqui</p>
       </div>`;
     const video = $('video', host);

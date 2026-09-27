@@ -2051,7 +2051,7 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
    folha de guardar e na lista de validades da página do produto. */
 .form-rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; background: var(--shelf); border-radius: 20px; overflow: hidden; }
 .form-rows > li { position: relative; }
-.form-rows > li + li::before { content: ''; position: absolute; top: 0; left: 16px; right: 0; height: 1px; background: var(--line); }
+.form-rows > li + li::before { content: ''; position: absolute; top: 0; inset-inline: 16px 0; height: 1px; background: var(--line); }
 .form-row {
   display: flex; align-items: center; gap: 12px;
   width: 100%; min-height: 52px; padding: 10px 16px;
@@ -2071,6 +2071,13 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .form-row.is-action { color: var(--mode, var(--entrada)); font-weight: 700; }
 .form-row.is-action > .icon { flex: none; width: 20px; height: 20px; }
 .form-rows + .group-note { padding: 6px 16px 0; }
+/* Fio embaixo de uma linha com ícone começa no texto, como no iOS (16 + 20 + 12) */
+.form-rows > li:has(> .form-row.is-action) + li::before { inset-inline-start: 48px; }
+/* O bloco corta o que passa da borda: o anel de foco fica para dentro, como nas
+   linhas da tela Mais */
+.form-row:focus-visible, .form-rows .icon-btn:focus-visible { outline-offset: -3px; }
+/* Na página do produto, o mesmo raio dos outros cartões (Consumo, Histórico) */
+.screen-product .form-rows { border-radius: 28px; }
 
 /* Uma data por linha; a que vence logo leva o amarelo de "vencendo" */
 .exp-lot-date { font-family: var(--font-num); font-weight: 800; font-size: 1.0588rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
@@ -2086,7 +2093,11 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 /* Leitura: a câmera grande, as datas lidas logo embaixo e "Digitar a data" */
 .exp-scan .exp-cam { margin: 0; }
 .exp-scan .exp-vf { min-height: 0; aspect-ratio: 4 / 3; border-radius: 22px; }  /* folha 38 − margem 16 */
-.exp-type-btn { align-self: center; }
+/* Caminho alternativo ("Digitar a data", "Outra data para…"): texto na cor
+   do modo, em negrito como o ícone ao lado, sem sublinhado nem fundo (como o
+   "Inserir dados manualmente" da Carteira) */
+.exp-alt { align-self: center; min-height: 44px; padding-inline: 12px; border: 0; background: none; color: var(--mode, var(--ink)); font-weight: 700; text-decoration: none; }
+.exp-alt:active:not(:disabled) { background: color-mix(in oklab, currentColor 10%, transparent); }
 
 /* Datas lidas: três vagas fixas, reservadas desde o início. A primeira data
    ocupa a primeira vaga, a segunda a segunda; nada muda de lugar nem de tamanho
@@ -2122,6 +2133,7 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-confirm-date { margin: 0; font-family: var(--font-num); font-weight: 800; font-size: calc(26px + (1rem - 17px) * 0.6); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
 .exp-confirm-rel { margin: 0; color: var(--ink-2); text-wrap: balance; }
 .exp-confirm-rel.is-past { color: var(--danger); }
+.exp-type .field-note.is-error { color: var(--danger); }
 .exp-howmany { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; border-radius: 22px; background: var(--shelf); }
 .exp-howmany-label { margin: 0; font-weight: 700; text-wrap: balance; text-align: center; }
 .exp-howmany .stepper-host { width: 220px; }

@@ -31,7 +31,7 @@ function sheetNav(body, root) {
   function paint(dir) {
     const top = stack[stack.length - 1];
     stack.forEach((p) => { p.el.hidden = p !== top; });
-    titleSlot.innerHTML = top.title ? `<h2 class="sheet-title">${esc(top.title)}</h2>` : top.bar || '';
+    titleSlot.innerHTML = top.title ? `<h2 class="sheet-title" tabindex="-1">${esc(top.title)}</h2>` : top.bar || '';
     const deep = stack.length > 1;
     back.hidden = !deep;
     close.hidden = deep;
@@ -39,12 +39,17 @@ function sheetNav(body, root) {
       top.el.animate([{ opacity: 0, transform: `translateX(${dir * 28}px)` }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
     }
     if (top.onShow) top.onShow();
+    // O foco acompanha: na página nova, o título (o leitor de tela anuncia
+    // "Validade"); ao voltar, o controle que abriu a página.
+    if (dir > 0) { const h = titleSlot.querySelector('.sheet-title'); if (h) h.focus({ preventScroll: true }); }
+    else if (dir < 0 && top.returnFocus && top.returnFocus.isConnected) top.returnFocus.focus({ preventScroll: true });
   }
   back.addEventListener('click', () => pop());
 
   function push(el, { title, onShow, onHide } = {}) {
     const cur = stack[stack.length - 1];
     if (cur.onHide) cur.onHide();
+    if (cur.el.contains(document.activeElement)) cur.returnFocus = document.activeElement;
     body.append(el);
     stack.push({ el, title, onShow, onHide });
     paint(1);
@@ -83,7 +88,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   function scanPage({ asRoot = false } = {}) {
     const el = page(`
       <div class="exp-cam"></div>
-      <button type="button" class="btn btn-link exp-type-btn" data-type>${icon('keyboard')}Digitar a data</button>`, 'exp-scan');
+      <button type="button" class="btn exp-alt" data-type>${icon('keyboard')}Digitar a data</button>`, 'exp-scan');
     let reading = null;
     const onShow = () => {
       if (reading) return;
@@ -114,18 +119,27 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         <input class="input input-date exp-type-input" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA" aria-describedby="exp-type-note">
       </label>
       <p class="field-note" id="exp-type-note" aria-live="polite">Só mês e ano (10/26) vale até o fim do mês.</p>
-      <button type="button" class="btn ${doneClass} btn-lg" data-next disabled>Continuar</button>`, 'exp-type');
+      <button type="button" class="btn ${doneClass} btn-lg" data-next>Continuar</button>`, 'exp-type');
     const input = $('input', el);
     const note = $('.field-note', el);
     const next = $('[data-next]', el);
     const HELP = note.textContent;
     input.addEventListener('input', () => {
       input.value = expiryInputValue(input.value);
+      input.removeAttribute('aria-invalid');
+      note.classList.remove('is-error');
       const iso = parseExpiry(input.value);
-      next.disabled = !iso;
       note.textContent = iso ? `${formatDateLong(iso)}.` : HELP;
     });
-    const go = () => { const iso = parseExpiry(input.value); if (iso) confirmPage(iso); };
+    // Continuar fica sempre ativo; sem data válida, diz como escrever e volta ao campo.
+    const go = () => {
+      const iso = parseExpiry(input.value);
+      if (iso) { confirmPage(iso); return; }
+      input.setAttribute('aria-invalid', 'true');
+      note.classList.add('is-error');
+      note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
+      input.focus();
+    };
     next.addEventListener('click', go);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
     nav.push(el, { title: 'Digitar a data', onShow: () => setTimeout(() => { if (!el.hidden) input.focus(); }, 320) });
@@ -150,7 +164,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       </div>` : ''}
       <div class="exp-actions">
         <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(doneLabel)}</button>
-        <button type="button" class="btn btn-link" data-more hidden></button>
+        <button type="button" class="btn exp-alt" data-more hidden></button>
       </div>`, 'exp-confirm-page');
     const more = $('[data-more]', el);
     let step = null;

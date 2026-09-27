@@ -970,3 +970,18 @@ folha já lendo; a confirmação salva com **Salvar**.
 **Movimento.** A página nova desliza 28 px e esmaece; a folha acompanha a
 altura com mola. O esmaecer geral da folha não roda por cima (antes eram
 três movimentos juntos).
+
+## Versão 3.30: revisão better-ui e better-interface da validade
+
+- "Digitar a data" e "Outra data para…" em texto na cor do modo, em negrito
+  como o ícone ao lado, sem sublinhado.
+- Lista de validades da página do produto com o raio dos outros cartões (28).
+- Fio entre linhas com ícone começa no texto; fios em propriedades lógicas.
+- Anel de foco das linhas (Validade, Marcar validade, Lembrete) desenhado para
+  dentro: antes o bloco arredondado cortava o anel inteiro.
+- Foco acompanha as páginas: ao abrir, vai para o título ("Validade"); ao
+  voltar, para o controle que abriu.
+- "Continuar" (digitar a data) fica sempre ativo; sem data válida, diz
+  "Use dia/mês/ano (15/10/26) ou mês/ano (10/26)." em vermelho, marca o campo
+  e volta o foco para ele.
+- As datas lidas pela câmera são anunciadas ao leitor de tela.
