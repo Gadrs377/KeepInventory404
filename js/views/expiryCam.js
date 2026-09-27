@@ -13,13 +13,17 @@
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { createPaddleReader } from '../paddleOcr.js';
-import { TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus } from '../expiryRecognition.js';
+import {
+  TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus,
+  STRUGGLE_MS, TILT_HINTS, BURST_TESSERACT_VARIANTS, BURST_PADDLE_VARIANTS,
+} from '../expiryRecognition.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { $, icon, vibrate } from '../ui.js';
 
 const MAX_PICKS = 3;
 const PICK_GUARD_MS = 450;
+const HINT_CYCLE_MS = 4200;
 
 function claimCamera(on) {
   window.dispatchEvent(new CustomEvent('ki:camera', { detail: { claim: on } }));
@@ -62,18 +66,26 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       </div>
       <div class="exp-picks" role="group" aria-label="Datas lidas" aria-live="polite">
         <p class="exp-picks-hint">As datas lidas aparecem aqui</p>
+      </div>
+      <div class="exp-struggle" hidden>
+        <p class="exp-struggle-hint" aria-live="polite"></p>
+        <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Tirar uma foto nítida da validade</span></button>
       </div>`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
     const status = $('.exp-status', host);
     const picks = $('.exp-picks', host);
     const torchBtn = $('[data-torch]', host);
+    const struggle = $('.exp-struggle', host);
+    const struggleHint = $('.exp-struggle-hint', host);
+    const photoBtn = $('[data-photo]', host);
     const canvas = document.createElement('canvas');
     const original = document.createElement('canvas');
     const evidence = new Map();
     let stream = null;
     let alive = true;
     let torchOn = false;
+    let busy = false; // lendo a foto nítida: a leitura ao vivo pausa
     const consensus = createExpiryConsensus({ skip });
     const paddle = createPaddleReader();
     let paddleState = 'idle';
@@ -84,11 +96,28 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     let activeSince = performance.now();
     let lastEngine = 'paddle';
     let visibilityEpoch = 0;
-    const visibilityChanged = () => { consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; };
+    const visibilityChanged = () => { consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; armStruggleHelp(); };
     document.addEventListener('visibilitychange', visibilityChanged);
     const shown = new Set();
     let turn = 0;
     let paddleTurn = 0;
+    let struggleTimer = null;
+    let hintPhase = 0;
+
+    // Sem confirmar por um tempo: sugere inclinar a caixa ou mudar a luz (ajuda
+    // com relevo e reflexo) e oferece tirar uma foto parada, sem o tremor do
+    // vídeo contínuo. Reaparece do zero sempre que a contagem reinicia.
+    function armStruggleHelp() {
+      clearInterval(struggleTimer);
+      struggle.hidden = true;
+      struggleTimer = setInterval(() => {
+        if (!alive || busy) return;
+        if (performance.now() - activeSince < STRUGGLE_MS) return;
+        hintPhase = struggle.hidden ? 0 : (hintPhase + 1) % TILT_HINTS.length;
+        struggleHint.textContent = TILT_HINTS[hintPhase];
+        struggle.hidden = false;
+      }, HINT_CYCLE_MS);
+    }
 
     // Nova data lida: entra na próxima vaga livre e ali fica.
     function addPick(iso) {
@@ -121,6 +150,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       if (iso) { try { onEvidence(evidence.get(iso) || null); } catch { /* confirmação ainda funciona */ } }
       alive = false;
       gone.disconnect();
+      clearInterval(struggleTimer);
       paddle.dispose();
       releaseOcr();
       document.removeEventListener('visibilitychange', visibilityChanged);
@@ -159,9 +189,77 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       });
     }
 
+    // Guarda a evidência (recorte + texto cru) e põe a data numa vaga, se houver.
+    // Usado tanto pela leitura contínua quanto pela foto nítida.
+    function recordCandidates(candidates, evidenceCanvas) {
+      for (const found of candidates) {
+        if (!evidence.has(found.iso) && evidence.size < MAX_PICKS) evidence.set(found.iso, {
+          image: evidenceCanvas.toDataURL('image/jpeg', .8), raw: found.raw,
+          monthOnly: /^\d{1,2}\s*[/.\- ]\s*\d{2,4}$|^\d{4}$/.test(found.raw),
+        });
+        addPick(found.iso);
+      }
+    }
+
+    // Foto parada (sem o tremor do vídeo contínuo) em vez de um quadro: quando
+    // o aparelho tem câmera de foto (ImageCapture), pega mais pixels do sensor;
+    // senão usa o próprio vídeo, mas com um recorte maior. Testa os filtros
+    // distintos de uma vez, com mais tempo, para embalagens com relevo/reflexo.
+    async function captureStill() {
+      const track = stream && stream.getVideoTracks()[0];
+      if (track && 'ImageCapture' in window) {
+        try {
+          const capture = new ImageCapture(track);
+          return await createImageBitmap(await capture.takePhoto());
+        } catch { /* segue com o quadro do vídeo */ }
+      }
+      return video;
+    }
+
+    async function takeSharpPhoto() {
+      if (busy || !alive) return;
+      busy = true;
+      photoBtn.disabled = true;
+      status.textContent = 'Lendo a foto. Leva alguns segundos';
+      try {
+        const box = aimBox(video, aim);
+        const still = await captureStill();
+        if (!alive) return;
+        prepareFrame(still, { mode: 'raw', width: 900, maxH: 700, box }, original);
+        const jobs = [
+          ...(tessFailed ? [] : BURST_TESSERACT_VARIANTS.map(variant => ({ engine: 'tesseract', variant }))),
+          ...BURST_PADDLE_VARIANTS.map(variant => ({ engine: 'paddle', variant })),
+        ];
+        if (jobs.some(j => j.engine === 'paddle') && paddleState !== 'ready') {
+          if (paddleState === 'idle') startPaddle();
+          try { await loadingPaddle; } catch { /* Paddle indisponível: pula os testes dele */ }
+        }
+        for (let i = 0; i < jobs.length; i++) {
+          if (!alive) return;
+          const { engine, variant } = jobs[i];
+          if (engine === 'paddle' && paddleState !== 'ready') continue;
+          let result;
+          try {
+            prepareFrame(still, { ...variant, box }, canvas);
+            result = engine === 'paddle' ? await paddle.read(canvas) : await readResult(canvas, { psm: variant.psm });
+          } catch { continue; }
+          if (!alive) return;
+          const candidates = findExpiryCandidates(result.text);
+          recordCandidates(candidates, original);
+          const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${i}`, at: performance.now() });
+          if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
+        }
+        if (alive) status.textContent = shown.size ? 'Toque na validade certa ou continue apontando' : 'Não deu para ler. Confira a mira ou digite a data';
+      } finally {
+        if (alive) { busy = false; photoBtn.disabled = false; }
+      }
+    }
+    photoBtn.addEventListener('click', () => { takeSharpPhoto(); });
+
     async function loop() {
       const pause = ms => new Promise(r => setTimeout(r, ms));
       while (alive) {
+        if (busy) { await pause(150); continue; } // uma foto nítida está sendo lida
         if (document.hidden || video.readyState < 2 || !video.videoWidth || video.currentTime === frameTime) { await pause(150); continue; }
         if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddle();
         // Do not run inference while Paddle is compiling its models: that
@@ -190,13 +288,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
         if (!alive) return;
         if (document.hidden || epoch !== visibilityEpoch) continue;
         const candidates = findExpiryCandidates(result.text);
-        for (const found of candidates) {
-          if (!evidence.has(found.iso) && evidence.size < MAX_PICKS) evidence.set(found.iso, {
-            image:original.toDataURL('image/jpeg', .8), raw:found.raw,
-            monthOnly:/^\d{1,2}\s*[/.\- ]\s*\d{2,4}$|^\d{4}$/.test(found.raw),
-          });
-          addPick(found.iso);
-        }
+        recordCandidates(candidates, original);
         const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
         if (accepted) {
           beep('ok'); vibrate(40); done(accepted); return;
@@ -238,6 +330,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       if (!alive) return;
       status.textContent = 'Aponte para a data de validade';
       activeSince = performance.now();
+      armStruggleHelp();
       loop().catch(() => { if (alive) status.textContent = 'Não foi possível ler. Digite a data.'; });
     })();
   });

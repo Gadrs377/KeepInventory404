@@ -19,6 +19,20 @@ export function needsPaddle(attempts, elapsedMs) {
 
 export const PADDLE_VARIANTS = ['raw', 'gray', 'otsu', 'red', 'blue'].map(mode => ({mode, blur:0, width:900}));
 
+// Depois de um tempo sem confirmar, a câmera sugere inclinar a embalagem ou
+// mudar a luz (ajuda com relevo/reflexo) e oferece tirar uma foto parada, que
+// aguenta um recorte maior por não ter o tremor do vídeo contínuo.
+export const STRUGGLE_MS = 10000;
+export const TILT_HINTS = [
+  'Incline a embalagem bem devagar, mantendo a validade na mira',
+  'Ou mude a direção da luz, sem tirar a validade da mira',
+];
+// Os cinco filtros distintos (sem as variações de segmentação/rotação, que
+// existem para variar entre quadros de vídeo, menos úteis numa foto só), com
+// mais pixels: uma foto parada aguenta um recorte maior sem ficar borrada.
+export const BURST_TESSERACT_VARIANTS = [0, 1, 2, 3, 4].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
+export const BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.map(v => ({ ...v, width: 1300, maxH: 900 }));
+
 export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
   let samples = [];
   return {

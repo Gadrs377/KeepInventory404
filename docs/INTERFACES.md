@@ -1024,3 +1024,18 @@ para o fluxo completo e as medições.
   precisa, do mesmo jeito que o Tesseract (`OCR não carrega no app inicial`).
 - `experiments/ocr/` e `scripts/paddle/` trazem o ambiente Node usado para
   medir e gerar os modelos; não fazem parte do app publicado.
+
+## Versão 3.34: inclinar/luz e foto nítida quando a câmera não confirma
+
+Ver `docs/LEITURA_VALIDADE.md` para o funcionamento completo e por que não
+adicionamos o EasyOCR como terceiro motor.
+
+- Depois de 10 s sem confirmar, um painel aparece com uma dica que alterna
+  ("Incline a embalagem bem devagar…" / "Ou mude a direção da luz…") e o
+  botão **Tirar uma foto nítida da validade**.
+- A foto usa `ImageCapture` (mais pixels do sensor) quando o navegador deixa,
+  senão o próprio vídeo com um recorte maior; testa cinco filtros de cada
+  motor de uma vez, sem o tremor do vídeo contínuo. Ajuda com validade em
+  relevo ou com reflexo, o caso que faltou nos testes anteriores.
+- Sem confirmar em nenhum filtro, volta ao normal com o que achou disponível
+  para tocar; a leitura contínua retoma sozinha.

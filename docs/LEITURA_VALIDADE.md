@@ -47,6 +47,55 @@ viram opções. Não se escolhe automaticamente a maior data entre duas sem rót
 - O build pronto está versionado. Publicação continua estática, sem dependências
   npm em produção. Instruções para reproduzir o bundle em `vendor/paddle/README.md`.
 
+## Sem confirmar por muito tempo: inclinar/luz e foto nítida
+
+Depois de `STRUGGLE_MS` (10 s) sem confirmar, `js/views/expiryCam.js` mostra um
+painel com duas sugestões que alternam a cada 4,2 s (`TILT_HINTS`, em
+`js/expiryRecognition.js`) — inclinar a embalagem devagar ou mudar a direção
+da luz, mantendo a validade na mira — e o botão **Tirar uma foto nítida da
+validade**. Foi a próxima experiência sugerida em `TESTES_VALIDADES_REAIS.md`
+para a embalagem roxa em relevo que não confirmou em nenhum teste.
+
+Ao tocar no botão:
+
+1. A leitura contínua pausa (`busy = true`; o laço só volta a rodar quando a
+   foto termina).
+2. Tenta `ImageCapture.takePhoto()` na trilha da câmera, que costuma trazer
+   mais pixels do sensor que um quadro de vídeo; sem suporte, usa o próprio
+   quadro atual do vídeo.
+3. Roda os cinco filtros distintos do Tesseract (sem as variações de
+   segmentação/rotação, pensadas para variar entre quadros de vídeo, não uma
+   foto só) com um recorte maior (`BURST_TESSERACT_VARIANTS`,
+   `prepareFrame` ganhou `maxH`/`maxScale` para isso) e, se o Paddle já
+   carregou (ou carrega agora, com aviso), os cinco filtros dele também
+   (`BURST_PADDLE_VARIANTS`). Cada filtro entra na mesma votação como um
+   "quadro" à parte; confirma sozinho nos mesmos critérios de sempre.
+4. Sem confirmar em nenhum filtro, volta ao normal: mostra o que achou como
+   opção para tocar, e a leitura contínua retoma.
+
+Testado com Tesseract simulado (Playwright): o painel aparece só depois do
+tempo certo, a dica alterna, a leitura contínua não confirma sozinha depois
+que a foto é pedida (só os quadros dela contam), confirma corretamente
+quando algum filtro acerta, e devolve o botão e a câmera quando nenhum acerta.
+
+## Por que não usamos EasyOCR
+
+Chegou a ser considerado como um terceiro motor. Pesados demais para um app
+que baixa por trás, no celular:
+
+- O modelo oficial otimizado da Qualcomm para aparelhos móveis (o mais leve
+  encontrado) já tem 79,2 MB só no detector, sem contar o reconhecedor; ele
+  roda em NPU específica do aparelho (QNN/TFLite), não em WASM de navegador.
+- A única porta JavaScript/WASM encontrada (`easyocr.js`, um projeto novo, sem
+  uso conhecido em produção) cita 100–300 MB de download na primeira vez.
+- Um estudo comparando os três motores nesta mesma tarefa (leitura de
+  validade em embalagem real) mediu o Paddle na frente, seguido do EasyOCR, e
+  o Tesseract em último — ou seja, o motor mais pesado dos dois não seria
+  nem o mais preciso aqui.
+
+Para comparação, o Tesseract já usado pesa uns 7 MB e o Paddle (`vendor/paddle`)
+uns 21,5 MB de modelos.
+
 ## Validação
 
 `node --test tests/expiry.test.mjs`: formatos, fabricação/lote, datas impossíveis,

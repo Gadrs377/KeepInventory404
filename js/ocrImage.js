@@ -105,7 +105,7 @@ export function filterPixels(pixels, w, h, { mode = 'otsu', blur = 0 } = {}) {
   }
 }
 
-export function prepareFrame(source, { box = { x: .08, y: .36, w: .84, h: .28 }, width = 1000, blur = 1, mode = 'otsu', angle = 0 } = {}, canvas = document.createElement('canvas')) {
+export function prepareFrame(source, { box = { x: .08, y: .36, w: .84, h: .28 }, width = 1000, maxH = 600, maxScale = 2, blur = 1, mode = 'otsu', angle = 0 } = {}, canvas = document.createElement('canvas')) {
   const vw = source.videoWidth || source.naturalWidth || source.width;
   const vh = source.videoHeight || source.naturalHeight || source.height;
   if (!vw || !vh) throw new Error('Quadro da câmera indisponível');
@@ -113,7 +113,9 @@ export function prepareFrame(source, { box = { x: .08, y: .36, w: .84, h: .28 },
   const sy = Math.max(0, Math.min(vh - 1, Math.round(vh * box.y)));
   const sw = Math.max(1, Math.min(vw - sx, Math.round(vw * box.w)));
   const sh = Math.max(1, Math.min(vh - sy, Math.round(vh * box.h)));
-  const scale = Math.min(2, width / sw, 600 / sh);
+  // Uma foto parada (câmera fixa, sem tremor de vídeo) aguenta um recorte maior:
+  // `maxScale`/`maxH` sobem para a leitura de reforço com foto nítida.
+  const scale = Math.min(maxScale, width / sw, maxH / sh);
   const w = Math.max(1, Math.round(sw * scale)); const h = Math.max(1, Math.round(sh * scale));
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });

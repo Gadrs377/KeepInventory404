@@ -2129,6 +2129,18 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 @media (prefers-reduced-motion: reduce) { .exp-pick { transition-property: opacity, background-color; } .exp-pick.is-new { flex-grow: 1; } }
 .text-large .exp-picks { flex-direction: column; }
 
+/* Depois de um tempo sem confirmar: sugere inclinar a caixa ou mudar a luz
+   (ajuda com relevo/reflexo) e o botão de foto parada. Entra suave, no mesmo
+   espírito das cápsulas de data acima. */
+.exp-struggle {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  margin-top: 14px; padding: 14px 16px; border-radius: 20px;
+  background: color-mix(in oklab, var(--ink) 5%, transparent);
+  animation: fade-in 400ms var(--ease);
+}
+.exp-struggle-hint { margin: 0; color: var(--ink-2); font-size: 0.8235rem; text-align: center; text-wrap: pretty; }
+@media (prefers-reduced-motion: reduce) { .exp-struggle { animation: none; } }
+
 /* Confirmação: a data por extenso, grande, e quantas vencem nela */
 .exp-confirm { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-block: 8px 4px; text-align: center; }
 .exp-confirm-icon {
