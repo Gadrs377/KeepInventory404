@@ -1178,3 +1178,23 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
   na digitação, em vez de ler a lista inteira a cada letra.
 - `tests/search.test.mjs`, `tests/ui/search.test.mjs` e `tests/sw.test.mjs`
   (todo módulo de `js/` precisa estar no cache offline). `sw.js` v56.
+
+## Versão 3.42: tela de testes (leitor com GPU)
+
+- **Mais → Testes (leitor com GPU)** abre `#/testes`, uma tela simples, só
+  para medir, que não mexe no armário. Compara, nas mesmas imagens (copo e
+  chocolate de `vendor/paddle/amostras/`, ou uma foto sua), o Paddle de hoje
+  (`vendor/paddle/v3`, só WebAssembly) com um pacote de teste que usa a GPU
+  (`vendor/paddle/gpu1`, onnxruntime 1.24.3 com WebGPU, variante asyncify).
+  Mostra quanto leva para preparar, a 1ª leitura (que na GPU inclui preparar
+  os programas dela), a mediana das demais, as datas lidas e se o texto é o
+  mesmo do atual. "Estresse GPU" repete leituras até 600 ou até dar erro (há
+  relato de travar depois de ~500 no iOS 26.3). "Copiar resultado" copia tudo
+  em JSON. A tela fica acesa durante os testes.
+- No Chromium com GPU simulada, os três leram exatamente o mesmo texto; a
+  velocidade só vale no celular.
+- `createPaddleReader(tier, { gpu, readTimeout })`: opções só para essa tela;
+  o leitor de validade continua usando o pacote de sempre.
+- `scripts/paddle/build-gpu.mjs` monta o pacote, com um patch que cria as
+  duas sessões do Paddle em série (o WebGPU do onnxruntime não aceita duas
+  ao mesmo tempo). `sw.js` v57.

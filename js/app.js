@@ -8,6 +8,7 @@ import mountProduto from './views/produto.js';
 import mountDados from './views/dados.js';
 import mountCompras from './views/compras.js';
 import mountCupons from './views/cupons.js';
+import mountTestes from './views/testes.js';
 import { closeSheet, closeMenu, hideStaleToast, collapsingTitle, toast, updateTabBar, $ } from './ui.js';
 import { refreshShopBadge } from './shop.js';
 import { onChange } from './store.js';
@@ -24,6 +25,7 @@ const ROUTES = [
   [/^\/dados$/, mountDados],
   [/^\/compras$/, mountCompras],
   [/^\/cupons$/, mountCupons],
+  [/^\/testes$/, mountTestes],
 ];
 
 const root = $('#app');

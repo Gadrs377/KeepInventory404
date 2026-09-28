@@ -48,6 +48,9 @@ export default async function mountDados(root) {
           <li><label class="group-row"><span class="group-icon">${icon('fileText')}</span><span class="group-label">Diagnóstico da leitura de validade</span><input type="checkbox" class="switch" data-debug ${debugEnabled() ? 'checked' : ''}></label></li>
         </ul>
         <p class="group-note">Mostra, embaixo da câmera, o que o leitor viu em cada tentativa e por que não confirmou. Tem um botão para copiar tudo e mandar para quem cuida do app.</p>
+        <ul class="group">
+          <li><a class="group-row" href="#/testes"><span class="group-icon">${icon('bolt')}</span><span class="group-label">Testes (leitor com GPU)</span>${icon('chevron', 'group-chevron')}</a></li>
+        </ul>
 
         <section class="install-note" ${installed ? 'hidden' : ''}>
           <h2 class="list-title">Instalar no celular</h2>
