@@ -39,11 +39,13 @@ viram opções. Não se escolhe automaticamente a maior data entre duas sem rót
 - Se o Paddle falhar ou estiver indisponível no primeiro uso offline, o Tesseract
   continua e a digitação permanece disponível. Se ambos falharem, há orientação
   para digitar, sem nova tentativa infinita de baixar modelos na mesma sessão.
-- Binários Paddle em `vendor/paddle/v1` (~43 MB sem compressão HTTP; modelos
-  correspondem a 21,5 MB) só são requisitados no fallback. O service worker v48
-  usa cache separado e URLs versionadas. Após cache completo, funciona offline;
-  caches podem ser removidos pelo navegador, e falta de espaço impede garantir
-  persistência. Falha de gravação no cache não deve impedir leitura online.
+- Binários Paddle em `vendor/paddle/v2` (~52 MB sem compressão HTTP; modelos
+  PP-OCRv6 small correspondem a 29,8 MB, antes 21,5 MB com PP-OCRv5 mobile —
+  ver "Modelo do Paddle atualizado" abaixo) só são requisitados no fallback.
+  O service worker v52 usa cache separado e URLs versionadas. Após cache
+  completo, funciona offline; caches podem ser removidos pelo navegador, e
+  falta de espaço impede garantir persistência. Falha de gravação no cache
+  não deve impedir leitura online.
 - O build pronto está versionado. Publicação continua estática, sem dependências
   npm em produção. Instruções para reproduzir o bundle em `vendor/paddle/README.md`.
 
@@ -110,6 +112,37 @@ mesmo tempo (uma leitura de 900 ms por filtro, mais longa que o próprio
 ciclo de dica, não gera chamadas simultâneas), confirma corretamente quando
 algum filtro acerta (pelo toque ou sozinha), e devolve o botão e a câmera
 quando nenhum acerta.
+
+## Modelo do Paddle atualizado (PP-OCRv5 mobile → PP-OCRv6 small)
+
+A PaddlePaddle lançou o PP-OCRv6 em 11/06/2026. O SDK que já usávamos
+(`@paddleocr/paddleocr-js` 0.4.2) já conhece os novos modelos oficiais
+(`PP-OCRv6_tiny/small/medium`), sem precisar trocar de biblioteca — só o
+nome dos modelos baixados. Testado localmente antes de trocar, comparando
+lado a lado com o motor real (não simulado):
+
+- **Texto sintético limpo** (6 casos: datas com/sem rótulo, lote): o
+  PP-OCRv5 mobile (antigo) leu 4 de 6 perfeitamente (trocou `/` por `I` numa
+  data, cortou o último dígito de outra). O PP-OCRv6 small leu os 6
+  perfeitamente, e mais rápido em cada caso.
+- **PP-OCRv6 tiny** (modelo ainda menor, ~6 MB) também leu os 6 casos
+  sintéticos perfeitamente e mais rápido que o small — mas, no vídeo real
+  da lata (próxima seção), passou a "ver" texto onde não tinha nada,
+  alucinando caracteres chineses com confiança alta em vários quadros
+  (por ser um modelo multilíngue pequeno demais para esse nível de ruído).
+  O PP-OCRv6 small não teve esse problema.
+- **Vídeo real da lata em relevo** (o caso mais difícil já documentado,
+  ver `TESTES_VALIDADES_REAIS.md`): rodando o worker do Paddle sozinho
+  sobre os mesmos quadros, o PP-OCRv5 mobile só achou ruído (ex.: "LE" a
+  60% de confiança). O PP-OCRv6 small leu **`LOTE:1291225` inteiro e
+  correto, duas vezes, a 99% de confiança**, em quadros diferentes — não
+  chegou a ler a validade em si, mas mostrou que consegue extrair texto
+  limpo de material que antes só virava ruído.
+
+Trocado para PP-OCRv6 small: 29,8 MB (antes 21,5 MB, +8,3 MB), só baixado
+no fallback como antes. Suite completa de testes (unitários, câmera real
+com motores reais, ciclo de vida do Paddle offline/cancelamento, painel de
+ajuda e foto automática) rodada de novo depois da troca, sem regressão.
 
 ## Por que não usamos EasyOCR
 

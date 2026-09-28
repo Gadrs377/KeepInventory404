@@ -14,7 +14,7 @@ try {
     export {prepareFrame} from './ocrImage.js';export async function ocrWorker(){};export function releaseOcr(){};
     export async function readResult(){window.calls=(window.calls||0)+1;return {text:window.calls<=6?'':'VAL 15/10/2026',confidence:90};}
   `}));
-  await page.route('**/vendor/paddle/v1/worker.js',route=>route.abort());
+  await page.route('**/vendor/paddle/v2/worker.js',route=>route.abort());
   const outcome=await page.evaluate(async()=>{
     const {renderFixture,fixtures}=await import('/experiments/ocr/fixtures.js');
     const {readExpiryWithCamera}=await import('/js/views/expiryCam.js');

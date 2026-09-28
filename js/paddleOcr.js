@@ -27,7 +27,7 @@ export function createPaddleReader() {
     if (stopped) return Promise.reject(new Error('Leitura encerrada'));
     if (!init) {
       try {
-        worker = new Worker(new URL('../vendor/paddle/v1/worker.js', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('../vendor/paddle/v2/worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = ({ data }) => {
           const item = pending.get(data.id); if (!item) return;
           clearTimeout(item.timer); pending.delete(data.id);

@@ -1,5 +1,5 @@
 {
-  "paddleText": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456",
+  "paddleText": "FAB 01/09/2026\nVAL 15/10/2026\nL0TE 123456",
   "rows": [
     {
       "id": "plain",
@@ -92,7 +92,7 @@
           "mode": "gray",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 93
+          "confidence": 92
         }
       ]
     },
@@ -123,13 +123,13 @@
           "mode": "sauvola",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 92
+          "confidence": 91
         },
         {
           "mode": "adaptive",
           "psm": 6,
           "text": "I\nFAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 80
+          "confidence": 83
         }
       ]
     },
@@ -142,13 +142,13 @@
           "mode": "raw",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123454\n",
-          "confidence": 78
+          "confidence": 91
         },
         {
           "mode": "gray",
           "psm": 6,
-          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123454\n",
-          "confidence": 77
+          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 94
         }
       ]
     },
@@ -161,7 +161,7 @@
           "mode": "raw",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 93
+          "confidence": 92
         },
         {
           "mode": "gray",
@@ -179,32 +179,38 @@
         {
           "mode": "raw",
           "psm": 6,
-          "text": "CAD    IAN BEF ATWA TAY F\nWE.    AF ANF LLNS\n",
-          "confidence": 26
+          "text": "EU A ES    ATE FLOAT TF TRIATEZO\nWIRE     APS ANA LLNS\n",
+          "confidence": 28
         },
         {
           "mode": "gray",
           "psm": 6,
-          "text": "CAD    IAN BE ATWA TAY F\nWE.    AF ANF LLNS\n",
-          "confidence": 24
+          "text": "EU A ES    ATE FLAT PF TRIATEZO\nWIRE     APS LN LLNS\n",
+          "confidence": 22
         },
         {
           "mode": "otsu",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 77
+          "confidence": 91
         },
         {
           "mode": "sauvola",
           "psm": 6,
-          "text": "EAT NE JG STRTIS\nPHS WEF LBA0\nVAD TRIO SINTIE\nWAAL. LGR LU AWE\nLOTE 1234585\n",
+          "text": "EAR AT IAG STATE\nPH WES LBD\nVAD TRAIL SINTE\nWAAL LGR LU AWS\nLOTTE 123456\n",
           "confidence": 24
         },
         {
           "mode": "adaptive",
           "psm": 6,
-          "text": "FAB 01/09/2026\nVAL 15/10/2026\nLOTE 123456\n",
-          "confidence": 81
+          "text": "FAB 01/09/2026\nVAL 15/19/2026\nLOTE 123456\n",
+          "confidence": 89
+        },
+        {
+          "mode": "otsu",
+          "psm": 6,
+          "text": "FAB 01/69/2826\nVAL 15/10/2026\nLOTE 123456\n",
+          "confidence": 84
         }
       ]
     },
@@ -216,20 +222,20 @@
         {
           "mode": "raw",
           "psm": 6,
-          "text": "FAB 01/09/2026\nVAL 15/10/Z\nLOTE 123456\n",
-          "confidence": 78
+          "text": "FAB 01/09/2026\nVAL 15/10/2\nLOTE 123456\n",
+          "confidence": 76
         },
         {
           "mode": "gray",
           "psm": 6,
           "text": "FAB 01/09/2026\nVAL 15/10/:\nLOTE 123456\n",
-          "confidence": 75
+          "confidence": 84
         },
         {
           "mode": "otsu",
           "psm": 6,
-          "text": "FAB 01/09/2077\nVAL 15/10/:\nLOTE 123456\n",
-          "confidence": 79
+          "text": "FAB 01/09/207\nVAL 15/10/:\nLOTE 123456\n",
+          "confidence": 76
         },
         {
           "mode": "sauvola",
@@ -240,8 +246,8 @@
         {
           "mode": "adaptive",
           "psm": 6,
-          "text": "FAB 01/09/2026\nVAL 15/10/2025\nLOTE 123456\n",
-          "confidence": 90
+          "text": "FAB 01/09/2026\nVAL 15/10/2020\nLOTE 123456      7\n",
+          "confidence": 79
         },
         {
           "mode": "otsu",
@@ -309,7 +315,7 @@
           "mode": "gray",
           "psm": 6,
           "text": "VAL 15 OUT 2026\n",
-          "confidence": 95
+          "confidence": 94
         }
       ]
     },
@@ -322,13 +328,13 @@
           "mode": "raw",
           "psm": 6,
           "text": "VAL 15/10/26\n",
-          "confidence": 87
+          "confidence": 85
         },
         {
           "mode": "gray",
           "psm": 6,
           "text": "VAL 15/10/26\n",
-          "confidence": 84
+          "confidence": 95
         }
       ]
     },
@@ -379,13 +385,13 @@
           "mode": "raw",
           "psm": 6,
           "text": "VAL 15 10 2026\n",
-          "confidence": 96
+          "confidence": 95
         },
         {
           "mode": "gray",
           "psm": 6,
           "text": "VAL 15 10 2026\n",
-          "confidence": 96
+          "confidence": 95
         }
       ]
     },
@@ -410,13 +416,13 @@
           "mode": "otsu",
           "psm": 6,
           "text": "FAB 15/09/2026\n",
-          "confidence": 95
+          "confidence": 94
         },
         {
           "mode": "sauvola",
           "psm": 6,
           "text": "FAB 15/09/2026\n",
-          "confidence": 96
+          "confidence": 95
         },
         {
           "mode": "adaptive",
@@ -428,7 +434,7 @@
           "mode": "otsu",
           "psm": 6,
           "text": "FAB 15/69/2026\n",
-          "confidence": 91
+          "confidence": 90
         },
         {
           "mode": "raw",
@@ -452,7 +458,7 @@
           "mode": "sauvola",
           "psm": 7,
           "text": "FAB 15/09/2026\n",
-          "confidence": 86
+          "confidence": 85
         }
       ]
     },
@@ -465,7 +471,7 @@
           "mode": "raw",
           "psm": 6,
           "text": "LOTE 10/26\n",
-          "confidence": 92
+          "confidence": 91
         },
         {
           "mode": "gray",
@@ -476,8 +482,8 @@
         {
           "mode": "otsu",
           "psm": 6,
-          "text": "LOTE 106/26\n",
-          "confidence": 82
+          "text": "LOTE 10/26\n",
+          "confidence": 93
         },
         {
           "mode": "sauvola",
@@ -488,20 +494,20 @@
         {
           "mode": "adaptive",
           "psm": 6,
-          "text": "LOTE 16/26\n",
-          "confidence": 84
+          "text": "LOTE 10/26\n",
+          "confidence": 93
         },
         {
           "mode": "otsu",
           "psm": 6,
           "text": "LOTE 16/26\n",
-          "confidence": 89
+          "confidence": 90
         },
         {
           "mode": "raw",
           "psm": 11,
           "text": "LOTE 10/26\n",
-          "confidence": 92
+          "confidence": 91
         },
         {
           "mode": "gray",
@@ -519,7 +525,7 @@
           "mode": "sauvola",
           "psm": 7,
           "text": "LOTE 10/26\n",
-          "confidence": 93
+          "confidence": 91
         }
       ]
     },
@@ -544,25 +550,25 @@
           "mode": "otsu",
           "psm": 6,
           "text": "ARROZ TIPO 1\nPESO 500 G6\n",
-          "confidence": 86
+          "confidence": 91
         },
         {
           "mode": "sauvola",
           "psm": 6,
           "text": "ARROZ TIPO 1\nPESO 500 G\n",
-          "confidence": 91
+          "confidence": 92
         },
         {
           "mode": "adaptive",
           "psm": 6,
           "text": "ARROZ TIPO 1\nPESO 500 G6\n",
-          "confidence": 89
+          "confidence": 91
         },
         {
           "mode": "otsu",
           "psm": 6,
-          "text": "ARROZ TIPO 1\nPESO 560 G\n",
-          "confidence": 88
+          "text": "ARROZ TIPO 1\nPESO 568 G\n",
+          "confidence": 93
         },
         {
           "mode": "raw",
@@ -573,8 +579,8 @@
         {
           "mode": "gray",
           "psm": 7,
-          "text": "PES0 560 6\n",
-          "confidence": 48
+          "text": "PESO 560 6\n",
+          "confidence": 77
         },
         {
           "mode": "sauvola",
@@ -585,8 +591,8 @@
         {
           "mode": "sauvola",
           "psm": 7,
-          "text": "ES0 500 5\n",
-          "confidence": 18
+          "text": "PESO 500 6\n",
+          "confidence": 43
         }
       ]
     },
@@ -599,13 +605,13 @@
           "mode": "raw",
           "psm": 6,
           "text": "VAL 31/02/2027\n",
-          "confidence": 82
+          "confidence": 90
         },
         {
           "mode": "gray",
           "psm": 6,
           "text": "VAL 31/02/2027\n",
-          "confidence": 83
+          "confidence": 91
         },
         {
           "mode": "otsu",
@@ -617,7 +623,7 @@
           "mode": "sauvola",
           "psm": 6,
           "text": "VAL 31/02/2027\n",
-          "confidence": 93
+          "confidence": 94
         },
         {
           "mode": "adaptive",
@@ -629,19 +635,19 @@
           "mode": "otsu",
           "psm": 6,
           "text": "VAL 31/02/2027\n",
-          "confidence": 94
+          "confidence": 91
         },
         {
           "mode": "raw",
           "psm": 11,
           "text": "VAL 31/02/2027\n",
-          "confidence": 82
+          "confidence": 90
         },
         {
           "mode": "gray",
           "psm": 7,
           "text": "VAL 31/02/2027\n",
-          "confidence": 83
+          "confidence": 91
         },
         {
           "mode": "sauvola",
@@ -653,7 +659,7 @@
           "mode": "sauvola",
           "psm": 7,
           "text": "VAL 31/02/2027\n",
-          "confidence": 93
+          "confidence": 94
         }
       ]
     }

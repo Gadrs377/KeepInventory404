@@ -1067,3 +1067,14 @@ adicionamos o EasyOCR como terceiro motor.
   mesmo filtro que uma rodada anterior seria descartada como "quadro
   repetido" da rodada anterior, perdendo um voto de uma foto genuinamente
   nova.
+
+## Versão 3.37: modelo do Paddle atualizado para PP-OCRv6 small
+
+- Trocado `vendor/paddle/v1` (PP-OCRv5 mobile) por `vendor/paddle/v2`
+  (PP-OCRv6 small, lançado 11/06/2026), mesmo SDK. 29,8 MB no fallback
+  (antes 21,5 MB). Testado antes de trocar: leu 6/6 casos sintéticos
+  perfeitamente (o antigo errou 2/6), e recuperou `LOTE:1291225` inteiro a
+  99% de confiança num vídeo real onde o antigo só achava ruído — ver
+  `docs/LEITURA_VALIDADE.md`.
+- `sw.js` v52: cache do Paddle renomeado para `paddle-v2`; a ativação agora
+  também limpa caches `paddle-*` órfãos (mesmo padrão já usado para `app-*`).

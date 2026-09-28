@@ -9,8 +9,8 @@ self.onmessage = async ({ data }) => {
     if (type === 'init') {
       const root = new URL('./', self.location.href);
       engine = await PaddleOCR.create({
-        textDetectionModelName: 'PP-OCRv5_mobile_det',
-        textRecognitionModelName: 'PP-OCRv5_mobile_rec',
+        textDetectionModelName: 'PP-OCRv6_small_det',
+        textRecognitionModelName: 'PP-OCRv6_small_rec',
         textDetectionModelAsset: { url: new URL('det.tar', root).href },
         textRecognitionModelAsset: { url: new URL('rec.tar', root).href },
         // This entire pipeline already lives in our dedicated module worker.

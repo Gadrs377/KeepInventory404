@@ -4,14 +4,14 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v51';
+const VERSION = 'v52';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
 // Leitor de validade (Tesseract, uns 7 MB): baixa uma vez e fica no aparelho.
 // Arquivos com nome fixo por versão: cache primeiro, sem rede.
 const OCR_CACHE = 'ocr-v1';
-const PADDLE_CACHE = 'paddle-v1';
+const PADDLE_CACHE = 'paddle-v2';
 
 const APP_FILES = [
   './',
@@ -75,7 +75,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('app-') && k !== APP_CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys
+        .filter((k) => (k.startsWith('app-') && k !== APP_CACHE) || (k.startsWith('paddle-') && k !== PADDLE_CACHE))
+        .map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -94,7 +96,7 @@ self.addEventListener('fetch', (event) => {
 
   // Large optional engine: downloaded only when Tesseract cannot confirm.
   // Versioned immutable URLs avoid mixing old WASM/JS with a newer model.
-  if (url.origin === self.location.origin && url.pathname.includes('/vendor/paddle/v1/')) {
+  if (url.origin === self.location.origin && url.pathname.includes('/vendor/paddle/v2/')) {
     event.respondWith(cacheFirst(request, PADDLE_CACHE, event));
     return;
   }

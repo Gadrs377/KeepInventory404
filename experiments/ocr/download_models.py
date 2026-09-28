@@ -5,8 +5,8 @@ import urllib.request
 
 BASE = 'https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/'
 MODELS = {
-    'PP-OCRv5_mobile_det': '781056046c9ed77a15c94681605db6a0f62317c2e9cce6931c71da2478d4bc30',
-    'PP-OCRv5_mobile_rec': 'f7e792bc836f36e7ef895ad47c426d75b0b75b1650caa6d63fe9418441ffba8c',
+    'PP-OCRv6_small_det': 'd218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4',
+    'PP-OCRv6_small_rec': 'd267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1',
 }
 folder = Path(__file__).parent / 'public/models'
 folder.mkdir(parents=True, exist_ok=True)
