@@ -62,6 +62,19 @@ test('filters of one still photo count as a single picture', () => {
   assert.equal(d.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 'photo-0-0', source: 'photo-0', at: 0, confidence: 90 }), null);
   assert.equal(d.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 1.23, at: 1, confidence: 90 }), '2026-10-15');
 });
+test('consensus explains why a reading did not confirm', () => {
+  const c = createExpiryConsensus();
+  const why = () => c.why().code;
+  c.add({ candidates: [], engine: 'tesseract', frame: 1, at: 0, confidence: 90 }); assert.equal(why(), 'no-date');
+  c.add({ candidates: [{ iso: '2026-10-15', labeled: false, ambiguous: false }], engine: 'tesseract', frame: 2, at: 1, confidence: 90 }); assert.equal(why(), 'unlabeled');
+  c.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 3, at: 2, confidence: 30 }); assert.equal(why(), 'confidence'); assert.equal(c.why().detail, 30);
+  c.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 4, at: 3, confidence: 90 }); assert.equal(why(), 'one-picture');
+  c.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 4, at: 4, confidence: 90 }); assert.equal(why(), 'repeated');
+  assert.equal(c.add({ candidates: candidate('2026-10-15'), engine: 'paddle', frame: 5, at: 5, confidence: 90 }), '2026-10-15'); assert.equal(why(), 'confirmed');
+  const d = createExpiryConsensus();
+  d.add({ candidates: [{ iso: '2026-10-15', ambiguous: true, labeled: true }, { iso: '2026-11-20', ambiguous: true, labeled: true }], engine: 'paddle', frame: 1, at: 0, confidence: 90 });
+  assert.equal(d.why().code, 'several');
+});
 test('frame issues: dark, glare, blur and a sharp frame', () => {
   const frame = (fn, width = 64, height = 32) => {
     const data = new Uint8ClampedArray(width * height * 4);
@@ -79,4 +92,23 @@ test('frame issues: dark, glare, blur and a sharp frame', () => {
 test('unlabeled manufacture cannot auto-confirm even with repeated confident readings', () => {
   const c=createExpiryConsensus();
   for(let frame=0;frame<6;frame++)assert.equal(c.add({candidates:findExpiryCandidates('06/25','2026-09-27'),engine:'paddle',frame,at:frame,confidence:95}),null);
+});
+test('real printed labels: misread VAL, FAB block, label on another line, combined heading', () => {
+  const today = '2026-09-27';
+  const labeled = (text) => { const c = findExpiryCandidates(text, today); return c.length === 1 && c[0].labeled ? c[0].iso : null; };
+  // Textos lidos pelo Paddle no copo (tests/real): VAL virou RL, U9L, UAL, BL, URL, UPL.
+  for (const text of ['FAB:05/08/24\nRL:17/09/26', 'FAB:05/06/2\nU9L:17/09/26', 'FAB:05/06/2\nUAL:17/09/26', 'AB:05/06/24\nBL:17/09/26', 'FR5:05/06/2/\nURL:17/09/26', 'FRB:05/08/21\nUPL:17/09/26'])
+    assert.equal(labeled(text), '2026-09-17', text);
+  assert.equal(labeled('FAB:05/08/24\n17/09/26'), '2026-09-17');
+  assert.equal(labeled('FAB:05/08/26\n20/08/26'), '2026-08-20');
+  // Chocolate: "CONSUMIR ANTES DE/LOTE:" com a data antes do código de lote.
+  assert.equal(labeled('ANTESDE/LOIE: 11/08/27 CC22'), '2027-08-11');
+  assert.equal(labeled('CONSUMIR ANTES DE/LOTE: 11/08/27 CC22326493 04:50'), '2027-08-11');
+  assert.equal(labeled('VAL/LOTE: 11/08/27 L123'), '2027-08-11');
+  assert.equal(labeled('VALIDADE: VER NA TAMPA\nLOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISCING ELIT SED\n11/08/27'), '2027-08-11');
+  // Proteções: fabricação e lote mal lidos, datas antes da fabricação, sem rótulo nenhum.
+  for (const text of ['FAL:05/08/26', 'PL:05/08/26', 'ML: 12/27', 'RL:17/09/24', 'FAB:05/08/27\n20/08/26', 'UAL:05/08/26\nFAB:10/08/26', '06/08/28', '11/08/27 CC22326', 'O SURIOD LEDHE SNPOLVO\n11/08/27 CC22326493 04:50\nBRICADO POR TOP CAU'])
+    assert.equal(labeled(text), null, text);
+  assert.deepEqual(findExpiryCandidates('FAB/LOTE: 05/06/26', today), []);
+  assert.deepEqual(findExpiryCandidates('L: 10/26', today), []);
 });

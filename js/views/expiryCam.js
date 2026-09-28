@@ -27,12 +27,13 @@ import { createPaddleReader } from '../paddleOcr.js';
 import {
   TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus,
   STRUGGLE_MS, TILT_HINTS, BURST_TESSERACT_VARIANTS, BURST_PADDLE_VARIANTS,
-  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, PHOTO_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS,
+  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, PHOTO_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
 } from '../expiryRecognition.js';
 import { frameIssue } from '../frameQuality.js';
+import { debugEnabled } from '../expiryDebug.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
-import { $, icon, vibrate, reducedMotion } from '../ui.js';
+import { $, icon, vibrate, reducedMotion, toast, download } from '../ui.js';
 
 const MAX_PICKS = 3;
 const PICK_GUARD_MS = 450;
@@ -49,6 +50,14 @@ const ISSUE_TEXT = {
 const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Tente a câmera do celular, ou digite a data olhando a melhor foto.';
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+const photoSource = (seq) => `photo-${seq}`;
+const variantName = (v) => `${v.mode}${v.psm ? `/psm${v.psm}` : ''}${v.angle ? `/${v.angle}°` : ''}`;
+const DEBUG_EVENT = {
+  pick: 'data virou botão', tap: 'tocou na data', confirmed: 'confirmou sozinho', shutter: 'foto automática',
+  native: 'foto do celular', hard: 'avisou que está difícil', ask: 'perguntou "é esta data?"', issue: 'aviso de imagem',
+  'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
+  'medium-failed': 'Paddle medium falhou', error: 'leitura falhou',
+};
 
 function claimCamera(on) {
   window.dispatchEvent(new CustomEvent('ki:camera', { detail: { claim: on } }));
@@ -95,8 +104,11 @@ function textScore({ text = '', confidence = 0 }) {
  * `onBestPhoto(dataUrl)`: a foto com mais texto legível até agora, para
  * mostrar ao lado do campo de digitar. `onHard()`: a embalagem parece difícil
  * demais para a câmera (hora de sugerir digitar).
+ * `debug`: mostra o painel de diagnóstico (padrão: opção em Mais ou ?debug).
+ * A promessa também tem `.log()`, o registro de cada tentativa e evento.
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {} } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, debug = debugEnabled() } = {}) {
+  const log = [];
   let stop = () => {};
   const promise = new Promise((resolve) => {
     host.hidden = false;
@@ -115,7 +127,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         <p class="exp-struggle-hint" aria-live="polite"></p>
         <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Usar a câmera do celular</span></button>
         <input type="file" accept="image/*" capture="environment" hidden data-photo-input>
-      </div>`;
+      </div>${debug ? `
+      <details class="exp-debug" open>
+        <summary>Diagnóstico da leitura</summary>
+        <img class="exp-debug-shot" alt="Último recorte enviado ao leitor" hidden>
+        <ol class="exp-debug-log"></ol>
+        <button type="button" class="btn exp-alt" data-debug-copy>${icon('download')}<span>Copiar diagnóstico</span></button>
+      </details>` : ''}`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
     const shutterEl = $('.exp-shutter', host);
@@ -179,6 +197,56 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
 
     function setStatus(text) { status.textContent = text; shownIssue = null; }
 
+    // ---------- Diagnóstico ----------
+    // Cada tentativa (motor, filtro, texto lido, datas e por que a votação
+    // recusou) e cada evento. Sempre registrado; o painel só aparece com o
+    // diagnóstico ligado.
+    const t0 = performance.now();
+    const debugList = debug ? $('.exp-debug-log', host) : null;
+    const debugShot = debug ? $('.exp-debug-shot', host) : null;
+    let lastShotAt = 0;
+    function note(entry, shotCanvas = null) {
+      const e = { t: Math.round(performance.now() - t0), ...entry };
+      log.push(e);
+      if (log.length > 400) log.shift();
+      if (!debugList) return;
+      const li = document.createElement('li');
+      const when = `${(e.t / 1000).toFixed(1)}s`;
+      if (e.kind === 'read') {
+        const dates = e.dates.length ? e.dates.map((d) => `${formatDate(d.iso)}${d.labeled ? ' (VAL)' : ''}`).join(', ') : '—';
+        const why = `${REJECT_TEXT[e.result] || e.result}${e.detail != null ? ` (${e.detail})` : ''}`;
+        li.textContent = `${when} ${e.engine === 'paddle' ? 'Paddle' : 'Tesseract'} ${e.filter} [${e.source}] “${(e.text || '').replace(/\s+/g, ' ').slice(0, 70)}” → ${dates} · ${why}`;
+        if (e.result === 'confirmed') li.className = 'is-ok';
+      } else {
+        li.textContent = `${when} • ${DEBUG_EVENT[e.what] || e.what}${e.iso ? ` ${formatDate(e.iso)}` : ''}${e.detail ? ` (${e.detail})` : ''}`;
+        li.className = 'is-event';
+      }
+      debugList.prepend(li);
+      while (debugList.children.length > 14) debugList.lastChild.remove();
+      const now = performance.now();
+      if (shotCanvas && now - lastShotAt > 700) {
+        lastShotAt = now;
+        try { debugShot.src = shotCanvas.toDataURL('image/jpeg', .7); debugShot.hidden = false; } catch { /* segue sem imagem */ }
+      }
+    }
+    function noteRead({ engine, variant, source, result, candidates }, shotCanvas) {
+      const why = consensus.why() || { code: '?', detail: null };
+      note({
+        kind: 'read', engine, filter: variantName(variant), source, text: result.text, confidence: Math.round(result.confidence),
+        dates: candidates.map((c) => ({ iso: c.iso, labeled: !!c.labeled, ambiguous: !!c.ambiguous })), result: why.code, detail: why.detail,
+      }, shotCanvas);
+    }
+    if (debug) {
+      $('[data-debug-copy]', host).addEventListener('click', async () => {
+        const payload = JSON.stringify({
+          app: 'KeepInventory404', when: new Date().toISOString(), ua: navigator.userAgent,
+          screen: [innerWidth, innerHeight], video: [video.videoWidth, video.videoHeight], log,
+        }, null, 1);
+        try { await navigator.clipboard.writeText(payload); toast('Diagnóstico copiado. Cole numa mensagem.'); }
+        catch { download(`diagnostico-validade-${Date.now()}.json`, payload, 'application/json'); toast('Diagnóstico baixado.'); }
+      });
+    }
+
     const visibilityChanged = () => {
       // Voltando da câmera do celular: não recomeça do zero, só religa a
       // câmera daqui (o iOS pode ter encerrado a trilha).
@@ -209,6 +277,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     function becomeHard() {
       if (hard) return;
       hard = true;
+      note({ kind: 'event', what: 'hard' });
       struggleHint.textContent = HARD_TEXT;
       struggle.classList.add('is-hard');
       try { onHard(); } catch { /* a câmera segue */ }
@@ -218,6 +287,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     function addPick(iso) {
       if (shown.has(iso) || shown.size >= MAX_PICKS) return;
       shown.add(iso);
+      note({ kind: 'event', what: 'pick', iso });
       const hint = $('.exp-picks-hint', picks);
       if (hint) hint.remove();
       const btn = document.createElement('button');
@@ -237,6 +307,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       // Logo depois de uma data nova, as vagas ainda estão se ajeitando: ignora.
       if (!btn || performance.now() - Number(picks.dataset.changed || 0) < PICK_GUARD_MS) return;
       vibrate(20);
+      note({ kind: 'event', what: 'tap', iso: btn.dataset.iso });
       done(btn.dataset.iso);
     });
 
@@ -277,6 +348,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       loadingPaddleLive = paddleLive.ready().then(() => {
         if (!alive) return;
         paddleLiveState = 'ready';
+        note({ kind: 'event', what: 'small-ready' });
         setStatus('Mantenha a validade na mira');
         // Com o small pronto, a embalagem já se mostrou difícil: prepara o
         // medium em segundo plano, para as fotos não precisarem esperar.
@@ -284,6 +356,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }).catch(() => {
         if (alive) {
           paddleLiveState = 'failed';
+          note({ kind: 'event', what: 'small-failed' });
           setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data');
         }
         paddleLive.dispose();
@@ -296,9 +369,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (paddleBurstState !== 'idle' || !alive) return;
       paddleBurstState = 'loading';
       loadingPaddleBurst = paddleBurst.ready().then(() => {
-        if (alive) paddleBurstState = 'ready';
+        if (alive) { paddleBurstState = 'ready'; note({ kind: 'event', what: 'medium-ready' }); }
       }).catch(() => {
-        if (alive) paddleBurstState = 'failed';
+        if (alive) { paddleBurstState = 'failed'; note({ kind: 'event', what: 'medium-failed' }); }
         paddleBurst.dispose();
       });
     }
@@ -328,7 +401,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       } catch { return; }
       if (issue === lastIssue) issueStreak++; else { lastIssue = issue; issueStreak = 1; }
       if (issueStreak < 2) return;
-      if (issue && shownIssue !== issue) { status.textContent = ISSUE_TEXT[issue]; shownIssue = issue; }
+      if (issue && shownIssue !== issue) { status.textContent = ISSUE_TEXT[issue]; shownIssue = issue; note({ kind: 'event', what: 'issue', detail: issue }); }
       else if (!issue && shownIssue) setStatus('Mantenha a validade na mira');
     }
 
@@ -371,7 +444,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // estiver pronto (medium; se ainda não, o small). Todos os filtros votam,
     // mas a foto conta como uma só na regra de "duas imagens diferentes".
     async function readStill({ still, box, seq, tessVariants, paddleVariants, waitForMedium = false, yields = false }) {
-      const source = `photo-${seq}`;
+      const source = photoSource(seq);
       let i = 0; let score = 0; let found = 0;
       const stopped = () => !alive || (yields && nativePending);
       async function tryVariants(engine, variants, read, exclusive = false) {
@@ -391,8 +464,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
             found += candidates.length;
             recordCandidates(candidates, photoEvidence);
             const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `${source}-${i}`, source, at: performance.now() });
+            noteRead({ engine, variant, source, result, candidates }, photoCanvas);
             i++;
-            if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
+            if (accepted) { note({ kind: 'event', what: 'confirmed', iso: accepted }); beep('ok'); vibrate(40); done(accepted); return; }
           }
         } finally { if (exclusive) busy = false; }
       }
@@ -417,6 +491,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         const shot = await captureStill(aimBox(video, aim));
         if (!alive || !shot) return;
         shutter();
+        note({ kind: 'event', what: 'shutter', detail: photoSource(seq) });
         setStatus('Foto tirada. Lendo');
         prepareFrame(shot.still, { mode: 'raw', width: 900, maxH: 700, box: shot.box }, photoEvidence);
         const { score } = await readStill({ ...shot, seq, tessVariants: BURST_TESSERACT_VARIANTS, paddleVariants: BURST_PADDLE_VARIANTS, yields: true });
@@ -439,6 +514,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (!alive) return;
       bursting = true; nativeReading = true;
       const seq = burstSeq++;
+      note({ kind: 'event', what: 'native', detail: photoSource(seq) });
       setStatus('Lendo a sua foto');
       try {
         let bitmap;
@@ -516,6 +592,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           if (engine === 'tesseract') tessErrors = 0;
         } catch {
           if (!alive) return;
+          note({ kind: 'event', what: 'error', detail: engine });
           if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.dispose(); }
           else if (++tessErrors >= 3) tessFailed = true;
           setStatus('Tente outro ângulo ou digite a data');
@@ -527,7 +604,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         const candidates = findExpiryCandidates(result.text);
         recordCandidates(candidates, original);
         const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
+        noteRead({ engine, variant, source: `video-${frame.toFixed(2)}`, result, candidates }, canvas);
         if (accepted) {
+          note({ kind: 'event', what: 'confirmed', iso: accepted });
           beep('ok'); vibrate(40); done(accepted); return;
         }
         if (candidates.some(c => c.ambiguous)) setStatus('Há mais de uma data. Toque na validade correta');
@@ -569,5 +648,6 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     })();
   });
   promise.stop = () => stop();
+  promise.log = () => log.slice();
   return promise;
 }

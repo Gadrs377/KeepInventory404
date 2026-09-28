@@ -3,6 +3,7 @@
 import { exportData, importData, listProducts, recentMovements } from '../store.js';
 import { $, esc, icon, toast, when, confirmSheet, download, tabBar } from '../ui.js';
 import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
+import { debugEnabled, setDebugEnabled } from '../expiryDebug.js';
 
 export default async function mountDados(root) {
   const [products, movements] = await Promise.all([listProducts(), recentMovements(60)]);
@@ -42,6 +43,12 @@ export default async function mountDados(root) {
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
         </ul>
 
+        <h2 class="list-title">Ajuda para melhorar</h2>
+        <ul class="group">
+          <li><label class="group-row"><span class="group-icon">${icon('fileText')}</span><span class="group-label">Diagnóstico da leitura de validade</span><input type="checkbox" class="switch" data-debug ${debugEnabled() ? 'checked' : ''}></label></li>
+        </ul>
+        <p class="group-note">Mostra, embaixo da câmera, o que o leitor viu em cada tentativa e por que não confirmou. Tem um botão para copiar tudo e mandar para quem cuida do app.</p>
+
         <section class="install-note" ${installed ? 'hidden' : ''}>
           <h2 class="list-title">Instalar no celular</h2>
           <p class="group-note">iPhone: no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início. Android: no Chrome, abra o menu e toque em Instalar app.</p>
@@ -64,6 +71,8 @@ export default async function mountDados(root) {
     setSoundEnabled(e.target.checked);
     if (e.target.checked) beep('ok');
   });
+
+  $('[data-debug]', root).addEventListener('change', (e) => setDebugEnabled(e.target.checked));
 
   $('[data-export]', root).addEventListener('click', async () => {
     const data = await exportData();

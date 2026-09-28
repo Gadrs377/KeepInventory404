@@ -45,10 +45,29 @@ export const PHOTO_PADDLE_VARIANTS = ['raw', 'gray', 'red'].map(mode => ({ mode,
 export const HARD_AFTER_BURSTS = 3;
 export const HARD_AFTER_MS = 35000;
 
+// Por que a última leitura não confirmou (para o modo de diagnóstico). O
+// texto é curto, para caber numa linha do painel.
+export const REJECT_TEXT = {
+  repeated: 'mesma imagem já contada',
+  'no-date': 'nenhuma data no texto',
+  several: 'mais de uma data',
+  unlabeled: 'data sem rótulo de validade',
+  confidence: 'confiança baixa',
+  'one-picture': 'só uma imagem até agora',
+  'few-votes': 'poucos votos',
+  tie: 'outra data empatada',
+  skipped: 'data já escolhida antes',
+  confirmed: 'confirmou',
+};
+
 export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
   let samples = [];
+  let last = null;
+  const reject = (code, detail = null) => { last = { code, detail }; return null; };
   return {
-    reset() { samples = []; },
+    reset() { samples = []; last = null; },
+    // Motivo da última decisão: { code, detail } (ver REJECT_TEXT).
+    why() { return last; },
     // `source`: the picture the reading came from. Several filters of one
     // still photo vote separately (`frame` differs) but share one source, so
     // the "two distinct pictures" rule can't be met by a single photo whose
@@ -56,12 +75,15 @@ export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
     add({ candidates, engine, confidence = 0, frame, source = frame, at }) {
       samples = samples.filter(s => at - s.at <= windowMs).slice(-11);
       // A frame can contribute at most once per engine.
-      if (samples.some(s => s.engine === engine && s.frame === frame)) return null;
+      if (samples.some(s => s.engine === engine && s.frame === frame)) return reject('repeated');
+      if (!candidates.length) return reject('no-date');
       const single = candidates.length === 1 && !candidates[0].ambiguous;
-      const candidate = single ? candidates[0] : null;
+      if (!single) return reject('several', candidates.length);
+      const candidate = candidates[0];
       // A missing F on embossed packaging can turn manufacture into an
       // apparently unambiguous date. Unlabeled dates remain manual choices.
-      if (!candidate || !candidate.labeled || confidence < 40) return null;
+      if (!candidate.labeled) return reject('unlabeled');
+      if (confidence < 40) return reject('confidence', Math.round(confidence));
       samples.push({ ...candidate, engine, frame, source, at });
       const counts = new Map();
       for (const s of samples) {
@@ -71,8 +93,12 @@ export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
       const ranked = [...counts.values()].sort((a, b) => b.n - a.n);
       const first = ranked[0]; const second = ranked[1]?.n || 0;
       const minimum = first?.labeled ? 2 : 3;
-      if (first && first.frames.size >= 2 && first.n >= minimum && first.n - second >= 2 && !skip.includes(first.iso)) return first.iso;
-      return null;
+      if (first.frames.size < 2) return reject('one-picture');
+      if (first.n < minimum) return reject('few-votes', `${first.n}/${minimum}`);
+      if (first.n - second < 2) return reject('tie', `${first.n}×${second}`);
+      if (skip.includes(first.iso)) return reject('skipped');
+      last = { code: 'confirmed', detail: null };
+      return first.iso;
     },
   };
 }

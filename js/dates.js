@@ -128,7 +128,14 @@ const MONTH_NAMES = {
   AGO: 8, AUG: 8, SET: 9, SEP: 9, OUT: 10, OCT: 10, NOV: 11, DEZ: 12, DEC: 12,
 };
 // Rótulos que vêm antes da data na embalagem.
-const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|BEST|BB|USE)\b|\bV(?=\s*[:.]?\s*\d)/g;
+const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|ANTES\s*DE|BEST|BB|USE)\b|\bV(?=\s*[:.]?\s*\d)/g;
+// "VAL:" mal lido em tinta impressa, visto nos vídeos reais (RL:, BL:, U9L:,
+// UAL:, URL:, UPL:): duas ou três letras terminando em L, no começo da
+// linha, com dois-pontos e uma data logo depois. Não começa com F/P (FAB e
+// PROD mal lidos) nem L (lote), não é ML, e a data tem de vir depois de
+// qualquer fabricação no texto e não ter passado há mais de 60 dias.
+const LOOSE_EXP_LABEL = /(?<=(?:^|\n)[ \t]*)(?![FPL]|ML\b)[A-Z0-9]{1,2}L(?=[ \t]*:[ \t]*\d)/g;
+const RECENT_DAYS = -60;
 const FAB_LABEL = /\b(FAB(R(ICACAO|ICADO)?)?|PROD(UCAO|UZIDO)?|EMB(ALADO)?|MFG|MFD)\b|\b[FP](?=\s*[:.]?\s*\d)/g;
 const LOT_LABEL = /\b(LOTE?|LT)\b|\bL(?=\s*[:.]?\s*\d)/g;
 
@@ -165,10 +172,16 @@ export function findExpiryCandidates(text, today = todayIso()) {
   t = t.replace(/(?<![A-Z])[0-9OQDILTSBZG|]{1,4}(?:\s*[\/.\-]\s*[0-9OQDILTSBZG|]{1,4}){1,2}/g, (m) => (/\d/.test(m) ? m.replace(/[OQDILTSBZG|]/g, (c) => OCR_DIGIT[c]) : m));
 
   const exp = labelsBefore(EXP_LABEL, t);
+  const loose = labelsBefore(LOOSE_EXP_LABEL, t);
   const fab = labelsBefore(FAB_LABEL, t);
-  const lot = labelsBefore(LOT_LABEL, t);
+  // Cabeçalho junto, "VAL/LOTE: 11/08/27 L123" ou "FAB/LOTE: …": a data vem
+  // primeiro e é do rótulo anterior à barra; o LOTE fala do código depois.
+  const lot = labelsBefore(LOT_LABEL, t).filter((end) => {
+    const start = t.lastIndexOf('/', end);
+    return !(start >= 0 && end - start <= 6 && [...exp, ...fab].some((p) => start - p >= 0 && start - p <= 2));
+  });
   const labelAt = (i) => {
-    const labels = [...exp.map(p => [p, 'expiry']), ...fab.map(p => [p, 'manufacture']), ...lot.map(p => [p, 'lot'])]
+    const labels = [...exp.map(p => [p, 'expiry']), ...loose.map(p => [p, 'loose']), ...fab.map(p => [p, 'manufacture']), ...lot.map(p => [p, 'lot'])]
       .filter(([p]) => p <= i && i - p <= 48).sort((a, b) => b[0] - a[0]);
     if (!labels.length) return null;
     const [p, label] = labels[0];
@@ -179,16 +192,19 @@ export function findExpiryCandidates(text, today = todayIso()) {
   const [ty, tm, td] = today.split('-').map(Number);
   const now = Date.UTC(ty, tm - 1, td);
   const found = [];
+  const fabDates = [];
   const add = (raw, index, iso) => {
     if (!iso) return;
     const [y, m, d] = iso.split('-').map(Number);
     const days = (Date.UTC(y, m - 1, d) - now) / 86400000;
     if (days < -730 || days > 3650) return; // fora do razoável para validade
-    const label = labelAt(index);
-    if (label === 'manufacture' || label === 'lot') return;
-    let score = label === 'expiry' ? 4 : 0;
+    let label = labelAt(index);
+    if (label === 'manufacture') { fabDates.push(iso); return; }
+    if (label === 'lot') return;
+    const loose = label === 'loose' && days > RECENT_DAYS;
+    let score = label === 'expiry' || loose ? 4 : 0;
     if (days >= -30) score += 1;
-    found.push({ iso, raw: raw.trim(), index, score, labeled: label === 'expiry' });
+    found.push({ iso, raw: raw.trim(), index, score, days, labeled: label === 'expiry' || loose, labelBy: label === 'expiry' ? 'label' : loose ? 'loose-label' : null });
   };
   const SEP = '\\s*[\\/.\\-]\\s*';
   // dia/mês/ano (ano com 2 ou 4 números)
@@ -232,13 +248,27 @@ export function findExpiryCandidates(text, today = todayIso()) {
     if (labelAt(m.index) === 'expiry') add(m[0], m.index, parseExpiry(`${m[1]}/${m[2]}`));
   }
   if (!found.length) return [];
+  // Rótulo mal lido antes de uma data que não passa da fabricação: não confia.
+  for (const f of found) if (f.labelBy === 'loose-label' && fabDates.some((d) => d >= f.iso)) { f.labeled = false; f.labelBy = null; f.score -= 4; }
   found.sort((a, b) => b.score - a.score || b.iso.localeCompare(a.iso));
   const byIso = new Map();
   for (const f of found) if (!byIso.has(f.iso)) byIso.set(f.iso, f);
   const unique = [...byIso.values()];
+  // Sem rótulo junto da data, mas o bloco diz qual é: uma única data futura
+  // que sobrou (a) numa etiqueta com fabricação ("FAB:05/08/24" numa linha,
+  // "17/09/26" na outra; a validade vem depois da fabricação) ou (b) com um
+  // rótulo de validade em outra parte do recorte ("CONSUMIR ANTES DE" longe
+  // da data). Precisa vir depois de toda fabricação lida e não ter passado há
+  // mais de 60 dias.
+  if (unique.length === 1 && !unique[0].labeled && unique[0].days > RECENT_DAYS) {
+    const only = unique[0];
+    const afterFab = (fabDates.length || /\bFAB\s*[:.]/.test(t)) && fabDates.every((f) => f < only.iso);
+    const labelElsewhere = exp.length > 0;
+    if (afterFab || labelElsewhere) { only.labeled = true; only.labelBy = afterFab ? 'fab-block' : 'label-elsewhere'; }
+  }
   const preferred = unique.filter(f => f.labeled);
   const choices = preferred.length ? preferred : unique;
-  return choices.map(f => ({ ...f, ambiguous: choices.length > 1 }));
+  return choices.map(({ days, ...f }) => ({ ...f, ambiguous: choices.length > 1 }));
 }
 
 export function findExpiry(text, today = todayIso()) {

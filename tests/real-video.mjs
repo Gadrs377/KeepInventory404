@@ -1,13 +1,46 @@
 // Mede os vídeos reais de tests/real contra as duas camadas do Paddle e o fluxo
 // completo da câmera. Não é um teste de passa/falha de precisão: a única regra
 // é nunca confirmar sozinho uma data diferente da referência.
+//
+// A medida principal do fluxo é "a data certa apareceu para a pessoa" (virou
+// botão ou foi confirmada), em quanto tempo, e quantas datas erradas viraram
+// botão antes dela. Do registro de diagnóstico da câmera sai também por que a
+// votação recusou cada leitura que tinha a data certa.
+//
 // Servidor na porta 8765 (ver docs/LEITURA_VALIDADE.md). Resultado em
-// tests/real-video-results.json.
+// tests/real-video-results.json. `--flow` pula a medida das camadas do Paddle
+// (a parte mais lenta); `--only=nome` roda um vídeo só.
 import { chromium } from '../experiments/ocr/node_modules/playwright/index.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
-const items = JSON.parse(await readFile('tests/real/manifest.json')).filter((m) => m.kind === 'video');
+const args = process.argv.slice(2);
+const flowOnly = args.includes('--flow');
+const only = args.find((a) => a.startsWith('--only='))?.slice(7);
+const items = JSON.parse(await readFile('tests/real/manifest.json')).filter((m) => m.kind === 'video' && (!only || m.file.includes(only)));
+// O que a pessoa viu, tirado do registro da câmera (ver expiryCam.js).
+function summarize(log, reference) {
+  const shown = log.filter((e) => e.kind === 'event' && (e.what === 'pick' || e.what === 'confirmed'));
+  const correct = shown.find((e) => e.iso === reference);
+  const wrong = shown.filter((e) => e.iso !== reference);
+  const reads = log.filter((e) => e.kind === 'read');
+  const ofReference = reads.filter((e) => e.dates.some((d) => d.iso === reference));
+  const refusals = {};
+  for (const e of ofReference) refusals[e.result] = (refusals[e.result] || 0) + 1;
+  const byEngine = {};
+  for (const e of reads) byEngine[e.engine] = (byEngine[e.engine] || 0) + 1;
+  return {
+    correctShownAt: correct ? correct.t : null,
+    wrongShownBefore: wrong.filter((e) => !correct || e.t < correct.t).map((e) => e.iso),
+    wrongShown: [...new Set(wrong.map((e) => e.iso))],
+    reads: reads.length,
+    readsByEngine: Object.entries(byEngine).map(([k, n]) => `${k} ${n}`).join(', '),
+    readsOfReference: ofReference.length,
+    refusals,
+    referenceConfidence: ofReference.map((e) => e.confidence),
+  };
+}
+
 const browser = await chromium.launch({ headless: true });
 const results = [];
 try {
@@ -36,7 +69,7 @@ try {
     }, item);
 
     const tiers = {};
-    for (const tier of ['small', 'medium']) {
+    for (const tier of flowOnly ? [] : ['small', 'medium']) {
       tiers[tier] = await page.evaluate(async ({ tier, frames, reference }) => {
         const { createPaddleReader } = await import('/js/paddleOcr.js');
         const { findExpiryCandidates } = await import('/js/dates.js');
@@ -88,14 +121,17 @@ try {
       const task = readExpiryWithCamera(document.querySelector('#host'), { onHard: () => { hard = true; }, onBestPhoto: () => { photo = true; } });
       const timeout = setTimeout(() => task.stop(), 90000);
       const accepted = await task; clearTimeout(timeout); clearInterval(timer);
-      return { accepted, ms: Math.round(performance.now() - start), suggestedTyping: hard, hadPhotoForTyping: photo };
+      return { accepted, ms: Math.round(performance.now() - start), suggestedTyping: hard, hadPhotoForTyping: photo, log: task.log() };
     }, item);
+    Object.assign(flow, summarize(flow.log, item.reference.val));
 
     assert.ok(flow.accepted === null || flow.accepted === item.reference.val, `${item.file}: confirmou data errada ${flow.accepted}`);
     results.push({ file: item.file, reference: item.reference, tiers, flow });
     console.log(item.file);
     for (const [tier, r] of Object.entries(tiers)) console.log(`  ${tier}: ${r.framesWithText}/${r.frames} quadros com texto, ${r.framesWithDateFragment} com fragmento de data, ${r.readsOfReference} leram a validade, ${r.msPerFrame} ms/quadro, datas erradas: ${r.wrongDates.join(', ') || 'nenhuma'}`);
     console.log(`  fluxo completo: ${flow.accepted ? `confirmou ${flow.accepted}` : 'não confirmou'} em ${(flow.ms / 1000).toFixed(0)} s; sugeriu digitar: ${flow.suggestedTyping}; tinha foto para mostrar: ${flow.hadPhotoForTyping}`);
+    console.log(`  data certa para a pessoa: ${flow.correctShownAt == null ? 'nunca' : `${(flow.correctShownAt / 1000).toFixed(1)} s`}; datas erradas antes: ${flow.wrongShownBefore.join(', ') || 'nenhuma'}; erradas no total: ${flow.wrongShown.join(', ') || 'nenhuma'}`);
+    console.log(`  leituras: ${flow.reads} (${flow.readsByEngine}); com a data certa: ${flow.readsOfReference}; por que não confirmaram: ${Object.entries(flow.refusals).map(([k, n]) => `${k} ${n}`).join(', ') || '—'}; confiança nelas: ${flow.referenceConfidence.join(', ') || '—'}`);
     await page.close();
   }
 } finally {
