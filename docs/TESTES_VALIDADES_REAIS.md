@@ -159,7 +159,7 @@ lata, é o caminho realista hoje.
 ## Reproduzir e auditar
 
 Material real agora fica no repositório, em `tests/real/` (recortado e sem
-metadados — o repositório é público via GitHub Pages; ver
+metadados — o repositório é público no GitHub; ver
 `tests/real/README.md`). O vídeo da lata já está lá. As seis fotos acima se
 perderam junto com o computador onde o teste rodou (ficavam só em
 `tests/private/`, fora do Git) e precisam ser enviadas de novo; os scripts

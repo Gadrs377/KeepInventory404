@@ -6,8 +6,9 @@ repositório para que qualquer mudança no leitor possa ser medida contra eles �
 antes ficavam só em `tests/private/`, que some junto com o computador onde o
 teste rodou.
 
-**Tudo aqui é público**: o GitHub Pages publica o repositório inteiro. Por isso
-cada arquivo entra recortado e sem metadados. O vídeo original da lata trazia a
+**Tudo aqui é público**: o repositório é aberto no GitHub e qualquer pessoa
+baixa os arquivos (o site do GitHub Pages só publica as pastas do app, mas isso
+não protege o repositório). Por isso cada arquivo entra recortado e sem metadados. O vídeo original da lata trazia a
 coordenada GPS de onde foi gravado (precisão de ~15 m), o modelo do celular e a
 hora — nada disso pode entrar. `tests/private/` continua existindo, fora do Git,
 para o que não deve ficar público.
