@@ -117,6 +117,30 @@ não uma falha do código: nenhum motor devolveu texto reconhecível nem no
 recorte bem centralizado. Ainda não há evidência de que outro filtro
 recupere esta lata especificamente; permanece como limite conhecido.
 
+### Retestado com PP-OCRv6 medium — 28/09/2026
+
+Depois de trocar o Paddle da leitura contínua para PP-OCRv6 small e
+adicionar uma camada "medium" (maior e mais lenta) só para a foto nítida
+(ver `LEITURA_VALIDADE.md`), retestamos esta mesma lata de duas formas:
+
+- **Comparação controlada** (mesmos 29 quadros exatos, reaproveitados para
+  os dois modelos, para não misturar "mais preciso" com "mais tentativas"):
+  o PP-OCRv6 small continuou só achando o LOTE. O PP-OCRv6 medium, nos
+  mesmos quadros, achou fragmentos da própria validade (`AB-29/DEZ`,
+  `FAB:29/1` + `UAL`) que batem com a data real — nunca visto antes nesta
+  lata. Ganho real de precisão, mas 7x mais lento por leitura (~4 s contra
+  ~0,6 s).
+- **Fluxo completo do app** (câmera real, Tesseract primeiro e depois o
+  Paddle medium, como funciona de verdade), até 90 s: ainda **não
+  confirmou** a validade. O medium enxerga mais nos quadros individuais,
+  mas isso não foi suficiente para fechar a votação com confiança/quadros
+  distintos suficientes dentro do tempo testado.
+
+Conclusão: mesmo pagando o custo de um modelo bem maior e mais lento, esta
+lata específica (gravação a laser em metal, sem nenhum contraste de tinta)
+continua sem solução completa. Continua sendo o limite conhecido mais duro
+já documentado — mais difícil que a embalagem roxa em relevo.
+
 ## Reproduzir e auditar
 
 As fotos originais não entram no repositório/pacote. Coloque-as em

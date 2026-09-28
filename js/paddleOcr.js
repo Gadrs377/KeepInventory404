@@ -1,7 +1,10 @@
 // Lazy per-camera worker. Closing the reader terminates it and releases WASM.
 // Its JS, models and runtime are self-hosted and cached by sw.js after use.
+// `tier`: 'small' (leitura contínua, rápida) ou 'medium' (foto nítida, mais
+// lenta por leitura mas enxerga mais em material difícil) — mesmo worker,
+// modelos PP-OCRv6 diferentes. Ver docs/LEITURA_VALIDADE.md.
 import { textRows } from './ocrLayout.js';
-export function createPaddleReader() {
+export function createPaddleReader(tier = 'small') {
   let worker;
   let init;
   let stopped = false;
@@ -27,7 +30,7 @@ export function createPaddleReader() {
     if (stopped) return Promise.reject(new Error('Leitura encerrada'));
     if (!init) {
       try {
-        worker = new Worker(new URL('../vendor/paddle/v2/worker.js', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('../vendor/paddle/v3/worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = ({ data }) => {
           const item = pending.get(data.id); if (!item) return;
           clearTimeout(item.timer); pending.delete(data.id);
@@ -35,7 +38,7 @@ export function createPaddleReader() {
         };
         worker.onerror = () => dispose(new Error('Leitor complementar indisponível'));
         worker.onmessageerror = () => dispose(new Error('Resposta do leitor inválida'));
-        init = request('init', {}, [], 60000);
+        init = request('init', { tier }, [], 120000);
       } catch (error) { init = Promise.reject(error); }
     }
     return init;

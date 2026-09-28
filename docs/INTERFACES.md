@@ -1071,10 +1071,31 @@ adicionamos o EasyOCR como terceiro motor.
 ## Versão 3.37: modelo do Paddle atualizado para PP-OCRv6 small
 
 - Trocado `vendor/paddle/v1` (PP-OCRv5 mobile) por `vendor/paddle/v2`
-  (PP-OCRv6 small, lançado 11/06/2026), mesmo SDK. 29,8 MB no fallback
+  (PP-OCRv6 small, lançado 11/06/2026), mesmo SDK. 31,2 MB no fallback
   (antes 21,5 MB). Testado antes de trocar: leu 6/6 casos sintéticos
   perfeitamente (o antigo errou 2/6), e recuperou `LOTE:1291225` inteiro a
   99% de confiança num vídeo real onde o antigo só achava ruído — ver
   `docs/LEITURA_VALIDADE.md`.
 - `sw.js` v52: cache do Paddle renomeado para `paddle-v2`; a ativação agora
   também limpa caches `paddle-*` órfãos (mesmo padrão já usado para `app-*`).
+
+## Versão 3.38: Paddle em duas camadas (small na leitura contínua, medium na foto nítida)
+
+- `vendor/paddle/v3` substitui v2: mesmo worker, agora escolhe entre
+  PP-OCRv6 small (31,2 MB) e PP-OCRv6 medium (138,8 MB) por uma mensagem
+  `tier` — não é mais um modelo fixo por build. A leitura contínua sempre
+  usa small (rápida, ~0,6 s por leitura). A foto nítida tenta o Tesseract
+  primeiro e, só se não confirmar, baixa/usa o medium (~4 s por leitura,
+  quase 7x mais lento, mas enxerga mais em material difícil — ver
+  `docs/LEITURA_VALIDADE.md`).
+- Motivo: o app é usado majoritariamente em casa, por wi-fi — o tamanho do
+  download importa menos que confirmar rápido e certo. Mas o medium é lento
+  o bastante para atrapalhar a leitura contínua (que depende de tentar
+  muitos quadros por segundo), então só entra onde a pessoa já está
+  esperando uma resposta mais cuidadosa.
+- `js/views/expiryCam.js`: duas instâncias de `createPaddleReader` (`paddleLive`,
+  `paddleBurst`), cada uma com seu próprio estado/inicialização. A foto
+  nítida foi reordenada para tentar todos os filtros do Tesseract antes de
+  sequer cogitar baixar o Paddle medium (antes, esperava o Paddle ficar
+  pronto mesmo que o Tesseract fosse resolver sozinho).
+- `sw.js` v53: cache do Paddle vira `paddle-v3`.

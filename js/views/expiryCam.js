@@ -3,8 +3,9 @@
 // meio do texto (ignora lote e fabricação).
 //
 // Tesseract tenta filtros/segmentações diferentes. Quando não confirma, ativa
-// Paddle local e alterna os dois motores. Ambos alimentam sugestões e votos
-// recentes; a pessoa continua conferindo a data antes de salvar.
+// Paddle local (camada "small", rápida) e alterna os dois motores. Ambos
+// alimentam sugestões e votos recentes; a pessoa continua conferindo a data
+// antes de salvar.
 //
 // Enquanto não tem certeza, as datas lidas viram botões embaixo da câmera
 // (até 3), numa fileira que ocupa a largura toda. Nada some e nada troca de
@@ -16,7 +17,10 @@
 // no botão) — uma tentativa independente a cada troca de dica, cada uma
 // entrando na mesma votação como um quadro à parte. Nunca junta pixels de
 // fotos diferentes; só dá mais chances de pegar o instante em que a luz ou
-// o ângulo ajudam.
+// o ângulo ajudam. A foto nítida tenta o Tesseract primeiro e, se não
+// confirmar, usa uma camada do Paddle maior ("medium") — mais lenta por
+// leitura, mas enxerga mais em material difícil; baixada só quando entra
+// em uso, não na leitura contínua.
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { createPaddleReader } from '../paddleOcr.js';
@@ -94,9 +98,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     let torchOn = false;
     let busy = false; // lendo a foto nítida: a leitura ao vivo pausa
     const consensus = createExpiryConsensus({ skip });
-    const paddle = createPaddleReader();
-    let paddleState = 'idle';
-    let loadingPaddle = null;
+    // Duas camadas do mesmo PP-OCRv6: "small" na leitura contínua (rápida,
+    // tenta muitos quadros) e "medium" só na foto nítida (mais lenta por
+    // leitura, mas enxerga mais em material difícil). Ver
+    // docs/LEITURA_VALIDADE.md e vendor/paddle/README.md.
+    const paddleLive = createPaddleReader('small');
+    let paddleLiveState = 'idle';
+    let loadingPaddleLive = null;
+    const paddleBurst = createPaddleReader('medium');
+    let paddleBurstState = 'idle';
+    let loadingPaddleBurst = null;
     let tessFailed = false;
     let tessErrors = 0;
     let frameTime = -1;
@@ -164,7 +175,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       alive = false;
       gone.disconnect();
       clearInterval(struggleTimer);
-      paddle.dispose();
+      paddleLive.dispose();
+      paddleBurst.dispose();
       releaseOcr();
       document.removeEventListener('visibilitychange', visibilityChanged);
       if (stream) stream.getTracks().forEach((t) => t.stop());
@@ -187,18 +199,34 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       torchBtn.setAttribute('aria-pressed', String(torchOn));
     });
 
-    function startPaddle() {
-      if (paddleState !== 'idle' || !alive) return;
-      paddleState = 'loading';
+    function startPaddleLive() {
+      if (paddleLiveState !== 'idle' || !alive) return;
+      paddleLiveState = 'loading';
       status.textContent = 'Preparando uma leitura mais detalhada';
-      loadingPaddle = paddle.ready().then(() => {
-        if (alive) { paddleState = 'ready'; status.textContent = 'Mantenha a validade na mira'; }
+      loadingPaddleLive = paddleLive.ready().then(() => {
+        if (alive) { paddleLiveState = 'ready'; status.textContent = 'Mantenha a validade na mira'; }
       }).catch(() => {
         if (alive) {
-          paddleState = 'failed';
+          paddleLiveState = 'failed';
           status.textContent = tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data';
         }
-        paddle.dispose();
+        paddleLive.dispose();
+      });
+    }
+
+    // Baixa/inicia o Paddle "medium" só quando a foto nítida realmente
+    // precisa dele (depois que o Tesseract já tentou e não confirmou) —
+    // é um modelo bem maior (~139 MB), sem sentido pedir isso na leitura
+    // contínua, onde o que importa é tentar muitos quadros rápido.
+    function startPaddleBurst() {
+      if (paddleBurstState !== 'idle' || !alive) return;
+      paddleBurstState = 'loading';
+      status.textContent = 'Preparando uma leitura mais precisa. Pode levar um tempinho na primeira vez';
+      loadingPaddleBurst = paddleBurst.ready().then(() => {
+        if (alive) paddleBurstState = 'ready';
+      }).catch(() => {
+        if (alive) paddleBurstState = 'failed';
+        paddleBurst.dispose();
       });
     }
 
@@ -235,35 +263,45 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       photoBtn.disabled = true;
       status.textContent = 'Lendo a foto. Leva alguns segundos';
       const seq = burstSeq++;
+      let i = 0;
       try {
         const box = aimBox(video, aim);
         const still = await captureStill();
         if (!alive) return;
         prepareFrame(still, { mode: 'raw', width: 900, maxH: 700, box }, original);
-        const jobs = [
-          ...(tessFailed ? [] : BURST_TESSERACT_VARIANTS.map(variant => ({ engine: 'tesseract', variant }))),
-          ...BURST_PADDLE_VARIANTS.map(variant => ({ engine: 'paddle', variant })),
-        ];
-        if (jobs.some(j => j.engine === 'paddle') && paddleState !== 'ready') {
-          if (paddleState === 'idle') startPaddle();
-          try { await loadingPaddle; } catch { /* Paddle indisponível: pula os testes dele */ }
+
+        // Tenta cada filtro; ao confirmar, chama done() e o alive vira false
+        // (os chamadores abaixo só precisam checar !alive para parar).
+        async function tryVariants(engine, variants, read) {
+          for (const variant of variants) {
+            if (!alive) return;
+            let result;
+            try {
+              prepareFrame(still, { ...variant, box }, canvas);
+              result = await read(canvas, variant);
+            } catch { i++; continue; }
+            if (!alive) return;
+            const candidates = findExpiryCandidates(result.text);
+            recordCandidates(candidates, original);
+            const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${seq}-${i}`, at: performance.now() });
+            i++;
+            if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
+          }
         }
-        for (let i = 0; i < jobs.length; i++) {
-          if (!alive) return;
-          const { engine, variant } = jobs[i];
-          if (engine === 'paddle' && paddleState !== 'ready') continue;
-          let result;
-          try {
-            prepareFrame(still, { ...variant, box }, canvas);
-            result = engine === 'paddle' ? await paddle.read(canvas) : await readResult(canvas, { psm: variant.psm });
-          } catch { continue; }
-          if (!alive) return;
-          const candidates = findExpiryCandidates(result.text);
-          recordCandidates(candidates, original);
-          const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${seq}-${i}`, at: performance.now() });
-          if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
+
+        // Tesseract primeiro: rápido e sem baixar nada. Só recorre ao Paddle
+        // "medium" (bem maior) se o Tesseract não confirmar.
+        if (!tessFailed) await tryVariants('tesseract', BURST_TESSERACT_VARIANTS, (c, variant) => readResult(c, { psm: variant.psm }));
+        if (!alive) return;
+
+        if (paddleBurstState !== 'ready') {
+          if (paddleBurstState === 'idle') startPaddleBurst();
+          try { await loadingPaddleBurst; } catch { /* Paddle indisponível: pula os testes dele */ }
         }
-        if (alive) status.textContent = shown.size ? 'Toque na validade certa ou continue apontando' : 'Não deu para ler. Confira a mira ou digite a data';
+        if (paddleBurstState === 'ready') await tryVariants('paddle', BURST_PADDLE_VARIANTS, (c) => paddleBurst.read(c));
+        if (!alive) return;
+
+        status.textContent = shown.size ? 'Toque na validade certa ou continue apontando' : 'Não deu para ler. Confira a mira ou digite a data';
       } finally {
         if (alive) { busy = false; photoBtn.disabled = false; }
       }
@@ -275,12 +313,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       while (alive) {
         if (busy) { await pause(150); continue; } // uma foto nítida está sendo lida
         if (document.hidden || video.readyState < 2 || !video.videoWidth || video.currentTime === frameTime) { await pause(150); continue; }
-        if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddle();
+        if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddleLive();
         // Do not run inference while Paddle is compiling its models: that
         // peak is already expensive on a phone. Cancellation terminates it.
-        if (paddleState === 'loading') { await loadingPaddle; continue; }
-        if (tessFailed && paddleState !== 'ready') return;
-        const engine = paddleState === 'ready' && (tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
+        if (paddleLiveState === 'loading') { await loadingPaddleLive; continue; }
+        if (tessFailed && paddleLiveState !== 'ready') return;
+        const engine = paddleLiveState === 'ready' && (tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
         lastEngine = engine;
         const frame = video.currentTime; frameTime = frame;
         const epoch = visibilityEpoch;
@@ -289,11 +327,11 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
         try {
           prepareFrame(video, { mode:'raw', width:640, box:aimBox(video, aim) }, original);
           prepareFrame(video, { ...variant, box: aimBox(video, aim) }, canvas);
-          result = engine === 'paddle' ? await paddle.read(canvas) : await readResult(canvas, { psm: variant.psm });
+          result = engine === 'paddle' ? await paddleLive.read(canvas) : await readResult(canvas, { psm: variant.psm });
           if (engine === 'tesseract') tessErrors = 0;
         } catch {
           if (!alive) return;
-          if (engine === 'paddle') { paddleState = 'failed'; paddle.dispose(); }
+          if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.dispose(); }
           else if (++tessErrors >= 3) tessFailed = true;
           status.textContent = 'Tente outro ângulo ou digite a data';
           await pause(250);
@@ -339,7 +377,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
         await ocrWorker((p) => { if (alive) status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`; });
       } catch {
         tessFailed = true;
-        if (alive) startPaddle();
+        if (alive) startPaddleLive();
       }
       if (!alive) return;
       status.textContent = 'Aponte para a data de validade';

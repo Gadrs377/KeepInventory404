@@ -5,8 +5,12 @@ import urllib.request
 
 BASE = 'https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/'
 MODELS = {
+    # small: leitura contínua ao vivo. medium: só a foto nítida. Ver
+    # scripts/paddle/worker.js (TIERS) e docs/LEITURA_VALIDADE.md.
     'PP-OCRv6_small_det': 'd218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4',
     'PP-OCRv6_small_rec': 'd267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1',
+    'PP-OCRv6_medium_det': 'c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf',
+    'PP-OCRv6_medium_rec': 'd8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec',
 }
 folder = Path(__file__).parent / 'public/models'
 folder.mkdir(parents=True, exist_ok=True)
