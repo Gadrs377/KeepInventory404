@@ -31,3 +31,18 @@ export function frameIssue({ data, width, height }) {
   if (n && m2 / n < BLUR_VARIANCE) return 'blur';
   return null;
 }
+
+/** Nitidez (variância do Laplaciano) de um recorte pequeno: maior é mais nítido. */
+export function sharpness({ data, width, height }) {
+  const gray = new Float32Array(width * height);
+  for (let i = 0; i < gray.length; i++) gray[i] = data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
+  let n = 0; let mean = 0; let m2 = 0;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * width + x;
+      const lap = 4 * gray[i] - gray[i - 1] - gray[i + 1] - gray[i - width] - gray[i + width];
+      n++; const d = lap - mean; mean += d / n; m2 += d * (lap - mean);
+    }
+  }
+  return n ? m2 / n : 0;
+}

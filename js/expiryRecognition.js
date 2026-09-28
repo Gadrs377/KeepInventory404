@@ -30,14 +30,17 @@ export const TILT_HINTS = [
 // Os cinco filtros distintos (sem as variações de segmentação/rotação, que
 // existem para variar entre quadros de vídeo, menos úteis numa foto só), com
 // mais pixels: uma foto parada aguenta um recorte maior sem ficar borrada.
-export const BURST_TESSERACT_VARIANTS = [0, 1, 2, 3, 4].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
-export const BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.map(v => ({ ...v, width: 1300, maxH: 900 }));
+// Menos filtros por foto (3 + 2): o medium lê o recorte do palpite de cada
+// foto (readGuessAuto), então o que importa é ter mais fotos, em mais
+// ângulos, e não muitos filtros da mesma.
+export const BURST_TESSERACT_VARIANTS = [0, 1, 3].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
+export const BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.slice(0, 2).map(v => ({ ...v, width: 1300, maxH: 900 }));
 // Foto tirada com a câmera do próprio celular: a foto inteira (a pessoa
 // enquadrou), com mais pixels. Texto esparso (psm 11) no Tesseract, porque
-// a data não está numa faixa conhecida; o Paddle acha as linhas sozinho.
+// a data não está numa faixa conhecida. Só quando o Paddle não carrega: com
+// ele, a foto vai para o painel "A validade está aqui?" (expiryFind.js).
 export const PHOTO_BOX = { x: 0, y: 0, w: 1, h: 1 };
 export const PHOTO_TESSERACT_VARIANTS = ['raw', 'gray', 'sauvola'].map(mode => ({ mode, blur: 0, width: 1600, maxH: 1600, psm: 11 }));
-export const PHOTO_PADDLE_VARIANTS = ['raw', 'gray', 'red'].map(mode => ({ mode, blur: 0, width: 1600, maxH: 1600 }));
 // Depois de tantas fotos automáticas sem confirmar (ou tanto tempo, desde que
 // já exista uma foto para mostrar), a câmera admite que a embalagem está
 // difícil e sugere digitar olhando a melhor foto. O tempo importa porque cada

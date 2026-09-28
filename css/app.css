@@ -2192,6 +2192,36 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 @media (prefers-reduced-motion: reduce) { .exp-struggle { animation: none; } }
 /* A câmera admitiu que a embalagem está difícil: o texto fica mais presente */
 .exp-struggle.is-hard .exp-struggle-hint { color: var(--ink); font-weight: 600; }
+/* "A validade está aqui?": a melhor foto com o palpite marcado (o resto
+   escurece), toque para corrigir, e as outras fotos numa fileira */
+.exp-find { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.exp-find[hidden] { display: none; }
+.exp-find-title { margin: 0; font-weight: 700; text-align: center; text-wrap: balance; }
+.exp-find-frame { position: relative; display: inline-block; max-width: 100%; line-height: 0; border-radius: 14px; overflow: hidden; outline: 1px solid var(--img-outline, transparent); outline-offset: -1px; }
+.exp-find-img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; cursor: crosshair; touch-action: manipulation; }
+.exp-find-box {
+  position: absolute; pointer-events: none; border-radius: 8px;
+  border: 2px solid #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55), 0 0 0 9999px rgba(0, 0, 0, 0.38);
+}
+@media (prefers-reduced-motion: no-preference) { .exp-find-box { transition: left 200ms var(--ease), top 200ms var(--ease), width 200ms var(--ease), height 200ms var(--ease); } }
+.exp-find-busy {
+  position: absolute; inset: auto 8px 8px 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 12px; border-radius: 999px; line-height: 1.3; font-size: 0.8235rem; font-weight: 600;
+  background: rgba(0, 0, 0, 0.66); color: #fff;
+}
+.exp-find-busy[hidden] { display: none; }
+.exp-find-note { margin: 0; color: var(--ink-2); font-size: 0.8235rem; text-align: center; text-wrap: pretty; }
+.exp-find-note:empty { display: none; }
+.exp-find-fail { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.exp-find-fail[hidden] { display: none; }
+.exp-find-crop { display: block; max-width: 100%; max-height: 120px; border-radius: 10px; image-rendering: auto; }
+.exp-find-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.exp-find-others { align-self: stretch; display: flex; flex-direction: column; gap: 6px; }
+.exp-find-others[hidden] { display: none; }
+.exp-find-strip { display: flex; gap: 8px; justify-content: center; }
+.exp-find-thumb { width: 64px; height: 64px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--shelf); cursor: pointer; }
+.exp-find-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.exp-find-thumb:active { scale: 0.95; }
 /* Piscar branco quando a foto automática é tirada (o js anima a opacidade) */
 .exp-shutter { position: absolute; inset: 0; z-index: 1; background: #fff; opacity: 0; pointer-events: none; }
 /* "Digitar a data" vira o caminho sugerido quando a câmera desiste */

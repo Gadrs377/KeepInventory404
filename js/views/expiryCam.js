@@ -22,14 +22,17 @@
 // oferece a câmera do próprio celular (foco, HDR e resolução cheia) e, se a
 // embalagem continuar difícil, sugere digitar olhando a melhor foto.
 
-import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
-import { createPaddleReader } from '../paddleOcr.js';
+import { ocrWorker, prepareFrame, readResult, releaseOcr, thickenDark } from '../ocr.js';
+import { createPaddleReader, createSmallReader } from '../paddleOcr.js';
+import { textRows } from '../ocrLayout.js';
+import { guessRegion, fingerprint } from '../dateRegion.js';
+import { createFindPanel } from './expiryFind.js';
 import {
   TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus,
   STRUGGLE_MS, TILT_HINTS, BURST_TESSERACT_VARIANTS, BURST_PADDLE_VARIANTS,
-  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, PHOTO_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
+  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
 } from '../expiryRecognition.js';
-import { frameIssue } from '../frameQuality.js';
+import { frameIssue, sharpness } from '../frameQuality.js';
 import { debugEnabled, BANCADA_URL, copyForBancada } from '../expiryDebug.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
@@ -52,7 +55,7 @@ const ISSUE_TEXT = {
   glare: 'Tem reflexo em cima da data. Incline um pouco para tirar o brilho',
   blur: 'Segure parado, com a data dentro da mira',
 };
-const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Tente a câmera do celular, ou digite a data olhando a melhor foto.';
+const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Mostre onde está a validade numa das fotos abaixo, ou digite a data.';
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const photoSource = (seq) => `photo-${seq}`;
@@ -62,6 +65,8 @@ const DEBUG_EVENT = {
   native: 'foto do celular', hard: 'avisou que está difícil', ask: 'perguntou "é esta data?"', issue: 'aviso de imagem',
   'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
   'medium-failed': 'Paddle medium falhou', error: 'leitura falhou', declined: 'respondeu que não é',
+  'find-photo': 'foto no painel', 'find-yes': 'confirmou o palpite', 'find-tap': 'tocou na foto', 'find-read': 'leu o pedaço',
+  'find-fail': 'não leu o pedaço', 'find-none': 'não está em nenhuma', 'find-switch': 'trocou de foto',
 };
 
 function claimCamera(on) {
@@ -110,10 +115,11 @@ function textScore({ text = '', confidence = 0 }) {
  * mostrar ao lado do campo de digitar. `onHard()`: a embalagem parece difícil
  * demais para a câmera (hora de sugerir digitar). `onLikely({ iso, n, monthOnly })`:
  * a data vista em mais imagens (ou null), para já vir escrita ao digitar.
+ * `onType()`: a pessoa pediu para digitar de dentro do painel de fotos.
  * `debug`: mostra o painel de diagnóstico (padrão: opção em Mais ou ?debug).
  * A promessa também tem `.log()`, o registro de cada tentativa e evento.
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, debug = debugEnabled() } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, onType = null, debug = debugEnabled() } = {}) {
   const log = [];
   let stop = () => {};
   const promise = new Promise((resolve) => {
@@ -138,6 +144,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       </div>
       <div class="exp-struggle" hidden>
         <p class="exp-struggle-hint" aria-live="polite"></p>
+        <div class="exp-find" hidden></div>
         <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Usar a câmera do celular</span></button>
         <input type="file" accept="image/*" capture="environment" hidden data-photo-input>
       </div>${debug ? `
@@ -159,6 +166,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     const photoBtn = $('[data-photo]', host);
     const photoInput = $('[data-photo-input]', host);
     const askBox = $('.exp-ask', host);
+    const findHost = $('.exp-find', host);
+    const findPanel = createFindPanel(findHost, {
+      onRead: (region, photo, progress) => readRegion(region, photo, progress),
+      onType: (crop) => { if (crop) { try { onBestPhoto(crop); } catch { /* segue */ } } if (onType) onType(); },
+      note: (what, detail) => note({ kind: 'event', what, detail: detail == null ? null : JSON.stringify(detail) }),
+    });
     const askText = $('.exp-ask-text', host);
     const canvas = document.createElement('canvas');
     const original = document.createElement('canvas');
@@ -185,7 +198,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // Duas camadas do mesmo PP-OCRv6: "small" na leitura contínua (rápida,
     // tenta muitos quadros) e "medium" só nas fotos (mais lenta por leitura,
     // mas enxerga mais em material difícil). Ver docs/LEITURA_VALIDADE.md.
-    const paddleLive = createPaddleReader('small');
+    // O small tenta a GPU (3× mais rápido no iPhone) e volta sozinho para o
+    // leitor sem GPU; o medium fica sem GPU (na GPU derrubou o app).
+    const paddleLive = createSmallReader();
     let paddleLiveState = 'idle';
     let loadingPaddleLive = null;
     const paddleBurst = createPaddleReader('medium');
@@ -311,6 +326,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (hard || asking) return;
       hard = true;
       note({ kind: 'event', what: 'hard' });
+      findPanel.open();
       struggleHint.textContent = HARD_TEXT;
       struggle.classList.add('is-hard');
       try { onHard(); } catch { /* a câmera segue */ }
@@ -352,6 +368,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       clearInterval(struggleTimer);
       paddleLive.dispose();
       paddleBurst.dispose();
+      findPanel.dispose();
       releaseOcr();
       document.removeEventListener('visibilitychange', visibilityChanged);
       if (stream) stream.getTracks().forEach((t) => t.stop());
@@ -381,7 +398,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       loadingPaddleLive = paddleLive.ready().then(() => {
         if (!alive) return;
         paddleLiveState = 'ready';
-        note({ kind: 'event', what: 'small-ready' });
+        note({ kind: 'event', what: 'small-ready', detail: paddleLive.backend() === 'gpu' ? 'GPU' : 'sem GPU' });
         setStatus('Mantenha a validade na mira');
         // Com o small pronto, a embalagem já se mostrou difícil: prepara o
         // medium em segundo plano, para as fotos não precisarem esperar.
@@ -538,13 +555,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       return { still: frame, box };
     }
 
-    // Lê uma foto: Tesseract primeiro (rápido), depois o Paddle mais preciso que
-    // estiver pronto (medium; se ainda não, o small). Todos os filtros votam,
-    // mas a foto conta como uma só na regra de "duas imagens diferentes".
-    // `stopWhenFound`: a foto já deu uma data com rótulo, os outros filtros
-    // param (a mesma foto conta como uma imagem só, e o Paddle medium leva
-    // vários segundos por filtro numa foto com muito texto). `onProgress(k, total)`.
-    async function readStill({ still, box, seq, tessVariants, paddleVariants, waitForMedium = false, yields = false, stopWhenFound = false, onProgress = () => {} }) {
+    // Lê uma foto: Tesseract primeiro, depois o Paddle rápido (small). Todos os
+    // filtros votam, mas a foto conta como uma só na regra de "duas imagens
+    // diferentes". `stopWhenFound`: a foto já deu uma data com rótulo, os
+    // outros filtros param (a mesma foto conta como uma imagem só).
+    // `onProgress(k, total)`.
+    async function readStill({ still, box, seq, tessVariants, paddleVariants, yields = false, stopWhenFound = false, onProgress = () => {} }) {
       const source = photoSource(seq);
       let i = 0; let score = 0; let found = 0; let sure = false;
       const total = (tessFailed ? 0 : tessVariants.length) + paddleVariants.length;
@@ -576,13 +592,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }
       if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
       if (stopped()) return { score, found };
-      if (waitForMedium && paddleBurstState === 'loading') {
-        setStatus('Preparando a leitura mais cuidadosa da sua foto', { urgent: true });
-        try { await loadingPaddleBurst; } catch { /* segue com o small */ }
-        if (!alive) return { score, found };
-      }
-      const reader = paddleBurstState === 'ready' ? paddleBurst : paddleLiveState === 'ready' ? paddleLive : null;
-      if (reader) await tryVariants('paddle', paddleVariants, (c) => reader.read(c), reader === paddleLive);
+      // Nas fotos, só o leitor rápido: o detalhado (medium) lê apenas o pedaço
+      // que a pessoa mostrar no painel (readRegion).
+      if (paddleLiveState === 'ready') await tryVariants('paddle', paddleVariants, (c) => paddleLive.read(c), true);
       return { score, found };
     }
 
@@ -601,6 +613,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         const { score } = await readStill({ ...shot, seq, tessVariants: BURST_TESSERACT_VARIANTS, paddleVariants: BURST_PADDLE_VARIANTS, yields: true });
         if (!alive || nativePending) return;
         keepBest(score, shot.still, shot.box);
+        const { candidates, guess } = await addPhotoToPool(shot.still, 'auto', score);
+        if (!alive) return;
+        recordCandidates(candidates, photoEvidence, photoSource(seq));
+        // Recorte automático: onde o rápido acha que está a validade, o
+        // detalhado (medium) lê só aquele pedaço, e o resultado vota.
+        if (guess && !nativePending) await readGuessAuto(shot.still, guess, photoSource(seq));
+        if (!alive || nativePending) return;
         if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
         setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
       } finally {
@@ -608,9 +627,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }
     }
 
-    // Foto da câmera do próprio celular: foco, HDR e resolução cheia. A pessoa
-    // enquadra, então lê a foto inteira. Uma foto só não confirma sozinha: a
-    // data vira um botão para tocar (e conferir na página seguinte).
+    // Foto da câmera do próprio celular: foco, HDR e resolução cheia. O leitor
+    // rápido lê a foto inteira (as datas viram botões) e marca onde acha que
+    // está a validade; a foto abre no painel para a pessoa confirmar ou tocar
+    // no lugar certo, e o detalhado lê só aquele pedaço.
     async function readNativePhoto(file) {
       nativePending = true;
       while (bursting && alive) await pause(50);
@@ -630,17 +650,159 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         photo.getContext('2d').drawImage(bitmap, 0, 0, photo.width, photo.height);
         if (bitmap.close) bitmap.close();
         prepareFrame(photo, { mode: 'raw', width: 900, maxH: 900, box: PHOTO_BOX }, photoEvidence);
-        const { score, found } = await readStill({
-          still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: PHOTO_PADDLE_VARIANTS, waitForMedium: true, stopWhenFound: true,
-          onProgress: (k, total) => setStatus(`Lendo a sua foto (${k} de ${total})`, { urgent: true }),
-        });
+        startPaddleLive();
+        if (paddleLiveState === 'loading') {
+          setStatus('Preparando o leitor', { urgent: true });
+          try { await loadingPaddleLive; } catch { /* segue com o Tesseract */ }
+          if (!alive) return;
+        }
+        let found = 0;
+        if (paddleLiveState !== 'ready') {
+          // Sem o Paddle: o Tesseract lê a foto inteira, como antes.
+          ({ found } = await readStill({
+            still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: [], stopWhenFound: true,
+            onProgress: (n, total) => setStatus(`Lendo a sua foto (${n} de ${total})`, { urgent: true }),
+          }));
+          if (!alive) return;
+        }
+        setStatus('Lendo a sua foto', { urgent: true });
+        const { candidates, guess } = await addPhotoToPool(photo, 'celular', 1e6, true);
         if (!alive) return;
+        recordCandidates(candidates, photoEvidence, photoSource(seq));
+        found += candidates.length;
         // Foto que a pessoa mesma tirou é a melhor para conferir a olho.
-        keepBest(1e6 + score, photo, PHOTO_BOX);
-        setStatus(found ? 'Achei a data na foto. Toque nela para conferir' : 'Não achei a data nessa foto. Tente mais de perto, ou digite a data');
+        keepBest(1e6, photo, PHOTO_BOX);
+        setStatus(found ? 'Achei uma data. Toque nela, ou confira na foto abaixo' : guess ? 'Confira na foto abaixo se a validade está marcada' : 'Toque na foto abaixo onde está a validade', { urgent: true });
+        findHost.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
       } finally {
         if (alive) { bursting = false; nativeReading = false; }
       }
+    }
+
+    // ---------- Fotos para o painel "A validade está aqui?" ----------
+    // A foto inteira (reduzida a 1600 px) vai para o painel com as linhas de
+    // texto que o leitor rápido achou nela e o palpite de onde está a
+    // validade. Também devolve as datas lidas na foto inteira.
+    async function addPhotoToPool(still, source, baseScore, select = false) {
+      const c = document.createElement('canvas');
+      prepareFrame(still, { mode: 'raw', box: PHOTO_BOX, width: 1600, maxH: 1600, maxScale: 1 }, c);
+      let rows = []; let candidates = [];
+      if (paddleLiveState === 'ready') {
+        busy = true;
+        try {
+          while (liveReading && alive) await pause(40);
+          const r = await paddleLive.read(c);
+          rows = textRows(r.items || []);
+          candidates = findExpiryCandidates(r.text);
+        } catch { /* a foto entra sem palpite */ } finally { busy = false; }
+      }
+      if (!alive) return { candidates: [], guess: null };
+      const guess = guessRegion(rows, c.width, c.height);
+      // Nitidez medida numa cópia pequena: fotos tremidas vão para o fim da fila.
+      let sharp = 0;
+      try {
+        prepareFrame(c, { mode: 'raw', box: PHOTO_BOX, width: 320, maxH: 320, maxScale: 1 }, qualityCanvas);
+        sharp = sharpness(qualityCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, qualityCanvas.width, qualityCanvas.height));
+      } catch { /* sem medida */ }
+      const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob || !alive) return { candidates, guess };
+      findPanel.add({
+        blob, url: URL.createObjectURL(blob), w: c.width, h: c.height, rows, rowsW: c.width, rowsH: c.height, guess,
+        score: baseScore + (guess ? 50 : 0) + Math.min(40, sharp / 5), sharp: Math.round(sharp), print: fingerprint(c), source,
+      }, { select });
+      // O painel só aparece quando há o que mostrar: um palpite, uma foto da
+      // própria pessoa, ou a embalagem já se mostrou difícil.
+      if (guess || select || hard) findPanel.open();
+      return { candidates, guess };
+    }
+
+    // O medium lê o pedaço do palpite de uma foto automática (sem esperar o
+    // medium carregar: se ainda não está pronto, fica para a próxima foto).
+    // Vota como qualquer leitura da mesma foto (conta como uma imagem só).
+    async function readGuessAuto(still, region, source) {
+      if (paddleBurstState !== 'ready') return;
+      const crop = document.createElement('canvas');
+      try { prepareFrame(still, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop); } catch { return; }
+      let result;
+      try { result = await paddleBurst.read(crop); } catch { return; }
+      if (!alive) return;
+      const candidates = findExpiryCandidates(result.text);
+      recordCandidates(candidates, crop, source);
+      const accepted = consensus.add({ candidates, engine: 'paddle', confidence: result.confidence, frame: `${source}-recorte`, source, at: performance.now() });
+      noteRead({ engine: 'paddle', variant: { mode: 'medium-recorte' }, source, result, candidates }, crop);
+      if (accepted) { note({ kind: 'event', what: 'confirmed', iso: accepted }); beep('ok'); vibrate(40); done(accepted); }
+    }
+
+    // Lê só o pedaço que a pessoa mostrou: o detalhado (medium, sem GPU) e
+    // dois filtros do Tesseract. Uma data clara vai direto para a
+    // confirmação, com o pedaço como prova; mais de uma vira botões.
+    async function readRegion(region, photo, progress) {
+      const t0 = performance.now();
+      const bmp = await createImageBitmap(photo.blob);
+      const crop = document.createElement('canvas');
+      prepareFrame(bmp, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop);
+      if (bmp.close) bmp.close();
+      const cropUrl = crop.toDataURL('image/jpeg', 0.85);
+      const texts = [];
+      startPaddleBurst();
+      if (paddleBurstState === 'loading') {
+        progress('Preparando a leitura detalhada (na 1ª vez baixa uns 140 MB)');
+        try { await loadingPaddleBurst; } catch { /* segue com o rápido */ }
+      }
+      if (!alive) return { status: 'ok' };
+      progress('Lendo esse pedaço');
+      try {
+        if (paddleBurstState === 'ready') texts.push(['medium', (await paddleBurst.read(crop)).text, 2]);
+        else if (paddleLiveState === 'ready') {
+          busy = true;
+          try { while (liveReading && alive) await pause(40); texts.push(['small', (await paddleLive.read(crop)).text, 2]); }
+          finally { busy = false; }
+        }
+      } catch { /* segue com o Tesseract */ }
+      if (!tessFailed) {
+        for (const [mode, psm] of [['gray', 6], ['sauvola', 6]]) {
+          if (!alive) return { status: 'ok' };
+          const c = document.createElement('canvas');
+          prepareFrame(crop, { mode, blur: 0, box: PHOTO_BOX, width: 1000, maxH: 600 }, c);
+          try { texts.push([`tesseract ${mode}`, (await readResult(c, { psm })).text, 1]); } catch { /* sem Tesseract */ }
+        }
+      }
+      if (!alive) return { status: 'ok' };
+      // Nenhuma data: tenta de novo com os pontinhos "engordados" (validade
+      // impressa em pontos, como nas tampas).
+      if (!texts.some(([, text]) => findExpiryCandidates(text).length) && paddleBurstState === 'ready') {
+        for (const passes of [4, 5]) {
+          if (!alive) return { status: 'ok' };
+          progress('Tentando de novo, com os pontos juntos');
+          try { texts.push([`medium pontos ${passes}`, (await paddleBurst.read(thickenDark(crop, passes))).text, 2]); } catch { /* segue */ }
+          if (findExpiryCandidates(texts[texts.length - 1][1]).length) break;
+        }
+      }
+      if (!alive) return { status: 'ok' };
+      note({ kind: 'event', what: 'find-read', detail: `${Math.round(performance.now() - t0)} ms: ${texts.map(([e, t]) => `${e} “${t.replace(/\s+/g, ' ').slice(0, 50)}”`).join(' · ')}` }, crop);
+      const byIso = new Map();
+      for (const [, text, weight] of texts) {
+        for (const found of findExpiryCandidates(text)) {
+          const v = byIso.get(found.iso) || { ...found, n: 0 };
+          v.n += weight; v.labeled ||= found.labeled;
+          byIso.set(found.iso, v);
+        }
+      }
+      let list = [...byIso.values()];
+      if (!list.length) return { status: 'none', crop: cropUrl };
+      if (list.some((c) => c.labeled)) list = list.filter((c) => c.labeled);
+      list.sort((a, b) => b.n - a.n);
+      const proof = (c) => ({ image: cropUrl, raw: c.raw, monthOnly: /^\d{1,2}\s*[/.\- ]\s*\d{2,4}$|^\d{4}$/.test(c.raw) });
+      if (list.length === 1 || list[0].n > list[1].n) {
+        const iso = list[0].iso;
+        evidence.set(iso, proof(list[0]));
+        note({ kind: 'event', what: 'confirmed', iso, detail: 'mostrado na foto' });
+        beep('ok'); vibrate(40);
+        done(iso);
+        return { status: 'ok' };
+      }
+      for (const c of list) { evidence.set(c.iso, proof(c)); addPick(c.iso); }
+      return { status: 'several' };
     }
 
     photoBtn.addEventListener('click', () => {

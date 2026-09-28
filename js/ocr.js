@@ -91,4 +91,4 @@ export function readResult(canvas, { psm = 6 } = {}) {
 export async function readText(canvas, options) {
   return (await readResult(canvas, options)).text;
 }
-export { prepareFrame } from './ocrImage.js';
+export { prepareFrame, thickenDark } from './ocrImage.js';

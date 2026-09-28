@@ -134,3 +134,46 @@ export function prepareFrame(source, { box = { x: .08, y: .36, w: .84, h: .28 },
   }
   return canvas;
 }
+
+/**
+ * "Engorda" o que é escuro (mínimo 3×3 repetido `passes` vezes), em tons de
+ * cinza, num canvas novo. Na validade impressa em pontinhos (tampas), junta
+ * os pontos num traço que o leitor reconhece: num recorte real da tampa, o
+ * medium passou a ler "F:06/08/26" e "L:20:42 A" com 4–5 passadas, onde antes
+ * não lia nada. Só para recortes pequenos (é feito em JavaScript).
+ */
+export function thickenDark(source, passes = 4) {
+  const W = source.width; const H = source.height;
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const g = out.getContext('2d', { willReadFrequently: true });
+  g.drawImage(source, 0, 0);
+  const img = g.getImageData(0, 0, W, H);
+  let a = new Uint8ClampedArray(W * H);
+  for (let i = 0; i < W * H; i++) a[i] = img.data[i * 4] * 0.299 + img.data[i * 4 + 1] * 0.587 + img.data[i * 4 + 2] * 0.114;
+  let b = new Uint8ClampedArray(W * H);
+  for (let k = 0; k < passes; k++) {
+    // separável: mínimo na horizontal, depois na vertical
+    for (let y = 0; y < H; y++) {
+      const r = y * W;
+      for (let x = 0; x < W; x++) {
+        let m = a[r + x];
+        if (x > 0 && a[r + x - 1] < m) m = a[r + x - 1];
+        if (x < W - 1 && a[r + x + 1] < m) m = a[r + x + 1];
+        b[r + x] = m;
+      }
+    }
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        let m = b[i];
+        if (y > 0 && b[i - W] < m) m = b[i - W];
+        if (y < H - 1 && b[i + W] < m) m = b[i + W];
+        a[i] = m;
+      }
+    }
+  }
+  for (let i = 0; i < W * H; i++) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = a[i]; img.data[i * 4 + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  b = null;
+  return out;
+}

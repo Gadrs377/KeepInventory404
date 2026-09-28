@@ -1269,3 +1269,46 @@ O sabonete diz "VAL 07/2021": o leitor acertou, mas `js/dates.js`
 descartava toda data de mais de 2 anos atrás. Com rótulo de validade na
 frente, agora vale até 10 anos atrás; sem rótulo, continua o limite de 2
 anos. `sw.js` v63.
+
+## Versão 3.48: GPU na câmera, "A validade está aqui?" e o medium no recorte
+
+Montado a partir dos testes no iPhone (versões 3.46–3.47) e de uma conversa
+sobre como a pessoa pode ajudar sem virar trabalho.
+
+**Leitor rápido na GPU** (`createSmallReader` em `js/paddleOcr.js`): o Paddle
+small usa a GPU (pacote `gpu2`, onnxruntime 1.30) quando o aparelho tem, e
+volta sozinho para o leitor sem GPU se ela não preparar. O medium continua
+sem GPU (na GPU derrubou o app). Proteção (`js/gpuGuard.js`): uma marca fica
+no aparelho durante cada leitura na GPU; se o app cair no meio, a marca sobra
+e a GPU fica desligada naquele aparelho dali em diante.
+
+**Recorte para o medium** (`js/dateRegion.js`): o small lê a foto inteira e
+diz onde está cada linha; a linha com mais cara de validade e as vizinhas
+viram uma faixa da largura da foto, e o medium lê só ela. Medido: sabonete
+33,4 s na foto inteira contra 3,6 s no recorte; chocolate 17,3 contra 5,3 s;
+mesma data. O small não precisa ler certo, só achar o lugar (no copo ele leu
+"17/09/46" e o medium, no recorte, "17/09/26"). Cada foto automática com
+palpite passa por isso sozinha (`readGuessAuto`), e o resultado vota.
+
+**"A validade está aqui?"** (`js/views/expiryFind.js`): quando a câmera não
+resolve, a melhor foto aparece com o palpite marcado (o resto escurece):
+"Sim" lê o pedaço; "Não? Toque onde ela está" encaixa na linha tocada, ou
+pega uma faixa em volta do toque. Até 4 fotos diferentes (quase iguais ficam
+só a de maior nota; tremidas vão para o fim), as outras numa fileira; "Não
+está em nenhuma" fecha até chegar uma foto nova. Sem data no pedaço: "Não
+consegui ler aí", o pedaço ampliado e "Digitar a data". Uma data clara vai
+direto para a confirmação, com o pedaço como prova. O painel só abre quando
+há palpite, quando a embalagem já se mostrou difícil, ou com a foto do
+celular — antes disso as fotos são guardadas em silêncio.
+
+**Foto do celular** passa pelo mesmo painel: o small lê a foto inteira (as
+datas viram botões), marca o palpite, e a pessoa confirma ou toca.
+
+**Pontinhos engordados** (`thickenDark` em `js/ocrImage.js`): se o medium não
+acha data no pedaço, tenta de novo com o escuro "engordado" (4 e 5 passadas):
+na tampa com validade em pontos, passou a ler "F:06/08/26" e "L:20:42 A".
+
+As fotos automáticas usam menos filtros (3 do Tesseract + 2 do Paddle), para
+saírem mais vezes. Vídeos reais, fluxo completo (sem GPU, neste computador):
+copo confirmou 17/09/2026 sozinho em 35 s (antes 39–64 s); chocolate
+perguntou a data certa aos 41 s; nenhuma confirmação errada. `sw.js` v64.

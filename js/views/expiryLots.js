@@ -108,6 +108,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         onLikely: (value) => { likely = value; },
         // A câmera desistiu com dignidade: "Digitar a data" vira o caminho sugerido.
         onHard: () => typeBtn.classList.add('is-suggested'),
+        // "Digitar a data" de dentro do painel de fotos: o mesmo caminho do botão.
+        onType: () => typeBtn.click(),
       });
       reading.then((iso) => {
         reading = null;

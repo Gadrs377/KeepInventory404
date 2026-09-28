@@ -101,19 +101,42 @@ test('embalagem difícil: fotos automáticas, aviso, digitar olhando a melhor fo
   } finally { await cam.close(); }
 });
 
-test('foto do celular: mostra o andamento e a data vira botão, sem confirmar sozinha', async () => {
-  const cam = await openExpirySheet(server, { ocr: { photoWidth: 1500, photoText: 'VAL 15/10/26' } });
+test('foto do celular: vira botão e abre o painel; "Sim" lê só o pedaço e confirma', async () => {
+  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 } });
   try {
     await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
     const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
     assert.equal(await (await chooser.element()).getAttribute('capture'), 'environment');
     await chooser.setFiles(await bigPhoto(cam.page));
-    await waitStatus(cam.page, /Lendo a sua foto \(\d de \d\)/);
-    await waitStatus(cam.page, /Achei a data na foto/, 180000);
-    // Achou com rótulo no primeiro filtro: os outros não rodam.
-    assert.equal(await cam.page.evaluate(() => window.__calls.filter((c) => c.w >= 1500).length), 1);
-    assert.equal(await cam.page.$('.exp-confirm-date'), null);
+    // O leitor rápido (Paddle small) lê a foto inteira: a data vira botão…
+    await waitStatus(cam.page, /Achei uma data/, 180000);
     assert.deepEqual(await cam.page.$$eval('.exp-pick', (els) => els.map((e) => e.dataset.iso)), ['2026-10-15']);
+    assert.equal(await cam.page.$('.exp-confirm-date'), null, 'uma foto sozinha não confirma');
+    // …e a foto abre no painel com o palpite de onde está a validade.
+    await cam.page.waitForSelector('.exp-find:not([hidden]) [data-find-yes]:not([hidden])');
+    assert.equal(await cam.page.textContent('[data-find-title]'), 'A validade está aqui?');
+    await cam.page.click('[data-find-yes]');
+    await cam.page.waitForSelector('.exp-confirm-date', { timeout: 240000 });
+    assert.match(await cam.page.$eval('.exp-confirm-date', (e) => e.textContent), /15 de outubro de 2026/);
+    assert.ok(await cam.page.$('.exp-evidence img'), 'o pedaço lido vai como prova');
+    noErrors(cam.errors);
+  } finally { await cam.close(); }
+});
+
+test('painel: tocar longe da data mostra "Não consegui ler aí" com o pedaço e Digitar', async () => {
+  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 } });
+  try {
+    await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
+    const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
+    await chooser.setFiles(await bigPhoto(cam.page));
+    await cam.page.waitForSelector('.exp-find:not([hidden]) [data-find-yes]:not([hidden])', { timeout: 180000 });
+    const box = await cam.page.$eval('[data-find-img]', (e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; });
+    await cam.page.mouse.click(box[0] + box[2] * 0.5, box[1] + box[3] * 0.12); // parte lisa, sem texto
+    await cam.page.waitForSelector('[data-find-fail]:not([hidden])', { timeout: 240000 });
+    assert.match(await cam.page.textContent('[data-find-note]'), /Não consegui ler aí/);
+    assert.ok(await cam.page.$eval('[data-find-crop]', (e) => e.src.startsWith('data:image/jpeg')));
+    await cam.page.click('[data-find-type]');
+    await cam.page.waitForSelector('.exp-type-input');
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });
