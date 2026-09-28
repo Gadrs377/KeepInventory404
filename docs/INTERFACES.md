@@ -1250,3 +1250,22 @@ por outros: aqui cai logo no começo.
 - Cada leitura entra no resultado na hora: se o app cair, a tabela mostra
   "parou depois de N leituras", com os tempos que deu para medir.
 - O envio para a Bancada leva o registro da tela (`log`). `sw.js` v62.
+
+## Versão 3.47: GPU 1.30 aguentou; validade antiga com VAL
+
+Segundo envio do iPhone (iOS 27), foto de um sabonete, modelo small, 6
+leituras de cada:
+
+| | preparar | 1ª leitura | demais (mediana) | texto |
+|---|---|---|---|---|
+| Atual (WebAssembly) | 0,6 s | 2,4 s | 2,3 s | — |
+| GPU, onnxruntime 1.30 | 4,1 s | 3,4 s | **0,66 s** | idêntico ao atual |
+
+A GPU com o 1.30 não derrubou o app (a 1.24 derrubava na 2ª/3ª leitura) e
+ficou **3,5× mais rápida** depois da primeira leitura (que prepara os
+programas da GPU).
+
+O sabonete diz "VAL 07/2021": o leitor acertou, mas `js/dates.js`
+descartava toda data de mais de 2 anos atrás. Com rótulo de validade na
+frente, agora vale até 10 anos atrás; sem rótulo, continua o limite de 2
+anos. `sw.js` v63.

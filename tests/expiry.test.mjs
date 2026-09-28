@@ -112,3 +112,9 @@ test('real printed labels: misread VAL, FAB block, label on another line, combin
   assert.deepEqual(findExpiryCandidates('FAB/LOTE: 05/06/26', today), []);
   assert.deepEqual(findExpiryCandidates('L: 10/26', today), []);
 });
+test('validade antiga com VAL escrito vale; sem rótulo, não', () => {
+  // Sabonete real (tests da Bancada, 28/09/2026): "VAL 07/2021 11:34 / LOTE 250719BR341L".
+  assert.equal(findExpiry('VAL 07/2021 11:34\nLOTE 250719BR341L', '2026-09-28')?.iso, '2021-07-31');
+  assert.deepEqual(findExpiryCandidates('07/2021', '2026-09-28'), []);
+  assert.deepEqual(findExpiryCandidates('FAB 07/2021', '2026-09-28'), []);
+});

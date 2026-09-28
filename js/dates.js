@@ -197,8 +197,11 @@ export function findExpiryCandidates(text, today = todayIso()) {
     if (!iso) return;
     const [y, m, d] = iso.split('-').map(Number);
     const days = (Date.UTC(y, m - 1, d) - now) / 86400000;
-    if (days < -730 || days > 3650) return; // fora do razoável para validade
     let label = labelAt(index);
+    // Fora do razoável para validade. Com "VAL" escrito na frente, uma data de
+    // anos atrás é real (o sabonete esquecido no armário, vencido em 2021);
+    // sem rótulo, provavelmente é outra coisa (fabricação, lote, leitura errada).
+    if (days > 3650 || days < (label === 'expiry' ? -3650 : -730)) return;
     if (label === 'manufacture') { fabDates.push(iso); return; }
     if (label === 'lot') return;
     const loose = label === 'loose' && days > RECENT_DAYS;
