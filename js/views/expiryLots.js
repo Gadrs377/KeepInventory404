@@ -86,6 +86,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   // A foto com mais texto legível da câmera: aparece ao lado do campo de
   // digitar. Vale para a embalagem atual; some quando uma data é confirmada.
   let bestPhoto = null;
+  // A data que a câmera viu em mais imagens: já vem escrita ao digitar.
+  let likely = null;
 
   // Página 1: ler com a câmera (ou ir para digitar).
   function scanPage({ asRoot = false } = {}) {
@@ -103,6 +105,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         skip: [...confirmed, ...lots.map((l) => l.expiresAt)],
         onEvidence: (value) => { evidence = value; },
         onBestPhoto: (url) => { bestPhoto = url; },
+        onLikely: (value) => { likely = value; },
         // A câmera desistiu com dignidade: "Digitar a data" vira o caminho sugerido.
         onHard: () => typeBtn.classList.add('is-suggested'),
       });
@@ -112,7 +115,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       });
     };
     const onHide = () => { if (reading) reading.stop(); reading = null; };
-    typeBtn.addEventListener('click', () => typePage(bestPhoto));
+    typeBtn.addEventListener('click', () => typePage(bestPhoto, likely));
     if (asRoot) {
       body.append(el);
       nav = sheetNav(body, { el, title: 'Validade', onShow, onHide });
@@ -126,7 +129,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
 
   // Digitar: campo grande, teclado numérico. Aceita também "VAL 20/12/27 L0425".
   // `photo`: a melhor foto da câmera, para digitar olhando (toque amplia).
-  function typePage(photo = null) {
+  // `guess`: a data que a câmera mais viu; vem escrita e selecionada, então
+  // digitar por cima troca tudo (mês/ano quando a câmera só leu mês/ano).
+  function typePage(photo = null, guess = null) {
     const el = page(`
       ${photo ? `
       <figure class="exp-type-photo">
@@ -145,6 +150,11 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     const note = $('.field-note', el);
     const next = $('[data-next]', el);
     const HELP = note.textContent;
+    if (guess) {
+      const [y, m, d] = guess.iso.split('-');
+      input.value = guess.monthOnly ? `${m}/${y.slice(2)}` : `${d}/${m}/${y.slice(2)}`;
+      note.textContent = `A câmera leu ${guess.monthOnly ? `${m}/${y}` : formatDateLong(guess.iso)} em ${guess.n} imagens. Confira${photo ? ' na foto' : ''}; se estiver errada, é só digitar por cima.`;
+    }
     input.addEventListener('input', () => {
       input.value = expiryInputValue(input.value);
       input.removeAttribute('aria-invalid');
@@ -176,13 +186,18 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     };
     next.addEventListener('click', go);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
-    nav.push(el, { title: 'Digitar a data', onShow: () => setTimeout(() => { if (!el.hidden) input.focus(); }, 320) });
+    nav.push(el, { title: 'Digitar a data', onShow: () => setTimeout(() => {
+      if (el.hidden) return;
+      input.focus();
+      if (guess) input.setSelectionRange(0, input.value.length);
+    }, 320) });
   }
 
   // Página 2: a data por extenso e quantas vencem nela.
   function confirmPage(iso, evidence = null) {
     if (!confirmed.includes(iso)) confirmed.push(iso);
     bestPhoto = null;
+    likely = null;
     const max = left();
     const past = daysUntil(iso) < 0;
     const el = page(`

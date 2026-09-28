@@ -108,11 +108,12 @@ function textScore({ text = '', confidence = 0 }) {
  * estar na mesma embalagem), mas aparecem para tocar.
  * `onBestPhoto(dataUrl)`: a foto com mais texto legível até agora, para
  * mostrar ao lado do campo de digitar. `onHard()`: a embalagem parece difícil
- * demais para a câmera (hora de sugerir digitar).
+ * demais para a câmera (hora de sugerir digitar). `onLikely({ iso, n, monthOnly })`:
+ * a data vista em mais imagens (ou null), para já vir escrita ao digitar.
  * `debug`: mostra o painel de diagnóstico (padrão: opção em Mais ou ?debug).
  * A promessa também tem `.log()`, o registro de cada tentativa e evento.
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, debug = debugEnabled() } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, debug = debugEnabled() } = {}) {
   const log = [];
   let stop = () => {};
   const promise = new Promise((resolve) => {
@@ -131,8 +132,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       <div class="exp-ask" role="group" aria-live="polite" hidden>
         <p class="exp-ask-text"></p>
         <div class="exp-ask-actions">
-          <button type="button" class="btn btn-primary" data-ask-yes>Sim, é esta</button>
-          <button type="button" class="btn btn-quiet" data-ask-no>Não é</button>
+          <button type="button" class="btn btn-primary" data-ask-yes>Sim</button>
+          <button type="button" class="btn btn-quiet" data-ask-no>Não</button>
         </div>
       </div>
       <div class="exp-struggle" hidden>
@@ -201,6 +202,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     const seen = new Map();
     let asking = null;
     const declined = new Set();
+    let likelyKey = '';
     let turn = 0;
     let paddleTurn = 0;
     let struggleTimer = null;
@@ -437,7 +439,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         btn.classList.toggle('is-likely', !!lead && lead.n >= 2 && lead.iso === btn.dataset.iso);
         btn.setAttribute('aria-label', `Usar ${formatDate(btn.dataset.iso)}${n >= 2 ? `, lida ${n} vezes` : ''}`);
       }
+      tellLikely(lead);
       maybeAsk(lead);
+    }
+
+    function tellLikely(lead) {
+      const likely = lead && lead.n >= 2 && !declined.has(lead.iso) ? { iso: lead.iso, n: lead.n, monthOnly: !!evidence.get(lead.iso)?.monthOnly } : null;
+      const key = likely ? `${likely.iso}:${likely.n}` : '';
+      if (key === likelyKey) return;
+      likelyKey = key;
+      try { onLikely(likely); } catch { /* a câmera segue */ }
     }
 
     // Pergunta sobre a data mais vista. Só uma data futura, ou que já veio com
@@ -447,7 +458,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       const past = lead.iso < new Date().toISOString().slice(0, 10);
       if (past && !seen.get(lead.iso).labeled) return;
       asking = lead.iso;
-      askText.textContent = `Vi ${formatDate(lead.iso)} em ${lead.n} imagens. É a validade?`;
+      askText.textContent = `Li ${formatDate(lead.iso)} várias vezes. É a validade?`;
       askBox.hidden = false;
       setStatus('Confira a data abaixo', { urgent: true });
       note({ kind: 'event', what: 'ask', iso: lead.iso, detail: `${lead.n} imagens` });
@@ -464,6 +475,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       note({ kind: 'event', what: 'declined', iso: asking });
       declined.add(asking);
       asking = null;
+      tellLikely(leader());
       askBox.hidden = true;
       setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
     });
@@ -524,16 +536,21 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // Lê uma foto: Tesseract primeiro (rápido), depois o Paddle mais preciso que
     // estiver pronto (medium; se ainda não, o small). Todos os filtros votam,
     // mas a foto conta como uma só na regra de "duas imagens diferentes".
-    async function readStill({ still, box, seq, tessVariants, paddleVariants, waitForMedium = false, yields = false }) {
+    // `stopWhenFound`: a foto já deu uma data com rótulo, os outros filtros
+    // param (a mesma foto conta como uma imagem só, e o Paddle medium leva
+    // vários segundos por filtro numa foto com muito texto). `onProgress(k, total)`.
+    async function readStill({ still, box, seq, tessVariants, paddleVariants, waitForMedium = false, yields = false, stopWhenFound = false, onProgress = () => {} }) {
       const source = photoSource(seq);
-      let i = 0; let score = 0; let found = 0;
-      const stopped = () => !alive || (yields && nativePending);
+      let i = 0; let score = 0; let found = 0; let sure = false;
+      const total = (tessFailed ? 0 : tessVariants.length) + paddleVariants.length;
+      const stopped = () => !alive || (yields && nativePending) || (stopWhenFound && sure);
       async function tryVariants(engine, variants, read, exclusive = false) {
         if (exclusive) busy = true;
         try {
           while (exclusive && liveReading && alive) await pause(40);
           for (const variant of variants) {
             if (stopped()) return;
+            onProgress(i + 1, total);
             let result;
             try {
               prepareFrame(still, { ...variant, box }, photoCanvas);
@@ -543,6 +560,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
             score += textScore(result);
             const candidates = findExpiryCandidates(result.text);
             found += candidates.length;
+            if (candidates.length === 1 && candidates[0].labeled) sure = true;
             recordCandidates(candidates, photoEvidence, source);
             const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `${source}-${i}`, source, at: performance.now() });
             noteRead({ engine, variant, source, result, candidates }, photoCanvas);
@@ -554,7 +572,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
       if (stopped()) return { score, found };
       if (waitForMedium && paddleBurstState === 'loading') {
-        setStatus('Lendo a sua foto com mais cuidado', { urgent: true });
+        setStatus('Preparando a leitura mais cuidadosa da sua foto', { urgent: true });
         try { await loadingPaddleBurst; } catch { /* segue com o small */ }
         if (!alive) return { score, found };
       }
@@ -607,7 +625,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         photo.getContext('2d').drawImage(bitmap, 0, 0, photo.width, photo.height);
         if (bitmap.close) bitmap.close();
         prepareFrame(photo, { mode: 'raw', width: 900, maxH: 900, box: PHOTO_BOX }, photoEvidence);
-        const { score, found } = await readStill({ still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: PHOTO_PADDLE_VARIANTS, waitForMedium: true });
+        const { score, found } = await readStill({
+          still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: PHOTO_PADDLE_VARIANTS, waitForMedium: true, stopWhenFound: true,
+          onProgress: (k, total) => setStatus(`Lendo a sua foto (${k} de ${total})`, { urgent: true }),
+        });
         if (!alive) return;
         // Foto que a pessoa mesma tirou é a melhor para conferir a olho.
         keepBest(1e6 + score, photo, PHOTO_BOX);

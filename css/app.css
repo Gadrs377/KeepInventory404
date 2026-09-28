@@ -2130,10 +2130,12 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .text-large .exp-picks { flex-direction: column; }
 /* Quantas imagens mostraram a data ("3×") e a mais provável com fundo mais
    forte. Nada troca de lugar: só o número e o fundo mudam. */
-.exp-pick-count { font-size: 0.7059rem; font-weight: 700; color: var(--ink-2); }
+/* No canto, fora do fluxo: cabe mesmo com três datas numa tela estreita */
+.exp-pick { position: relative; }
+.exp-pick-count { position: absolute; top: 4px; inset-inline: 0; text-align: center; font-size: 0.6471rem; font-weight: 700; line-height: 1; color: var(--ink-2); }
+.exp-pick:has(.exp-pick-count:not(:empty)) > span:not(.exp-pick-count) { translate: 0 3px; }
 .exp-pick-count:empty { display: none; }
 .exp-pick.is-likely { background: color-mix(in oklab, var(--mode, var(--ink)) 18%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--mode, var(--ink)) 55%, transparent); }
-@container (max-width: 92px) { .exp-pick-count { display: none; } }
 
 /* "Vi 11/08/2027 em 4 imagens. É a validade?" */
 .exp-ask {
@@ -2142,7 +2144,7 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   animation: fade-in 400ms var(--ease);
 }
 .exp-ask[hidden] { display: none; }
-.exp-ask-text { margin: 0; font-weight: 600; text-align: center; text-wrap: pretty; }
+.exp-ask-text { margin: 0; font-weight: 600; text-align: center; text-wrap: balance; }
 .exp-ask-actions { display: flex; gap: 8px; }
 .exp-ask-actions .btn { flex: 1; }
 @media (prefers-reduced-motion: reduce) { .exp-ask { animation: none; } }
