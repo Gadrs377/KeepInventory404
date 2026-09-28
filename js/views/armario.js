@@ -5,6 +5,7 @@ import { listProducts, listLots, getCountDraft, isLow, onChange, addStock, remov
 import { addToShopList } from '../shop.js';
 import { AREAS, isMed } from '../areas.js';
 import { searchMeds } from '../remedios.js';
+import { scoreProduct, highlight } from '../search.js';
 import { medSheet, anvisaResultsHtml } from './remedioInfo.js';
 import { showProductSheet } from './productSheet.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
@@ -40,15 +41,18 @@ export default function mountArmario(root, m = {}) {
         </div>
       </header>
       <div class="home-tools glass-thick">
-        <label class="search">
+        <div class="search" role="search">
           ${icon('search')}
-          <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}" autocomplete="off">
-        </label>
+          <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}"
+            autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+          <button type="button" class="search-clear" aria-label="Limpar busca" ${savedQuery ? '' : 'hidden'}><span aria-hidden="true">${icon('close')}</span></button>
+        </div>
         <div class="tabs" role="group" aria-label="Ambiente"></div>
       </div>
       <div class="draft-note" hidden></div>
       <div class="summary" role="group" aria-label="Mostrar só" hidden></div>
-      <main class="shelf" aria-live="polite" aria-busy="true">${skeletonRows(5)}</main>
+      <p class="sr-only" role="status" data-found></p>
+      <main class="shelf" aria-busy="true">${skeletonRows(5)}</main>
       ${tabBar('armario')}
     </div>`;
 
@@ -56,6 +60,9 @@ export default function mountArmario(root, m = {}) {
   const tabs = $('.tabs', root);
   const chips = $('.summary', root);
   const search = $('input[type=search]', root);
+  const clearBtn = $('.search-clear', root);
+  const foundNote = $('[data-found]', root);
+  let foundTimer = 0;
   const draftNote = $('.draft-note', root);
   let products = [];
   let nextExpiry = new Map(); // code -> AAAA-MM-DD do lote que vence antes
@@ -97,8 +104,13 @@ export default function mountArmario(root, m = {}) {
     // estão acabando, zerados e vencendo no ambiente escolhido. Tocar filtra a
     // lista; tocar de novo volta para todos. Sem nada, o bloco fica apagado.
     const inArea = products.filter((p) => savedArea === 'tudo' || (p.area || 'cozinha') === savedArea);
-    const counts = Object.fromEntries(FILTERS.map((f) => [f.id, inArea.filter(f.test).length]));
-    const urgent = inArea.some((p) => expiresSoon(p, SOON_DAYS));
+    // Buscando, os blocos contam só o que a busca achou.
+    const q = savedQuery.trim();
+    const scores = new Map();
+    if (q) for (const p of products) { const n = scoreProduct(p, q); if (n) scores.set(p.code, n); }
+    const inScope = q ? inArea.filter((p) => scores.has(p.code)) : inArea;
+    const counts = Object.fromEntries(FILTERS.map((f) => [f.id, inScope.filter(f.test).length]));
+    const urgent = inScope.some((p) => expiresSoon(p, SOON_DAYS));
     const TILE_ICON = { acabando: 'hourglass', zerados: 'dashed', vencendo: 'calendar' };
     // Sem nada acabando, zerado ou vencendo, os blocos não têm o que mostrar: somem.
     chips.hidden = !products.length || (savedFilter === 'todos' && !counts.acabando && !counts.zerados && !counts.vencendo);
@@ -120,14 +132,18 @@ export default function mountArmario(root, m = {}) {
       return;
     }
 
-    const q = savedQuery.trim().toLocaleLowerCase('pt-BR');
     const filter = FILTERS.find((f) => f.id === savedFilter) || FILTERS[0];
     const rank = (p) => (isLow(p) ? 0 : p.qty === 0 ? 1 : 2);
     const byExpiry = (a, b) => nextExpiry.get(a.code).localeCompare(nextExpiry.get(b.code));
+    // Buscando: o mais parecido com o que foi digitado vem primeiro (ver
+    // js/search.js). A busca olha o armário todo, para contar o que ficou
+    // de fora por causa do ambiente ou do filtro.
+    const byScore = (a, b) => scores.get(b.code) - scores.get(a.code) || a.name.localeCompare(b.name, 'pt-BR');
     const visible = inArea
       .filter(filter.test)
-      .filter((p) => !q || `${p.name} ${p.brand} ${p.code}`.toLocaleLowerCase('pt-BR').includes(q))
-      .sort(filter.id === 'vencendo' ? byExpiry : (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pt-BR'));
+      .filter((p) => !q || scores.has(p.code))
+      .sort(q ? byScore : filter.id === 'vencendo' ? byExpiry : (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pt-BR'));
+    const outside = q ? scores.size - visible.length : 0;
     // Em "Tudo", com mais de um ambiente, a lista vem separada por ambiente
     // (como a despensa, a geladeira e o armário dos apps de despensa).
     const grouped = showTabs && savedArea === 'tudo';
@@ -149,7 +165,7 @@ export default function mountArmario(root, m = {}) {
             <a class="row" draggable="false" href="#/produto/${encodeURIComponent(p.code)}">
               ${thumb(p)}
               <span class="row-main">
-                <span class="row-name">${esc(p.name)}</span>
+                <span class="row-name">${q ? highlight(p.name, q) : esc(p.name)}</span>
                 ${rowMeta(p)}
               </span>
               ${tag(p.qty, `${tagState(p)} ${moved(p)}`)}
@@ -173,12 +189,17 @@ export default function mountArmario(root, m = {}) {
       listHtml = `<ul class="${ulClass}">${visible.map(rowHtml).join('')}</ul>`;
     }
     shelf.innerHTML = (visible.length
-      ? listHtml
+      ? listHtml + (outside ? `<div class="search-more"><p>Mais ${plural(outside, 'produto', 'produtos')} com “${esc(q)}” ${scopeText()}.</p><button type="button" class="btn btn-quiet btn-sm" data-widen>Mostrar</button></div>` : '')
       : `<div class="empty-filter">
           <span class="empty-icon is-small" aria-hidden="true">${icon(q ? 'search' : 'check')}</span>
-          <p>${q ? `Nada ${savedArea === 'tudo' ? 'no armário' : `em ${esc(AREAS.find((a) => a.id === savedArea).short)}`} com “${esc(savedQuery.trim())}”.` : emptyText(filter.id)}</p>
-          <button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>
+          <p>${q ? (outside
+            ? `Nada com “${esc(q)}” ${scopeText('in')}, mas ${outside === 1 ? 'tem 1 produto' : `tem ${outside} produtos`} no resto do armário.`
+            : `Nada no armário com “${esc(q)}”.`) : emptyText(filter.id)}</p>
+          ${q && outside
+            ? `<button type="button" class="btn btn-quiet btn-sm" data-widen>Buscar no armário todo</button>`
+            : `<button type="button" class="btn btn-quiet btn-sm" data-reset>${q ? 'Limpar busca' : 'Mostrar todos'}</button>`}
         </div>`) + medsHtml(visible.length);
+    announce(q, visible.length);
 
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
     shelf.removeAttribute('aria-busy');
@@ -200,6 +221,31 @@ export default function mountArmario(root, m = {}) {
       (again || search).focus({ preventScroll: true });
       refocus = null;
     }
+  }
+
+  // Onde a busca está limitada agora: "fora de Cozinha", "fora do filtro
+  // Acabando" ou "fora de Cozinha e do filtro Acabando".
+  // Com 'in': "em Cozinha", "no filtro Acabando", "em Cozinha, no filtro Acabando".
+  function scopeText(kind = 'out') {
+    const short = savedArea === 'tudo' ? '' : AREAS.find((a) => a.id === savedArea).short;
+    const label = savedFilter === 'todos' ? '' : FILTERS.find((f) => f.id === savedFilter).label;
+    if (kind === 'in') return [short && `em ${short}`, label && `no filtro ${label}`].filter(Boolean).join(', ');
+    return `fora ${[short && `de ${short}`, label && `do filtro ${label}`].filter(Boolean).join(' e ')}`;
+  }
+
+  // Leitor de tela: quantos produtos a busca achou, depois de uma pausa na
+  // digitação (e não a lista inteira a cada letra).
+  function announce(q, n) {
+    clearTimeout(foundTimer);
+    if (!q) { foundNote.textContent = ''; return; }
+    foundTimer = setTimeout(() => { foundNote.textContent = n ? `${plural(n, 'produto encontrado', 'produtos encontrados')}.` : 'Nenhum produto encontrado.'; }, 700);
+  }
+
+  function setQuery(value) {
+    savedQuery = value;
+    search.value = value;
+    clearBtn.hidden = !value;
+    keepOrder = false;
   }
 
   // Remédios da lista da Anvisa para o que foi digitado. Em Remédios aparece
@@ -302,8 +348,14 @@ export default function mountArmario(root, m = {}) {
     }
     const hit = e.target.closest('[data-ean]');
     if (hit) { openMed(hit.dataset.ean); return; }
+    if (e.target.closest('[data-widen]')) {
+      savedFilter = 'todos'; savedArea = 'tudo';
+      keepOrder = false;
+      renderAnimated();
+      return;
+    }
     if (!e.target.closest('[data-reset]')) return;
-    if (savedQuery.trim()) { savedQuery = ''; search.value = ''; } else { savedFilter = 'todos'; savedArea = 'tudo'; }
+    if (savedQuery.trim()) setQuery(''); else { savedFilter = 'todos'; savedArea = 'tudo'; }
     keepOrder = false;
     render();
     search.focus();
@@ -325,10 +377,23 @@ export default function mountArmario(root, m = {}) {
     renderAnimated();
   });
   search.addEventListener('input', () => {
-    savedQuery = search.value;
-    keepOrder = false;
+    setQuery(search.value);
     render();
   });
+  // X: apaga e continua no campo, com o teclado aberto, para digitar outra coisa.
+  clearBtn.addEventListener('click', () => {
+    setQuery('');
+    render();
+    search.focus();
+  });
+  search.addEventListener('keydown', (e) => {
+    // Esc apaga; com o campo vazio, sai dele.
+    if (e.key === 'Escape') { e.preventDefault(); if (search.value) { setQuery(''); render(); } else search.blur(); }
+    // "Buscar" do teclado: a lista já está filtrada, então só fecha o teclado.
+    if (e.key === 'Enter') { e.preventDefault(); search.blur(); }
+  });
+  // Tocar em qualquer parte da barra (na lupa, por exemplo) leva ao campo.
+  $('.search', root).addEventListener('click', (e) => { if (!e.target.closest('button')) search.focus(); });
 
   // Arrastar a linha, como no Mail do iPhone: para a esquerda tira 1, para a
   // direita põe 1. Passando do ponto a ação "arma" (vibra e cresce); soltando,
@@ -463,5 +528,5 @@ export default function mountArmario(root, m = {}) {
 
   const off = onChange(load);
   load();
-  return () => { alive = false; clearTimeout(medTimer); off(); };
+  return () => { alive = false; clearTimeout(medTimer); clearTimeout(foundTimer); off(); };
 }

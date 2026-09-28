@@ -7,6 +7,7 @@ import { listProducts, newProductId, addStock, nfceMap, learnNfce, notaImported,
 import { guessArea } from '../areas.js';
 import { $, esc, icon, openSheet, stepper, plural, thumb, skeletonRows, vibrate, pill } from '../ui.js';
 import { showReceipt } from './receipt.js';
+import { searchProducts } from '../search.js';
 
 // Vendido por peso ou volume: conta como 1 pacote e começa de fora (fruta, pão).
 const WEIGHT = new Set(['KG', 'G', 'GR', 'L', 'LT', 'ML']);
@@ -253,7 +254,7 @@ function review(body, close, data, rows, products, already) {
     }
     if (e.target.matches('[data-q]')) {
       const q = norm(e.target.value.trim());
-      const found = q.length < 2 ? [] : products.filter((x) => norm(`${x.name} ${x.brand}`).includes(q)).slice(0, 5);
+      const found = q.length < 2 ? [] : searchProducts(products, q).slice(0, 5);
       $('[data-found]', li).innerHTML = found.map((x) => `<button type="button" class="chip" data-pick="${esc(x.code)}">${esc(x.name)}</button>`).join('')
         || (q.length >= 2 ? '<p class="field-note">Nada no armário com esse nome.</p>' : '');
     }

@@ -7,6 +7,7 @@
 // qual deles está na mão, e sempre deixa cadastrar mais um com o mesmo código.
 
 import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
+import { searchProducts, highlight } from '../search.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessArea } from '../areas.js';
 import { expiryRowHtml, bindExpiryRow } from './expiryLots.js';
@@ -140,7 +141,7 @@ async function searchLocal(ctx, { all = false, title = 'O que está tirando?' } 
   const status = $('#local-status', body);
   const render = () => {
     const found = matchLocal(products, input.value).slice(0, 8);
-    list.innerHTML = found.map((p) => localRow(p)).join('');
+    list.innerHTML = found.map((p) => localRow(p, input.value)).join('');
     list.hidden = !found.length;
     status.textContent = input.value.trim() && !found.length ? `Nada no armário com “${input.value.trim()}”.` : '';
   };
@@ -153,25 +154,20 @@ async function searchLocal(ctx, { all = false, title = 'O que está tirando?' } 
   setTimeout(() => input.focus(), 250);
 }
 
-const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-// Produtos do armário que têm todas as palavras digitadas.
+// Produtos do armário para o que foi digitado (js/search.js); sem nada
+// digitado, os mexidos por último.
 function matchLocal(products, query) {
-  const words = fold(query).split(/\s+/).filter(Boolean);
-  if (!words.length) return products.slice().sort((a, b) => b.updatedAt - a.updatedAt);
-  return products.filter((p) => {
-    const text = fold(`${p.name} ${p.brand}`);
-    return words.every((w) => text.includes(w));
-  }).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  if (!String(query || '').trim()) return products.slice().sort((a, b) => b.updatedAt - a.updatedAt);
+  return searchProducts(products, query);
 }
 
-function localRow(p) {
+function localRow(p, query = '') {
   return `
     <li>
       <button type="button" class="pick-row suggest-row" data-local="${esc(p.code)}">
         ${thumb(p)}
         <span class="row-main">
-          <span class="row-name">${esc(p.name)}</span>
+          <span class="row-name">${String(query).trim() ? highlight(p.name, query) : esc(p.name)}</span>
           <span class="row-sub"><strong class="stock-note">No armário: ${p.qty}</strong>${subtitle(p) ? `, ${subtitle(p)}` : ''}</span>
         </span>
       </button>
@@ -287,7 +283,7 @@ async function linkToProduct(ctx) {
   const status = $('#link-status', body);
   const render = () => {
     const found = matchLocal(products, input.value).slice(0, 8);
-    list.innerHTML = found.map((p) => localRow(p)).join('');
+    list.innerHTML = found.map((p) => localRow(p, input.value)).join('');
     list.hidden = !found.length;
     status.textContent = input.value.trim() && !found.length ? `Nada no armário com “${input.value.trim()}”.` : '';
   };
@@ -452,7 +448,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     suggestions = items;
     const mine = noCode && query ? matchLocal(locals, query).slice(0, 3) : [];
     list.hidden = !items.length && !mine.length && !photoRow();
-    list.innerHTML = mine.map((p) => localRow(p)).join('') + items.map((p, i) => `
+    list.innerHTML = mine.map((p) => localRow(p, query)).join('') + items.map((p, i) => `
       <li>
         <button type="button" class="pick-row suggest-row" data-i="${i}">
           ${thumb(p)}

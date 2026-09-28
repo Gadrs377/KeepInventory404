@@ -1155,3 +1155,26 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
   achou uma data com rótulo (os outros não contariam como imagem nova).
 - `tests/ui/`: testes de interface com câmera falsa gerada no próprio teste.
 - `sw.js` v55, com `js/expiryDebug.js` no cache do app.
+
+## Versão 3.41: busca do Armário
+
+- **X para limpar**, sempre que há texto na barra (com o campo em foco ou
+  não): um toque apaga e mantém o teclado aberto. O X do próprio navegador
+  some, para não aparecerem dois. Esc também apaga; "Buscar" no teclado só
+  fecha o teclado.
+- **Busca tolerante** (`js/search.js`, a mesma no Armário, em "O que está
+  tirando?" e na nota fiscal): sem acento ("feijao"), palavras em qualquer
+  ordem e pelo começo ("ninho lei"), singular e plural ("ovos", "pao"), um
+  erro de digitação ("detergnte"), palavras coladas ("papelhigienico"), e
+  também marca, tamanho, princípio ativo do remédio, ambiente e código.
+  Palavras de ligação ("de", "com") valem pouco.
+- **O mais parecido primeiro**, e o pedaço do nome que bateu em destaque: forte,
+  com o resto do nome mais claro, como na busca do iPhone.
+- **Nada some por causa do ambiente ou do filtro:** "Mais 1 produto com
+  “papel” fora de Cozinha — Mostrar", ou, sem nada no ambiente, "Buscar no
+  armário todo". Os blocos Acabando/Zerados/Vencendo contam só o que a busca
+  achou.
+- Leitor de tela: anuncia quantos produtos a busca achou depois de uma pausa
+  na digitação, em vez de ler a lista inteira a cada letra.
+- `tests/search.test.mjs`, `tests/ui/search.test.mjs` e `tests/sw.test.mjs`
+  (todo módulo de `js/` precisa estar no cache offline). `sw.js` v56.

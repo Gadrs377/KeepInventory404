@@ -328,6 +328,36 @@ body.has-sheet .glass-regular, body.has-sheet .home-tools, body.has-sheet .cam-t
 .search:focus-within { border-color: var(--ink); background: var(--paper); }
 .search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--ink); }
 .search input::placeholder { color: var(--ink-2); }
+/* O X do próprio navegador some: o nosso aparece sempre que há texto, com o
+   campo em foco ou não, e tem área de toque de 44 px sem alargar a barra. */
+.search input { appearance: none; -webkit-appearance: none; }
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.search-clear {
+  flex: none; display: grid; place-items: center;
+  width: 44px; height: 44px; margin-inline-end: -12px; padding: 0;
+  border: 0; background: none; color: var(--paper); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.search-clear[hidden] { display: none; }
+.search-clear > span {
+  display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink) 45%, transparent);
+  transition: scale 150ms var(--ease), background-color 150ms var(--ease);
+}
+.search-clear .icon { width: 10px; height: 10px; }
+.search-clear:active > span { scale: 0.85; background: color-mix(in oklab, var(--ink) 60%, transparent); }
+.search-clear:focus-visible { outline: none; }
+.search-clear:focus-visible > span { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* O pedaço do nome que bateu fica forte; o resto do nome, mais claro (como a
+   busca do iPhone). Só nos nomes que têm destaque: um produto achado pela
+   marca continua com o nome normal. */
+.row-name:has(mark.hit) { color: var(--ink-2); }
+mark.hit { background: none; color: var(--ink); }
+/* "Mais 2 produtos com … fora de Cozinha" no fim da lista */
+.search-more { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px var(--gutter) 4px; padding: 12px 16px; border-radius: var(--r-control); background: color-mix(in oklab, var(--ink) 5%, transparent); }
+.search-more p { margin: 0; font-size: 0.8824rem; color: var(--ink-2); text-wrap: pretty; }
+.search-more .btn { flex: none; }
 
 .tabs { display: flex; gap: 20px; }
 .tab {
