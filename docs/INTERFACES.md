@@ -1210,3 +1210,13 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
 - "Foto minha" reabre o seletor a cada toque, para trocar de foto.
 - O texto de cada leitura no diagnóstico é cortado em 400 caracteres, para
   um envio longo caber no limite da Bancada. `sw.js` v58.
+
+## Versão 3.44: foto própria na tela de testes
+
+- "Escolher foto do celular" é um botão com o campo de arquivo por cima,
+  transparente: o toque abre o seletor direto, sem abrir por código.
+- Cada passo e cada erro aparecem na tela ("Foto pronta: …", "Não deu para
+  abrir …: motivo") e vão no envio para a Bancada (`events`).
+- A foto é reduzida na hora e guardada no aparelho; se o iPhone fechar o app
+  com o seletor aberto, ela volta ao reabrir e a tela avisa que houve a
+  recarga. `sw.js` v59.

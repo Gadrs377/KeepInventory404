@@ -43,8 +43,9 @@ export default function mountTestes(root) {
           <legend>Imagem</legend>
           <label><input type="radio" name="img" value="copo" checked> Copo (tinta preta)</label>
           <label><input type="radio" name="img" value="chocolate"> Chocolate (tinta prata)</label>
-          <label><input type="radio" name="img" value="mine"> Foto minha</label>
-          <input type="file" accept="image/*" data-file hidden>
+          <label><input type="radio" name="img" value="mine" data-mine-radio disabled> Foto minha <small data-mine-name>(escolha abaixo)</small></label>
+          <label class="btn btn-quiet btn-sm tests-pick">Escolher foto do celular<input type="file" accept="image/*" data-file class="tests-file"></label>
+          <p class="group-note" data-photo-status aria-live="polite"></p>
         </fieldset>
         <fieldset class="tests-opts">
           <legend>Modelo</legend>
@@ -74,15 +75,19 @@ export default function mountTestes(root) {
   const table = $('[data-table]', root);
   const preview = $('[data-preview]', root);
   const fileInput = $('[data-file]', root);
+  const mineRadio = $('[data-mine-radio]', root);
+  const mineName = $('[data-mine-name]', root);
+  const photoStatus = $('[data-photo-status]', root);
   const buttons = ['[data-run]', '[data-stress]', '[data-copy]'].map((s) => $(s, root));
   const stopBtn = $('[data-stop]', root);
-  const report = { kind: 'testes-gpu', when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [] };
+  const report = { kind: 'testes-gpu', when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [], events: [] };
+  const event = (what, detail = null) => report.events.push({ t: new Date().toISOString(), what, detail });
   let alive = true;
   let stopping = false;
   let busy = false;
   let wake = null;
   let current = null; // leitor aberto agora (para parar)
-  let mine = null;
+  let mine = null; // data URL da foto escolhida, já reduzida (≤ 1600 px)
 
   const say = (line) => { log.textContent = `${line}\n${log.textContent}`.slice(0, 20000); };
   const pick = (name) => $(`input[name=${name}]:checked`, root).value;
@@ -108,14 +113,93 @@ export default function mountTestes(root) {
     const which = pick('img');
     const src = which === 'mine' ? mine : SAMPLES[which];
     if (!src) throw new Error('Escolha uma foto primeiro');
-    const img = new Image();
-    img.src = src;
-    await img.decode();
+    const img = await imageFrom(src);
     preview.src = src;
     // Mesmo limite de tamanho que a câmera usa nas fotos.
     const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
     return { img, w: Math.round(img.naturalWidth * k), h: Math.round(img.naturalHeight * k), which };
   }
+  // Abre uma imagem com onload/onerror (img.decode() falha à toa no Safari
+  // com fotos grandes).
+  function imageFrom(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('o navegador não conseguiu abrir essa imagem'));
+      img.src = src;
+    });
+  }
+
+  // ---------- Foto do celular ----------
+  // O campo de arquivo fica por cima do botão (transparente): o toque cai nele
+  // direto, sem abrir o seletor por código (o Safari às vezes bloqueia). A
+  // foto é reduzida na hora e guardada no aparelho: se o iPhone fechar o app
+  // enquanto o seletor está aberto (falta de memória), ela volta ao reabrir,
+  // e a tela avisa que isso aconteceu.
+  const PICKING = 'ki.testes.escolhendo';
+  const PHOTO = 'ki.testes.foto';
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+    del: (k) => { try { localStorage.removeItem(k); } catch { /* sem armazenamento */ } },
+  };
+  function photoSay(text) { photoStatus.textContent = text; say(`[foto] ${text}`); }
+  function useMine(dataUrl, name) {
+    mine = dataUrl;
+    mineRadio.disabled = false;
+    mineRadio.checked = true;
+    mineName.textContent = `(${name})`;
+    loadImage().catch((e) => photoSay(`Não deu para mostrar a foto: ${e.message}`));
+  }
+  const pickingSince = Number(store.get(PICKING) || 0);
+  if (pickingSince && Date.now() - pickingSince < 10 * 60000) {
+    photoSay('A tela recarregou enquanto você escolhia a foto. Provavelmente o iPhone fechou o app por falta de memória. Tente de novo; se repetir, feche outros apps.');
+    event('recarregou-escolhendo-foto', { segundos: Math.round((Date.now() - pickingSince) / 1000) });
+  }
+  store.del(PICKING);
+  try {
+    const saved = JSON.parse(store.get(PHOTO) || 'null');
+    if (saved && saved.url) { useMine(saved.url, saved.name); event('foto-restaurada', { nome: saved.name }); }
+  } catch { store.del(PHOTO); }
+
+  fileInput.addEventListener('click', () => { store.set(PICKING, String(Date.now())); event('abriu-seletor'); });
+  fileInput.addEventListener('cancel', () => { store.del(PICKING); event('cancelou-seletor'); });
+  fileInput.addEventListener('change', async () => {
+    store.del(PICKING);
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) { photoSay('Nenhuma foto escolhida.'); event('sem-arquivo'); return; }
+    const info = { nome: file.name, tipo: file.type || '?', kb: Math.round(file.size / 1024) };
+    photoSay(`Abrindo ${file.name} (${info.tipo}, ${info.kb} KB)…`);
+    const t0 = performance.now();
+    const url = URL.createObjectURL(file);
+    try {
+      let src;
+      try { src = await imageFrom(url); }
+      catch (e) {
+        // Plano B: alguns formatos abrem por createImageBitmap e não por <img>.
+        if (!('createImageBitmap' in window)) throw e;
+        src = await createImageBitmap(file);
+      }
+      const w0 = src.naturalWidth || src.width;
+      const h0 = src.naturalHeight || src.height;
+      const k = Math.min(1, 1600 / Math.max(w0, h0));
+      const c = document.createElement('canvas');
+      c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+      c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+      if (src.close) src.close();
+      const dataUrl = c.toDataURL('image/jpeg', 0.92);
+      Object.assign(info, { original: `${w0}x${h0}`, usada: `${c.width}x${c.height}`, ms: Math.round(performance.now() - t0) });
+      event('foto-escolhida', info);
+      const kept = store.set(PHOTO, JSON.stringify({ url: dataUrl, name: file.name }));
+      useMine(dataUrl, file.name);
+      photoSay(`Foto pronta: ${file.name}, ${w0}×${h0} → ${c.width}×${c.height}${kept ? '' : ' (não coube na memória do aparelho; some se a tela recarregar)'}.`);
+    } catch (e) {
+      event('foto-falhou', { ...info, erro: e.message });
+      photoSay(`Não deu para abrir ${file.name}: ${String(e.message).replace(/\.+$/, '')}. Tente outra foto ou tire uma nova.`);
+    } finally { URL.revokeObjectURL(url); }
+  });
+
   // Miniatura da foto da pessoa, para o Claude ver o que o leitor viu.
   function thumbOf(image) {
     if (image.which !== 'mine') return null;
@@ -253,7 +337,7 @@ export default function mountTestes(root) {
 
   $('[data-send]', root).addEventListener('click', (e) => {
     if (busy) { e.preventDefault(); toast('Espere o teste terminar.'); return; }
-    if (!report.runs.length) { e.preventDefault(); toast('Rode um teste antes de enviar.'); return; }
+    if (!report.runs.length && !report.events.length) { e.preventDefault(); toast('Rode um teste antes de enviar.'); return; }
     copyForBancada(JSON.stringify(report), () => toast('Não deu para copiar. Use Copiar resultado e cole na Bancada.', { duration: 5000 }));
   });
 
@@ -263,26 +347,14 @@ export default function mountTestes(root) {
     catch { download(`testes-${Date.now()}.json`, text, 'application/json'); toast('Resultado baixado.'); }
   });
 
-  // "Foto minha" abre o seletor a cada toque (também para trocar de foto).
-  root.addEventListener('click', (e) => {
-    if (e.target.name === 'img' && e.target.value === 'mine') fileInput.click();
-  });
   root.addEventListener('change', (e) => {
-    if (e.target.name === 'img' && e.target.value !== 'mine') loadImage().catch(() => {});
+    if (e.target.name === 'img') loadImage().catch((err) => say(`✖ imagem: ${err.message}`));
   });
-  fileInput.addEventListener('change', () => {
-    const f = fileInput.files && fileInput.files[0];
-    if (!f) return;
-    if (mine) URL.revokeObjectURL(mine);
-    mine = URL.createObjectURL(f);
-    loadImage().catch(() => {});
-  });
-  loadImage().catch(() => {});
+  if (!mine) loadImage().catch((err) => say(`✖ imagem: ${err.message}`));
 
   return () => {
     alive = false;
     if (current) current.dispose();
     if (wake) wake.release().catch(() => {});
-    if (mine) URL.revokeObjectURL(mine);
   };
 }
