@@ -8,5 +8,35 @@
     "region": [0.15, 0.26, 0.80, 0.48],
     "captured": "27/09/2026, 15 s, câmera de celular; recortado para a lata, sem áudio e sem metadados",
     "knownHard": true
+  },
+  {
+    "file": "tampa-plastico-relevo.webm",
+    "kind": "video",
+    "description": "Tampa plástica branca (copo de sobremesa), validade em relevo por pontos (sem tinta), parecido com a lata mas em plástico injetado.",
+    "reference": { "val": "2026-12-01", "fab": "2026-08-06", "lote": "20:42 A" },
+    "referenceSource": "lida a olho num quadro bem iluminado do próprio vídeo",
+    "region": [0.10, 0.25, 0.75, 0.40],
+    "captured": "28/09/2026, câmera de celular; recortado para a tampa, sem áudio e sem metadados",
+    "knownHard": null
+  },
+  {
+    "file": "copo-tinta-impressa.webm",
+    "kind": "video",
+    "description": "Copo de sobremesa (doce de leite), validade impressa em tinta preta sobre plástico claro — bom contraste, caso mais fácil dos quatro.",
+    "reference": { "val": "2026-09-17", "fab": "2024-06-05", "lote": "10:26 F" },
+    "referenceSource": "lida a olho num quadro do próprio vídeo",
+    "region": [0.10, 0.12, 0.70, 0.30],
+    "captured": "28/09/2026, câmera de celular; recortado para o copo, sem áudio e sem metadados",
+    "knownHard": false
+  },
+  {
+    "file": "chocolate-tinta-prata-foil.webm",
+    "kind": "video",
+    "description": "Caixa de chocolate, validade impressa em tinta prateada sobre embalagem metalizada azul (baixo contraste, reflexo).",
+    "reference": { "val": "2027-08-11", "lote": "CC22326493" },
+    "referenceSource": "lida a olho num quadro do próprio vídeo",
+    "region": [0.0, 0.28, 1.0, 0.30],
+    "captured": "28/09/2026, câmera de celular; recortado para a caixa, sem áudio e sem metadados",
+    "knownHard": null
   }
 ]
