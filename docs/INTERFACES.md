@@ -1130,3 +1130,28 @@ Depois de uma crítica do próprio fluxo (ver `docs/LEITURA_VALIDADE.md`,
   metadados — o original tinha a coordenada GPS da gravação),
   `tests/real-video.mjs` e instruções para adicionar fotos com segurança.
 - `sw.js` v54, com `js/frameQuality.js` no cache do app.
+
+## Versão 3.40: diagnóstico, rótulos reais e "É esta data?"
+
+Todas as sugestões da crítica anterior, guiadas por um diagnóstico em vez de
+hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
+
+- **Diagnóstico da leitura** (Mais → Ajuda para melhorar, ou `?debug`):
+  embaixo da câmera, o último recorte enviado ao leitor e cada tentativa com
+  o texto lido e o motivo de não ter confirmado; "Copiar diagnóstico" copia
+  tudo em JSON (ou baixa, se não der para copiar).
+- **Rótulos reais mal lidos** entram como validade (`RL:`, `UAL:`…, bloco com
+  FAB, "CONSUMIR ANTES DE" longe da data, "VAL/LOTE:"), sem abrir mão da
+  proteção de fabricação e lote.
+- **"Li 11/08/2027 várias vezes. É a validade?"** com "Sim" e "Não", para a
+  data vista em várias imagens sem rótulo. "Não" fecha a pergunta e não
+  pergunta de novo; a data continua como botão. Com a pergunta aberta, as
+  instruções de rotina e os avisos de imagem esperam.
+- **Contagem em cada data** ("5×", no alto da cápsula) e a mais vista com
+  fundo mais forte. Nada muda de lugar.
+- **Digitar já vem com a data mais vista**, selecionada: conferir e tocar em
+  Continuar, ou digitar por cima.
+- **Foto do celular:** "Lendo a sua foto (2 de 6)" e para quando um filtro já
+  achou uma data com rótulo (os outros não contariam como imagem nova).
+- `tests/ui/`: testes de interface com câmera falsa gerada no próprio teste.
+- `sw.js` v55, com `js/expiryDebug.js` no cache do app.

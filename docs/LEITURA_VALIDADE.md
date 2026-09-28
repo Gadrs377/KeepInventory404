@@ -219,11 +219,40 @@ que baixa por trás, no celular:
 Para comparação, o Tesseract já usado pesa uns 7 MB e o Paddle (`vendor/paddle`)
 uns 21,5 MB de modelos.
 
+## Diagnóstico, rótulo e a pergunta "É esta data?"
+
+A votação sempre sabe por que não confirmou (`why()` em
+`createExpiryConsensus`: sem data, mais de uma, sem rótulo, confiança baixa,
+só uma imagem, poucos votos, empate, data já escolhida). A câmera guarda cada
+tentativa com esse motivo (`promise.log()`), e com o diagnóstico ligado
+(Mais, ou `?debug`) mostra o recorte e as últimas tentativas na tela, com um
+botão para copiar tudo em JSON. Foi esse registro que mostrou que, nas
+embalagens reais em que a data certa era lida, o que faltava quase sempre
+era o rótulo ("Nono teste" em `TESTES_VALIDADES_REAIS.md`).
+
+Por isso:
+
+- `js/dates.js` reconhece o "VAL" mal lido no começo da linha, a data que
+  vem depois de uma linha de fabricação, o rótulo em outra parte do recorte
+  e o cabeçalho junto "VAL/LOTE:" — cada um com limites para não aceitar
+  fabricação (sempre anterior à validade) nem lote.
+- Uma data sem rótulo continua sem confirmar sozinha. Vista em 4 imagens
+  diferentes, 2 à frente das outras, vira uma pergunta ("Li … várias vezes.
+  É a validade?"), só se for futura ou já tiver vindo com rótulo alguma vez.
+- Cada data mostra em quantas imagens apareceu; a mais vista ganha destaque
+  e já vem escrita na página de digitar.
+
 ## Validação
 
 `node --test tests/expiry.test.mjs`: formatos, fabricação/lote, datas impossíveis,
 ambiguidade, votos de motores distintos, expiração dos votos, repetição de quadro,
 confiança insuficiente e datas já escolhidas.
+
+`node --test --test-concurrency=1 tests/ui/*.test.mjs`: o fluxo na tela, com
+câmera falsa gerada no teste e leitor simulado — confirmação, ordem e
+contagem das datas, a pergunta ("Sim" e "Não"), digitar pré-preenchido,
+embalagem difícil com a melhor foto, foto do celular com andamento, avisos de
+escuro/reflexo/tremido e o diagnóstico. Sobe o próprio servidor.
 
 `tests/ocr-browser.mjs` usa Chromium 134 com os motores reais, sem serviço remoto:
 

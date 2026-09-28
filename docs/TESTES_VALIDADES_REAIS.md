@@ -198,6 +198,79 @@ Fluxo completo por 90 s: não confirmou (nem confirmou data errada), e depois
 de ~35 s passou a sugerir digitar mostrando a melhor foto — que, para esta
 lata, é o caminho realista hoje.
 
+## Nono teste: por que não confirmava, medido — 28/09/2026
+
+O oitavo teste deixou em aberto por que o copo (o caso mais fácil) não
+confirmava. Em vez de outra hipótese, a câmera passou a registrar cada
+tentativa: motor, filtro, texto lido, datas achadas e **por que a votação
+recusou** (`consensus.why()`; o mesmo registro aparece na tela com o
+diagnóstico ligado em Mais). `tests/real-video.mjs` agora mede também o que
+importa para quem usa: **quando a data certa apareceu na tela** (virou botão,
+pergunta ou confirmação) e quantas datas erradas apareceram antes.
+
+### O que o registro mostrou
+
+Leituras que tinham a data certa, no fluxo completo (90 s):
+
+| Embalagem | leituras com a data certa | motivo da recusa |
+|---|---|---|
+| Copo | 9 | **sem rótulo 7**, só uma imagem 2 |
+| Chocolate | 13 | **sem rótulo 13** |
+
+A data certa era lida; o que faltava era o rótulo. Os textos crus explicam:
+
+- **Copo:** o Paddle lia `FAB:05/08/24` numa linha e, na outra, o "VAL" mal
+  lido: `RL:17/09/26`, `U9L:`, `UAL:`, `BL:`, `URL:`, `UPL:`. Só 2 leituras
+  tinham `VAL` certinho.
+- **Chocolate:** a embalagem diz "CONSUMIR ANTES DE/LOTE:" numa linha e a
+  data com o lote e a hora na seguinte (`11/08/27 CC22326493 04:50`). O
+  rótulo quase nunca entra no mesmo recorte que a data.
+
+Isso responde à pergunta do oitavo teste sem precisar da hipótese da mira.
+
+**Hipótese da confiança mínima do Paddle** (a confiança da leitura é a do pior
+trecho do texto, e poderia derrubar leituras boas abaixo de 40): nas 22
+leituras do chocolate com a data certa, 3 ficaram abaixo de 40 (19, 22, 37).
+Existe, mas é pequena; o motivo principal era o rótulo. Não mudou.
+
+### O que mudou
+
+Em `js/dates.js`, cada regra com os textos reais acima como teste e as
+proteções de fabricação e lote mantidas (`tests/expiry.test.mjs`):
+
+- **"VAL" mal lido:** 2–3 caracteres terminando em L, no começo da linha,
+  com dois-pontos e data logo depois. Não vale se começa com F, P ou L
+  (fabricação e lote mal lidos), nem para "ML", nem se a data não vem
+  depois da fabricação lida, nem se passou há mais de 60 dias.
+- **Bloco com fabricação:** "FAB: …" numa linha e uma única outra data,
+  posterior, na outra → validade.
+- **Rótulo em outra parte do recorte:** "CONSUMIR ANTES DE", "VALIDADE"… sem
+  data junto, e uma única data no recorte → validade.
+- **Cabeçalho junto** "VAL/LOTE:", "ANTES DE/LOTE:": a data que vem logo
+  depois é do primeiro rótulo; "FAB/LOTE:" continua fabricação.
+
+E na câmera: a mesma data vista em 4 imagens diferentes, 2 à frente das
+outras, vira a pergunta **"Li 11/08/2027 várias vezes. É a validade?"** — só
+para data futura ou que já veio com rótulo, para a fabricação não virar
+pergunta. Enquanto a pergunta está aberta, a câmera não diz que a embalagem
+está difícil.
+
+### Resultado
+
+| Embalagem | antes: data certa na tela | antes: fluxo | depois: data certa na tela | depois: pergunta | depois: fluxo |
+|---|---|---|---|---|---|
+| Copo | 8,4 s | não confirmou | 8,1–19,4 s | (confirmou antes) | **confirmou 17/09/2026** em 39–64 s |
+| Chocolate | 14,2 s (1 errada antes) | não confirmou | 12,9–13,4 s (nenhuma errada) | **20,9 s** | **confirmou 11/08/2027** em 46 s |
+| Tampa (relevo) | nunca | não confirmou | nunca | nenhuma | não confirmou |
+| Lata (laser) | nunca | não confirmou | nunca | nenhuma | não confirmou |
+
+Nenhuma pergunta e nenhuma confirmação com data errada. Os tempos variam
+bastante de uma execução para outra na mesma máquina (o copo confirmou em
+39 s numa e 64 s na outra), então cada número vale como ordem de grandeza.
+Tampa e lata continuam sem ler a data certa em nenhum quadro — é limite do
+motor de leitura, não da votação; para elas o caminho é digitar olhando a
+melhor foto (agora já com a data mais vista escrita, quando houver).
+
 ## Reproduzir e auditar
 
 Material real agora fica no repositório, em `tests/real/` (recortado e sem
@@ -212,7 +285,8 @@ Com o servidor na porta 8765:
 
 ```sh
 node --test tests/expiry.test.mjs tests/layout.test.mjs
-node tests/real-video.mjs
+node --test --test-concurrency=1 tests/ui/*.test.mjs   # sobe o próprio servidor
+node tests/real-video.mjs          # --flow: só o fluxo; --only=copo: um vídeo
 node tests/photos.mjs
 node tests/photo-experiments.mjs
 node tests/camera-heuristics.mjs

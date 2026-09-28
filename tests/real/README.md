@@ -42,15 +42,41 @@ estão aqui: precisam ser enviadas de novo e passar pelo passo acima, com os
 mesmos nomes. Os scripts já procuram em `tests/real/` e em `tests/private/`
 (`tests/media.mjs`).
 
+## Gravar um vídeo novo pelo próprio app
+
+Os vídeos de hoje foram gravados com a câmera do celular, fora do app, e a
+região do manifesto foi escolhida depois, olhando o vídeo — por isso não
+servem para medir nada que dependa de onde a pessoa mira (ver "Oitavo
+teste" em `docs/TESTES_VALIDADES_REAIS.md`). Para isso:
+
+1. No app, **Mais → Diagnóstico da leitura de validade** ligado.
+2. Ligar a **gravação de tela** do iPhone (Central de Controle).
+3. Abrir a validade de um produto e mirar a data como faria normalmente, por
+   uns 30–60 s, sem ajudar a câmera mais do que o normal.
+4. Antes de fechar, tocar em **Copiar diagnóstico** e colar numa mensagem
+   ou nota: é o JSON com cada leitura e o motivo da recusa.
+5. Parar a gravação. Anotar a validade real, lida a olho.
+
+A gravação de tela mostra exatamente o que a pessoa viu (mira, datas,
+pergunta, avisos); o JSON diz o que o leitor viu. Antes de entrar aqui,
+os dois passam pelo mesmo cuidado de cima: recortar a gravação só na área
+da câmera (sem barra de status, notificações ou outros apps), sem áudio e
+sem metadados, e conferir que o JSON não tem nada além de texto da
+embalagem (ele traz o modelo do navegador em `ua`; apagar esse campo).
+
 ## Rodar
 
 Com o servidor na porta 8765 (ver `docs/LEITURA_VALIDADE.md`):
 
     node tests/real-video.mjs
 
-Leva uns 4 minutos por vídeo (o Paddle medium lê ~4 s por quadro). Resultado em
-`tests/real-video-results.json`. A única regra que reprova é confirmar sozinho
-uma data diferente da referência; o resto é medida.
+Leva uns 4 minutos por vídeo (o Paddle medium lê ~4 s por quadro);
+`--flow` pula a medida das camadas e roda só o fluxo (90 s por vídeo), e
+`--only=copo` roda um vídeo só. Resultado em `tests/real-video-results.json`.
+A única regra que reprova é confirmar sozinho uma data diferente da
+referência; o resto é medida — sobretudo **quando a data certa apareceu na
+tela** (botão, pergunta ou confirmação), as datas erradas que apareceram
+antes e por que a votação recusou cada leitura certa.
 
 ## O que só dá para testar num iPhone de verdade
 
@@ -68,3 +94,9 @@ Os testes aqui rodam no Chromium. No Safari/iPhone ainda falta conferir:
    piscando.
 5. **Piscar da foto automática** visível, e o toque para ampliar a foto na
    página de digitar.
+6. **Pergunta "É esta data?"**: aparece sem empurrar a câmera para fora da
+   tela; "Sim" e "Não" cabem numa linha; o VoiceOver lê a pergunta uma vez.
+7. **Digitar já preenchido**: a data vem selecionada e o primeiro número
+   digitado troca tudo (no iOS a seleção feita por código às vezes não
+   aparece; se não trocar, anotar).
+8. **Copiar diagnóstico** funciona no Safari (senão, baixa o arquivo JSON).
