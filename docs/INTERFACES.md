@@ -1220,3 +1220,16 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
 - A foto é reduzida na hora e guardada no aparelho; se o iPhone fechar o app
   com o seletor aberto, ela volta ao reabrir e a tela avisa que houve a
   recarga. `sw.js` v59.
+
+## Versão 3.45: tela de testes guarda tudo
+
+- A tela de testes guarda no aparelho as opções, os resultados, a tabela e
+  o registro. O iPhone às vezes fecha o app em segundo plano (ao abrir a
+  Bancada, o seletor de fotos ou a câmera) e a tela voltava do zero, com o
+  copo marcado e o resultado sumido. Agora volta como estava, até tocar em
+  "Limpar resultados".
+- Se o app cai no meio de um teste, a tela avisa ao reabrir em que motor,
+  modelo e leitura parou, e registra `caiu-durante-teste` no envio: é assim
+  que aparece o travamento da GPU depois de muitas leituras, se acontecer.
+- O envio para a Bancada tira as miniaturas e os testes mais antigos se
+  passar de 230 KB. `sw.js` v60.

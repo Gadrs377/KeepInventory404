@@ -63,6 +63,7 @@ export default function mountTestes(root) {
           <button type="button" class="btn btn-quiet" data-stress>Estresse GPU</button>
           <button type="button" class="btn btn-quiet" data-stop disabled>Parar</button>
           <button type="button" class="btn btn-quiet" data-copy>Copiar resultado</button>
+          <button type="button" class="btn btn-quiet" data-clear>Limpar resultados</button>
         </div>
         <a class="btn btn-primary" data-send href="${BANCADA_URL}" target="_blank" rel="noopener">Enviar para o Claude</a>
         <p class="group-note">Copia o resultado e abre a Bancada. Lá, toque e segure no campo e escolha Colar.</p>
@@ -80,8 +81,32 @@ export default function mountTestes(root) {
   const photoStatus = $('[data-photo-status]', root);
   const buttons = ['[data-run]', '[data-stress]', '[data-copy]'].map((s) => $(s, root));
   const stopBtn = $('[data-stop]', root);
-  const report = { kind: 'testes-gpu', when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [], events: [] };
-  const event = (what, detail = null) => report.events.push({ t: new Date().toISOString(), what, detail });
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+    del: (k) => { try { localStorage.removeItem(k); } catch { /* sem armazenamento */ } },
+  };
+  // Tudo desta tela fica guardado no aparelho (opções, resultados, registro):
+  // o iPhone às vezes fecha o app em segundo plano (ao abrir a Bancada, o
+  // seletor de fotos ou a câmera) e a tela voltava do zero. `running` marca
+  // o teste em andamento: se ainda estiver lá ao reabrir, o app caiu no meio.
+  const STATE = 'ki.testes.estado';
+  const fresh = () => ({ kind: 'testes-gpu', when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [], events: [] });
+  let saved = null;
+  try { saved = JSON.parse(store.get(STATE) || 'null'); } catch { saved = null; }
+  let report = saved && saved.report ? saved.report : fresh();
+  let lastTable = saved && saved.table ? saved.table : [];
+  let running = null;
+  const event = (what, detail = null) => { report.events.push({ t: new Date().toISOString(), what, detail }); persist(); };
+  let persistTimer = 0;
+  function persist() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      const opts = { img: pick('img'), tier: pick('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked };
+      store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts, running }));
+    }, 150);
+  }
+  function setRunning(r) { running = r; persist(); }
   let alive = true;
   let stopping = false;
   let busy = false;
@@ -89,7 +114,7 @@ export default function mountTestes(root) {
   let current = null; // leitor aberto agora (para parar)
   let mine = null; // data URL da foto escolhida, já reduzida (≤ 1600 px)
 
-  const say = (line) => { log.textContent = `${line}\n${log.textContent}`.slice(0, 20000); };
+  const say = (line) => { log.textContent = `${line}\n${log.textContent}`.slice(0, 20000); persist(); };
   const pick = (name) => $(`input[name=${name}]:checked`, root).value;
 
   // Ambiente: tem GPU para a web? Qual?
@@ -108,6 +133,25 @@ export default function mountTestes(root) {
     report.env = lines;
     if (alive) $('[data-env]', root).textContent = lines.join('\n');
   })();
+
+  // Volta do jeito que estava.
+  if (saved) {
+    const o = saved.opts || {};
+    for (const [name, value] of [['img', o.img], ['tier', o.tier]]) {
+      const r = value && $(`input[name=${name}][value="${value}"]`, root);
+      if (r && !r.disabled) r.checked = true;
+    }
+    if (o.n) $('[data-n]', root).value = o.n;
+    $('[data-extra]', root).checked = !!o.extra;
+    log.textContent = saved.log || '';
+    if (lastTable.length) renderTable(lastTable);
+    if (saved.running) {
+      const r = saved.running;
+      say(`⚠ O app fechou no meio do teste (${r.what}, ${r.label || ''} ${r.tier}, leitura ${r.read}${r.of ? ` de ${r.of}` : ''}, ${Math.round((Date.now() - r.since) / 1000)} s depois de começar). Provavelmente o iPhone fechou por falta de memória.`);
+      event('caiu-durante-teste', r);
+    }
+  }
+  event('abriu-tela', { recarga: (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]?.type) || '?' });
 
   async function loadImage() {
     const which = pick('img');
@@ -138,11 +182,6 @@ export default function mountTestes(root) {
   // e a tela avisa que isso aconteceu.
   const PICKING = 'ki.testes.escolhendo';
   const PHOTO = 'ki.testes.foto';
-  const store = {
-    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-    set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } },
-    del: (k) => { try { localStorage.removeItem(k); } catch { /* sem armazenamento */ } },
-  };
   function photoSay(text) { photoStatus.textContent = text; say(`[foto] ${text}`); }
   function useMine(dataUrl, name) {
     mine = dataUrl;
@@ -158,8 +197,13 @@ export default function mountTestes(root) {
   }
   store.del(PICKING);
   try {
-    const saved = JSON.parse(store.get(PHOTO) || 'null');
-    if (saved && saved.url) { useMine(saved.url, saved.name); event('foto-restaurada', { nome: saved.name }); }
+    const photo = JSON.parse(store.get(PHOTO) || 'null');
+    if (photo && photo.url) {
+      useMine(photo.url, photo.name);
+      // A foto volta, mas a imagem escolhida é a que estava marcada.
+      const was = saved && saved.opts && saved.opts.img;
+      if (was && was !== 'mine') { $(`input[name=img][value="${was}"]`, root).checked = true; loadImage().catch(() => {}); }
+    }
   } catch { store.del(PHOTO); }
 
   fileInput.addEventListener('click', () => { store.set(PICKING, String(Date.now())); event('abriu-seletor'); });
@@ -235,11 +279,13 @@ export default function mountTestes(root) {
     const out = { engine: key, label, tier, image: image.which, reads: [], texts: [] };
     try {
       const t0 = performance.now();
+      setRunning({ what: 'comparar', engine: key, label, tier, read: 0, of: n, since: Date.now() });
       const ready = await reader.ready();
       out.initMs = Math.round(performance.now() - t0);
       out.providers = ready.summary ? `${ready.summary.detProvider}/${ready.summary.recProvider}` : 'wasm/wasm';
       say(`  pronto em ${(out.initMs / 1000).toFixed(1)} s (${out.providers})`);
       for (let i = 0; i < n && alive && !stopping; i++) {
+        setRunning({ what: 'comparar', engine: key, label, tier, read: i + 1, of: n, since: t0 + performance.timeOrigin });
         const c = canvasOf(image);
         const t = performance.now();
         const r = await reader.read(c);
@@ -254,6 +300,7 @@ export default function mountTestes(root) {
     } finally {
       reader.dispose();
       current = null;
+      setRunning(null);
     }
     out.firstMs = out.reads[0] ?? null;
     out.medianMs = median(out.reads.slice(1));
@@ -288,10 +335,11 @@ export default function mountTestes(root) {
       for (const key of keys) {
         if (!alive || stopping) break;
         runs.push(await runEngine(key, image, tier, n));
+        lastTable = runs;
         renderTable(runs);
       }
       report.runs.push({ kind: 'comparar', image: image.which, size: `${image.w}x${image.h}`, thumb: thumbOf(image), runs });
-      say('✔ pronto');
+      say('✔ pronto — o resultado fica guardado aqui até você tocar em Limpar resultados');
     } catch (e) { say(`✖ ${e.message}`); }
     finally { if (alive) setBusy(false); }
   });
@@ -308,12 +356,14 @@ export default function mountTestes(root) {
       const image = await loadImage();
       out.image = image.which;
       say(`— Estresse GPU (${tier}): até ${LIMIT} leituras seguidas —`);
+      setRunning({ what: 'estresse', label: 'GPU', tier, read: 0, of: LIMIT, since: Date.now() });
       await reader.ready();
       const t0 = performance.now();
       let last = t0;
       while (out.count < LIMIT && alive && !stopping) {
         await reader.read(canvasOf(image));
         out.count++;
+        if (out.count % 5 === 0) setRunning({ ...running, read: out.count });
         if (out.count % 20 === 0) {
           const now = performance.now();
           say(`  ${out.count} leituras, últimas 20: ${Math.round((now - last) / 20)} ms cada`);
@@ -329,6 +379,7 @@ export default function mountTestes(root) {
       reader.dispose();
       current = null;
       report.runs.push(out);
+      setRunning(null);
       if (alive) setBusy(false);
     }
   });
@@ -338,7 +389,29 @@ export default function mountTestes(root) {
   $('[data-send]', root).addEventListener('click', (e) => {
     if (busy) { e.preventDefault(); toast('Espere o teste terminar.'); return; }
     if (!report.runs.length && !report.events.length) { e.preventDefault(); toast('Rode um teste antes de enviar.'); return; }
-    copyForBancada(JSON.stringify(report), () => toast('Não deu para copiar. Use Copiar resultado e cole na Bancada.', { duration: 5000 }));
+    copyForBancada(forBancada(), () => toast('Não deu para copiar. Use Copiar resultado e cole na Bancada.', { duration: 5000 }));
+  });
+
+  // A Bancada guarda até 240 KB por envio: tira as miniaturas mais antigas
+  // e, se ainda precisar, os testes mais antigos.
+  function forBancada() {
+    const copy = JSON.parse(JSON.stringify(report));
+    let text = JSON.stringify(copy);
+    for (const r of copy.runs) { if (text.length < 230000) break; if (r.thumb) { r.thumb = null; text = JSON.stringify(copy); } }
+    while (text.length >= 230000 && copy.runs.length > 1) { copy.runs.shift(); copy.cortado = true; text = JSON.stringify(copy); }
+    return text;
+  }
+
+  $('[data-clear]', root).addEventListener('click', () => {
+    if (busy) return;
+    const env = report.env;
+    report = fresh();
+    report.env = env;
+    lastTable = [];
+    table.innerHTML = '';
+    log.textContent = '';
+    persist();
+    toast('Resultados apagados.', { duration: 2000 });
   });
 
   $('[data-copy]', root).addEventListener('click', async () => {
@@ -349,11 +422,16 @@ export default function mountTestes(root) {
 
   root.addEventListener('change', (e) => {
     if (e.target.name === 'img') loadImage().catch((err) => say(`✖ imagem: ${err.message}`));
+    persist();
   });
   if (!mine) loadImage().catch((err) => say(`✖ imagem: ${err.message}`));
 
   return () => {
     alive = false;
+    // Saiu da tela pelo app (não é queda): o teste em andamento só para.
+    if (running) { report.events.push({ t: new Date().toISOString(), what: 'saiu-da-tela-durante-teste', detail: running }); running = null; }
+    clearTimeout(persistTimer);
+    store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts: { img: pick('img'), tier: pick('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked }, running: null }));
     if (current) current.dispose();
     if (wake) wake.release().catch(() => {});
   };
