@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v61';
+const VERSION = 'v62';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -100,7 +100,7 @@ self.addEventListener('fetch', (event) => {
 
   // Large optional engine: downloaded only when Tesseract cannot confirm.
   // Versioned immutable URLs avoid mixing old WASM/JS with a newer model.
-  if (url.origin === self.location.origin && (url.pathname.includes('/vendor/paddle/v3/') || url.pathname.includes('/vendor/paddle/gpu1/'))) {
+  if (url.origin === self.location.origin && /\/vendor\/paddle\/(v3|gpu\d+)\//.test(url.pathname)) {
     event.respondWith(cacheFirst(request, PADDLE_CACHE, event));
     return;
   }

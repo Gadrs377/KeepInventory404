@@ -3,11 +3,12 @@
 // `tier`: 'small' (leitura contínua, rápida) ou 'medium' (foto nítida, mais
 // lenta por leitura mas enxerga mais em material difícil) — mesmo worker,
 // modelos PP-OCRv6 diferentes. Ver docs/LEITURA_VALIDADE.md.
-// `gpu`: só para a tela de testes. Usa vendor/paddle/gpu1 (onnxruntime com
-// WebGPU); `gpu: 'wasm'` roda esse mesmo pacote sem GPU, para comparar.
+// `gpu`: só para a tela de testes. Usa o pacote `pack` (vendor/paddle/gpu1,
+// onnxruntime 1.24.3, ou gpu2, 1.30.0, com WebGPU); `gpu: 'wasm'` roda esse
+// mesmo pacote sem GPU, para comparar.
 // `readTimeout`: quanto uma leitura pode levar antes de desistir.
 import { textRows } from './ocrLayout.js';
-export function createPaddleReader(tier = 'small', { gpu = null, readTimeout = 30000 } = {}) {
+export function createPaddleReader(tier = 'small', { gpu = null, pack = 'gpu1', readTimeout = 30000 } = {}) {
   let worker;
   let init;
   let stopped = false;
@@ -33,7 +34,7 @@ export function createPaddleReader(tier = 'small', { gpu = null, readTimeout = 3
     if (stopped) return Promise.reject(new Error('Leitura encerrada'));
     if (!init) {
       try {
-        worker = new Worker(new URL(gpu ? '../vendor/paddle/gpu1/worker.js' : '../vendor/paddle/v3/worker.js', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL(gpu ? `../vendor/paddle/${pack}/worker.js` : '../vendor/paddle/v3/worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = ({ data }) => {
           const item = pending.get(data.id); if (!item) return;
           clearTimeout(item.timer); pending.delete(data.id);

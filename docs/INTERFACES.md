@@ -1234,3 +1234,19 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
 - O envio para a Bancada tira as miniaturas e os testes mais antigos se
   passar de 230 KB. Tudo é gravado na hora (sem espera), para não perder o
   que aconteceu logo antes de o iPhone fechar o app. `sw.js` v61.
+
+## Versão 3.46: GPU com onnxruntime 1.30 nos testes
+
+Primeiro envio real do iPhone (iOS 27, app instalado, GPU "apple"): a foto
+própria funcionou, e a GPU com onnxruntime 1.24.3 **derrubou o app** duas
+vezes, na 2ª e na 3ª leitura (o iPhone recarregou a tela; a tela registrou
+`caiu-durante-teste`). Não é o travamento depois de ~500 leituras relatado
+por outros: aqui cai logo no começo.
+
+- Novo pacote `vendor/paddle/gpu2` com o onnxruntime **1.30.0** (o mais novo;
+  o 1.24.3 é o da produção). `build-gpu.mjs` monta os dois.
+- Na tela de testes, cada versão de GPU é uma opção; a 1.24 começa
+  desmarcada. O estresse usa a primeira marcada.
+- Cada leitura entra no resultado na hora: se o app cair, a tabela mostra
+  "parou depois de N leituras", com os tempos que deu para medir.
+- O envio para a Bancada leva o registro da tela (`log`). `sw.js` v62.

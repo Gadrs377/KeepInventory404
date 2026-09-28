@@ -17,8 +17,9 @@ const SAMPLES = { copo: 'vendor/paddle/amostras/copo.jpg', chocolate: 'vendor/pa
 const ENGINES = {
   // Prazo largo: a 1ª leitura na GPU inclui preparar os programas dela.
   v3: { label: 'Atual (sem GPU)', opts: { readTimeout: 180000 } },
-  gpu: { label: 'GPU', opts: { gpu: 'webgpu', readTimeout: 180000 } },
-  gpuwasm: { label: 'Pacote novo sem GPU', opts: { gpu: 'wasm', readTimeout: 180000 } },
+  gpu: { label: 'GPU 1.24', opts: { gpu: 'webgpu', pack: 'gpu1', readTimeout: 180000 } },
+  gpu2: { label: 'GPU 1.30', opts: { gpu: 'webgpu', pack: 'gpu2', readTimeout: 180000 } },
+  gpuwasm: { label: '1.30 sem GPU', opts: { gpu: 'wasm', pack: 'gpu2', readTimeout: 180000 } },
 };
 
 // "3,2× mais rápido" ou "32× mais lento" que o atual.
@@ -55,7 +56,9 @@ export default function mountTestes(root) {
         <fieldset class="tests-opts">
           <legend>Opções</legend>
           <label>Leituras por motor <input type="number" min="2" max="30" value="6" data-n class="tests-num"></label>
-          <label><input type="checkbox" data-extra> Também o pacote novo sem GPU</label>
+          <label><input type="checkbox" data-eng="gpu2" checked> GPU com onnxruntime 1.30 (novo)</label>
+          <label><input type="checkbox" data-eng="gpu"> GPU com onnxruntime 1.24 (derrubou o app no iPhone)</label>
+          <label><input type="checkbox" data-eng="gpuwasm"> onnxruntime 1.30 sem GPU</label>
         </fieldset>
         <img class="tests-img" alt="Imagem usada no teste" data-preview>
         <div class="tests-actions">
@@ -102,7 +105,7 @@ export default function mountTestes(root) {
   // app (abrir o seletor, começar uma leitura) é justamente o que importa.
   function persist() {
     const checked = (name) => $(`input[name=${name}]:checked`, root)?.value || null;
-    const opts = { img: checked('img'), tier: checked('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked };
+    const opts = { img: checked('img'), tier: checked('tier'), n: $('[data-n]', root).value, engines: [...root.querySelectorAll('[data-eng]')].filter((c) => c.checked).map((c) => c.dataset.eng) };
     store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts, running }));
   }
   function setRunning(r) { running = r; persist(); }
@@ -141,7 +144,7 @@ export default function mountTestes(root) {
       if (r && !r.disabled) r.checked = true;
     }
     if (o.n) $('[data-n]', root).value = o.n;
-    $('[data-extra]', root).checked = !!o.extra;
+    if (Array.isArray(o.engines)) for (const c of root.querySelectorAll('[data-eng]')) c.checked = o.engines.includes(c.dataset.eng);
     log.textContent = saved.log || '';
     if (lastTable.length) renderTable(lastTable);
     if (saved.running) {
@@ -271,12 +274,15 @@ export default function mountTestes(root) {
     } else if (wake) { wake.release().catch(() => {}); wake = null; }
   }
 
-  async function runEngine(key, image, tier, n) {
+  // `entry`: o teste em andamento, já dentro de report.runs; cada leitura
+  // entra nele na hora, para uma queda do app não apagar os tempos.
+  async function runEngine(key, image, tier, n, entry) {
     const { label, opts } = ENGINES[key];
     say(`▶ ${label} (${tier}): preparando…`);
     const reader = createPaddleReader(tier, opts);
     current = reader;
     const out = { engine: key, label, tier, image: image.which, reads: [], texts: [] };
+    entry.runs.push(out);
     try {
       const t0 = performance.now();
       setRunning({ what: 'comparar', engine: key, label, tier, read: 0, of: n, since: Date.now() });
@@ -306,6 +312,7 @@ export default function mountTestes(root) {
     out.medianMs = median(out.reads.slice(1));
     const dates = findExpiryCandidates(out.texts[0] || '');
     out.dates = dates.map((d) => d.iso);
+    persist();
     return out;
   }
 
@@ -316,8 +323,10 @@ export default function mountTestes(root) {
       <tbody>${runs.map((r) => `<tr>
         <td>${esc(r.label)}<br><small>${esc(r.providers || '')}</small></td>
         <td>${r.initMs != null ? `${(r.initMs / 1000).toFixed(1)} s` : '—'}</td>
-        <td>${r.firstMs != null ? `${r.firstMs} ms` : '—'}</td>
-        <td>${r.error ? `<b>erro</b>: ${esc(r.error)}` : `<b>${r.medianMs} ms</b>${base && r !== base && base.medianMs ? `<br><small>${speed(base.medianMs, r.medianMs)}</small>` : ''}`}</td>
+        <td>${r.reads && r.reads.length ? `${r.reads[0]} ms` : '—'}</td>
+        <td>${r.error ? `<b>erro</b>: ${esc(r.error)}`
+          : r.medianMs == null ? `<b>parou</b> depois de ${r.reads ? r.reads.length : 0} leitura(s)${r.reads && r.reads.length > 1 ? `: ${r.reads.slice(1).join(', ')} ms` : ''}`
+          : `<b>${r.medianMs} ms</b>${base && r !== base && base.medianMs ? `<br><small>${speed(base.medianMs, r.medianMs)}</small>` : ''}`}</td>
         <td>${r.dates && r.dates.length ? r.dates.map((d) => esc(formatDate(d))).join(', ') : '—'}${base && r !== base && r.texts[0] !== undefined ? `<br><small>${r.texts[0] === base.texts[0] ? 'mesmo texto do atual' : 'texto diferente do atual'}</small>` : ''}</td>
       </tr>`).join('')}</tbody></table>`;
   }
@@ -325,20 +334,23 @@ export default function mountTestes(root) {
   $('[data-run]', root).addEventListener('click', async () => {
     if (busy) return;
     setBusy(true);
-    const runs = [];
+    let entry = null;
     try {
       const image = await loadImage();
       const tier = pick('tier');
       const n = Math.max(2, Math.min(30, Number($('[data-n]', root).value) || 6));
-      const keys = ['v3', 'gpu', ...($('[data-extra]', root).checked ? ['gpuwasm'] : [])];
+      const keys = ['v3', ...[...root.querySelectorAll('[data-eng]')].filter((c) => c.checked).map((c) => c.dataset.eng)];
       say(`— Comparar: ${image.which}, ${image.w}×${image.h}, ${tier}, ${n} leituras —`);
+      entry = { kind: 'comparar', image: image.which, size: `${image.w}x${image.h}`, thumb: thumbOf(image), runs: [], incompleto: true };
+      report.runs.push(entry);
+      lastTable = entry.runs;
       for (const key of keys) {
         if (!alive || stopping) break;
-        runs.push(await runEngine(key, image, tier, n));
-        lastTable = runs;
-        renderTable(runs);
+        await runEngine(key, image, tier, n, entry);
+        renderTable(entry.runs);
       }
-      report.runs.push({ kind: 'comparar', image: image.which, size: `${image.w}x${image.h}`, thumb: thumbOf(image), runs });
+      delete entry.incompleto;
+      persist();
       say('✔ pronto — o resultado fica guardado aqui até você tocar em Limpar resultados');
     } catch (e) { say(`✖ ${e.message}`); }
     finally { if (alive) setBusy(false); }
@@ -349,14 +361,15 @@ export default function mountTestes(root) {
     setBusy(true);
     const LIMIT = 600;
     const tier = pick('tier');
-    const reader = createPaddleReader(tier, ENGINES.gpu.opts);
+    const engine = ['gpu2', 'gpu'].find((k) => $(`[data-eng="${k}"]`, root).checked) || 'gpu2';
+    const reader = createPaddleReader(tier, ENGINES[engine].opts);
     current = reader;
-    const out = { kind: 'estresse', tier, count: 0, error: null };
+    const out = { kind: 'estresse', engine, label: ENGINES[engine].label, tier, count: 0, error: null };
     try {
       const image = await loadImage();
       out.image = image.which;
-      say(`— Estresse GPU (${tier}): até ${LIMIT} leituras seguidas —`);
-      setRunning({ what: 'estresse', label: 'GPU', tier, read: 0, of: LIMIT, since: Date.now() });
+      say(`— Estresse ${ENGINES[engine].label} (${tier}): até ${LIMIT} leituras seguidas —`);
+      setRunning({ what: 'estresse', engine, label: ENGINES[engine].label, tier, read: 0, of: LIMIT, since: Date.now() });
       await reader.ready();
       const t0 = performance.now();
       let last = t0;
@@ -396,6 +409,7 @@ export default function mountTestes(root) {
   // e, se ainda precisar, os testes mais antigos.
   function forBancada() {
     const copy = JSON.parse(JSON.stringify(report));
+    copy.log = log.textContent.slice(0, 12000); // mais recente primeiro
     let text = JSON.stringify(copy);
     for (const r of copy.runs) { if (text.length < 230000) break; if (r.thumb) { r.thumb = null; text = JSON.stringify(copy); } }
     while (text.length >= 230000 && copy.runs.length > 1) { copy.runs.shift(); copy.cortado = true; text = JSON.stringify(copy); }

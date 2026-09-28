@@ -2,10 +2,14 @@
   "name": "keepinventory-paddle-build",
   "private": true,
   "type": "module",
-  "scripts": { "build": "node build.mjs", "build:gpu": "node build-gpu.mjs" },
+  "scripts": {
+    "build": "node build.mjs",
+    "build:gpu": "node build-gpu.mjs"
+  },
   "dependencies": {
     "@paddleocr/paddleocr-js": "0.4.2",
+    "esbuild": "0.25.12",
     "onnxruntime-web": "1.24.3",
-    "esbuild": "0.25.12"
+    "ort130": "npm:onnxruntime-web@1.30.0"
   }
 }
