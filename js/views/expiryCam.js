@@ -24,7 +24,7 @@
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr, thickenDark } from '../ocr.js';
 import { readDotPrint } from '../dotPrint.js';
-import { createPaddleReader, createSmallReader } from '../paddleOcr.js';
+import { createPaddleReader, createSmallReader, sharedReader } from '../paddleOcr.js';
 import { textRows } from '../ocrLayout.js';
 import { guessRegion, fingerprint } from '../dateRegion.js';
 import { createFindPanel } from './expiryFind.js';
@@ -213,10 +213,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // mas enxerga mais em material difícil). Ver docs/LEITURA_VALIDADE.md.
     // O small tenta a GPU (3× mais rápido no iPhone) e volta sozinho para o
     // leitor sem GPU; o medium fica sem GPU (na GPU derrubou o app).
-    const paddleLive = useGpu ? createSmallReader() : Object.assign(createPaddleReader('small'), { backend: () => 'wasm' });
+    // Os leitores ficam de uma abertura para a outra (sharedReader): criar e
+    // destruir a cada vez fazia o iPhone fechar o app por memória.
+    const paddleLive = useGpu ? sharedReader('small-gpu', createSmallReader)
+      : sharedReader('small-wasm', () => Object.assign(createPaddleReader('small'), { backend: () => 'wasm' }));
     let paddleLiveState = 'idle';
     let loadingPaddleLive = null;
-    const paddleBurst = createPaddleReader('medium');
+    const paddleBurst = sharedReader('medium', () => createPaddleReader('medium'));
     let paddleBurstState = 'idle';
     let loadingPaddleBurst = null;
     let tessFailed = false;
@@ -422,7 +425,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           note({ kind: 'event', what: 'small-failed' });
           setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data', { urgent: true });
         }
-        paddleLive.dispose();
+        paddleLive.kill();
       });
     }
 
@@ -435,7 +438,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (alive) { paddleBurstState = 'ready'; note({ kind: 'event', what: 'medium-ready' }); }
       }).catch(() => {
         if (alive) { paddleBurstState = 'failed'; note({ kind: 'event', what: 'medium-failed' }); }
-        paddleBurst.dispose();
+        paddleBurst.kill();
       });
     }
 
@@ -558,14 +561,14 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           // takePhoto() pode nunca responder se a trilha cair no meio.
           const blob = await Promise.race([new ImageCapture(track).takePhoto(), pause(3000).then(() => { throw new Error('foto demorou'); })]);
           const photo = await createImageBitmap(blob);
-          return { still: photo, box: mapBox(box, video.videoWidth, video.videoHeight, photo.width, photo.height) };
+          return { still: photo, blob, how: `foto ${photo.width}×${photo.height}`, box: mapBox(box, video.videoWidth, video.videoHeight, photo.width, photo.height) };
         } catch { /* segue com o quadro do vídeo */ }
       }
       if (!video.videoWidth) return null;
       const frame = document.createElement('canvas');
       frame.width = video.videoWidth; frame.height = video.videoHeight;
       frame.getContext('2d').drawImage(video, 0, 0);
-      return { still: frame, box };
+      return { still: frame, how: `quadro ${frame.width}×${frame.height}`, box };
     }
 
     // Lê uma foto: Tesseract primeiro, depois o Paddle rápido (small). Todos os
@@ -619,11 +622,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (bursting || !alive) return;
       bursting = true;
       const seq = burstSeq++;
+      let shot = null;
       try {
-        const shot = await captureStill(aimBox(video, aim));
+        shot = await captureStill(aimBox(video, aim));
         if (!alive || !shot) return;
         shutter();
-        note({ kind: 'event', what: 'shutter', detail: photoSource(seq) });
+        note({ kind: 'event', what: 'shutter', detail: `${photoSource(seq)}, ${shot.how}` });
         setStatus('Foto tirada. Lendo');
         prepareFrame(shot.still, { mode: 'raw', width: 900, maxH: 700, box: shot.box }, photoEvidence);
         const { score } = await readStill({
@@ -638,7 +642,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
           return;
         }
-        const pooled = { ...(await addPhotoToPool(shot.still, 'auto', score)), still: shot.still };
+        const pooled = { ...(await addPhotoToPool(shot.still, 'auto', score, false, shot.blob || null)), still: shot.still };
         if (!alive) return;
         recordCandidates(pooled.candidates, photoEvidence, photoSource(seq));
         // Recorte automático: onde o rápido acha que está a validade, o
@@ -648,6 +652,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
         setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
       } finally {
+        // A foto do ImageCapture (4032×3024 no iPhone) ocupa ~48 MB aberta.
+        if (shot && shot.still && shot.still.close) shot.still.close();
         if (alive) bursting = false;
       }
     }
@@ -942,7 +948,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         } catch {
           if (!alive) return;
           note({ kind: 'event', what: 'error', detail: engine });
-          if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.dispose(); }
+          if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.kill(); }
           else if (++tessErrors >= 3) tessFailed = true;
           setStatus('Tente outro ângulo ou digite a data', { urgent: true });
           await pause(250);

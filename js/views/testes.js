@@ -462,6 +462,7 @@ export default function mountTestes(root) {
   const camTable = $('[data-camtable]', root);
 
   async function openVideo(srcs) {
+    let last = null;
     for (const src of srcs) {
       const v = document.createElement('video');
       v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', '');
@@ -474,9 +475,9 @@ export default function mountTestes(root) {
         });
         await v.play();
         return v;
-      } catch { v.removeAttribute('src'); v.load(); }
+      } catch (e) { last = e && e.message; v.removeAttribute('src'); v.load(); }
     }
-    throw new Error('Nenhum dos vídeos abriu neste navegador');
+    throw new Error(`Nenhum dos vídeos abriu neste navegador (${last || '?'})`);
   }
 
   // O que a pessoa viu, a partir do registro da câmera (como tests/real-video.mjs).

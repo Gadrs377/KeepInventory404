@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v70';
+const VERSION = 'v71';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -96,6 +96,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (url.hostname.endsWith('openfoodfacts.org') && url.pathname.startsWith('/api/')) return;
+  // Vídeo (as amostras da tela de testes): o Safari pede em pedaços (Range) e
+  // o service worker no meio fazia o vídeo às vezes não abrir. Vai direto.
+  if (request.headers.has('range') || /\.(mp4|webm)$/i.test(url.pathname)) return;
 
   if (url.origin === self.location.origin && url.pathname.includes('/vendor/tesseract/')) {
     event.respondWith(cacheFirst(request, OCR_CACHE, event));

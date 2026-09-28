@@ -104,3 +104,64 @@ export function createSmallReader() {
   }
   return { ready, read, dispose, backend: () => kind };
 }
+
+// Leitores que sobrevivem de uma abertura da câmera para a outra. Criar e
+// destruir o worker a cada abertura (o medium carrega ~140 MB; o small na GPU
+// abre uma sessão WebGPU) fazia o iPhone fechar o app na 2ª ou 3ª vez, na
+// tela de testes: o Safari demora a devolver essa memória. Agora a mesma
+// instância é reaproveitada e só é encerrada depois de `idleMs` sem uso (ou
+// quando a página é fechada). As leituras passam numa fila: uma abertura nova
+// não lê junto com uma leitura que a anterior deixou no meio.
+const SHARED = new Map();
+let sharedPagehide = false;
+
+/**
+ * `create()` → leitor (createPaddleReader/createSmallReader). Devolve a mesma
+ * interface, onde `dispose()` só solta este uso e `kill()` encerra o worker
+ * de vez (leitura travada ou com erro: a próxima abertura cria outro).
+ */
+export function sharedReader(key, create, { idleMs = 120000 } = {}) {
+  if (!sharedPagehide && typeof window !== 'undefined') {
+    sharedPagehide = true;
+    window.addEventListener('pagehide', () => { for (const e of [...SHARED.values()]) e.kill(); });
+  }
+  let entry = SHARED.get(key);
+  if (!entry || entry.dead) {
+    entry = { reader: create(), users: 0, timer: 0, dead: false, queue: Promise.resolve() };
+    entry.kill = () => {
+      if (entry.dead) return;
+      entry.dead = true; clearTimeout(entry.timer);
+      if (SHARED.get(key) === entry) SHARED.delete(key);
+      entry.reader.dispose();
+    };
+    SHARED.set(key, entry);
+  }
+  const mine = entry;
+  clearTimeout(mine.timer);
+  mine.users++;
+  let released = false;
+  const closed = () => new Error('Leitura encerrada');
+  function dispose() {
+    if (released) return;
+    released = true;
+    if (--mine.users > 0 || mine.dead) return;
+    mine.timer = setTimeout(mine.kill, idleMs);
+  }
+  function kill() { released = true; mine.users = Math.max(0, mine.users - 1); mine.kill(); }
+  function ready() {
+    if (released || mine.dead) return Promise.reject(closed());
+    return mine.reader.ready().catch((e) => { mine.kill(); throw e; });
+  }
+  function read(canvas) {
+    if (released || mine.dead) return Promise.reject(closed());
+    const run = mine.queue.then(() => {
+      if (released || mine.dead) throw closed();
+      return mine.reader.read(canvas);
+    });
+    mine.queue = run.catch(() => {});
+    // Erro de leitura: o worker pode ter travado ou caído. Só encerra se o
+    // erro não é o "encerrada" desta própria abertura.
+    return run.catch((e) => { if (!released && !mine.dead) mine.kill(); throw e; });
+  }
+  return { ready, read, dispose, kill, backend: () => (mine.reader.backend ? mine.reader.backend() : 'wasm') };
+}

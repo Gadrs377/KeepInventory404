@@ -1414,3 +1414,30 @@ A foto da lata, pelo painel, confirma 29/12/2028. Nos vídeos, o copo e o
 chocolate confirmam sozinhos. Datas erradas que ainda aparecem como botão nos
 vídeos da lata ("22/DEZ/25", "DEZ/25") vêm do Tesseract em quadros borrados,
 como antes. `sw.js` v70.
+
+## Versão 3.53: o que o iPhone mostrou, e memória
+
+Da tela de testes no iPhone (iOS 27, app instalado):
+
+- **Câmera:** pedindo 4K veio 2160×3840 a 30 q/s; o máximo anunciado é
+  4032×3024. **ImageCapture existe** (ao contrário do que diziam as fontes da
+  web): as fotos automáticas já saíam por `takePhoto()`, em resolução de
+  foto. O registro agora diz de onde veio cada foto automática ("foto
+  4032×3024" ou "quadro …"), e o painel guarda essa foto inteira (o blob do
+  `takePhoto`) para ler o pedaço marcado. A foto aberta é fechada no fim.
+- **Comparação com vídeos:** o app fechou duas vezes, sempre na 2ª rodada do
+  "Agora", e várias rodadas deram "Nenhum dos vídeos abriu". Duas causas:
+  - Cada abertura da câmera criava e destruía os leitores (o medium com ~140
+    MB, o small com uma sessão WebGPU), e o Safari demora a devolver essa
+    memória. `sharedReader` (`js/paddleOcr.js`) mantém o mesmo leitor de uma
+    abertura para a outra, com as leituras numa fila, e só o encerra depois
+    de 2 min sem uso, ao fechar a página, ou se uma leitura falha (`kill()`).
+    Vale também para o uso normal: vários produtos seguidos.
+  - O service worker ficava no meio dos pedidos de vídeo em pedaços (Range).
+    Vídeos (e qualquer pedido com Range) agora vão direto para a rede. O
+    erro de vídeo passa a dizer o motivo.
+- **Números válidos que vieram** (copo, sem toque da pessoa): "Antes" confirmou
+  em 12,7 e 10,6 s; "Agora" em 12,9 s. As primeiras rodadas tiveram a data
+  tocada à mão (confirmou sem "confirmed" no registro) e não contam.
+
+`sw.js` v71.
