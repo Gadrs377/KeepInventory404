@@ -98,13 +98,12 @@ export default function mountTestes(root) {
   let lastTable = saved && saved.table ? saved.table : [];
   let running = null;
   const event = (what, detail = null) => { report.events.push({ t: new Date().toISOString(), what, detail }); persist(); };
-  let persistTimer = 0;
+  // Grava na hora, sem esperar: o que acontece logo antes de o iPhone fechar o
+  // app (abrir o seletor, começar uma leitura) é justamente o que importa.
   function persist() {
-    clearTimeout(persistTimer);
-    persistTimer = setTimeout(() => {
-      const opts = { img: pick('img'), tier: pick('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked };
-      store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts, running }));
-    }, 150);
+    const checked = (name) => $(`input[name=${name}]:checked`, root)?.value || null;
+    const opts = { img: checked('img'), tier: checked('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked };
+    store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts, running }));
   }
   function setRunning(r) { running = r; persist(); }
   let alive = true;
@@ -188,6 +187,7 @@ export default function mountTestes(root) {
     mineRadio.disabled = false;
     mineRadio.checked = true;
     mineName.textContent = `(${name})`;
+    persist();
     loadImage().catch((e) => photoSay(`Não deu para mostrar a foto: ${e.message}`));
   }
   const pickingSince = Number(store.get(PICKING) || 0);
@@ -202,7 +202,7 @@ export default function mountTestes(root) {
       useMine(photo.url, photo.name);
       // A foto volta, mas a imagem escolhida é a que estava marcada.
       const was = saved && saved.opts && saved.opts.img;
-      if (was && was !== 'mine') { $(`input[name=img][value="${was}"]`, root).checked = true; loadImage().catch(() => {}); }
+      if (was && was !== 'mine') { $(`input[name=img][value="${was}"]`, root).checked = true; persist(); loadImage().catch(() => {}); }
     }
   } catch { store.del(PHOTO); }
 
@@ -430,8 +430,7 @@ export default function mountTestes(root) {
     alive = false;
     // Saiu da tela pelo app (não é queda): o teste em andamento só para.
     if (running) { report.events.push({ t: new Date().toISOString(), what: 'saiu-da-tela-durante-teste', detail: running }); running = null; }
-    clearTimeout(persistTimer);
-    store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts: { img: pick('img'), tier: pick('tier'), n: $('[data-n]', root).value, extra: $('[data-extra]', root).checked }, running: null }));
+    persist();
     if (current) current.dispose();
     if (wake) wake.release().catch(() => {});
   };

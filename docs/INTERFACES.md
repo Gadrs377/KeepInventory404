@@ -1232,4 +1232,5 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
   modelo e leitura parou, e registra `caiu-durante-teste` no envio: é assim
   que aparece o travamento da GPU depois de muitas leituras, se acontecer.
 - O envio para a Bancada tira as miniaturas e os testes mais antigos se
-  passar de 230 KB. `sw.js` v60.
+  passar de 230 KB. Tudo é gravado na hora (sem espera), para não perder o
+  que aconteceu logo antes de o iPhone fechar o app. `sw.js` v61.
