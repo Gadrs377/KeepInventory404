@@ -30,7 +30,7 @@ import { createFindPanel } from './expiryFind.js';
 import {
   TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus,
   STRUGGLE_MS, TILT_HINTS, BURST_TESSERACT_VARIANTS, BURST_PADDLE_VARIANTS,
-  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
+  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, LEGACY_BURST_TESSERACT_VARIANTS, LEGACY_BURST_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
 } from '../expiryRecognition.js';
 import { frameIssue, sharpness } from '../frameQuality.js';
 import { debugEnabled, BANCADA_URL, copyForBancada } from '../expiryDebug.js';
@@ -116,10 +116,15 @@ function textScore({ text = '', confidence = 0 }) {
  * demais para a câmera (hora de sugerir digitar). `onLikely({ iso, n, monthOnly })`:
  * a data vista em mais imagens (ou null), para já vir escrita ao digitar.
  * `onType()`: a pessoa pediu para digitar de dentro do painel de fotos.
+ * `experiment` (só a tela de testes): `{ gpu: false }` usa o leitor rápido sem
+ * GPU; `{ legacy: true }` faz as fotos automáticas como até a versão 3.47
+ * (5 + 5 filtros, medium na mira, sem palpite nem recorte).
  * `debug`: mostra o painel de diagnóstico (padrão: opção em Mais ou ?debug).
  * A promessa também tem `.log()`, o registro de cada tentativa e evento.
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, onType = null, debug = debugEnabled() } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, onType = null, debug = debugEnabled(), experiment = {} } = {}) {
+  const useGpu = experiment.gpu !== false;
+  const legacy = !!experiment.legacy;
   const log = [];
   let stop = () => {};
   const promise = new Promise((resolve) => {
@@ -200,7 +205,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // mas enxerga mais em material difícil). Ver docs/LEITURA_VALIDADE.md.
     // O small tenta a GPU (3× mais rápido no iPhone) e volta sozinho para o
     // leitor sem GPU; o medium fica sem GPU (na GPU derrubou o app).
-    const paddleLive = createSmallReader();
+    const paddleLive = useGpu ? createSmallReader() : Object.assign(createPaddleReader('small'), { backend: () => 'wasm' });
     let paddleLiveState = 'idle';
     let loadingPaddleLive = null;
     const paddleBurst = createPaddleReader('medium');
@@ -592,9 +597,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }
       if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
       if (stopped()) return { score, found };
-      // Nas fotos, só o leitor rápido: o detalhado (medium) lê apenas o pedaço
-      // que a pessoa mostrar no painel (readRegion).
-      if (paddleLiveState === 'ready') await tryVariants('paddle', paddleVariants, (c) => paddleLive.read(c), true);
+      // Nas fotos, só o leitor rápido: o detalhado (medium) lê o pedaço do
+      // palpite (readGuessAuto) ou o que a pessoa mostrar no painel.
+      if (legacy) {
+        const reader = paddleBurstState === 'ready' ? paddleBurst : paddleLiveState === 'ready' ? paddleLive : null;
+        if (reader) await tryVariants('paddle', paddleVariants, (c) => reader.read(c), reader === paddleLive);
+      } else if (paddleLiveState === 'ready') await tryVariants('paddle', paddleVariants, (c) => paddleLive.read(c), true);
       return { score, found };
     }
 
@@ -610,9 +618,18 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         note({ kind: 'event', what: 'shutter', detail: photoSource(seq) });
         setStatus('Foto tirada. Lendo');
         prepareFrame(shot.still, { mode: 'raw', width: 900, maxH: 700, box: shot.box }, photoEvidence);
-        const { score } = await readStill({ ...shot, seq, tessVariants: BURST_TESSERACT_VARIANTS, paddleVariants: BURST_PADDLE_VARIANTS, yields: true });
+        const { score } = await readStill({
+          ...shot, seq, yields: true,
+          tessVariants: legacy ? LEGACY_BURST_TESSERACT_VARIANTS : BURST_TESSERACT_VARIANTS,
+          paddleVariants: legacy ? LEGACY_BURST_PADDLE_VARIANTS : BURST_PADDLE_VARIANTS,
+        });
         if (!alive || nativePending) return;
         keepBest(score, shot.still, shot.box);
+        if (legacy) {
+          if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
+          setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
+          return;
+        }
         const { candidates, guess } = await addPhotoToPool(shot.still, 'auto', score);
         if (!alive) return;
         recordCandidates(candidates, photoEvidence, photoSource(seq));

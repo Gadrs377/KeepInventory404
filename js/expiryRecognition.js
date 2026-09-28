@@ -35,6 +35,10 @@ export const TILT_HINTS = [
 // ângulos, e não muitos filtros da mesma.
 export const BURST_TESSERACT_VARIANTS = [0, 1, 3].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
 export const BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.slice(0, 2).map(v => ({ ...v, width: 1300, maxH: 900 }));
+// Como era até a versão 3.47 (5 + 5 filtros, com o medium na mira): só para a
+// comparação "antes × agora" da tela de testes.
+export const LEGACY_BURST_TESSERACT_VARIANTS = [0, 1, 2, 3, 4].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
+export const LEGACY_BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.map(v => ({ ...v, width: 1300, maxH: 900 }));
 // Foto tirada com a câmera do próprio celular: a foto inteira (a pessoa
 // enquadrou), com mais pixels. Texto esparso (psm 11) no Tesseract, porque
 // a data não está numa faixa conhecida. Só quando o Paddle não carrega: com

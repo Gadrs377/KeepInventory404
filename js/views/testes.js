@@ -13,6 +13,7 @@ import { findExpiryCandidates, formatDate } from '../dates.js';
 import { $, esc, icon, toast, download } from '../ui.js';
 import { BANCADA_URL, copyForBancada } from '../expiryDebug.js';
 import { gpuAllowed, gpuOffReason, gpuReset } from '../gpuGuard.js';
+import { readExpiryWithCamera } from './expiryCam.js';
 
 const SAMPLES = { copo: 'vendor/paddle/amostras/copo.jpg', chocolate: 'vendor/paddle/amostras/chocolate.jpg' };
 const ENGINES = {
@@ -29,6 +30,22 @@ const speed = (base, ms) => {
   const f = (x) => (x >= 10 ? Math.round(x) : x.toFixed(1).replace('.', ','));
   return k >= 1 ? `${f(k)}× mais rápido` : `${f(1 / k)}× mais lento`;
 };
+// Vídeos reais (tests/real) no lugar da câmera: MP4 para o iPhone; o WebM do
+// repositório para o Chromium dos testes (que não toca H.264). `region`
+// (x, y, largura, altura, 0–1) enquadra o vídeo com a validade no meio, onde
+// fica a mira, como se a pessoa mirasse pelo app (os vídeos não foram
+// gravados assim), com folga em volta para o painel de fotos.
+const CAM_VIDEOS = {
+  copo: { label: 'Copo', ref: '2026-09-17', region: [0.05, 0.12, 0.85, 0.44], src: ['vendor/paddle/amostras/copo.mp4', 'tests/real/copo-tinta-impressa.webm'] },
+  chocolate: { label: 'Chocolate', ref: '2027-08-11', region: [0, 0.18, 1, 0.5], src: ['vendor/paddle/amostras/chocolate.mp4', 'tests/real/chocolate-tinta-prata-foil.webm'] },
+};
+const CAM_MODES = {
+  antes: { label: 'Antes', experiment: { gpu: false, legacy: true } },
+  agora: { label: 'Agora', experiment: { gpu: true, legacy: false } },
+};
+const CAM_SECONDS = 90;
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const median = (xs) => { const s = xs.slice().sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : 0; };
 
 export default function mountTestes(root) {
@@ -71,6 +88,23 @@ export default function mountTestes(root) {
           <button type="button" class="btn btn-quiet" data-copy>Copiar resultado</button>
           <button type="button" class="btn btn-quiet" data-clear>Limpar resultados</button>
         </div>
+
+        <h2 class="list-title">Câmera com vídeos reais</h2>
+        <p class="group-note">A câmera de validade inteira, com vídeos de embalagens de verdade no lugar da câmera, nos dois jeitos. Mede quando a data certa aparece, quando pergunta e quando confirma. Até ${CAM_SECONDS} s por vez.</p>
+        <fieldset class="tests-opts">
+          <legend>Vídeos</legend>
+          ${Object.entries(CAM_VIDEOS).map(([k, v]) => `<label><input type="checkbox" data-vid="${k}" checked> ${v.label} (validade ${formatDate(v.ref)})</label>`).join('')}
+        </fieldset>
+        <fieldset class="tests-opts">
+          <legend>Jeitos</legend>
+          <label><input type="checkbox" data-cmode="antes" checked> Antes (sem GPU, medium na mira)</label>
+          <label><input type="checkbox" data-cmode="agora" checked> Agora (GPU, palpite e recorte)</label>
+          <label>Repetições <input type="number" min="1" max="5" value="2" data-reps class="tests-num"></label>
+        </fieldset>
+        <button type="button" class="btn btn-primary" data-camrun>Rodar a câmera com os vídeos</button>
+        <div class="tests-cam" data-camhost hidden></div>
+        <div data-camtable></div>
+
         <a class="btn btn-primary" data-send href="${BANCADA_URL}" target="_blank" rel="noopener">Enviar para o Claude</a>
         <p class="group-note">Copia o resultado e abre a Bancada. Lá, toque e segure no campo e escolha Colar.</p>
         <div data-table></div>
@@ -85,7 +119,7 @@ export default function mountTestes(root) {
   const mineRadio = $('[data-mine-radio]', root);
   const mineName = $('[data-mine-name]', root);
   const photoStatus = $('[data-photo-status]', root);
-  const buttons = ['[data-run]', '[data-stress]', '[data-copy]'].map((s) => $(s, root));
+  const buttons = ['[data-run]', '[data-stress]', '[data-copy]', '[data-camrun]'].map((s) => $(s, root));
   const stopBtn = $('[data-stop]', root);
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -108,7 +142,11 @@ export default function mountTestes(root) {
   // app (abrir o seletor, começar uma leitura) é justamente o que importa.
   function persist() {
     const checked = (name) => $(`input[name=${name}]:checked`, root)?.value || null;
-    const opts = { img: checked('img'), tier: checked('tier'), n: $('[data-n]', root).value, engines: [...root.querySelectorAll('[data-eng]')].filter((c) => c.checked).map((c) => c.dataset.eng) };
+    const list = (sel, key) => [...root.querySelectorAll(sel)].filter((c) => c.checked).map((c) => c.dataset[key]);
+    const opts = {
+      img: checked('img'), tier: checked('tier'), n: $('[data-n]', root).value, engines: list('[data-eng]', 'eng'),
+      vids: list('[data-vid]', 'vid'), cmodes: list('[data-cmode]', 'cmode'), reps: $('[data-reps]', root).value,
+    };
     store.set(STATE, JSON.stringify({ report, table: lastTable, log: log.textContent, opts, running }));
   }
   function setRunning(r) { running = r; persist(); }
@@ -160,6 +198,9 @@ export default function mountTestes(root) {
     }
     if (o.n) $('[data-n]', root).value = o.n;
     if (Array.isArray(o.engines)) for (const c of root.querySelectorAll('[data-eng]')) c.checked = o.engines.includes(c.dataset.eng);
+    if (Array.isArray(o.vids)) for (const c of root.querySelectorAll('[data-vid]')) c.checked = o.vids.includes(c.dataset.vid);
+    if (Array.isArray(o.cmodes)) for (const c of root.querySelectorAll('[data-cmode]')) c.checked = o.cmodes.includes(c.dataset.cmode);
+    if (o.reps) $('[data-reps]', root).value = o.reps;
     log.textContent = saved.log || '';
     if (lastTable.length) renderTable(lastTable);
     if (saved.running) {
@@ -412,6 +453,139 @@ export default function mountTestes(root) {
     }
   });
 
+  // ---------- Câmera com vídeos reais ----------
+  const camHost = $('[data-camhost]', root);
+  const camTable = $('[data-camtable]', root);
+
+  async function openVideo(srcs) {
+    for (const src of srcs) {
+      const v = document.createElement('video');
+      v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', '');
+      v.src = src;
+      try {
+        await new Promise((resolve, reject) => {
+          v.onloadeddata = resolve;
+          v.onerror = () => reject(new Error(`não abriu ${src}`));
+          setTimeout(() => reject(new Error(`${src} demorou`)), 20000);
+        });
+        await v.play();
+        return v;
+      } catch { v.removeAttribute('src'); v.load(); }
+    }
+    throw new Error('Nenhum dos vídeos abriu neste navegador');
+  }
+
+  // O que a pessoa viu, a partir do registro da câmera (como tests/real-video.mjs).
+  function summarizeCam(log, ref) {
+    const ev = (what) => log.filter((e) => e.kind === 'event' && e.what === what);
+    const shown = [...ev('pick'), ...ev('confirmed')].sort((a, b) => a.t - b.t);
+    const at = (list) => { const e = list.find((x) => x.iso === ref); return e ? e.t : null; };
+    const reads = log.filter((e) => e.kind === 'read');
+    const confirmed = ev('confirmed')[0] || null;
+    const small = ev('small-ready')[0];
+    return {
+      shownAt: at(shown), askedAt: at(ev('ask')), confirmedAt: confirmed && confirmed.iso === ref ? confirmed.t : null,
+      wrongConfirmed: confirmed && confirmed.iso !== ref ? confirmed.iso : null,
+      wrongShown: [...new Set(shown.filter((e) => e.iso !== ref).map((e) => e.iso))],
+      reads: reads.length, photos: ev('shutter').length, smallBackend: small ? small.detail : null,
+    };
+  }
+
+  async function runCamOnce(videoKey, modeKey, rep, reps) {
+    const vid = CAM_VIDEOS[videoKey]; const mode = CAM_MODES[modeKey];
+    say(`▶ Câmera: ${vid.label}, ${mode.label} (${rep} de ${reps})`);
+    setRunning({ what: 'câmera com vídeo', label: `${vid.label} ${mode.label}`, tier: '', read: rep, of: reps, since: Date.now() });
+    const out = { kind: 'camera-video', video: videoKey, mode: modeKey, rep };
+    let video = null; let timer = 0; let draw = 0; let task = null;
+    const origGum = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+    try {
+      video = await openVideo(vid.src);
+      out.src = video.currentSrc.split('/').pop();
+      const [rx, ry, rw, rh] = vid.region;
+      const c = document.createElement('canvas');
+      c.width = Math.round(video.videoWidth * rw); c.height = Math.round(video.videoHeight * rh);
+      const g = c.getContext('2d');
+      const paint = () => { try { g.drawImage(video, video.videoWidth * rx, video.videoHeight * ry, c.width, c.height, 0, 0, c.width, c.height); } catch { /* quadro ainda não pronto */ } };
+      paint();
+      draw = setInterval(paint, 66);
+      const stream = c.captureStream(15);
+      navigator.mediaDevices.getUserMedia = async () => stream;
+      camHost.hidden = false;
+      camHost.innerHTML = '<div></div>';
+      const start = performance.now();
+      task = readExpiryWithCamera(camHost.firstElementChild, { experiment: mode.experiment, debug: false });
+      timer = setTimeout(() => task.stop(), CAM_SECONDS * 1000);
+      const stopCheck = setInterval(() => { if (stopping || !alive) task.stop(); }, 500);
+      const accepted = await task;
+      clearInterval(stopCheck);
+      out.ms = Math.round(performance.now() - start);
+      out.accepted = accepted || null;
+      Object.assign(out, summarizeCam(task.log(), vid.ref));
+      const t = (ms) => (ms == null ? '—' : `${(ms / 1000).toFixed(1)} s`);
+      say(`  data certa na tela ${t(out.shownAt)} · perguntou ${t(out.askedAt)} · confirmou ${out.confirmedAt != null ? t(out.confirmedAt) : out.wrongConfirmed ? `ERRADO (${out.wrongConfirmed})` : 'não'} · ${out.photos} fotos, ${out.reads} leituras, leitor rápido ${out.smallBackend || '?'}`);
+    } catch (e) {
+      out.error = e.message;
+      say(`  ✖ ${e.message}`);
+    } finally {
+      clearTimeout(timer); clearInterval(draw);
+      if (task) task.stop();
+      if (origGum) navigator.mediaDevices.getUserMedia = origGum;
+      if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+      camHost.innerHTML = ''; camHost.hidden = true;
+      setRunning(null);
+    }
+    return out;
+  }
+
+  function renderCamTable() {
+    const runs = report.runs.filter((r) => r.kind === 'camera-video' && !r.error);
+    if (!runs.length) { camTable.innerHTML = ''; return; }
+    const t = (ms) => (ms == null ? '—' : `${Math.round(ms / 1000)} s`);
+    const rows = [];
+    for (const [vk, vid] of Object.entries(CAM_VIDEOS)) {
+      for (const [mk, mode] of Object.entries(CAM_MODES)) {
+        const rs = runs.filter((r) => r.video === vk && r.mode === mk);
+        if (!rs.length) continue;
+        const ok = rs.filter((r) => r.confirmedAt != null);
+        const asked = rs.filter((r) => r.askedAt != null);
+        const shown = rs.filter((r) => r.shownAt != null);
+        const wrong = rs.filter((r) => r.wrongConfirmed).length;
+        rows.push(`<tr><td>${esc(vid.label)}<br><small>${esc(mode.label)}</small></td>
+          <td>${ok.length}/${rs.length}${ok.length ? `<br><small>mediana ${t(median(ok.map((r) => r.confirmedAt)))}</small>` : ''}${wrong ? `<br><b>${wrong} errada(s)</b>` : ''}</td>
+          <td>${asked.length}/${rs.length}${asked.length ? `<br><small>mediana ${t(median(asked.map((r) => r.askedAt)))}</small>` : ''}</td>
+          <td>${shown.length}/${rs.length}${shown.length ? `<br><small>mediana ${t(median(shown.map((r) => r.shownAt)))}</small>` : ''}</td></tr>`);
+      }
+    }
+    camTable.innerHTML = `<table class="tests-table"><thead><tr><th>Vídeo</th><th>Confirmou sozinho</th><th>Perguntou</th><th>Data certa na tela</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  }
+
+  renderCamTable(); // resultados guardados de antes
+
+  $('[data-camrun]', root).addEventListener('click', async () => {
+    if (busy) return;
+    const vids = [...root.querySelectorAll('[data-vid]')].filter((c) => c.checked).map((c) => c.dataset.vid);
+    const modes = [...root.querySelectorAll('[data-cmode]')].filter((c) => c.checked).map((c) => c.dataset.cmode);
+    const reps = Math.max(1, Math.min(5, Number($('[data-reps]', root).value) || 1));
+    if (!vids.length || !modes.length) { toast('Escolha pelo menos um vídeo e um jeito.'); return; }
+    setBusy(true);
+    say(`— Câmera com vídeos: ${vids.join(', ')} × ${modes.join(', ')}, ${reps} vez(es), até ${CAM_SECONDS} s cada —`);
+    try {
+      // Intercala os jeitos, para o celular esquentar igual para os dois.
+      for (let rep = 1; rep <= reps; rep++) {
+        for (const v of vids) {
+          for (const m of modes) {
+            if (!alive || stopping) break;
+            report.runs.push(await runCamOnce(v, m, rep, reps));
+            persist();
+            renderCamTable();
+            await pause(1500);
+          }
+        }
+      }
+      say('✔ câmera com vídeos: pronto');
+    } finally { if (alive) setBusy(false); }
+  });
+
   stopBtn.addEventListener('click', () => { stopping = true; say('… parando depois da leitura atual'); });
 
   $('[data-send]', root).addEventListener('click', (e) => {
@@ -438,6 +612,7 @@ export default function mountTestes(root) {
     report.env = env;
     lastTable = [];
     table.innerHTML = '';
+    camTable.innerHTML = '';
     log.textContent = '';
     persist();
     toast('Resultados apagados.', { duration: 2000 });

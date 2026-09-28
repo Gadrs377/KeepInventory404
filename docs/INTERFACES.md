@@ -1312,3 +1312,22 @@ As fotos automáticas usam menos filtros (3 do Tesseract + 2 do Paddle), para
 saírem mais vezes. Vídeos reais, fluxo completo (sem GPU, neste computador):
 copo confirmou 17/09/2026 sozinho em 35 s (antes 39–64 s); chocolate
 perguntou a data certa aos 41 s; nenhuma confirmação errada. `sw.js` v64.
+
+## Versão 3.49: "Câmera com vídeos reais" na tela de testes
+
+Para medir no próprio iPhone (com a GPU dele) se a versão 3.48 melhorou ou
+piorou o tempo: a tela de testes roda a câmera de validade inteira com os
+vídeos do copo e do chocolate no lugar da câmera (`canvas.captureStream`),
+nos dois jeitos, várias vezes, intercalados:
+
+- **Antes**: leitor rápido sem GPU; fotos automáticas com 5 + 5 filtros e o
+  medium na área da mira, sem palpite nem recorte (`experiment.legacy`).
+- **Agora**: leitor rápido na GPU; 3 + 2 filtros, palpite e medium no recorte.
+
+Mede, pelo registro da câmera, quando a data certa apareceu na tela, quando
+perguntou "É esta data?", quando confirmou sozinha e se confirmou errado; a
+tabela mostra quantas vezes e a mediana. Tudo fica guardado na tela e vai
+para a Bancada. Os vídeos estão em `vendor/paddle/amostras/` em MP4 (sem
+áudio e sem metadados; o iPhone toca) e o Chromium dos testes usa o WebM de
+`tests/real/`. Cada vídeo é enquadrado com a validade perto do meio, onde
+fica a mira. `sw.js` v66.
