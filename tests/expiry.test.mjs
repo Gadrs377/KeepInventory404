@@ -126,12 +126,18 @@ test('good readings far apart on a slow phone still confirm (window covers one p
 });
 test('dot-printed can (lata): misread month names, labels and separators', () => {
   const today = '2026-09-28';
-  const one = (text) => { const c = findExpiryCandidates(text, today); return c.length === 1 ? `${c[0].iso}${c[0].labeled ? ' L' : ''}` : c.map((x) => x.iso).join(','); };
+  const one = (text, dots = true) => { const c = findExpiryCandidates(text, today, { dots }); return c.length === 1 ? `${c[0].iso}${c[0].labeled ? ' L' : ''}` : c.map((x) => x.iso).join(','); };
   // Leituras reais do medium na foto da lata (VAL 29/DEZ/28).
   for (const text of ['VAL:29/0E2/28', 'UAL:29/DEZ/28', 'UAT:29/DEZ/28', 'UAC·29/DEZ/28', 'UA7:29/DEZ/28', 'UAT129/DE2/28', 'UAL/:29>0EZ/28', 'FAB/29/DEZ/25\nVAL:29/0E2/28\nLOTE:1291225'])
     assert.equal(one(text), '2028-12-29 L', text);
   // Sem rótulo, mas o mês lido com número não vira outra data.
   assert.equal(one('29/DE2/28'), '2028-12-29');
+  // Fora da leitura de pontinhos, mês torto descarta a data (não vira botão
+  // errado nem fevereiro) e ">" não é barra.
+  assert.equal(one('28/0EZ/25', false), '');
+  assert.equal(one('29/DE2/28', false), '');
+  assert.equal(one('26>DEZ/28', false), '2028-12-31'); // só "DEZ/28", como antes
+  assert.equal(one('UAT:29/DEZ/28', false), '2028-12-29 L');
   // Só nomes de mês entre dia e ano; números e lote não viram mês.
   assert.equal(one('LOTE:1291225'), '');
   assert.equal(one('CAE:331BEZ23'), '');

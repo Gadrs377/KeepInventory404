@@ -165,24 +165,28 @@ function labelsBefore(re, text) {
  * sua pontuação. Se houver ambiguidade, a câmera oferece escolha manual.
  * `today` (AAAA-MM-DD) serve para os testes.
  */
-export function findExpiryCandidates(text, today = todayIso()) {
+export function findExpiryCandidates(text, today = todayIso(), { dots = false } = {}) {
   let t = String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
   // Confusão observada no Paddle: OUT -> 0UT. Correção limitada a nomes de
   // meses junto de ano; não transforma palavras/lotes arbitrários em datas.
   t = t.replace(/\b(0UT|0CT|N0V)(?=\s*[/.\-]?\s*\d{2,4}\b)/g, m => m.replace('0', 'O'));
   // Pontos de impressão (lata) viram "·" ou "：" no lugar dos dois-pontos.
   t = t.replace(/[·•：]/g, ':').replace(/\/\s*:/g, ':');
-  // Barra em pontinhos lida como "<" ou ">": "29>DEZ/28".
-  t = t.replace(/(?<=[0-9A-Z])\s*[<>]\s*(?=[0-9A-Z])/g, '/');
+  // Barra em pontinhos lida como "<" ou ">": "29>DEZ/28". Só na leitura de
+  // pontinhos (js/dotPrint.js, que vota): no resto, lixo viraria data.
+  if (dots) t = t.replace(/(?<=[0-9A-Z])\s*[<>]\s*(?=[0-9A-Z])/g, '/');
   // Dois-pontos lido como "1" entre o rótulo e o dia: "UAL129/DEZ/28".
   t = t.replace(/(?<=(?:^|\n)[ \t]*(?:VAL|[UV][A4][A-Z0-9]))1(?=\d{2}\s*\/)/g, ':');
   // Mês por extenso com letra lida como número, entre dia e ano com barras:
-  // "29/0EZ/28", "29/DE2/28" (DEZ). Só com dia/ano dos dois lados e ao menos
-  // uma letra no mês, para não mexer em números.
+  // "29/0EZ/28", "29/DE2/28" (DEZ). Na leitura de pontinhos (que vota), vira
+  // o mês; nas outras, a data é descartada: nos quadros borrados do vídeo da
+  // lata, "28/0EZ/25" (a fabricação mal lida) virava botão. E sem isso
+  // "DE2/28" virava fevereiro de 2028.
   t = t.replace(/(?<![0-9])(\d{1,2}\s*[\/.\-]\s*)([A-Z0-9]{3})(?=\s*[\/.\-]\s*\d{2,4}\b)/g, (all, pre, tok) => {
     if (!/[A-Z]/.test(tok) || MONTH_NAMES[tok] || !/\d/.test(tok)) return all;
     const month = monthFromOcr(tok);
-    return month ? pre + month : all;
+    if (!month) return all;
+    return dots ? pre + month : `${pre}#`;
   });
   // "15 OUT 2026", "OUT/26", "15OUT26" -> meses em número
   t = t.replace(/(?:(\d{1,2})\s*[\/.\-]?\s*)?(?<![A-Z])(JAN|FEV|FEB|MAR|ABR|APR|MAI|MAY|JUN|JUL|AGO|AUG|SET|SEP|OUT|OCT|NOV|DEZ|DEC)[A-Z]*\.?\s*[\/.\-]?\s*(\d{2,4})\b/g,

@@ -105,6 +105,10 @@ export default function mountTestes(root) {
         <div class="tests-cam" data-camhost hidden></div>
         <div data-camtable></div>
 
+        <h2 class="list-title">Resolução da câmera</h2>
+        <p class="group-note">Abre a câmera de trás pedindo 4K e depois 1080p e mostra quanto o celular entrega de verdade.</p>
+        <button type="button" class="btn btn-quiet" data-camres>Ver a resolução da câmera</button>
+
         <a class="btn btn-primary" data-send href="${BANCADA_URL}" target="_blank" rel="noopener">Enviar para o Claude</a>
         <p class="group-note">Copia o resultado e abre a Bancada. Lá, toque e segure no campo e escolha Colar.</p>
         <div data-table></div>
@@ -564,6 +568,35 @@ export default function mountTestes(root) {
   }
 
   renderCamTable(); // resultados guardados de antes
+
+  $('[data-camres]', root).addEventListener('click', async () => {
+    say('— Resolução da câmera —');
+    const out = { kind: 'camera-res', imageCapture: 'ImageCapture' in window, asks: [] };
+    for (const [label, width, height] of [['4K', 3840, 2160], ['1080p', 1920, 1080]]) {
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: width }, height: { ideal: height } } });
+        const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.srcObject = stream;
+        await v.play().catch(() => {});
+        for (let i = 0; i < 40 && !v.videoWidth; i++) await new Promise((r) => setTimeout(r, 50));
+        const track = stream.getVideoTracks()[0];
+        const set = track.getSettings ? track.getSettings() : {};
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        const got = { pediu: label, veio: `${v.videoWidth}×${v.videoHeight}`, fps: set.frameRate ? Math.round(set.frameRate) : null, max: caps.width ? `${caps.width.max}×${caps.height.max}` : null };
+        out.asks.push(got);
+        say(`  pediu ${label}: veio ${got.veio}${got.fps ? ` a ${got.fps} q/s` : ''}${got.max ? ` (máximo ${got.max})` : ''}`);
+      } catch (e) {
+        out.asks.push({ pediu: label, erro: String(e && e.message || e) });
+        say(`  pediu ${label}: erro ${e && e.message}`);
+      } finally {
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        await new Promise((r) => setTimeout(r, 400));
+      }
+    }
+    say(`  foto em resolução de foto (ImageCapture): ${out.imageCapture ? 'tem' : 'não tem'}`);
+    report.runs.push(out);
+    persist();
+  });
 
   $('[data-camrun]', root).addEventListener('click', async () => {
     if (busy) return;

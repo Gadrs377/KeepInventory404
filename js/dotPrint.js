@@ -23,10 +23,11 @@ const MAX_LINES = 4;
  * Devolve { iso, text, texts }: `text` é uma leitura que tem a data vencedora
  * (para a prova e o rótulo), ou iso null quando nenhuma data se repetiu.
  */
-export async function readDotPrint(read, source, region, { lineH, parse, alive = () => true, progress = () => {} }) {
+export async function readDotPrint(read, source, region, { lineH, parse, seed = [], alive = () => true, progress = () => {} }) {
   const W = source.width; const H = source.height;
   const reg = { x: region.x * W, y: region.y * H, w: region.w * W, h: region.h * H };
-  const texts = [];
+  // `seed`: leituras do mesmo pedaço já feitas antes (votam junto).
+  const texts = seed.filter(Boolean);
   const boxes = [];
   for (const [textH, blur, passes] of BLOCK_VARIANTS) {
     if (!alive()) return { iso: null, text: '', texts };

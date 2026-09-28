@@ -1384,3 +1384,33 @@ Na foto da lata, pelo app (foto do celular → painel → "Sim"): confirmou
 leitura só confirmou 26/12/2028; por isso a votação. Nos quatro vídeos reais,
 nenhuma data errada; os vídeos da lata e da tampa continuam sem leitura
 sozinha (os quadros do vídeo são bem mais borrados que a foto). `sw.js` v69.
+
+## Versão 3.52: resolução cheia
+
+Pergunta de quem usa: "por que roda com qualidade tão ruim, se a mira pega só
+um pedaço da câmera?". Onde se perdia resolução:
+
+- **A câmera pedia 1080p.** No iPhone, em pé, a caixa da câmera (4:3) mostra
+  uns 42% do quadro, e a mira pega ~870 × 310 px dele. Agora pede 4K
+  (`ideal`, as câmeras traseiras dos iPhones dão): o mesmo pedaço com o dobro
+  de pixels em cada direção. O Safari não tem ImageCapture (a foto em
+  resolução de foto), então o quadro do vídeo é o máximo que a página pega; a
+  foto pelo botão da câmera do celular continua sendo a melhor imagem. O
+  registro da câmera diz a resolução que veio, e a tela de testes tem "Ver a
+  resolução da câmera" (pede 4K e 1080p e mostra o que veio).
+- **O pedaço marcado era lido da cópia de 1600 px do painel.** A foto do
+  celular (4032 px) e o quadro 4K ficavam com 40% da resolução antes de o
+  medium ler o pedaço. Agora o painel guarda a foto em resolução cheia e o
+  pedaço sai dela, com o texto posto perto de 40 px de altura (o medium põe
+  cada linha em 48 px): texto pequeno ganha pixels de verdade, texto grande é
+  reduzido e fica mais rápido.
+- **Leitura de pontinhos só onde há votação.** O mês torto ("0EZ", "DE2") e
+  ">" como barra só valem na leitura de pontinhos (`findExpiryCandidates(…,
+  { dots: true })`); fora dela, o mês torto descarta a data. Nos quadros
+  borrados do vídeo da lata, "28/0EZ/25" (a fabricação mal lida) virava
+  botão. A leitura normal do pedaço também vota junto com a de pontinhos.
+
+A foto da lata, pelo painel, confirma 29/12/2028. Nos vídeos, o copo e o
+chocolate confirmam sozinhos. Datas erradas que ainda aparecem como botão nos
+vídeos da lata ("22/DEZ/25", "DEZ/25") vêm do Tesseract em quadros borrados,
+como antes. `sw.js` v70.

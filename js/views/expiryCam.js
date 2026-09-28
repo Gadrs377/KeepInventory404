@@ -51,7 +51,12 @@ const NATIVE_MAX_SIDE = 2400;
 // ficava em destaque, com "2×", "3×", e a pergunta demorava a vir.
 const ASK_AFTER = 2;
 const LEAD = 2;
-const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } };
+// 4K quando a câmera deixa (as traseiras dos iPhones deixam): a mira pega
+// só um pedaço do quadro, e com 1080p esse pedaço tinha ~870 px de largura.
+// O Safari não tem ImageCapture (foto em resolução de foto), então o quadro
+// do vídeo é o máximo que a página consegue. Pedido "ideal": se não der, o
+// navegador entrega o mais perto (o registro diz quanto veio).
+const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } } };
 
 const ISSUE_TEXT = {
   dark: 'Está escuro. Acenda uma luz perto da embalagem',
@@ -66,7 +71,7 @@ const variantName = (v) => `${v.mode}${v.psm ? `/psm${v.psm}` : ''}${v.angle ? `
 const DEBUG_EVENT = {
   pick: 'data virou botão', tap: 'tocou na data', confirmed: 'confirmou sozinho', shutter: 'foto automática',
   native: 'foto do celular', hard: 'avisou que está difícil', ask: 'perguntou "é esta data?"', issue: 'aviso de imagem',
-  'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
+  camera: 'câmera', 'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
   'medium-failed': 'Paddle medium falhou', error: 'leitura falhou', declined: 'respondeu que não é',
   'find-photo': 'foto no painel', 'find-yes': 'confirmou o palpite', 'find-tap': 'tocou na foto', 'find-read': 'leu o pedaço',
   'find-fail': 'não leu o pedaço', 'find-none': 'não está em nenhuma', 'find-switch': 'trocou de foto',
@@ -633,7 +638,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
           return;
         }
-        const pooled = await addPhotoToPool(shot.still, 'auto', score);
+        const pooled = { ...(await addPhotoToPool(shot.still, 'auto', score)), still: shot.still };
         if (!alive) return;
         recordCandidates(pooled.candidates, photoEvidence, photoSource(seq));
         // Recorte automático: onde o rápido acha que está a validade, o
@@ -686,7 +691,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           if (!alive) return;
         }
         setStatus('Lendo a sua foto', { urgent: true });
-        const { candidates, guess } = await addPhotoToPool(photo, 'celular', 1e6, true);
+        const { candidates, guess } = await addPhotoToPool(photo, 'celular', 1e6, true, file);
         if (!alive) return;
         recordCandidates(candidates, photoEvidence, photoSource(seq));
         found += candidates.length;
@@ -703,7 +708,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // A foto inteira (reduzida a 1600 px) vai para o painel com as linhas de
     // texto que o leitor rápido achou nela e o palpite de onde está a
     // validade. Também devolve as datas lidas na foto inteira.
-    async function addPhotoToPool(still, source, baseScore, select = false) {
+    async function addPhotoToPool(still, source, baseScore, select = false, full = null) {
       const c = document.createElement('canvas');
       prepareFrame(still, { mode: 'raw', box: PHOTO_BOX, width: 1600, maxH: 1600, maxScale: 1 }, c);
       let rows = []; let candidates = [];
@@ -726,8 +731,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       } catch { /* sem medida */ }
       const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/jpeg', 0.9));
       if (!blob || !alive) return { candidates, guess, rows, canvas: c };
+      // A foto em resolução cheia, para ler o pedaço marcado: a do painel é
+      // reduzida a 1600 px; a do celular tem 4032, o quadro 4K tem 3840.
+      let fullBlob = full;
+      if (!fullBlob && still.width > c.width) fullBlob = await new Promise((resolve) => still.toBlob ? still.toBlob(resolve, 'image/jpeg', 0.92) : resolve(null));
+      if (!alive) return { candidates, guess, rows, canvas: c };
       findPanel.add({
-        blob, url: URL.createObjectURL(blob), w: c.width, h: c.height, rows, rowsW: c.width, rowsH: c.height, guess,
+        blob, full: fullBlob || null, url: URL.createObjectURL(blob), w: c.width, h: c.height, rows, rowsW: c.width, rowsH: c.height, guess,
         score: baseScore + (guess ? 50 : 0) + Math.min(40, sharp / 5), sharp: Math.round(sharp), print: fingerprint(c), source,
       }, { select });
       // O painel só aparece quando há o que mostrar: um palpite, uma foto da
@@ -736,24 +746,42 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       return { candidates, guess, rows, canvas: c };
     }
 
+    // Altura de uma linha de texto dentro de `region`, em px de uma imagem de
+    // altura `H`, pelas linhas do leitor rápido (medidas numa de altura
+    // `rowsH`). null se o rápido não viu linha ali.
+    function lineHeightIn(rows, rowsH, region, H) {
+      const inside = (rows || []).filter((r) => r.y + r.h / 2 >= region.y * rowsH && r.y + r.h / 2 <= (region.y + region.h) * rowsH).map((r) => r.h).sort((x, y) => x - y);
+      return inside.length ? inside[inside.length >> 1] * 0.75 * (H / rowsH) : null;
+    }
+
+    // O pedaço para o medium, da imagem em resolução cheia, com o texto
+    // perto de 40 px de altura (o medium põe cada linha em 48 px): texto
+    // pequeno ganha pixels de verdade, texto grande não pesa à toa.
+    function cropForMedium(source, region, lineH, out = document.createElement('canvas')) {
+      if (lineH) prepareFrame(source, { mode: 'raw', box: region, width: 2000, maxH: 1000, maxScale: Math.min(3, 40 / lineH) }, out);
+      else prepareFrame(source, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, out);
+      return out;
+    }
+
     // Validade em pontinhos (lata): só quando a leitura normal do pedaço não
     // achou data nenhuma (js/dotPrint.js). `rows`: as linhas do leitor rápido
     // na mesma escala de `source`, só para estimar a altura de uma linha.
-    async function readDots(source, rows, region, progress = () => {}) {
+    async function readDots(source, lineH, region, seed = []) {
       if (paddleBurstState !== 'ready') return { iso: null, text: '', texts: [] };
-      const H = source.height;
-      const inside = (rows || []).filter((r) => r.y + r.h / 2 >= region.y * H && r.y + r.h / 2 <= (region.y + region.h) * H).map((r) => r.h).sort((x, y) => x - y);
-      const lineH = inside.length ? inside[inside.length >> 1] * 0.75 : region.h * H / 3;
-      return readDotPrint((c) => paddleBurst.read(c), source, region, { lineH, parse: (t) => findExpiryCandidates(t), alive: () => alive, progress });
+      lineH = lineH || region.h * source.height / 3;
+      return readDotPrint((c) => paddleBurst.read(c), source, region, { lineH, parse: (t) => findExpiryCandidates(t, undefined, { dots: true }), seed, alive: () => alive });
     }
 
     // O medium lê o pedaço do palpite de uma foto automática (sem esperar o
     // medium carregar: se ainda não está pronto, fica para a próxima foto).
     // Vota como qualquer leitura da mesma foto (conta como uma imagem só).
-    async function readGuessAuto({ canvas, guess: region, rows }, source) {
+    async function readGuessAuto({ still, canvas, guess: region, rows }, source) {
       if (paddleBurstState !== 'ready') return;
-      const crop = document.createElement('canvas');
-      try { prepareFrame(canvas, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop); } catch { return; }
+      // Do quadro em resolução cheia, não da cópia de 1600 px do painel.
+      const src = still && still.width ? still : canvas;
+      const lineH = lineHeightIn(rows, canvas.height, region, src.height);
+      let crop;
+      try { crop = cropForMedium(src, region, lineH); } catch { return; }
       let result;
       try { result = await paddleBurst.read(crop); } catch { return; }
       if (!alive) return;
@@ -761,9 +789,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       let mode = 'medium-recorte';
       // Nada no recorte: tenta como validade em pontinhos.
       if (!candidates.length) {
-        const dots = await readDots(canvas, rows, region);
+        const dots = await readDots(src, lineH, region, [result.text]);
         if (!alive) return;
-        if (dots.iso) { result = { ...result, text: dots.text }; candidates = findExpiryCandidates(dots.text); mode = 'medium-pontos'; }
+        if (dots.iso) { result = { ...result, text: dots.text }; candidates = findExpiryCandidates(dots.text, undefined, { dots: true }); mode = 'medium-pontos'; }
       }
       recordCandidates(candidates, crop, source);
       const accepted = consensus.add({ candidates, engine: 'paddle', confidence: result.confidence, frame: `${source}-recorte`, source, at: performance.now() });
@@ -776,12 +804,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // confirmação, com o pedaço como prova; mais de uma vira botões.
     async function readRegion(region, photo, progress) {
       const t0 = performance.now();
-      const bmp = await createImageBitmap(photo.blob);
-      const crop = document.createElement('canvas');
-      prepareFrame(bmp, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop);
-      if (bmp.close) bmp.close();
+      // A foto em resolução cheia (a do celular inteira, o quadro 4K), não a
+      // de 1600 px mostrada no painel.
+      let full;
+      try { full = await createImageBitmap(photo.full || photo.blob); } catch { full = await createImageBitmap(photo.blob); }
+      const lineH = lineHeightIn(photo.rows, photo.rowsH, region, full.height);
+      const crop = cropForMedium(full, region, lineH);
       const cropUrl = crop.toDataURL('image/jpeg', 0.85);
       const texts = [];
+      // O texto da leitura de pontinhos aceita mês torto ("0E2"): já votou.
+      const parse = ([engine, text]) => findExpiryCandidates(text, undefined, { dots: engine === 'medium pontos' });
       startPaddleBurst();
       if (paddleBurstState === 'loading') {
         progress('Preparando a leitura detalhada (na 1ª vez baixa uns 140 MB)');
@@ -807,21 +839,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }
       if (!alive) return { status: 'ok' };
       // Nenhuma data: tenta como validade em pontinhos (lata).
-      if (!texts.some(([, text]) => findExpiryCandidates(text).length) && paddleBurstState === 'ready') {
+      if (!texts.some((t) => parse(t).length) && paddleBurstState === 'ready') {
         progress('Tentando juntar os pontinhos da impressão');
-        const page = document.createElement('canvas');
-        const bmp2 = await createImageBitmap(photo.blob);
-        page.width = photo.rowsW || bmp2.width; page.height = photo.rowsH || bmp2.height;
-        page.getContext('2d').drawImage(bmp2, 0, 0, page.width, page.height);
-        if (bmp2.close) bmp2.close();
-        const dots = await readDots(page, photo.rows, region);
+        const dots = await readDots(full, lineH, region, texts.filter(([engine]) => engine === 'medium').map(([, text]) => text));
         if (dots.iso) texts.push(['medium pontos', dots.text, 2]);
         else if (dots.texts.length) note({ kind: 'event', what: 'find-read', detail: `pontos sem acordo: ${dots.texts.map((t) => `“${t.replace(/\s+/g, ' ').slice(0, 30)}”`).join(' · ')}` });
       }
       if (!alive) return { status: 'ok' };
       // Nenhuma data: tenta de novo com os pontinhos "engordados" (validade
       // impressa em pontos, como nas tampas).
-      if (!texts.some(([, text]) => findExpiryCandidates(text).length) && paddleBurstState === 'ready') {
+      if (!texts.some((t) => parse(t).length) && paddleBurstState === 'ready') {
         for (const passes of [4, 5]) {
           if (!alive) return { status: 'ok' };
           progress('Tentando de novo, com os pontos juntos');
@@ -831,9 +858,11 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       }
       if (!alive) return { status: 'ok' };
       note({ kind: 'event', what: 'find-read', detail: `${Math.round(performance.now() - t0)} ms: ${texts.map(([e, t]) => `${e} “${t.replace(/\s+/g, ' ').slice(0, 50)}”`).join(' · ')}` }, crop);
+      if (full.close) full.close();
       const byIso = new Map();
-      for (const [, text, weight] of texts) {
-        for (const found of findExpiryCandidates(text)) {
+      for (const entry of texts) {
+        const weight = entry[2];
+        for (const found of parse(entry)) {
           const v = byIso.get(found.iso) || { ...found, n: 0 };
           v.n += weight; v.labeled ||= found.labeled;
           byIso.set(found.iso, v);
@@ -950,6 +979,11 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       try { await video.play(); } catch { /* o quadro chega mesmo assim */ }
       const track = stream.getVideoTracks()[0];
       const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+      try {
+        const set = track.getSettings ? track.getSettings() : {};
+        const max = caps.width && caps.height ? ` (máx ${caps.width.max}×${caps.height.max})` : '';
+        note({ kind: 'event', what: 'camera', detail: `${video.videoWidth || set.width}×${video.videoHeight || set.height}${set.frameRate ? ` a ${Math.round(set.frameRate)} q/s` : ''}${max}` });
+      } catch { /* sem detalhes */ }
       if (caps.torch) { torchBtn.hidden = false; torchBtn.parentElement.hidden = false; }
       // Foco contínuo, quando a câmera deixa: a data fica perto da lente.
       try { if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch { /* segue */ }
