@@ -43,10 +43,12 @@ const PICK_GUARD_MS = 450;
 const HINT_CYCLE_MS = 4200;
 const QUALITY_MS = 1200;
 const NATIVE_MAX_SIDE = 2400;
-// Mesma data em tantas imagens diferentes, bem à frente das outras: a câmera
-// pergunta "É esta?" em vez de esperar um rótulo que talvez nunca apareça
-// (a validade às vezes fica longe do "VAL", noutra linha da embalagem).
-const ASK_AFTER = 4;
+// Mesma data em tantas imagens diferentes, bem à frente das outras (a mesma
+// regra que põe a data em destaque): a câmera pergunta "É esta?" em vez de
+// esperar um rótulo que talvez nunca apareça (a validade às vezes fica longe
+// do "VAL", noutra linha da embalagem). Era 4 até a versão 3.49: a data certa
+// ficava em destaque, com "2×", "3×", e a pergunta demorava a vir.
+const ASK_AFTER = 2;
 const LEAD = 2;
 const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } };
 
@@ -485,7 +487,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       const past = lead.iso < new Date().toISOString().slice(0, 10);
       if (past && !seen.get(lead.iso).labeled) return;
       asking = lead.iso;
-      askText.textContent = `Li ${formatDate(lead.iso)} várias vezes. É a validade?`;
+      askText.textContent = `Li ${formatDate(lead.iso)} mais de uma vez. É a validade?`;
       askBox.hidden = false;
       setStatus('Confira a data abaixo', { urgent: true });
       note({ kind: 'event', what: 'ask', iso: lead.iso, detail: `${lead.n} imagens` });

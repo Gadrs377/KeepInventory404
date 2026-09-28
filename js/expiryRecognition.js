@@ -67,7 +67,10 @@ export const REJECT_TEXT = {
   confirmed: 'confirmou',
 };
 
-export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
+// A janela cobre a leitura inteira de uma embalagem: num celular, duas
+// leituras boas da validade podem vir a mais de 9 s uma da outra (era 9 s até
+// a versão 3.49), e aí a data aparecia "3×" na tela sem nunca confirmar.
+export function createExpiryConsensus({ skip = [], windowMs = 45000 } = {}) {
   let samples = [];
   let last = null;
   const reject = (code, detail = null) => { last = { code, detail }; return null; };

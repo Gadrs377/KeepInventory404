@@ -488,6 +488,10 @@ export default function mountTestes(root) {
       wrongConfirmed: confirmed && confirmed.iso !== ref ? confirmed.iso : null,
       wrongShown: [...new Set(shown.filter((e) => e.iso !== ref).map((e) => e.iso))],
       reads: reads.length, photos: ev('shutter').length, smallBackend: small ? small.detail : null,
+      // Quando cada leitura viu a data certa (s desde o início), as 8 primeiras.
+      refAt: reads.filter((e) => (e.dates || []).some((d) => d.iso === ref)).slice(0, 8).map((e) => Math.round(e.t / 100) / 10),
+      // Por que as leituras que viram a data certa não contaram (REJECT_TEXT).
+      whyNot: reads.filter((e) => (e.dates || []).some((d) => d.iso === ref)).reduce((acc, e) => { const k = `${e.engine}:${e.result}`; acc[k] = (acc[k] || 0) + 1; return acc; }, {}),
     };
   }
 

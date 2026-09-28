@@ -32,8 +32,8 @@ test('engines share votes, require distinct frames, and age out old evidence', (
   assert.equal(add('paddle', 1, 2), null);
   assert.equal(add('paddle', 2, 3), '2026-10-15');
   c.reset(); assert.equal(add('tesseract', 3, 4), null);
-  assert.equal(add('paddle', 4, 10000), null);
-  assert.equal(add('tesseract', 5, 11000), '2026-10-15');
+  assert.equal(add('paddle', 4, 50000), null);
+  assert.equal(add('tesseract', 5, 51000), '2026-10-15');
 });
 test('conflicts, skips and uncertain results cannot auto-confirm', () => {
   const c = createExpiryConsensus({ skip: ['2026-10-15'] });
@@ -117,4 +117,10 @@ test('validade antiga com VAL escrito vale; sem rótulo, não', () => {
   assert.equal(findExpiry('VAL 07/2021 11:34\nLOTE 250719BR341L', '2026-09-28')?.iso, '2021-07-31');
   assert.deepEqual(findExpiryCandidates('07/2021', '2026-09-28'), []);
   assert.deepEqual(findExpiryCandidates('FAB 07/2021', '2026-09-28'), []);
+});
+test('good readings far apart on a slow phone still confirm (window covers one package)', () => {
+  const c = createExpiryConsensus();
+  const add = (frame, at) => c.add({ candidates: candidate('2026-10-15'), engine: 'paddle', frame, at, confidence: 90 });
+  assert.equal(add(1, 0), null);
+  assert.equal(add(2, 15000), '2026-10-15');
 });

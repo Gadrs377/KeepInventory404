@@ -1143,7 +1143,7 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
 - **Rótulos reais mal lidos** entram como validade (`RL:`, `UAL:`…, bloco com
   FAB, "CONSUMIR ANTES DE" longe da data, "VAL/LOTE:"), sem abrir mão da
   proteção de fabricação e lote.
-- **"Li 11/08/2027 várias vezes. É a validade?"** com "Sim" e "Não", para a
+- **"Li 11/08/2027 várias vezes. É a validade?" (a partir da 3.50: "mais de uma vez")** com "Sim" e "Não", para a
   data vista em várias imagens sem rótulo. "Não" fecha a pergunta e não
   pergunta de novo; a data continua como botão. Com a pergunta aberta, as
   instruções de rotina e os avisos de imagem esperam.
@@ -1331,3 +1331,26 @@ para a Bancada. Os vídeos estão em `vendor/paddle/amostras/` em MP4 (sem
 áudio e sem metadados; o iPhone toca) e o Chromium dos testes usa o WebM de
 `tests/real/`. Cada vídeo é enquadrado com a validade perto do meio, onde
 fica a mira. `sw.js` v67.
+
+## Versão 3.50: a data certa em destaque não fica esperando
+
+No iPhone, a data certa aparecia com "2×", "3×" e em destaque bem antes de
+a câmera confirmar ou perguntar. Duas causas:
+
+- **A votação esquecia leituras com mais de 9 s.** A contagem da tela vale
+  para a leitura inteira, mas a votação só juntava leituras com até 9 s de
+  distância. Num celular, duas leituras boas da validade (com "VAL") podem
+  vir a 10–15 s uma da outra, e aí nunca somavam. A janela agora é de 45 s,
+  o bastante para uma embalagem. As outras regras continuam: rótulo de
+  validade, confiança, duas imagens diferentes e 2 votos à frente.
+- **A pergunta só vinha com 4 imagens.** Agora vem no mesmo momento em que a
+  data fica em destaque: 2 imagens diferentes e 2 à frente de qualquer outra.
+  O texto passou a ser "Li 11/08/2027 mais de uma vez. É a validade?". Data
+  passada sem rótulo continua sem virar pergunta, e data sem rótulo continua
+  sem confirmar sozinha.
+
+No Chromium, com os vídeos: o chocolate (data sem rótulo na linha) passou a
+perguntar em 14 s, na 2ª imagem com a data (antes, entre 21 e 45 s); o copo
+confirmou sozinho em 11 s; a lata e a tampa não fizeram nenhuma pergunta
+errada. A comparação "Câmera com vídeos reais" também mostra quando cada
+leitura viu a data certa e por que ela não contou. `sw.js` v68.

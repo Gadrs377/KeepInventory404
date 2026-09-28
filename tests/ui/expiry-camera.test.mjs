@@ -40,7 +40,7 @@ test('data sem rótulo vista várias vezes vira pergunta; "Não" guarda o botão
   const cam = await openExpirySheet(server, { ocr: { fallback: '11/08/27 CC22326', delay: 150 } });
   try {
     await cam.page.waitForSelector('.exp-ask:not([hidden])', { timeout: 30000 });
-    assert.match(await cam.page.$eval('.exp-ask-text', (e) => e.textContent), /Li 11\/08\/2027 várias vezes\. É a validade\?/);
+    assert.match(await cam.page.$eval('.exp-ask-text', (e) => e.textContent), /Li 11\/08\/2027 mais de uma vez\. É a validade\?/);
     assert.match(await cam.status(), /Confira a data abaixo/);
     // Nunca confirma sozinha: sem rótulo, só a pessoa decide.
     assert.equal(await cam.page.$('.exp-confirm-date'), null);
