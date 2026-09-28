@@ -42,8 +42,9 @@ viram opções. Não se escolhe automaticamente a maior data entre duas sem rót
 - Binários Paddle em `vendor/paddle/v3` (~185 MB sem compressão HTTP: duas
   camadas do PP-OCRv6, small com 31,2 MB para a leitura contínua e medium
   com 138,8 MB só para a foto nítida — ver "Duas camadas do Paddle" abaixo)
-  só são requisitados no fallback, e a medium só quando a foto nítida
-  realmente precisa dela. O service worker v53 usa cache separado e URLs
+  só são requisitados no fallback; a medium começa a carregar em segundo
+  plano quando a small fica pronta (ou quando a pessoa abre a câmera do
+  celular). O service worker v54 usa cache separado e URLs
   versionadas. Após cache completo, funciona offline; caches podem ser
   removidos pelo navegador, e falta de espaço impede garantir persistência.
   Falha de gravação no cache não deve impedir leitura online.
@@ -67,58 +68,76 @@ Rodar os dois juntos passou a impressão de que dobraria o tempo por leitura
 mediana com `eng+por` não ficou mais lenta que só `eng`. Não é uma garantia
 para todo texto/PSM, mas não há custo perceptível neste uso.
 
-## Sem confirmar por muito tempo: inclinar/luz e foto nítida
+## Sem confirmar por muito tempo: inclinar/luz, fotos e digitar olhando
 
 Depois de `STRUGGLE_MS` (10 s) sem confirmar, `js/views/expiryCam.js` mostra um
 painel com duas sugestões que alternam a cada 4,2 s (`TILT_HINTS`, em
 `js/expiryRecognition.js`) — inclinar a embalagem devagar ou mudar a direção
-da luz, mantendo a validade na mira — e o botão **Tirar uma foto nítida da
-validade**. Foi a próxima experiência sugerida em `TESTES_VALIDADES_REAIS.md`
-para a embalagem roxa em relevo que não confirmou em nenhum teste.
+da luz, mantendo a validade na mira — e o botão **Tirar foto com a câmera do
+celular**.
 
-A cada troca de dica (mesmo ciclo de 4,2 s), o app também tira e lê uma foto
-parada sozinho, sem esperar o toque no botão — quem está inclinando a
-embalagem ou mudando a luz tem mais chances de a leitura pegar o instante
-certo sem precisar parar para tocar em nada. O botão continua ali para
-tentar na hora, sem esperar o próximo ciclo. Enquanto uma rodada está em
-andamento (`busy = true`), o ciclo seguinte só continua alternando a dica —
-não inicia uma segunda rodada por cima da primeira.
+**Foto automática.** A cada troca de dica, o app congela o quadro atual (ou
+usa `ImageCapture.takePhoto()` quando existe — no Safari não existe) e lê essa
+foto parada. A imagem pisca em branco e o celular dá um toque curto, para a
+pessoa perceber o instante e aprender o ritmo "inclina, para, inclina". Nunca
+duas fotos ao mesmo tempo. Cada foto:
 
-Cada rodada (automática ou pelo botão):
+1. Roda os cinco filtros do Tesseract com um recorte maior
+   (`BURST_TESSERACT_VARIANTS`) e depois os cinco do Paddle
+   (`BURST_PADDLE_VARIANTS`) — com o medium, se já estiver pronto; senão com o
+   small. Nunca espera o medium carregar.
+2. A leitura ao vivo **continua rodando** enquanto a foto é lida: o Tesseract
+   tem fila própria (`js/ocr.js`) e o medium tem worker próprio. Só pausa
+   (`busy`) se a foto precisar do Paddle small, que é o mesmo worker da
+   leitura ao vivo. Antes, a leitura ao vivo parava a foto inteira — com o
+   medium (~4 s por filtro) isso chegava a ~20 s parada; num teste, a
+   confirmação caiu de 14,9 s para 0,3 s depois da mudança.
+3. **Uma foto conta como uma imagem só.** Todos os filtros votam, mas com a
+   mesma origem (`source: photo-<n>` em `createExpiryConsensus`), então a regra
+   de "duas imagens diferentes" não se cumpre com uma foto só. Antes, dois
+   filtros da mesma foto já confirmavam — e filtros diferentes sobre a mesma
+   imagem borrada tendem a errar igual. Agora a confirmação precisa de outra
+   foto ou de um quadro ao vivo concordando.
+4. Se a `ImageCapture` tem outra proporção que o vídeo (foto 4:3, vídeo 16:9),
+   a mira é convertida para a foto (antes, o recorte caía no lugar errado), e
+   `takePhoto()` tem limite de 3 s — sem isso, uma trilha que cai no meio
+   deixava a foto esperando para sempre.
 
-1. Pausa a leitura contínua (`busy = true`; o laço só volta a rodar quando a
-   foto termina).
-2. Tenta `ImageCapture.takePhoto()` na trilha da câmera, que costuma trazer
-   mais pixels do sensor que um quadro de vídeo; sem suporte, usa o próprio
-   quadro atual do vídeo.
-3. Roda os cinco filtros distintos do Tesseract primeiro (sem as variações
-   de segmentação/rotação, pensadas para variar entre quadros de vídeo, não
-   uma foto só) com um recorte maior (`BURST_TESSERACT_VARIANTS`,
-   `prepareFrame` ganhou `maxH`/`maxScale` para isso) — rápido, sem baixar
-   nada. Só se nenhum confirmar é que entra o Paddle "medium" (baixa/inicia
-   na primeira vez que é preciso, senão já está pronto de uma rodada
-   anterior) com os cinco filtros dele (`BURST_PADDLE_VARIANTS`). Cada
-   filtro entra na mesma votação como um "quadro" à parte, com um número de
-   rodada crescente no identificador (`photo-<rodada>-<filtro>`) para que
-   uma nova foto nunca seja descartada como "quadro repetido" de uma rodada
-   anterior — cada tentativa segue independente, sem misturar pixels entre
-   fotos. Confirma sozinha nos mesmos critérios de sempre.
-4. Sem confirmar em nenhum filtro, volta ao normal: mostra o que achou como
-   opção para tocar, e a leitura contínua retoma.
+**Câmera do celular.** O botão abre a câmera do próprio aparelho
+(`<input type="file" capture="environment">`): foco, HDR e resolução cheia —
+no iPhone, a única forma de ter uma foto realmente mais nítida que o vídeo. A
+foto inteira é lida (`PHOTO_*_VARIANTS`: Tesseract com texto esparso, e o
+Paddle medium, que espera ficar pronto só neste caso, já que a pessoa pediu
+uma leitura cuidadosa). A foto automática em andamento cede a vez. Como é uma
+foto só, não confirma sozinha: a data vira um botão ("Achei a data na foto.
+Toque nela para conferir"). Na volta, se o iOS encerrou a câmera da página,
+ela é religada.
 
-Testado com Tesseract simulado (Playwright): o painel aparece só depois do
-tempo certo, a dica alterna, a leitura contínua não confirma sozinha depois
-que a foto é pedida (só os quadros dela contam), a foto dispara sozinha a
-cada ciclo sem exigir toque no botão, duas rodadas nunca ficam pendentes ao
-mesmo tempo (uma leitura de 900 ms por filtro, mais longa que o próprio
-ciclo de dica, não gera chamadas simultâneas), confirma corretamente quando
-algum filtro acerta (pelo toque ou sozinha, inclusive quando a primeira
-rodada precisa baixar o Paddle medium de verdade antes de confirmar numa
-rodada seguinte), e devolve o botão e a câmera quando nenhum acerta. Como a
-primeira rodada sem o Tesseract confirmar chega a baixar/iniciar o Paddle
-medium (bem maior — ver seção abaixo), ela pode demorar bem mais que as
-seguintes; enquanto isso, a leitura contínua fica pausada (`busy = true`)
-até a rodada terminar.
+**Mensagens de causa.** A cada ~1,2 s o recorte da mira (320 px) é medido em
+`js/frameQuality.js`: brilho médio baixo → "Está escuro…"; mais de 2,5% de
+pixels estourados → "Tem reflexo em cima da data…"; pouca variância do
+Laplaciano → "Segure parado, com a data dentro da mira". Os limites vieram de
+quadros reais do vídeo da lata (tremidos ficaram abaixo de ~35; nítidos acima
+de ~95). A mensagem só aparece depois de a mesma causa ser vista duas vezes
+seguidas, e só some do mesmo jeito. **É só para a mensagem**: nenhum quadro
+deixa de ser lido por causa dela (descartar quadros "ruins" já piorou a
+leitura antes). As mensagens que falavam da máquina ("leitura mais
+detalhada", "mais precisa") viraram "Só um instante" ou sumiram.
+
+**Desistir com dignidade.** Depois de 3 fotos automáticas sem confirmar, ou
+35 s (`HARD_AFTER_*`) desde que já exista uma foto, o painel diz que a
+embalagem está difícil de ler pela câmera, e "Digitar a data" vira o caminho
+sugerido. A página de digitar mostra a foto com mais texto legível até ali
+(foto do celular tem preferência), e um toque amplia em volta do ponto
+tocado. A foto segue para a confirmação como prova. É o caminho realista para
+a lata gravada a laser, que a pessoa lê a olho mas nenhum motor leu.
+
+Testado com Tesseract simulado (Playwright): painel no tempo certo, dicas
+alternando, fotos automáticas sem toque (contando o piscar), nenhuma
+confirmação só com fotos, confirmação rápida quando a data fica legível,
+câmera do celular (atributos, leitura, data virando botão, foto como prova,
+falha sem data, trilha encerrada e religada), desistência com foto e zoom, e
+as três mensagens de causa com vídeos falsos (escuro, reflexo, liso).
 
 ## Duas camadas do Paddle (PP-OCRv5 mobile → PP-OCRv6 small + medium)
 
@@ -165,8 +184,9 @@ na parte do Paddle, e cada ciclo de dica de inclinar levaria de 4,2 s para
 esse tanto. Por isso a divisão adotada: **small na leitura contínua** (onde
 tentar rápido vale mais) e **medium só na foto nítida** (onde a pessoa já
 está esperando uma resposta mais cuidadosa, e vale a pena pensar mais numa
-única foto bem tirada). A foto nítida tenta o Tesseract primeiro, sem custo
-nenhum de download, e só recorre ao medium se o Tesseract não confirmar.
+única foto bem tirada). A foto tenta o Tesseract primeiro e depois o
+Paddle; o medium carrega em segundo plano e nenhuma foto automática espera
+por ele nem pausa a leitura ao vivo (ver a seção anterior).
 
 Mesmo com o medium, o vídeo real da lata não chegou a confirmar a validade
 de ponta a ponta pelo fluxo completo do app (testado por até 90 s) — o
@@ -175,9 +195,9 @@ embalagem específica continua sem solução completa; ver
 `TESTES_VALIDADES_REAIS.md`.
 
 Tamanhos: small 31,2 MB (era 21,5 MB no PP-OCRv5 mobile), medium 138,8 MB —
-juntos, 185 MB de binários em `vendor/paddle/v3`, mas a medium só é
-baixada quando a foto nítida realmente precisa dela, nunca na leitura
-contínua. Suite completa de testes (unitários, câmera real com motores
+juntos, 185 MB de binários em `vendor/paddle/v3`; a medium só é baixada
+quando a embalagem já se mostrou difícil (small pronta) ou a pessoa pede a
+câmera do celular. Suite completa de testes (unitários, câmera real com motores
 reais, ciclo de vida do Paddle offline/cancelamento, painel de ajuda e foto
 automática) rodada de novo depois da troca, sem regressão.
 

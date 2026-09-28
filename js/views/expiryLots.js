@@ -83,6 +83,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   // sozinhas de novo (senão a data errada voltaria na hora); ainda dá para tocar.
   const confirmed = [];
   const left = () => Math.max(0, total() - lots.reduce((a, l) => a + l.qty, 0));
+  // A foto com mais texto legível da câmera: aparece ao lado do campo de
+  // digitar. Vale para a embalagem atual; some quando uma data é confirmada.
+  let bestPhoto = null;
 
   // Página 1: ler com a câmera (ou ir para digitar).
   function scanPage({ asRoot = false } = {}) {
@@ -91,17 +94,25 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       <button type="button" class="btn exp-alt" data-type>${icon('keyboard')}Digitar a data</button>`, 'exp-scan');
     let reading = null;
     let evidence = null;
+    const typeBtn = $('[data-type]', el);
     const onShow = () => {
       if (reading) return;
       evidence = null;
-      reading = readExpiryWithCamera($('.exp-cam', el), { skip: [...confirmed, ...lots.map((l) => l.expiresAt)], onEvidence:value => { evidence=value; } });
+      typeBtn.classList.remove('is-suggested');
+      reading = readExpiryWithCamera($('.exp-cam', el), {
+        skip: [...confirmed, ...lots.map((l) => l.expiresAt)],
+        onEvidence: (value) => { evidence = value; },
+        onBestPhoto: (url) => { bestPhoto = url; },
+        // A câmera desistiu com dignidade: "Digitar a data" vira o caminho sugerido.
+        onHard: () => typeBtn.classList.add('is-suggested'),
+      });
       reading.then((iso) => {
         reading = null;
         if (iso && el.isConnected && !el.hidden) confirmPage(iso, evidence);
       });
     };
     const onHide = () => { if (reading) reading.stop(); reading = null; };
-    $('[data-type]', el).addEventListener('click', () => typePage());
+    typeBtn.addEventListener('click', () => typePage(bestPhoto));
     if (asRoot) {
       body.append(el);
       nav = sheetNav(body, { el, title: 'Validade', onShow, onHide });
@@ -114,8 +125,16 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   }
 
   // Digitar: campo grande, teclado numérico. Aceita também "VAL 20/12/27 L0425".
-  function typePage() {
+  // `photo`: a melhor foto da câmera, para digitar olhando (toque amplia).
+  function typePage(photo = null) {
     const el = page(`
+      ${photo ? `
+      <figure class="exp-type-photo">
+        <button type="button" class="exp-type-zoom" aria-label="Ampliar a foto da embalagem" aria-pressed="false">
+          <img src="${esc(photo)}" alt="Melhor foto da embalagem tirada pela câmera">
+        </button>
+        <figcaption>Toque na foto para ampliar onde está a data</figcaption>
+      </figure>` : ''}
       <label class="field">
         <span class="field-label">Data da embalagem</span>
         <input class="input input-date exp-type-input" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AA" aria-describedby="exp-type-note">
@@ -133,10 +152,23 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       const iso = parseExpiry(input.value);
       note.textContent = iso ? `${formatDateLong(iso)}.` : HELP;
     });
+    const zoom = $('.exp-type-zoom', el);
+    if (zoom) {
+      // Amplia em volta do ponto tocado; outro toque volta ao tamanho normal.
+      zoom.addEventListener('click', (e) => {
+        const img = $('img', zoom);
+        const on = zoom.getAttribute('aria-pressed') !== 'true';
+        const r = zoom.getBoundingClientRect();
+        if (on && e.clientX) img.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+        zoom.setAttribute('aria-pressed', String(on));
+        zoom.classList.toggle('is-zoomed', on);
+      });
+    }
     // Continuar fica sempre ativo; sem data válida, diz como escrever e volta ao campo.
     const go = () => {
       const iso = parseExpiry(input.value);
-      if (iso) { confirmPage(iso); return; }
+      // A foto olhada para digitar vai junto para a confirmação, como prova.
+      if (iso) { confirmPage(iso, photo ? { image: photo, monthOnly: /^\d{1,2}\/\d{2,4}$/.test(input.value.trim()) } : null); return; }
       input.setAttribute('aria-invalid', 'true');
       note.classList.add('is-error');
       note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
@@ -150,6 +182,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   // Página 2: a data por extenso e quantas vencem nela.
   function confirmPage(iso, evidence = null) {
     if (!confirmed.includes(iso)) confirmed.push(iso);
+    bestPhoto = null;
     const max = left();
     const past = daysUntil(iso) < 0;
     const el = page(`

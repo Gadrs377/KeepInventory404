@@ -1,0 +1,238 @@
+[
+  {
+    "file": "lata-gravacao-laser.webm",
+    "reference": {
+      "val": "2028-12-29",
+      "fab": "2025-12-29",
+      "lote": "1291225"
+    },
+    "tiers": {
+      "small": {
+        "frames": 30,
+        "framesWithText": 19,
+        "framesWithDateFragment": 0,
+        "readsOfReference": 0,
+        "wrongDates": [],
+        "msPerFrame": 640,
+        "reads": [
+          {
+            "t": 0.01,
+            "text": "211 | CE | DE | \"L. | OTE:1291",
+            "dates": []
+          },
+          {
+            "t": 0.52,
+            "text": "LIFIL | LOTE:1291",
+            "dates": []
+          },
+          {
+            "t": 1.02,
+            "text": "JFL: | LOTE:1291",
+            "dates": []
+          },
+          {
+            "t": 1.52,
+            "text": "2 S | LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 2.02,
+            "text": "RH | 尚 | JF11",
+            "dates": []
+          },
+          {
+            "t": 3.04,
+            "text": "29/",
+            "dates": []
+          },
+          {
+            "t": 4.04,
+            "text": "BE",
+            "dates": []
+          },
+          {
+            "t": 4.55,
+            "text": "E:1291225",
+            "dates": []
+          },
+          {
+            "t": 5.07,
+            "text": "[0TE:1291225",
+            "dates": []
+          },
+          {
+            "t": 6.59,
+            "text": "中举三品牌至三室",
+            "dates": []
+          },
+          {
+            "t": 7.09,
+            "text": "HE/ | UFIL LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 8.6,
+            "text": "I8",
+            "dates": []
+          },
+          {
+            "t": 9.61,
+            "text": "LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 10.13,
+            "text": "FFE | LIFIL",
+            "dates": []
+          },
+          {
+            "t": 11.16,
+            "text": "FFE | LFL | LOTE:1",
+            "dates": []
+          },
+          {
+            "t": 11.68,
+            "text": "BE",
+            "dates": []
+          },
+          {
+            "t": 12.69,
+            "text": "LFIL: | LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 13.2,
+            "text": "111",
+            "dates": []
+          },
+          {
+            "t": 14.71,
+            "text": ":1291225",
+            "dates": []
+          }
+        ]
+      },
+      "medium": {
+        "frames": 30,
+        "framesWithText": 21,
+        "framesWithDateFragment": 3,
+        "readsOfReference": 0,
+        "wrongDates": [],
+        "msPerFrame": 3800,
+        "reads": [
+          {
+            "t": 0.01,
+            "text": "-11 | OTE:1291",
+            "dates": []
+          },
+          {
+            "t": 0.52,
+            "text": "LUFIL LOTET129T225",
+            "dates": []
+          },
+          {
+            "t": 1.02,
+            "text": "JAL:",
+            "dates": []
+          },
+          {
+            "t": 1.52,
+            "text": "LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 2.02,
+            "text": "R1 | DE | JAL DE | JOTE:1 S9",
+            "dates": []
+          },
+          {
+            "t": 2.53,
+            "text": "FEBEE8",
+            "dates": []
+          },
+          {
+            "t": 4.55,
+            "text": "280E2<25 E:1291225",
+            "dates": []
+          },
+          {
+            "t": 5.07,
+            "text": "FA8/29/0EZ 20 | 0TE:1291225",
+            "dates": []
+          },
+          {
+            "t": 5.59,
+            "text": "[183/8/23 | 0TE:1291225",
+            "dates": []
+          },
+          {
+            "t": 6.09,
+            "text": "福 | 112",
+            "dates": []
+          },
+          {
+            "t": 6.59,
+            "text": "中华茶乐0军通三店理",
+            "dates": []
+          },
+          {
+            "t": 7.09,
+            "text": "UAIL LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 9.1,
+            "text": "E",
+            "dates": []
+          },
+          {
+            "t": 9.61,
+            "text": "FAB·29/DEZ",
+            "dates": []
+          },
+          {
+            "t": 10.13,
+            "text": "FAB:22/ | LUAL | LOTE:129T",
+            "dates": []
+          },
+          {
+            "t": 11.16,
+            "text": "LOTE:129T225",
+            "dates": []
+          },
+          {
+            "t": 11.68,
+            "text": "DTE-1291",
+            "dates": []
+          },
+          {
+            "t": 12.69,
+            "text": "LOTE:1291225",
+            "dates": []
+          },
+          {
+            "t": 13.2,
+            "text": "yl | 4 | DE | fnn | 17",
+            "dates": []
+          },
+          {
+            "t": 13.7,
+            "text": "29/DE",
+            "dates": []
+          },
+          {
+            "t": 14.71,
+            "text": "LOTET1291225",
+            "dates": []
+          }
+        ]
+      }
+    },
+    "flow": {
+      "accepted": null,
+      "ms": 90006,
+      "suggestedTyping": true,
+      "hadPhotoForTyping": true
+    }
+  }
+]

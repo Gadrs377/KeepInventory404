@@ -1,5 +1,6 @@
 import {chromium} from '../experiments/ocr/node_modules/playwright/index.mjs';
 import {writeFile} from 'node:fs/promises';
+import {mediaFiles,mediaUrl} from './media.mjs';
 const fixtures=[
  ['0A69', '2028-05-31', [.14,.23,.63,.38]],
  ['6E3D', '2027-02-28', [.18,.37,.53,.24]],
@@ -8,8 +9,7 @@ const fixtures=[
  ['9B7E', '2028-03-31', [.29,.33,.44,.25]],
  ['D8D3', '2027-06-30', [.14,.36,.76,.25]],
 ];
-const {readdir}=await import('node:fs/promises');
-const files=await readdir('tests/private');
+const files=mediaFiles();
 const browser=await chromium.launch({headless:true});
 const rows=[];
 try {
@@ -17,12 +17,12 @@ try {
  await page.goto('http://127.0.0.1:8765/tests/ocr-fixture.html');
  for(const [prefix,expected,region] of fixtures){
   const file=files.find(f=>f.startsWith('IMG_'+prefix));
-  const row=await page.evaluate(async({file,expected,region})=>{
+  const row=await page.evaluate(async({file,url,expected,region})=>{
    const {prepareFrame,readResult}=await import('/js/ocr.js');
    const {TESSERACT_VARIANTS}=await import('/js/expiryRecognition.js');
    const {findExpiryCandidates}=await import('/js/dates.js');
    const {createPaddleReader}=await import('/js/paddleOcr.js');
-   const img=new Image();img.src='/tests/private/'+file;await img.decode();
+   const img=new Image();img.src=url;await img.decode();
    const results=[];const paddle=createPaddleReader();
    for(const scope of ['full','aim']){
     const [x,y,w,h]=scope==='full'?[0,0,1,1]:region;
@@ -39,7 +39,7 @@ try {
     }
    }
    paddle.dispose();return {file,expected,region,results};
-  },{file,expected,region});
+  },{file,url:mediaUrl(file),expected,region});
   rows.push(row);await writeFile(process.env.PHOTO_RESULTS || 'tests/photos-current.json',JSON.stringify(rows,null,2));
   console.log(prefix, row.results.filter(r=>r.candidates.some(c=>c.iso===expected)).length+'/30 correct candidates');
  }

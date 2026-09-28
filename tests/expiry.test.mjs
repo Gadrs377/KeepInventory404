@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { findExpiry, findExpiryCandidates, expiryInputValue } from '../js/dates.js';
 import { createExpiryConsensus, needsPaddle } from '../js/expiryRecognition.js';
+import { frameIssue } from '../js/frameQuality.js';
 
 test('known labels, missing separators, ISO and corrupted month names', () => {
   for (const text of ['VAL 15/10/26', 'VAL 2026-10-15', 'VAL 15 10 2026', 'VAL 15 0UT 2026', 'VAL15102026', 'FAB 01/09/2026 VAL 15/10/2026 LOTE 12/27']) {
@@ -50,6 +51,30 @@ test('real packages: spaced and compact month/year preserve expiry labels', () =
   for(const text of ['F0225','L0227','LOTE 0227','V02\n27','VAL 31 02 2027','V 02 27 123'])
     assert.equal(findExpiry(text,'2026-09-27'),null,text);
   assert.equal(findExpiry('F.:05.2025','2026-09-27'),null);
+});
+test('filters of one still photo count as a single picture', () => {
+  const c = createExpiryConsensus();
+  const add = (engine, frame, source, at) => c.add({ candidates: candidate('2026-10-15'), engine, frame, source, at, confidence: 90 });
+  for (let i = 0; i < 5; i++) assert.equal(add('tesseract', `photo-0-${i}`, 'photo-0', i), null);
+  for (let i = 5; i < 10; i++) assert.equal(add('paddle', `photo-0-${i}`, 'photo-0', i), null);
+  assert.equal(add('tesseract', 'photo-1-0', 'photo-1', 20), '2026-10-15');
+  const d = createExpiryConsensus();
+  assert.equal(d.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 'photo-0-0', source: 'photo-0', at: 0, confidence: 90 }), null);
+  assert.equal(d.add({ candidates: candidate('2026-10-15'), engine: 'tesseract', frame: 1.23, at: 1, confidence: 90 }), '2026-10-15');
+});
+test('frame issues: dark, glare, blur and a sharp frame', () => {
+  const frame = (fn, width = 64, height = 32) => {
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const v = fn(x, y); const i = (y * width + x) * 4;
+      data[i] = data[i + 1] = data[i + 2] = v; data[i + 3] = 255;
+    }
+    return { data, width, height };
+  };
+  assert.equal(frameIssue(frame(() => 20)), 'dark');
+  assert.equal(frameIssue(frame((x) => (x < 8 ? 255 : 120))), 'glare');
+  assert.equal(frameIssue(frame((x) => 100 + x)), 'blur');
+  assert.equal(frameIssue(frame((x, y) => ((x + y) % 2 ? 60 : 200))), null);
 });
 test('unlabeled manufacture cannot auto-confirm even with repeated confident readings', () => {
   const c=createExpiryConsensus();

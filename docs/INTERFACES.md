@@ -1099,3 +1099,34 @@ adicionamos o EasyOCR como terceiro motor.
   sequer cogitar baixar o Paddle medium (antes, esperava o Paddle ficar
   pronto mesmo que o Tesseract fosse resolver sozinho).
 - `sw.js` v53: cache do Paddle vira `paddle-v3`.
+
+## Versão 3.39: câmera do celular, mensagens de causa e digitar olhando a foto
+
+Depois de uma crítica do próprio fluxo (ver `docs/LEITURA_VALIDADE.md`,
+"Sem confirmar por muito tempo"):
+
+- **Uma foto conta como uma imagem só na votação.** Os filtros de uma mesma
+  foto ainda votam, mas não cumprem sozinhos a regra de "duas imagens
+  diferentes" (`source` em `createExpiryConsensus`).
+- **"Tirar foto com a câmera do celular"** substitui "Tirar uma foto nítida"
+  (que ficava desativado quase o tempo todo, porque a foto já dispara
+  sozinha): abre a câmera do aparelho, com foco, HDR e resolução cheia. A
+  data achada vira um botão para conferir. A câmera da página é religada
+  na volta, se o iOS a tiver encerrado.
+- **Nada trava a leitura ao vivo:** o Paddle medium carrega em segundo plano
+  quando o small fica pronto, e a foto automática lê junto com a leitura ao
+  vivo em vez de pausá-la.
+- **Mensagens de causa:** "Está escuro…", "Tem reflexo em cima da data…",
+  "Segure parado…", medidas na mira (`js/frameQuality.js`) só para a
+  mensagem. Mensagens sobre a máquina ("leitura mais detalhada") saíram.
+- **Piscar branco + toque curto** quando a foto automática é tirada.
+- **Desistir com dignidade:** depois de 3 fotos ou 35 s, o painel admite que a
+  embalagem está difícil, "Digitar a data" fica em destaque, e a página de
+  digitar mostra a melhor foto (toque amplia), que segue como prova para a
+  confirmação.
+- Corrigido: recorte da `ImageCapture` quando a foto tem outra proporção que
+  o vídeo; `takePhoto()` que nunca respondia com a trilha encerrada.
+- Material real no repositório: `tests/real/` (vídeo da lata recortado e sem
+  metadados — o original tinha a coordenada GPS da gravação),
+  `tests/real-video.mjs` e instruções para adicionar fotos com segurança.
+- `sw.js` v54, com `js/frameQuality.js` no cache do app.

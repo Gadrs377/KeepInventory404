@@ -1,7 +1,8 @@
 import {chromium} from '../experiments/ocr/node_modules/playwright/index.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const photos=JSON.parse(await readFile('tests/photos-baseline.json'));
+import {mediaUrl} from './media.mjs';
+const photos=JSON.parse(await readFile('tests/photos-baseline.json')).map(p=>({...p,url:mediaUrl(p.file)}));
 const browser=await chromium.launch({headless:true});
 const results=[];
 try{
@@ -10,7 +11,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const result=await page.evaluate(async photo=>{
    const {readExpiryWithCamera}=await import('/js/views/expiryCam.js');
-   const img=new Image();img.src='/tests/private/'+photo.file;await img.decode();
+   const img=new Image();img.src=photo.url;await img.decode();
    const [x,y,w,h]=photo.region,c=document.createElement('canvas');c.width=Math.round(img.width*w);c.height=Math.round(img.height*h);
    const ctx=c.getContext('2d'),draw=()=>ctx.drawImage(img,img.width*x,img.height*y,img.width*w,img.height*h,0,0,c.width,c.height);draw();
    const style=document.createElement('style');style.textContent=`.viewfinder{width:600px;height:${600*c.height/c.width}px}`;document.head.append(style);

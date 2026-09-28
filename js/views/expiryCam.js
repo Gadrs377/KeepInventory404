@@ -13,28 +13,42 @@
 // segundo nenhuma aceita toque, para o dedo não acertar a data errada.
 //
 // Sem confirmar por muito tempo, sugere inclinar a embalagem ou mudar a luz
-// e, sozinho, tira e lê fotos paradas nesse meio-tempo (sem esperar o toque
-// no botão) — uma tentativa independente a cada troca de dica, cada uma
-// entrando na mesma votação como um quadro à parte. Nunca junta pixels de
-// fotos diferentes; só dá mais chances de pegar o instante em que a luz ou
-// o ângulo ajudam. A foto nítida tenta o Tesseract primeiro e, se não
-// confirmar, usa uma camada do Paddle maior ("medium") — mais lenta por
-// leitura, mas enxerga mais em material difícil; baixada só quando entra
-// em uso, não na leitura contínua.
+// e, sozinho, tira e lê fotos paradas nesse meio-tempo — uma tentativa
+// independente a cada troca de dica. Nunca junta pixels de fotos diferentes,
+// e os filtros de uma mesma foto contam como uma foto só na votação. A foto
+// tenta o Tesseract primeiro e depois o Paddle "medium" (mais lento, enxerga
+// mais em material difícil), que carrega em segundo plano assim que o small
+// fica pronto — nunca trava a leitura contínua esperando por ele. Ainda
+// oferece a câmera do próprio celular (foco, HDR e resolução cheia) e, se a
+// embalagem continuar difícil, sugere digitar olhando a melhor foto.
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { createPaddleReader } from '../paddleOcr.js';
 import {
   TESSERACT_VARIANTS, PADDLE_VARIANTS, needsPaddle, createExpiryConsensus,
   STRUGGLE_MS, TILT_HINTS, BURST_TESSERACT_VARIANTS, BURST_PADDLE_VARIANTS,
+  PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, PHOTO_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS,
 } from '../expiryRecognition.js';
+import { frameIssue } from '../frameQuality.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
-import { $, icon, vibrate } from '../ui.js';
+import { $, icon, vibrate, reducedMotion } from '../ui.js';
 
 const MAX_PICKS = 3;
 const PICK_GUARD_MS = 450;
 const HINT_CYCLE_MS = 4200;
+const QUALITY_MS = 1200;
+const NATIVE_MAX_SIDE = 2400;
+const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } };
+
+const ISSUE_TEXT = {
+  dark: 'Está escuro. Acenda uma luz perto da embalagem',
+  glare: 'Tem reflexo em cima da data. Incline um pouco para tirar o brilho',
+  blur: 'Segure parado, com a data dentro da mira',
+};
+const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Tente a câmera do celular, ou digite a data olhando a melhor foto.';
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function claimCamera(on) {
   window.dispatchEvent(new CustomEvent('ki:camera', { detail: { claim: on } }));
@@ -58,13 +72,31 @@ function aimBox(video, aim) {
   return { x: clamp(x), y: clamp(y), w: Math.min(w, 1 - clamp(x)), h: Math.min(h, 1 - clamp(y)) };
 }
 
+// A foto do ImageCapture costuma ter outra proporção que o vídeo (4:3 contra
+// 16:9): o vídeo é um recorte central do mesmo sensor. Leva a mira para a foto.
+function mapBox(box, vw, vh, pw, ph) {
+  const va = vw / vh; const pa = pw / ph;
+  if (Math.abs(va - pa) < 0.01) return box;
+  if (pa < va) { const f = pa / va; return { x: box.x, w: box.w, y: (1 - f) / 2 + box.y * f, h: box.h * f }; }
+  const f = va / pa;
+  return { y: box.y, h: box.h, x: (1 - f) / 2 + box.x * f, w: box.w * f };
+}
+
+// Quanto texto uma leitura achou (só para escolher a melhor foto a mostrar).
+function textScore({ text = '', confidence = 0 }) {
+  return (text.match(/[0-9A-Za-z]/g) || []).length * Math.max(0, confidence) / 100;
+}
+
 /**
  * Monta a câmera em `host`. Resolve com AAAA-MM-DD, ou null se cancelar.
  * A promessa tem `.stop()` para desligar a câmera por fora (ao sair da página).
  * `skip`: datas já escolhidas; não entram sozinhas de novo (a câmera ainda pode
  * estar na mesma embalagem), mas aparecem para tocar.
+ * `onBestPhoto(dataUrl)`: a foto com mais texto legível até agora, para
+ * mostrar ao lado do campo de digitar. `onHard()`: a embalagem parece difícil
+ * demais para a câmera (hora de sugerir digitar).
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {} } = {}) {
   let stop = () => {};
   const promise = new Promise((resolve) => {
     host.hidden = false;
@@ -72,6 +104,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       <div class="viewfinder is-compact exp-vf">
         <video muted playsinline aria-label="Imagem da câmera"></video>
         <div class="aim exp-aim" aria-hidden="true"></div>
+        <div class="exp-shutter" aria-hidden="true"></div>
         <p class="exp-status" role="status">Abrindo a câmera</p>
         <div class="cam-tools" hidden><button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button></div>
       </div>
@@ -80,28 +113,44 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       </div>
       <div class="exp-struggle" hidden>
         <p class="exp-struggle-hint" aria-live="polite"></p>
-        <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Tirar uma foto nítida da validade</span></button>
+        <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Usar a câmera do celular</span></button>
+        <input type="file" accept="image/*" capture="environment" hidden data-photo-input>
       </div>`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
+    const shutterEl = $('.exp-shutter', host);
     const status = $('.exp-status', host);
     const picks = $('.exp-picks', host);
     const torchBtn = $('[data-torch]', host);
     const struggle = $('.exp-struggle', host);
     const struggleHint = $('.exp-struggle-hint', host);
     const photoBtn = $('[data-photo]', host);
+    const photoInput = $('[data-photo-input]', host);
     const canvas = document.createElement('canvas');
     const original = document.createElement('canvas');
+    // Fotos têm canvas próprios: a leitura ao vivo pode voltar a rodar enquanto
+    // uma foto espera o Paddle medium ficar pronto.
+    const photoCanvas = document.createElement('canvas');
+    const photoEvidence = document.createElement('canvas');
+    const qualityCanvas = document.createElement('canvas');
+    const bestCanvas = document.createElement('canvas');
     const evidence = new Map();
     let stream = null;
     let alive = true;
     let torchOn = false;
-    let busy = false; // lendo a foto nítida: a leitura ao vivo pausa
+    // Uma foto está usando o worker do Paddle small, o mesmo da leitura ao vivo:
+    // a leitura ao vivo pausa. (O Tesseract já tem fila própria, e o medium
+    // tem worker próprio: esses rodam junto com a leitura ao vivo.)
+    let busy = false;
+    let bursting = false; // uma foto está em andamento (inclui esperar o modelo)
+    let liveReading = false;
+    let nativeOpen = false; // a pessoa saiu para a câmera do celular
+    let nativePending = false; // uma foto do celular espera a vez: a automática cede
+    let nativeReading = false; // lendo a foto do celular: o status fica nela
     const consensus = createExpiryConsensus({ skip });
     // Duas camadas do mesmo PP-OCRv6: "small" na leitura contínua (rápida,
-    // tenta muitos quadros) e "medium" só na foto nítida (mais lenta por
-    // leitura, mas enxerga mais em material difícil). Ver
-    // docs/LEITURA_VALIDADE.md e vendor/paddle/README.md.
+    // tenta muitos quadros) e "medium" só nas fotos (mais lenta por leitura,
+    // mas enxerga mais em material difícil). Ver docs/LEITURA_VALIDADE.md.
     const paddleLive = createPaddleReader('small');
     let paddleLiveState = 'idle';
     let loadingPaddleLive = null;
@@ -114,33 +163,55 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     let activeSince = performance.now();
     let lastEngine = 'paddle';
     let visibilityEpoch = 0;
-    const visibilityChanged = () => { consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; armStruggleHelp(); };
-    document.addEventListener('visibilitychange', visibilityChanged);
     const shown = new Set();
     let turn = 0;
     let paddleTurn = 0;
     let struggleTimer = null;
     let hintPhase = 0;
     let burstSeq = 0;
+    let burstsWithoutConfirm = 0;
+    let hard = false;
+    let bestScore = -1;
+    let lastQualityAt = 0;
+    let lastIssue = null;
+    let issueStreak = 0;
+    let shownIssue = null;
+
+    function setStatus(text) { status.textContent = text; shownIssue = null; }
+
+    const visibilityChanged = () => {
+      // Voltando da câmera do celular: não recomeça do zero, só religa a
+      // câmera daqui (o iOS pode ter encerrado a trilha).
+      if (nativeOpen) { if (!document.hidden) ensureCamera(); return; }
+      consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; armStruggleHelp();
+    };
+    document.addEventListener('visibilitychange', visibilityChanged);
 
     // Sem confirmar por um tempo: sugere inclinar a caixa ou mudar a luz (ajuda
-    // com relevo e reflexo) e tenta sozinho uma leitura de foto parada a cada
-    // troca de dica — sem esperar a pessoa tocar no botão. Cada tentativa é
-    // independente (nada de pixel de um quadro se misturar com outro): quem
-    // decide é a mesma votação de sempre, só que com mais chances, pegando o
-    // instante em que a luz bateu melhor enquanto a pessoa inclina. O botão
-    // continua para tentar na hora, sem esperar o próximo ciclo.
+    // com relevo e reflexo) e tira sozinho uma foto parada a cada troca de dica.
+    // Cada foto é independente: quem decide é a mesma votação de sempre.
     function armStruggleHelp() {
       clearInterval(struggleTimer);
       struggle.hidden = true;
       struggleTimer = setInterval(() => {
-        if (!alive) return;
-        if (performance.now() - activeSince < STRUGGLE_MS) return;
+        if (!alive || document.hidden || nativeOpen) return;
+        const elapsed = performance.now() - activeSince;
+        if (elapsed < STRUGGLE_MS) return;
+        if (elapsed >= HARD_AFTER_MS && bestScore >= 0) becomeHard();
         hintPhase = struggle.hidden ? 0 : (hintPhase + 1) % TILT_HINTS.length;
-        struggleHint.textContent = TILT_HINTS[hintPhase];
+        struggleHint.textContent = hard ? HARD_TEXT : TILT_HINTS[hintPhase];
+        struggle.classList.toggle('is-hard', hard);
         struggle.hidden = false;
-        if (!busy) takeSharpPhoto();
+        if (!bursting) takeSharpPhoto();
       }, HINT_CYCLE_MS);
+    }
+
+    function becomeHard() {
+      if (hard) return;
+      hard = true;
+      struggleHint.textContent = HARD_TEXT;
+      struggle.classList.add('is-hard');
+      try { onHard(); } catch { /* a câmera segue */ }
     }
 
     // Nova data lida: entra na próxima vaga livre e ali fica.
@@ -202,26 +273,28 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     function startPaddleLive() {
       if (paddleLiveState !== 'idle' || !alive) return;
       paddleLiveState = 'loading';
-      status.textContent = 'Preparando uma leitura mais detalhada';
+      setStatus('Só um instante');
       loadingPaddleLive = paddleLive.ready().then(() => {
-        if (alive) { paddleLiveState = 'ready'; status.textContent = 'Mantenha a validade na mira'; }
+        if (!alive) return;
+        paddleLiveState = 'ready';
+        setStatus('Mantenha a validade na mira');
+        // Com o small pronto, a embalagem já se mostrou difícil: prepara o
+        // medium em segundo plano, para as fotos não precisarem esperar.
+        startPaddleBurst();
       }).catch(() => {
         if (alive) {
           paddleLiveState = 'failed';
-          status.textContent = tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data';
+          setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data');
         }
         paddleLive.dispose();
       });
     }
 
-    // Baixa/inicia o Paddle "medium" só quando a foto nítida realmente
-    // precisa dele (depois que o Tesseract já tentou e não confirmou) —
-    // é um modelo bem maior (~139 MB), sem sentido pedir isso na leitura
-    // contínua, onde o que importa é tentar muitos quadros rápido.
+    // Em segundo plano e sem aviso: nenhuma leitura espera por ele, exceto a
+    // foto tirada com a câmera do celular (a pessoa pediu uma leitura cuidadosa).
     function startPaddleBurst() {
       if (paddleBurstState !== 'idle' || !alive) return;
       paddleBurstState = 'loading';
-      status.textContent = 'Preparando uma leitura mais precisa. Pode levar um tempinho na primeira vez';
       loadingPaddleBurst = paddleBurst.ready().then(() => {
         if (alive) paddleBurstState = 'ready';
       }).catch(() => {
@@ -231,7 +304,6 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     }
 
     // Guarda a evidência (recorte + texto cru) e põe a data numa vaga, se houver.
-    // Usado tanto pela leitura contínua quanto pela foto nítida.
     function recordCandidates(candidates, evidenceCanvas) {
       for (const found of candidates) {
         if (!evidence.has(found.iso) && evidence.size < MAX_PICKS) evidence.set(found.iso, {
@@ -242,88 +314,201 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       }
     }
 
-    // Foto parada (sem o tremor do vídeo contínuo) em vez de um quadro: quando
-    // o aparelho tem câmera de foto (ImageCapture), pega mais pixels do sensor;
-    // senão usa o próprio vídeo, mas com um recorte maior. Testa os filtros
-    // distintos de uma vez, com mais tempo, para embalagens com relevo/reflexo.
-    async function captureStill() {
-      const track = stream && stream.getVideoTracks()[0];
-      if (track && 'ImageCapture' in window) {
-        try {
-          const capture = new ImageCapture(track);
-          return await createImageBitmap(await capture.takePhoto());
-        } catch { /* segue com o quadro do vídeo */ }
-      }
-      return video;
+    // O que atrapalha dentro da mira (pouca luz, reflexo, tremido). Só fala
+    // depois de ver o mesmo problema duas vezes seguidas, e só volta à
+    // instrução normal quando ele some duas vezes: nada de texto piscando.
+    function checkQuality() {
+      const now = performance.now();
+      if (nativeReading || now - lastQualityAt < QUALITY_MS) return;
+      lastQualityAt = now;
+      let issue;
+      try {
+        prepareFrame(video, { mode: 'raw', width: 320, box: aimBox(video, aim) }, qualityCanvas);
+        issue = frameIssue(qualityCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, qualityCanvas.width, qualityCanvas.height));
+      } catch { return; }
+      if (issue === lastIssue) issueStreak++; else { lastIssue = issue; issueStreak = 1; }
+      if (issueStreak < 2) return;
+      if (issue && shownIssue !== issue) { status.textContent = ISSUE_TEXT[issue]; shownIssue = issue; }
+      else if (!issue && shownIssue) setStatus('Mantenha a validade na mira');
     }
 
-    async function takeSharpPhoto() {
-      if (busy || !alive) return;
-      busy = true;
-      photoBtn.disabled = true;
-      status.textContent = 'Lendo a foto. Leva alguns segundos';
-      const seq = burstSeq++;
-      let i = 0;
-      try {
-        const box = aimBox(video, aim);
-        const still = await captureStill();
-        if (!alive) return;
-        prepareFrame(still, { mode: 'raw', width: 900, maxH: 700, box }, original);
+    // Um piscar branco na imagem: a foto automática foi tirada agora.
+    function shutter() {
+      vibrate(10);
+      if (!reducedMotion()) shutterEl.animate([{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' });
+    }
 
-        // Tenta cada filtro; ao confirmar, chama done() e o alive vira false
-        // (os chamadores abaixo só precisam checar !alive para parar).
-        async function tryVariants(engine, variants, read) {
+    function keepBest(score, still, box) {
+      if (score <= bestScore) return;
+      bestScore = score;
+      try {
+        prepareFrame(still, { mode: 'raw', width: 1400, maxH: 1400, box }, bestCanvas);
+        onBestPhoto(bestCanvas.toDataURL('image/jpeg', .85));
+      } catch { /* sem foto para mostrar */ }
+    }
+
+    // Foto parada do vídeo: quando o aparelho tem câmera de foto (ImageCapture,
+    // não existe no Safari), pega mais pixels do sensor; senão congela o quadro
+    // atual, para todos os filtros lerem exatamente a mesma imagem.
+    async function captureStill(box) {
+      const track = stream && stream.getVideoTracks()[0];
+      if (track && track.readyState === 'live' && 'ImageCapture' in window) {
+        try {
+          // takePhoto() pode nunca responder se a trilha cair no meio.
+          const blob = await Promise.race([new ImageCapture(track).takePhoto(), pause(3000).then(() => { throw new Error('foto demorou'); })]);
+          const photo = await createImageBitmap(blob);
+          return { still: photo, box: mapBox(box, video.videoWidth, video.videoHeight, photo.width, photo.height) };
+        } catch { /* segue com o quadro do vídeo */ }
+      }
+      if (!video.videoWidth) return null;
+      const frame = document.createElement('canvas');
+      frame.width = video.videoWidth; frame.height = video.videoHeight;
+      frame.getContext('2d').drawImage(video, 0, 0);
+      return { still: frame, box };
+    }
+
+    // Lê uma foto: Tesseract primeiro (rápido), depois o Paddle mais preciso que
+    // estiver pronto (medium; se ainda não, o small). Todos os filtros votam,
+    // mas a foto conta como uma só na regra de "duas imagens diferentes".
+    async function readStill({ still, box, seq, tessVariants, paddleVariants, waitForMedium = false, yields = false }) {
+      const source = `photo-${seq}`;
+      let i = 0; let score = 0; let found = 0;
+      const stopped = () => !alive || (yields && nativePending);
+      async function tryVariants(engine, variants, read, exclusive = false) {
+        if (exclusive) busy = true;
+        try {
+          while (exclusive && liveReading && alive) await pause(40);
           for (const variant of variants) {
-            if (!alive) return;
+            if (stopped()) return;
             let result;
             try {
-              prepareFrame(still, { ...variant, box }, canvas);
-              result = await read(canvas, variant);
+              prepareFrame(still, { ...variant, box }, photoCanvas);
+              result = await read(photoCanvas, variant);
             } catch { i++; continue; }
             if (!alive) return;
+            score += textScore(result);
             const candidates = findExpiryCandidates(result.text);
-            recordCandidates(candidates, original);
-            const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `photo-${seq}-${i}`, at: performance.now() });
+            found += candidates.length;
+            recordCandidates(candidates, photoEvidence);
+            const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `${source}-${i}`, source, at: performance.now() });
             i++;
             if (accepted) { beep('ok'); vibrate(40); done(accepted); return; }
           }
-        }
+        } finally { if (exclusive) busy = false; }
+      }
+      if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
+      if (stopped()) return { score, found };
+      if (waitForMedium && paddleBurstState === 'loading') {
+        setStatus('Lendo a sua foto com mais cuidado');
+        try { await loadingPaddleBurst; } catch { /* segue com o small */ }
+        if (!alive) return { score, found };
+      }
+      const reader = paddleBurstState === 'ready' ? paddleBurst : paddleLiveState === 'ready' ? paddleLive : null;
+      if (reader) await tryVariants('paddle', paddleVariants, (c) => reader.read(c), reader === paddleLive);
+      return { score, found };
+    }
 
-        // Tesseract primeiro: rápido e sem baixar nada. Só recorre ao Paddle
-        // "medium" (bem maior) se o Tesseract não confirmar.
-        if (!tessFailed) await tryVariants('tesseract', BURST_TESSERACT_VARIANTS, (c, variant) => readResult(c, { psm: variant.psm }));
-        if (!alive) return;
-
-        if (paddleBurstState !== 'ready') {
-          if (paddleBurstState === 'idle') startPaddleBurst();
-          try { await loadingPaddleBurst; } catch { /* Paddle indisponível: pula os testes dele */ }
-        }
-        if (paddleBurstState === 'ready') await tryVariants('paddle', BURST_PADDLE_VARIANTS, (c) => paddleBurst.read(c));
-        if (!alive) return;
-
-        status.textContent = shown.size ? 'Toque na validade certa ou continue apontando' : 'Não deu para ler. Confira a mira ou digite a data';
+    // Foto automática durante a dica de inclinar/luz.
+    async function takeSharpPhoto() {
+      if (bursting || !alive) return;
+      bursting = true;
+      const seq = burstSeq++;
+      try {
+        const shot = await captureStill(aimBox(video, aim));
+        if (!alive || !shot) return;
+        shutter();
+        setStatus('Foto tirada. Lendo');
+        prepareFrame(shot.still, { mode: 'raw', width: 900, maxH: 700, box: shot.box }, photoEvidence);
+        const { score } = await readStill({ ...shot, seq, tessVariants: BURST_TESSERACT_VARIANTS, paddleVariants: BURST_PADDLE_VARIANTS, yields: true });
+        if (!alive || nativePending) return;
+        keepBest(score, shot.still, shot.box);
+        if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
+        setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
       } finally {
-        if (alive) { busy = false; photoBtn.disabled = false; }
+        if (alive) bursting = false;
       }
     }
-    photoBtn.addEventListener('click', () => { takeSharpPhoto(); });
+
+    // Foto da câmera do próprio celular: foco, HDR e resolução cheia. A pessoa
+    // enquadra, então lê a foto inteira. Uma foto só não confirma sozinha: a
+    // data vira um botão para tocar (e conferir na página seguinte).
+    async function readNativePhoto(file) {
+      nativePending = true;
+      while (bursting && alive) await pause(50);
+      nativePending = false;
+      if (!alive) return;
+      bursting = true; nativeReading = true;
+      const seq = burstSeq++;
+      setStatus('Lendo a sua foto');
+      try {
+        let bitmap;
+        try { bitmap = await createImageBitmap(file); } catch { setStatus('Não deu para abrir a foto. Tente de novo ou digite a data'); return; }
+        if (!alive) return;
+        const photo = document.createElement('canvas');
+        const k = Math.min(1, NATIVE_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+        photo.width = Math.round(bitmap.width * k); photo.height = Math.round(bitmap.height * k);
+        photo.getContext('2d').drawImage(bitmap, 0, 0, photo.width, photo.height);
+        if (bitmap.close) bitmap.close();
+        prepareFrame(photo, { mode: 'raw', width: 900, maxH: 900, box: PHOTO_BOX }, photoEvidence);
+        const { score, found } = await readStill({ still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: PHOTO_PADDLE_VARIANTS, waitForMedium: true });
+        if (!alive) return;
+        // Foto que a pessoa mesma tirou é a melhor para conferir a olho.
+        keepBest(1e6 + score, photo, PHOTO_BOX);
+        setStatus(found ? 'Achei a data na foto. Toque nela para conferir' : 'Não achei a data nessa foto. Tente mais de perto, ou digite a data');
+      } finally {
+        if (alive) { bursting = false; nativeReading = false; }
+      }
+    }
+
+    photoBtn.addEventListener('click', () => {
+      if (!alive) return;
+      startPaddleBurst();
+      nativeOpen = true;
+      photoInput.value = '';
+      photoInput.click();
+    });
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files && photoInput.files[0];
+      nativeOpen = false;
+      ensureCamera();
+      if (file) readNativePhoto(file);
+    });
+    photoInput.addEventListener('cancel', () => { nativeOpen = false; ensureCamera(); });
+
+    // O iOS encerra a câmera da página quando a câmera do celular abre.
+    async function ensureCamera() {
+      if (!alive) return;
+      const track = stream && stream.getVideoTracks()[0];
+      if (track && track.readyState === 'live') { if (video.paused) video.play().catch(() => {}); return; }
+      try {
+        const next = await navigator.mediaDevices.getUserMedia(CAMERA);
+        if (!alive) { next.getTracks().forEach((t) => t.stop()); return; }
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        stream = next;
+        video.srcObject = stream;
+        await video.play().catch(() => {});
+      } catch {
+        setStatus('A câmera parou. Toque em Digitar a data, ou feche e abra de novo');
+      }
+    }
 
     async function loop() {
-      const pause = ms => new Promise(r => setTimeout(r, ms));
       while (alive) {
-        if (busy) { await pause(150); continue; } // uma foto nítida está sendo lida
+        if (busy) { await pause(150); continue; } // uma foto está sendo lida
         if (document.hidden || video.readyState < 2 || !video.videoWidth || video.currentTime === frameTime) { await pause(150); continue; }
         if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddleLive();
         // Do not run inference while Paddle is compiling its models: that
         // peak is already expensive on a phone. Cancellation terminates it.
         if (paddleLiveState === 'loading') { await loadingPaddleLive; continue; }
         if (tessFailed && paddleLiveState !== 'ready') return;
+        checkQuality();
         const engine = paddleLiveState === 'ready' && (tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
         lastEngine = engine;
         const frame = video.currentTime; frameTime = frame;
         const epoch = visibilityEpoch;
         const variant = engine === 'paddle' ? PADDLE_VARIANTS[paddleTurn++ % PADDLE_VARIANTS.length] : TESSERACT_VARIANTS[turn++ % TESSERACT_VARIANTS.length];
         let result;
+        liveReading = true;
         try {
           prepareFrame(video, { mode:'raw', width:640, box:aimBox(video, aim) }, original);
           prepareFrame(video, { ...variant, box: aimBox(video, aim) }, canvas);
@@ -333,10 +518,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
           if (!alive) return;
           if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.dispose(); }
           else if (++tessErrors >= 3) tessFailed = true;
-          status.textContent = 'Tente outro ângulo ou digite a data';
+          setStatus('Tente outro ângulo ou digite a data');
           await pause(250);
           continue;
-        }
+        } finally { liveReading = false; }
         if (!alive) return;
         if (document.hidden || epoch !== visibilityEpoch) continue;
         const candidates = findExpiryCandidates(result.text);
@@ -345,7 +530,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
         if (accepted) {
           beep('ok'); vibrate(40); done(accepted); return;
         }
-        if (candidates.some(c => c.ambiguous)) status.textContent = 'Há mais de uma data. Toque na validade correta';
+        if (candidates.some(c => c.ambiguous)) setStatus('Há mais de uma data. Toque na validade correta');
         // Yield to camera/interaction and avoid immediately rereading the same
         // decoded frame. The next pass uses a fresh frame and another variant.
         await pause(engine === 'paddle' ? 220 : 120);
@@ -355,12 +540,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
     (async () => {
       claimCamera(true);
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        });
+        stream = await navigator.mediaDevices.getUserMedia(CAMERA);
       } catch {
-        status.textContent = 'Sem acesso à câmera. Digite a data.';
+        setStatus('Sem acesso à câmera. Digite a data.');
         claimCamera(false);
         return;
       }
@@ -372,7 +554,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
       if (caps.torch) { torchBtn.hidden = false; torchBtn.parentElement.hidden = false; }
       // Foco contínuo, quando a câmera deixa: a data fica perto da lente.
       try { if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch { /* segue */ }
-      status.textContent = 'Preparando o leitor de validade';
+      setStatus('Preparando o leitor de validade');
       try {
         await ocrWorker((p) => { if (alive) status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`; });
       } catch {
@@ -380,10 +562,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {} } 
         if (alive) startPaddleLive();
       }
       if (!alive) return;
-      status.textContent = 'Aponte para a data de validade';
+      setStatus('Aponte para a data de validade');
       activeSince = performance.now();
       armStruggleHelp();
-      loop().catch(() => { if (alive) status.textContent = 'Não foi possível ler. Digite a data.'; });
+      loop().catch(() => { if (alive) setStatus('Não foi possível ler. Digite a data.'); });
     })();
   });
   promise.stop = () => stop();

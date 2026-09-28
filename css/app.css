@@ -2140,6 +2140,29 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 }
 .exp-struggle-hint { margin: 0; color: var(--ink-2); font-size: 0.8235rem; text-align: center; text-wrap: pretty; }
 @media (prefers-reduced-motion: reduce) { .exp-struggle { animation: none; } }
+/* A câmera admitiu que a embalagem está difícil: o texto fica mais presente */
+.exp-struggle.is-hard .exp-struggle-hint { color: var(--ink); font-weight: 600; }
+/* Piscar branco quando a foto automática é tirada (o js anima a opacidade) */
+.exp-shutter { position: absolute; inset: 0; z-index: 1; background: #fff; opacity: 0; pointer-events: none; }
+/* "Digitar a data" vira o caminho sugerido quando a câmera desiste */
+.exp-alt.is-suggested {
+  padding-inline: 20px; border-radius: 999px;
+  background: color-mix(in oklab, var(--mode, var(--ink)) 13%, transparent);
+  animation: fade-in 400ms var(--ease);
+}
+@media (prefers-reduced-motion: reduce) { .exp-alt.is-suggested { animation: none; } }
+
+/* Digitar olhando a melhor foto da câmera; um toque amplia no ponto tocado */
+.exp-type-photo { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.exp-type-zoom {
+  display: block; width: 100%; height: 190px; padding: 0; border: 0; overflow: hidden; cursor: zoom-in;
+  background: var(--shelf); border-radius: var(--r-thumb); outline: 1px solid var(--img-outline); outline-offset: -1px;
+}
+.exp-type-zoom img { display: block; width: 100%; height: 100%; object-fit: contain; transition: transform 250ms var(--ease); }
+.exp-type-zoom.is-zoomed { cursor: zoom-out; }
+.exp-type-zoom.is-zoomed img { transform: scale(2.6); }
+.exp-type-photo figcaption { color: var(--ink-2); font-size: 0.8235rem; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .exp-type-zoom img { transition: none; } }
 
 /* Confirmação: a data por extenso, grande, e quantas vencem nela */
 .exp-confirm { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-block: 8px 4px; text-align: center; }

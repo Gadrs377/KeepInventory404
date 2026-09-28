@@ -1,8 +1,9 @@
 import {chromium} from '../experiments/ocr/node_modules/playwright/index.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
+import {mediaUrl} from './media.mjs';
 import {findExpiryCandidates} from '../js/dates.js';
 import {textRows} from '../js/ocrLayout.js';
-const baseline=JSON.parse(await readFile('tests/photos-baseline.json'));
+const baseline=JSON.parse(await readFile('tests/photos-baseline.json')).map(p=>({...p,url:mediaUrl(p.file)}));
 const browser=await chromium.launch({headless:true});
 const report=[];
 try{
@@ -14,7 +15,7 @@ try{
    const {createPaddleReader}=await import('/js/paddleOcr.js');
    const {findExpiryCandidates}=await import('/js/dates.js');
    const {textRows}=await import('/js/ocrLayout.js');
-   const img=new Image();img.src='/tests/private/'+photo.file;await img.decode();
+   const img=new Image();img.src=photo.url;await img.decode();
    const paddle=createPaddleReader(),results=[];
    // Automatic detector crops: no manually specified validity line.
    const full=prepareFrame(img,{mode:'raw',box:{x:0,y:0,w:1,h:1}});

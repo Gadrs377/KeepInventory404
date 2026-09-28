@@ -1,7 +1,8 @@
 // Exploratory heuristics, deliberately not enabled in the production camera.
 import {chromium} from '../experiments/ocr/node_modules/playwright/index.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
-const photos=JSON.parse(await readFile('tests/photos-baseline.json'));
+import {mediaUrl} from './media.mjs';
+const photos=JSON.parse(await readFile('tests/photos-baseline.json')).map(p=>({...p,url:mediaUrl(p.file)}));
 const revised=JSON.parse(await readFile('tests/photos-experiments.json'));
 const browser=await chromium.launch({headless:true});
 try{
@@ -20,7 +21,7 @@ try{
   }
   const difference=(a,b)=>a.reduce((s,v,i)=>s+Math.abs(v-b[i]),0)/a.length/255;
   for(const photo of photos){
-   const img=new Image();img.src='/tests/private/'+photo.file;await img.decode();
+   const img=new Image();img.src=photo.url;await img.decode();
    const [x,y,w,h]=photo.region,source=document.createElement('canvas');source.width=600;source.height=Math.round(600*img.height*h/(img.width*w));
    source.getContext('2d').drawImage(img,x*img.width,y*img.height,w*img.width,h*img.height,0,0,source.width,source.height);
    const variants=[];

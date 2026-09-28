@@ -32,12 +32,28 @@ export const TILT_HINTS = [
 // mais pixels: uma foto parada aguenta um recorte maior sem ficar borrada.
 export const BURST_TESSERACT_VARIANTS = [0, 1, 2, 3, 4].map(i => ({ ...TESSERACT_VARIANTS[i], width: 1400, maxH: 900 }));
 export const BURST_PADDLE_VARIANTS = PADDLE_VARIANTS.map(v => ({ ...v, width: 1300, maxH: 900 }));
+// Foto tirada com a câmera do próprio celular: a foto inteira (a pessoa
+// enquadrou), com mais pixels. Texto esparso (psm 11) no Tesseract, porque
+// a data não está numa faixa conhecida; o Paddle acha as linhas sozinho.
+export const PHOTO_BOX = { x: 0, y: 0, w: 1, h: 1 };
+export const PHOTO_TESSERACT_VARIANTS = ['raw', 'gray', 'sauvola'].map(mode => ({ mode, blur: 0, width: 1600, maxH: 1600, psm: 11 }));
+export const PHOTO_PADDLE_VARIANTS = ['raw', 'gray', 'red'].map(mode => ({ mode, blur: 0, width: 1600, maxH: 1600 }));
+// Depois de tantas fotos automáticas sem confirmar (ou tanto tempo, desde que
+// já exista uma foto para mostrar), a câmera admite que a embalagem está
+// difícil e sugere digitar olhando a melhor foto. O tempo importa porque cada
+// foto com o Paddle medium leva ~20 s no computador, mais num celular.
+export const HARD_AFTER_BURSTS = 3;
+export const HARD_AFTER_MS = 35000;
 
 export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
   let samples = [];
   return {
     reset() { samples = []; },
-    add({ candidates, engine, confidence = 0, frame, at }) {
+    // `source`: the picture the reading came from. Several filters of one
+    // still photo vote separately (`frame` differs) but share one source, so
+    // the "two distinct pictures" rule can't be met by a single photo whose
+    // blur every filter misreads the same way. Defaults to `frame`.
+    add({ candidates, engine, confidence = 0, frame, source = frame, at }) {
       samples = samples.filter(s => at - s.at <= windowMs).slice(-11);
       // A frame can contribute at most once per engine.
       if (samples.some(s => s.engine === engine && s.frame === frame)) return null;
@@ -46,11 +62,11 @@ export function createExpiryConsensus({ skip = [], windowMs = 9000 } = {}) {
       // A missing F on embossed packaging can turn manufacture into an
       // apparently unambiguous date. Unlabeled dates remain manual choices.
       if (!candidate || !candidate.labeled || confidence < 40) return null;
-      samples.push({ ...candidate, engine, frame, at });
+      samples.push({ ...candidate, engine, frame, source, at });
       const counts = new Map();
       for (const s of samples) {
         const v = counts.get(s.iso) || { iso: s.iso, n: 0, frames: new Set(), labeled: false };
-        v.n++; v.frames.add(s.frame); v.labeled ||= s.labeled; counts.set(s.iso, v);
+        v.n++; v.frames.add(s.source); v.labeled ||= s.labeled; counts.set(s.iso, v);
       }
       const ranked = [...counts.values()].sort((a, b) => b.n - a.n);
       const first = ranked[0]; const second = ranked[1]?.n || 0;

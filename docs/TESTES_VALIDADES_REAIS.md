@@ -141,17 +141,36 @@ lata específica (gravação a laser em metal, sem nenhum contraste de tinta)
 continua sem solução completa. Continua sendo o limite conhecido mais duro
 já documentado — mais difícil que a embalagem roxa em relevo.
 
+### Guardado no repositório e medido de novo — 28/09/2026
+
+O vídeo agora está em `tests/real/lata-gravacao-laser.webm` (só a lata, sem
+áudio e sem metadados; o original trazia a coordenada GPS de onde foi
+gravado). `node tests/real-video.mjs` sobre ele, em 30 quadros:
+
+| | quadros com texto | com fragmento de data | leram a validade | ms/quadro | datas erradas |
+|---|---|---|---|---|---|
+| Paddle small | 19/30 | 0 | 0 | 640 | nenhuma |
+| Paddle medium | 21/30 | 3 | 0 | 3800 | nenhuma |
+
+Fluxo completo por 90 s: não confirmou (nem confirmou data errada), e depois
+de ~35 s passou a sugerir digitar mostrando a melhor foto — que, para esta
+lata, é o caminho realista hoje.
+
 ## Reproduzir e auditar
 
-As fotos originais não entram no repositório/pacote. Coloque-as em
-`tests/private/` com os nomes originais, listados nos JSONs de resultado.
-Essa pasta é ignorada pelo Git. Dependências e servidor: veja
-`LEITURA_VALIDADE.md`.
+Material real agora fica no repositório, em `tests/real/` (recortado e sem
+metadados — o repositório é público via GitHub Pages; ver
+`tests/real/README.md`). O vídeo da lata já está lá. As seis fotos acima se
+perderam junto com o computador onde o teste rodou (ficavam só em
+`tests/private/`, fora do Git) e precisam ser enviadas de novo; os scripts
+procuram em `tests/real/` e em `tests/private/`. Dependências e servidor:
+veja `LEITURA_VALIDADE.md`.
 
 Com o servidor na porta 8765:
 
 ```sh
 node --test tests/expiry.test.mjs tests/layout.test.mjs
+node tests/real-video.mjs
 node tests/photos.mjs
 node tests/photo-experiments.mjs
 node tests/camera-heuristics.mjs
