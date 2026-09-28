@@ -136,10 +136,15 @@ adicionar uma camada "medium" (maior e mais lenta) só para a foto nítida
   mas isso não foi suficiente para fechar a votação com confiança/quadros
   distintos suficientes dentro do tempo testado.
 
+Conclusão: mesmo pagando o custo de um modelo bem maior e mais lento, esta
+lata específica (gravação a laser em metal, sem nenhum contraste de tinta)
+continua sem solução completa. Continua sendo o limite conhecido mais duro
+já documentado — mais difícil que a embalagem roxa em relevo.
+
 ## Oitavo teste: mais três embalagens reais (vídeo) — 28/09/2026
 
 Três vídeos novos em `tests/real/`, medidos com `tests/real-video.mjs`
-(pequeno cript acrescentado no teste anterior): os dois motores (small e
+(script acrescentado no teste anterior): os dois motores (small e
 medium) rodando sobre os mesmos 25–31 quadros de cada vídeo, e o fluxo
 completo do app por até 90 s. Nenhum teste usa resposta fornecida ao OCR.
 
@@ -154,46 +159,29 @@ Nenhum dos quatro confirmou sozinho uma data errada — a votação exigindo
 rótulo, dois quadros distintos e vantagem de dois votos segurou em todos os
 casos, mesmo quando a leitura bruta de um motor errava ocasionalmente.
 
-**O achado importante está nas linhas 2 e 3.** O copo tem tinta preta bem
-legível — o small sozinho leu a validade certa em 7 de 25 quadros, sem
-nenhuma leitura errada. Era, de longe, o caso mais fácil dos quatro. Mesmo
-assim o fluxo completo não confirmou. Investigando o porquê:
+**A linha 2 chama atenção.** O copo tem tinta preta bem legível — o small
+sozinho leu a validade certa em 7 de 25 quadros, sem nenhuma leitura errada.
+Era, de longe, o caso mais fácil dos quatro. Mesmo assim o fluxo completo
+não confirmou, e isso mereceria entender o porquê.
 
-A mira da câmera (`aim`) cobre só uns 12% da altura do quadro (calculado
-nesta sessão, numa tela de celular comum). Comparando a mesma imagem com a
-mira desenhada em cima:
+Cheguei a levantar uma hipótese (a mira da câmera, que cobre só ~12% da
+altura do quadro, cortando a linha da validade ao meio mesmo bem
+centralizada) e a "comprovar" com uma imagem: recortei o vídeo pela mesma
+região usada no teste e desenhei a mira por cima. Só que essa comprovação
+tem um furo sério: quem decidiu *onde* a região começava e terminava fui
+eu, chutando um retângulo generoso a partir do vídeo original — ninguém
+alinhou a validade dentro da mira em tempo real, como uma pessoa faria
+segurando o celular de verdade e vendo a mira ao vivo na tela. Onde a mira
+(fixa, sempre no meio da região) cai em cima do texto depende inteiramente
+de como eu recortei a região, não de como a câmera seria usada de fato.
+Não é uma comprovação válida — é só uma coincidência do meu recorte.
 
-- No copo, a mira — mesmo bem centralizada na linha `VAL:17/09/26` — corta
-  os dígitos ao meio, sobra só uma tira de 604×57 px sem contexto nenhum
-  (nem `FAB` nem `10:26` por perto). Rótulo e dígitos completos importam
-  para a votação confirmar sozinha (`VAL` sem ambiguidade); uma tira cortada
-  no meio da linha atrapalha exatamente isso.
-- No chocolate, em outros quadros a mira caiu abaixo da própria linha de
-  texto, pegando só metal liso.
-
-Ou seja: o motor consegue ler a validade quando tem a linha inteira (7–12
-acertos em poucos quadros, para um recorte manual generoso), mas a mira real
-é fina o bastante para cortar essa mesma linha ao meio mesmo quando está bem
-posicionada. Isso é diferente da lata e da tampa, onde o motor não lê a
-validade nem com a imagem inteira — ali o problema é o material, não a
-mira.
-
-**Ressalva sobre o método:** o teste do fluxo completo usa um vídeo tocando
-em loop, sem ninguém reposicionando a câmera para manter o texto na mira —
-o que uma pessoa de verdade faria ao vivo. Isso provavelmente piora o
-resultado do teste em relação ao uso real (a pessoa corrigiria o
-enquadramento), mas o problema de a mira cortar uma linha de texto ao meio
-mesmo bem centralizada é geométrico, independente de quem está segurando o
-celular.
-
-Screenshots comparando a mira com a região recortada estão descritos em
-detalhe na conversa; não foram salvos no repositório (não fazem parte do
-material de teste, só da investigação).
-
-Conclusão: mesmo pagando o custo de um modelo bem maior e mais lento, esta
-lata específica (gravação a laser em metal, sem nenhum contraste de tinta)
-continua sem solução completa. Continua sendo o limite conhecido mais duro
-já documentado — mais difícil que a embalagem roxa em relevo.
+Testar essa hipótese direito exigiria um vídeo diferente: alguém abrindo a
+câmera de validade do app de verdade (ou gravando a tela) e mirando a data
+como faria normalmente. Sem isso, fica em aberto por que o copo não
+confirmou — pode ser a mira, pode ser só a janela de 9 s da votação não
+ter fechado por acaso dentro dos 90 s testados, pode ser outra coisa.
+Hipótese descartada por enquanto, não descoberta.
 
 ### Guardado no repositório e medido de novo — 28/09/2026
 
