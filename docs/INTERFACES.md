@@ -1198,3 +1198,15 @@ hipóteses (números em `docs/TESTES_VALIDADES_REAIS.md`, "Nono teste"):
 - `scripts/paddle/build-gpu.mjs` monta o pacote, com um patch que cria as
   duas sessões do Paddle em série (o WebGPU do onnxruntime não aceita duas
   ao mesmo tempo). `sw.js` v57.
+
+## Versão 3.43: "Enviar para o Claude" (Bancada)
+
+- A tela de testes e o painel de diagnóstico da validade ganharam **Enviar
+  para o Claude**: copia o resultado (JSON) e abre a Bancada, uma página
+  privada no claude.ai (`BANCADA_URL` em `js/expiryDebug.js`). Lá, tocar e
+  segurar no campo e Colar guarda o resultado num banco que o Claude lê
+  direto. A página não recebe dados pelo link, por isso o colar.
+- Com "Foto minha", o envio leva uma miniatura (480 px) da foto usada.
+- "Foto minha" reabre o seletor a cada toque, para trocar de foto.
+- O texto de cada leitura no diagnóstico é cortado em 400 caracteres, para
+  um envio longo caber no limite da Bancada. `sw.js` v58.

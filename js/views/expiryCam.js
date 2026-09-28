@@ -30,7 +30,7 @@ import {
   PHOTO_BOX, PHOTO_TESSERACT_VARIANTS, PHOTO_PADDLE_VARIANTS, HARD_AFTER_BURSTS, HARD_AFTER_MS, REJECT_TEXT,
 } from '../expiryRecognition.js';
 import { frameIssue } from '../frameQuality.js';
-import { debugEnabled } from '../expiryDebug.js';
+import { debugEnabled, BANCADA_URL, copyForBancada } from '../expiryDebug.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { $, icon, vibrate, reducedMotion, toast, download } from '../ui.js';
@@ -146,6 +146,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         <img class="exp-debug-shot" alt="Último recorte enviado ao leitor" hidden>
         <ol class="exp-debug-log"></ol>
         <button type="button" class="btn exp-alt" data-debug-copy>${icon('download')}<span>Copiar diagnóstico</span></button>
+        <a class="btn exp-alt" data-debug-send href="${BANCADA_URL}" target="_blank" rel="noopener">${icon('share')}<span>Enviar para o Claude</span></a>
       </details>` : ''}`;
     const video = $('video', host);
     const aim = $('.exp-aim', host);
@@ -258,11 +259,15 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     function noteRead({ engine, variant, source, result, candidates }, shotCanvas) {
       const why = consensus.why() || { code: '?', detail: null };
       note({
-        kind: 'read', engine, filter: variantName(variant), source, text: result.text, confidence: Math.round(result.confidence),
+        kind: 'read', engine, filter: variantName(variant), source, text: String(result.text || '').slice(0, 400), confidence: Math.round(result.confidence),
         dates: candidates.map((c) => ({ iso: c.iso, labeled: !!c.labeled, ambiguous: !!c.ambiguous })), result: why.code, detail: why.detail,
       }, shotCanvas);
     }
     if (debug) {
+      const debugPayload = () => JSON.stringify({ kind: 'diagnóstico da validade', app: 'KeepInventory404', when: new Date().toISOString(), ua: navigator.userAgent, screen: [innerWidth, innerHeight], video: [video.videoWidth, video.videoHeight], log });
+      $('[data-debug-send]', host).addEventListener('click', () => {
+        copyForBancada(debugPayload(), () => toast('Não deu para copiar. Use Copiar diagnóstico e cole na Bancada.', { duration: 5000 }));
+      });
       $('[data-debug-copy]', host).addEventListener('click', async () => {
         const payload = JSON.stringify({
           app: 'KeepInventory404', when: new Date().toISOString(), ua: navigator.userAgent,

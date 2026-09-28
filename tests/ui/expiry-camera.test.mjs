@@ -137,6 +137,8 @@ test('diagnóstico (?debug): mostra o motivo de cada leitura e copia em JSON', a
     await cam.page.waitForTimeout(300);
     const copied = JSON.parse(await cam.page.evaluate(() => navigator.clipboard.readText()));
     assert.ok(copied.log.some((e) => e.kind === 'read' && e.result === 'unlabeled' && e.dates[0].iso === '2027-08-11'));
+    // "Enviar para o Claude" abre a Bancada (a página que guarda os resultados).
+    assert.match(await cam.page.getAttribute('[data-debug-send]', 'href'), /^https:\/\/claude\.ai\/artifact\//);
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });

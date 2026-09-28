@@ -11,6 +11,7 @@
 import { createPaddleReader } from '../paddleOcr.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { $, esc, icon, toast, download } from '../ui.js';
+import { BANCADA_URL, copyForBancada } from '../expiryDebug.js';
 
 const SAMPLES = { copo: 'vendor/paddle/amostras/copo.jpg', chocolate: 'vendor/paddle/amostras/chocolate.jpg' };
 const ENGINES = {
@@ -62,6 +63,8 @@ export default function mountTestes(root) {
           <button type="button" class="btn btn-quiet" data-stop disabled>Parar</button>
           <button type="button" class="btn btn-quiet" data-copy>Copiar resultado</button>
         </div>
+        <a class="btn btn-primary" data-send href="${BANCADA_URL}" target="_blank" rel="noopener">Enviar para o Claude</a>
+        <p class="group-note">Copia o resultado e abre a Bancada. Lá, toque e segure no campo e escolha Colar.</p>
         <div data-table></div>
         <pre class="tests-pre tests-log" data-log></pre>
       </main>
@@ -73,7 +76,7 @@ export default function mountTestes(root) {
   const fileInput = $('[data-file]', root);
   const buttons = ['[data-run]', '[data-stress]', '[data-copy]'].map((s) => $(s, root));
   const stopBtn = $('[data-stop]', root);
-  const report = { when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [] };
+  const report = { kind: 'testes-gpu', when: new Date().toISOString(), ua: navigator.userAgent, env: null, runs: [] };
   let alive = true;
   let stopping = false;
   let busy = false;
@@ -112,6 +115,15 @@ export default function mountTestes(root) {
     // Mesmo limite de tamanho que a câmera usa nas fotos.
     const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
     return { img, w: Math.round(img.naturalWidth * k), h: Math.round(img.naturalHeight * k), which };
+  }
+  // Miniatura da foto da pessoa, para o Claude ver o que o leitor viu.
+  function thumbOf(image) {
+    if (image.which !== 'mine') return null;
+    const k = Math.min(1, 480 / Math.max(image.w, image.h));
+    const c = document.createElement('canvas');
+    c.width = Math.round(image.w * k); c.height = Math.round(image.h * k);
+    c.getContext('2d').drawImage(image.img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.6);
   }
   function canvasOf({ img, w, h }) {
     const c = document.createElement('canvas');
@@ -194,7 +206,7 @@ export default function mountTestes(root) {
         runs.push(await runEngine(key, image, tier, n));
         renderTable(runs);
       }
-      report.runs.push({ kind: 'comparar', runs });
+      report.runs.push({ kind: 'comparar', image: image.which, size: `${image.w}x${image.h}`, thumb: thumbOf(image), runs });
       say('✔ pronto');
     } catch (e) { say(`✖ ${e.message}`); }
     finally { if (alive) setBusy(false); }
@@ -210,6 +222,7 @@ export default function mountTestes(root) {
     const out = { kind: 'estresse', tier, count: 0, error: null };
     try {
       const image = await loadImage();
+      out.image = image.which;
       say(`— Estresse GPU (${tier}): até ${LIMIT} leituras seguidas —`);
       await reader.ready();
       const t0 = performance.now();
@@ -238,17 +251,24 @@ export default function mountTestes(root) {
 
   stopBtn.addEventListener('click', () => { stopping = true; say('… parando depois da leitura atual'); });
 
+  $('[data-send]', root).addEventListener('click', (e) => {
+    if (busy) { e.preventDefault(); toast('Espere o teste terminar.'); return; }
+    if (!report.runs.length) { e.preventDefault(); toast('Rode um teste antes de enviar.'); return; }
+    copyForBancada(JSON.stringify(report), () => toast('Não deu para copiar. Use Copiar resultado e cole na Bancada.', { duration: 5000 }));
+  });
+
   $('[data-copy]', root).addEventListener('click', async () => {
     const text = JSON.stringify(report, null, 1);
     try { await navigator.clipboard.writeText(text); toast('Resultado copiado. Cole numa mensagem.'); }
     catch { download(`testes-${Date.now()}.json`, text, 'application/json'); toast('Resultado baixado.'); }
   });
 
+  // "Foto minha" abre o seletor a cada toque (também para trocar de foto).
+  root.addEventListener('click', (e) => {
+    if (e.target.name === 'img' && e.target.value === 'mine') fileInput.click();
+  });
   root.addEventListener('change', (e) => {
-    if (e.target.name === 'img') {
-      if (e.target.value === 'mine') fileInput.click();
-      else loadImage().catch(() => {});
-    }
+    if (e.target.name === 'img' && e.target.value !== 'mine') loadImage().catch(() => {});
   });
   fileInput.addEventListener('change', () => {
     const f = fileInput.files && fileInput.files[0];
