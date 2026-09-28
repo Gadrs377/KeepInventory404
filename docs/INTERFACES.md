@@ -1354,3 +1354,33 @@ perguntar em 14 s, na 2ª imagem com a data (antes, entre 21 e 45 s); o copo
 confirmou sozinho em 11 s; a lata e a tampa não fizeram nenhuma pergunta
 errada. A comparação "Câmera com vídeos reais" também mostra quando cada
 leitura viu a data certa e por que ela não contou. `sw.js` v68.
+
+## Versão 3.51: validade em pontinhos (a lata)
+
+Numa foto boa da tampa da lata ("FAB: 29/DEZ/25 / VAL: 29/DEZ/28 / LOTE:
+1291225", impressa em pontinhos), o leitor detalhado (medium) não lia nada:
+nem a foto inteira, nem o bloco. O leitor rápido achava as três linhas no
+lugar certo, mas lia "FAB", "UFIL", "LOTE:1" e as caixas pegavam só metade
+de cada linha.
+
+- **`js/dotPrint.js` + `dotLine` (`js/ocrImage.js`).** Reduz o texto a
+  ~24–30 px de altura e borra de leve: os pontos viram traço e o medium lê.
+  Primeiro o bloco inteiro (o medium, assim, também diz onde cada linha começa
+  e termina), depois cada linha bem recortada, com duas preparações cada. Cada
+  leitura sozinha ainda erra (9 vira 6), então a data só vale se aparece em
+  duas leituras e à frente das outras. Só roda quando a leitura normal do
+  pedaço não achou data nenhuma: no painel "A validade está aqui?" (depois do
+  "Sim" ou do toque) e no recorte das fotos automáticas.
+- **Palpite pelo FAB/LOTE.** Sem nenhuma linha com cara de data, uma linha que
+  começa com FAB ou LOTE vira o palpite (a validade costuma estar do lado).
+- **Leituras tortas que agora viram data:** mês com número no lugar de letra
+  entre dia e ano ("29/0EZ/28", "29/DE2/28" → dezembro; antes "DE2/28" virava
+  fevereiro), "·" e "：" no lugar dos dois-pontos, "UAL/:", "/" lido como
+  ">" ou "<", dois-pontos lido como "1" ("UAL129/DEZ/28"), e "VAL" lido como
+  UAT/UAC/UA7 (entra na regra do rótulo mal lido, com as mesmas travas).
+
+Na foto da lata, pelo app (foto do celular → painel → "Sim"): confirmou
+29/12/2028, 17 s depois do "Sim" no Chromium. Antes disso, uma versão com uma
+leitura só confirmou 26/12/2028; por isso a votação. Nos quatro vídeos reais,
+nenhuma data errada; os vídeos da lata e da tampa continuam sem leitura
+sozinha (os quadros do vídeo são bem mais borrados que a foto). `sw.js` v69.

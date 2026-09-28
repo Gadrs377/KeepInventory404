@@ -124,3 +124,15 @@ test('good readings far apart on a slow phone still confirm (window covers one p
   assert.equal(add(1, 0), null);
   assert.equal(add(2, 15000), '2026-10-15');
 });
+test('dot-printed can (lata): misread month names, labels and separators', () => {
+  const today = '2026-09-28';
+  const one = (text) => { const c = findExpiryCandidates(text, today); return c.length === 1 ? `${c[0].iso}${c[0].labeled ? ' L' : ''}` : c.map((x) => x.iso).join(','); };
+  // Leituras reais do medium na foto da lata (VAL 29/DEZ/28).
+  for (const text of ['VAL:29/0E2/28', 'UAL:29/DEZ/28', 'UAT:29/DEZ/28', 'UAC·29/DEZ/28', 'UA7:29/DEZ/28', 'UAT129/DE2/28', 'UAL/:29>0EZ/28', 'FAB/29/DEZ/25\nVAL:29/0E2/28\nLOTE:1291225'])
+    assert.equal(one(text), '2028-12-29 L', text);
+  // Sem rótulo, mas o mês lido com número não vira outra data.
+  assert.equal(one('29/DE2/28'), '2028-12-29');
+  // Só nomes de mês entre dia e ano; números e lote não viram mês.
+  assert.equal(one('LOTE:1291225'), '');
+  assert.equal(one('CAE:331BEZ23'), '');
+});

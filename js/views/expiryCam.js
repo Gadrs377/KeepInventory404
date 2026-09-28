@@ -23,6 +23,7 @@
 // embalagem continuar difícil, sugere digitar olhando a melhor foto.
 
 import { ocrWorker, prepareFrame, readResult, releaseOcr, thickenDark } from '../ocr.js';
+import { readDotPrint } from '../dotPrint.js';
 import { createPaddleReader, createSmallReader } from '../paddleOcr.js';
 import { textRows } from '../ocrLayout.js';
 import { guessRegion, fingerprint } from '../dateRegion.js';
@@ -632,12 +633,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
           return;
         }
-        const { candidates, guess } = await addPhotoToPool(shot.still, 'auto', score);
+        const pooled = await addPhotoToPool(shot.still, 'auto', score);
         if (!alive) return;
-        recordCandidates(candidates, photoEvidence, photoSource(seq));
+        recordCandidates(pooled.candidates, photoEvidence, photoSource(seq));
         // Recorte automático: onde o rápido acha que está a validade, o
         // detalhado (medium) lê só aquele pedaço, e o resultado vota.
-        if (guess && !nativePending) await readGuessAuto(shot.still, guess, photoSource(seq));
+        if (pooled.guess && !nativePending) await readGuessAuto(pooled, photoSource(seq));
         if (!alive || nativePending) return;
         if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
         setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
@@ -715,7 +716,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           candidates = findExpiryCandidates(r.text);
         } catch { /* a foto entra sem palpite */ } finally { busy = false; }
       }
-      if (!alive) return { candidates: [], guess: null };
+      if (!alive) return { candidates: [], guess: null, rows, canvas: c };
       const guess = guessRegion(rows, c.width, c.height);
       // Nitidez medida numa cópia pequena: fotos tremidas vão para o fim da fila.
       let sharp = 0;
@@ -724,7 +725,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         sharp = sharpness(qualityCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, qualityCanvas.width, qualityCanvas.height));
       } catch { /* sem medida */ }
       const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/jpeg', 0.9));
-      if (!blob || !alive) return { candidates, guess };
+      if (!blob || !alive) return { candidates, guess, rows, canvas: c };
       findPanel.add({
         blob, url: URL.createObjectURL(blob), w: c.width, h: c.height, rows, rowsW: c.width, rowsH: c.height, guess,
         score: baseScore + (guess ? 50 : 0) + Math.min(40, sharp / 5), sharp: Math.round(sharp), print: fingerprint(c), source,
@@ -732,23 +733,41 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       // O painel só aparece quando há o que mostrar: um palpite, uma foto da
       // própria pessoa, ou a embalagem já se mostrou difícil.
       if (guess || select || hard) findPanel.open();
-      return { candidates, guess };
+      return { candidates, guess, rows, canvas: c };
+    }
+
+    // Validade em pontinhos (lata): só quando a leitura normal do pedaço não
+    // achou data nenhuma (js/dotPrint.js). `rows`: as linhas do leitor rápido
+    // na mesma escala de `source`, só para estimar a altura de uma linha.
+    async function readDots(source, rows, region, progress = () => {}) {
+      if (paddleBurstState !== 'ready') return { iso: null, text: '', texts: [] };
+      const H = source.height;
+      const inside = (rows || []).filter((r) => r.y + r.h / 2 >= region.y * H && r.y + r.h / 2 <= (region.y + region.h) * H).map((r) => r.h).sort((x, y) => x - y);
+      const lineH = inside.length ? inside[inside.length >> 1] * 0.75 : region.h * H / 3;
+      return readDotPrint((c) => paddleBurst.read(c), source, region, { lineH, parse: (t) => findExpiryCandidates(t), alive: () => alive, progress });
     }
 
     // O medium lê o pedaço do palpite de uma foto automática (sem esperar o
     // medium carregar: se ainda não está pronto, fica para a próxima foto).
     // Vota como qualquer leitura da mesma foto (conta como uma imagem só).
-    async function readGuessAuto(still, region, source) {
+    async function readGuessAuto({ canvas, guess: region, rows }, source) {
       if (paddleBurstState !== 'ready') return;
       const crop = document.createElement('canvas');
-      try { prepareFrame(still, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop); } catch { return; }
+      try { prepareFrame(canvas, { mode: 'raw', box: region, width: 1400, maxH: 700, maxScale: 3 }, crop); } catch { return; }
       let result;
       try { result = await paddleBurst.read(crop); } catch { return; }
       if (!alive) return;
-      const candidates = findExpiryCandidates(result.text);
+      let candidates = findExpiryCandidates(result.text);
+      let mode = 'medium-recorte';
+      // Nada no recorte: tenta como validade em pontinhos.
+      if (!candidates.length) {
+        const dots = await readDots(canvas, rows, region);
+        if (!alive) return;
+        if (dots.iso) { result = { ...result, text: dots.text }; candidates = findExpiryCandidates(dots.text); mode = 'medium-pontos'; }
+      }
       recordCandidates(candidates, crop, source);
       const accepted = consensus.add({ candidates, engine: 'paddle', confidence: result.confidence, frame: `${source}-recorte`, source, at: performance.now() });
-      noteRead({ engine: 'paddle', variant: { mode: 'medium-recorte' }, source, result, candidates }, crop);
+      noteRead({ engine: 'paddle', variant: { mode }, source, result, candidates }, crop);
       if (accepted) { note({ kind: 'event', what: 'confirmed', iso: accepted }); beep('ok'); vibrate(40); done(accepted); }
     }
 
@@ -785,6 +804,19 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           prepareFrame(crop, { mode, blur: 0, box: PHOTO_BOX, width: 1000, maxH: 600 }, c);
           try { texts.push([`tesseract ${mode}`, (await readResult(c, { psm })).text, 1]); } catch { /* sem Tesseract */ }
         }
+      }
+      if (!alive) return { status: 'ok' };
+      // Nenhuma data: tenta como validade em pontinhos (lata).
+      if (!texts.some(([, text]) => findExpiryCandidates(text).length) && paddleBurstState === 'ready') {
+        progress('Tentando juntar os pontinhos da impressão');
+        const page = document.createElement('canvas');
+        const bmp2 = await createImageBitmap(photo.blob);
+        page.width = photo.rowsW || bmp2.width; page.height = photo.rowsH || bmp2.height;
+        page.getContext('2d').drawImage(bmp2, 0, 0, page.width, page.height);
+        if (bmp2.close) bmp2.close();
+        const dots = await readDots(page, photo.rows, region);
+        if (dots.iso) texts.push(['medium pontos', dots.text, 2]);
+        else if (dots.texts.length) note({ kind: 'event', what: 'find-read', detail: `pontos sem acordo: ${dots.texts.map((t) => `“${t.replace(/\s+/g, ' ').slice(0, 30)}”`).join(' · ')}` });
       }
       if (!alive) return { status: 'ok' };
       // Nenhuma data: tenta de novo com os pontinhos "engordados" (validade

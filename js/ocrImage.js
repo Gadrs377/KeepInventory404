@@ -177,3 +177,41 @@ export function thickenDark(source, passes = 4) {
   b = null;
   return out;
 }
+
+/**
+ * Uma linha de texto em pontinhos (impressora de pontos, como na lata) pronta
+ * para o leitor detalhado: recorta a linha `box` (pixels de `source`), reduz
+ * até o texto ter ~`textH` px de altura, borra de leve e engorda o escuro,
+ * para os pontos virarem traço. Na foto da lata, o medium não lia nada na
+ * foto inteira nem no bloco FAB/VAL/LOTE; linha a linha, assim, leu
+ * "UAL:29/DEZ/28" (docs/INTERFACES.md, versão 3.51).
+ */
+export function dotLine(source, box, { rowH = box.h, textH = 30, blur = 1, passes = 1 } = {}) {
+  const k = Math.max(0.15, Math.min(2, textH / Math.max(1, rowH)));
+  const W = Math.max(8, Math.round(box.w * k)); const H = Math.max(8, Math.round(box.h * k));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  g.drawImage(source, box.x, box.y, box.w, box.h, 0, 0, W, H);
+  if (blur > 0) {
+    const img = g.getImageData(0, 0, W, H);
+    let a = new Float32Array(W * H);
+    for (let i = 0; i < W * H; i++) a[i] = img.data[i * 4] * 0.299 + img.data[i * 4 + 1] * 0.587 + img.data[i * 4 + 2] * 0.114;
+    // Média 3×3 repetida `blur` × 2 vezes (perto de uma gaussiana).
+    let b = new Float32Array(W * H);
+    for (let k2 = 0; k2 < blur * 2; k2++) {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        b[i] = (a[i] + a[x > 0 ? i - 1 : i] + a[x < W - 1 ? i + 1 : i]) / 3;
+      }
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        a[i] = (b[i] + b[y > 0 ? i - W : i] + b[y < H - 1 ? i + W : i]) / 3;
+      }
+    }
+    for (let i = 0; i < W * H; i++) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = a[i]; img.data[i * 4 + 3] = 255; }
+    g.putImageData(img, 0, 0);
+  }
+  return passes > 0 ? thickenDark(c, passes) : c;
+}

@@ -127,6 +127,14 @@ const MONTH_NAMES = {
   JAN: 1, FEV: 2, FEB: 2, MAR: 3, ABR: 4, APR: 4, MAI: 5, MAY: 5, JUN: 6, JUL: 7,
   AGO: 8, AUG: 8, SET: 9, SEP: 9, OUT: 10, OCT: 10, NOV: 11, DEZ: 12, DEC: 12,
 };
+// Números que o leitor põe no lugar de letras dentro do nome do mês.
+const OCR_LETTER = { 0: 'OD', 2: 'Z', 5: 'S', 1: 'IL', 8: 'B', 6: 'G', 7: 'T', 4: 'A' };
+function monthFromOcr(tok) {
+  let options = [''];
+  for (const c of tok) options = options.flatMap((o) => [...(OCR_LETTER[c] || c)].map((l) => o + l));
+  const hits = [...new Set(options.filter((o) => MONTH_NAMES[o]))];
+  return hits.length === 1 ? hits[0] : null;
+}
 // Rótulos que vêm antes da data na embalagem.
 const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CONSUMIR|ANTES\s*DE|BEST|BB|USE)\b|\bV(?=\s*[:.]?\s*\d)/g;
 // "VAL:" mal lido em tinta impressa, visto nos vídeos reais (RL:, BL:, U9L:,
@@ -134,7 +142,9 @@ const EXP_LABEL = /\b(VAL(IDADE)?|VALID|VENC(IMENTO)?|VCTO|VTO|EXP(IRY|IRA)?|CON
 // linha, com dois-pontos e uma data logo depois. Não começa com F/P (FAB e
 // PROD mal lidos) nem L (lote), não é ML, e a data tem de vir depois de
 // qualquer fabricação no texto e não ter passado há mais de 60 dias.
-const LOOSE_EXP_LABEL = /(?<=(?:^|\n)[ \t]*)(?![FPL]|ML\b)[A-Z0-9]{1,2}L(?=[ \t]*:[ \t]*\d)/g;
+// Na lata (pontos de impressão, lida em linha) também UAT:, UAC:, UA7: — um
+// U ou V, um A e mais um caractere.
+const LOOSE_EXP_LABEL = /(?<=(?:^|\n)[ \t]*)(?:(?![FPL]|ML\b)[A-Z0-9]{1,2}L|[UV]A[A-Z0-9])(?=[ \t]*:[ \t]*\d)/g;
 const RECENT_DAYS = -60;
 const FAB_LABEL = /\b(FAB(R(ICACAO|ICADO)?)?|PROD(UCAO|UZIDO)?|EMB(ALADO)?|MFG|MFD)\b|\b[FP](?=\s*[:.]?\s*\d)/g;
 const LOT_LABEL = /\b(LOTE?|LT)\b|\bL(?=\s*[:.]?\s*\d)/g;
@@ -160,6 +170,20 @@ export function findExpiryCandidates(text, today = todayIso()) {
   // Confusão observada no Paddle: OUT -> 0UT. Correção limitada a nomes de
   // meses junto de ano; não transforma palavras/lotes arbitrários em datas.
   t = t.replace(/\b(0UT|0CT|N0V)(?=\s*[/.\-]?\s*\d{2,4}\b)/g, m => m.replace('0', 'O'));
+  // Pontos de impressão (lata) viram "·" ou "：" no lugar dos dois-pontos.
+  t = t.replace(/[·•：]/g, ':').replace(/\/\s*:/g, ':');
+  // Barra em pontinhos lida como "<" ou ">": "29>DEZ/28".
+  t = t.replace(/(?<=[0-9A-Z])\s*[<>]\s*(?=[0-9A-Z])/g, '/');
+  // Dois-pontos lido como "1" entre o rótulo e o dia: "UAL129/DEZ/28".
+  t = t.replace(/(?<=(?:^|\n)[ \t]*(?:VAL|[UV][A4][A-Z0-9]))1(?=\d{2}\s*\/)/g, ':');
+  // Mês por extenso com letra lida como número, entre dia e ano com barras:
+  // "29/0EZ/28", "29/DE2/28" (DEZ). Só com dia/ano dos dois lados e ao menos
+  // uma letra no mês, para não mexer em números.
+  t = t.replace(/(?<![0-9])(\d{1,2}\s*[\/.\-]\s*)([A-Z0-9]{3})(?=\s*[\/.\-]\s*\d{2,4}\b)/g, (all, pre, tok) => {
+    if (!/[A-Z]/.test(tok) || MONTH_NAMES[tok] || !/\d/.test(tok)) return all;
+    const month = monthFromOcr(tok);
+    return month ? pre + month : all;
+  });
   // "15 OUT 2026", "OUT/26", "15OUT26" -> meses em número
   t = t.replace(/(?:(\d{1,2})\s*[\/.\-]?\s*)?(?<![A-Z])(JAN|FEV|FEB|MAR|ABR|APR|MAI|MAY|JUN|JUL|AGO|AUG|SET|SEP|OUT|OCT|NOV|DEZ|DEC)[A-Z]*\.?\s*[\/.\-]?\s*(\d{2,4})\b/g,
     (_, d, mon, y) => `${d ? `${d}/` : ''}${String(MONTH_NAMES[mon]).padStart(2, '0')}/${y}`);

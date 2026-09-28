@@ -30,11 +30,18 @@ function around(rows, row, H) {
   return { x: 0, y, w: 1, h: clamp((y1 + my) / H) - y };
 }
 
-/** Palpite de onde está a validade, ou null se nenhuma linha tem cara disso. */
+/**
+ * Palpite de onde está a validade, ou null se nenhuma linha tem cara disso.
+ * Sem nenhuma data legível, uma linha com FAB ou LOTE também serve: a
+ * validade costuma estar logo ao lado (na lata em pontinhos, o rápido leu só
+ * "FAB", "UFIL" e "LOTE:1", mas no lugar certo).
+ */
 export function guessRegion(rows, W, H) {
   if (!rows || !rows.length) return null;
   const best = rows.map((r) => ({ r, s: dateScore(r.text) })).sort((a, b) => b.s - a.s)[0];
-  return best.s >= 2 ? around(rows, best.r, H) : null;
+  if (best.s >= 2) return around(rows, best.r, H);
+  const block = rows.find((r) => /^\s*(FAB|LOTE)\b/i.test(r.text));
+  return block ? around(rows, block, H) : null;
 }
 
 /**
