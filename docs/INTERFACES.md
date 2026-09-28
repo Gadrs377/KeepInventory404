@@ -1330,4 +1330,4 @@ tabela mostra quantas vezes e a mediana. Tudo fica guardado na tela e vai
 para a Bancada. Os vídeos estão em `vendor/paddle/amostras/` em MP4 (sem
 áudio e sem metadados; o iPhone toca) e o Chromium dos testes usa o WebM de
 `tests/real/`. Cada vídeo é enquadrado com a validade perto do meio, onde
-fica a mira. `sw.js` v66.
+fica a mira. `sw.js` v67.

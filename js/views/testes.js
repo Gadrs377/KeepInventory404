@@ -36,8 +36,8 @@ const speed = (base, ms) => {
 // fica a mira, como se a pessoa mirasse pelo app (os vídeos não foram
 // gravados assim), com folga em volta para o painel de fotos.
 const CAM_VIDEOS = {
-  copo: { label: 'Copo', ref: '2026-09-17', region: [0.05, 0.12, 0.85, 0.44], src: ['vendor/paddle/amostras/copo.mp4', 'tests/real/copo-tinta-impressa.webm'] },
-  chocolate: { label: 'Chocolate', ref: '2027-08-11', region: [0, 0.18, 1, 0.5], src: ['vendor/paddle/amostras/chocolate.mp4', 'tests/real/chocolate-tinta-prata-foil.webm'] },
+  copo: { label: 'Copo', ref: '2026-09-17', region: [0.05, 0.17, 0.85, 0.44], src: ['vendor/paddle/amostras/copo.mp4', 'tests/real/copo-tinta-impressa.webm'] },
+  chocolate: { label: 'Chocolate', ref: '2027-08-11', region: [0, 0.13, 1, 0.5], src: ['vendor/paddle/amostras/chocolate.mp4', 'tests/real/chocolate-tinta-prata-foil.webm'] },
 };
 const CAM_MODES = {
   antes: { label: 'Antes', experiment: { gpu: false, legacy: true } },
