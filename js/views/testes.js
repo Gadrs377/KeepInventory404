@@ -12,6 +12,7 @@ import { createPaddleReader } from '../paddleOcr.js';
 import { findExpiryCandidates, formatDate } from '../dates.js';
 import { $, esc, icon, toast, download } from '../ui.js';
 import { BANCADA_URL, copyForBancada } from '../expiryDebug.js';
+import { gpuAllowed, gpuOffReason, gpuReset } from '../gpuGuard.js';
 
 const SAMPLES = { copo: 'vendor/paddle/amostras/copo.jpg', chocolate: 'vendor/paddle/amostras/chocolate.jpg' };
 const ENGINES = {
@@ -40,6 +41,8 @@ export default function mountTestes(root) {
 
         <h2 class="list-title">Leitor de validade com GPU</h2>
         <pre class="tests-pre" data-env>Verificando a GPU…</pre>
+        <p class="group-note" data-gpu-state></p>
+        <button type="button" class="btn btn-quiet btn-sm" data-gpu-reset hidden>Religar a GPU na câmera</button>
         <fieldset class="tests-opts">
           <legend>Imagem</legend>
           <label><input type="radio" name="img" value="copo" checked> Copo (tinta preta)</label>
@@ -135,6 +138,18 @@ export default function mountTestes(root) {
     report.env = lines;
     if (alive) $('[data-env]', root).textContent = lines.join('\n');
   })();
+
+  // A câmera de validade usa a GPU no leitor rápido; se o app caiu durante
+  // uma leitura nela, fica desligada neste aparelho (js/gpuGuard.js).
+  function showGpuState() {
+    const off = gpuOffReason();
+    $('[data-gpu-state]', root).textContent = off
+      ? `GPU na câmera de validade: desligada (o app caiu durante uma leitura nela em ${new Date(off.at).toLocaleString('pt-BR')}).`
+      : `GPU na câmera de validade: ${gpuAllowed() ? 'ligada' : 'indisponível neste aparelho'}.`;
+    $('[data-gpu-reset]', root).hidden = !off;
+  }
+  showGpuState();
+  $('[data-gpu-reset]', root).addEventListener('click', () => { gpuReset(); event('gpu-religada'); showGpuState(); toast('GPU religada na câmera.', { duration: 2500 }); });
 
   // Volta do jeito que estava.
   if (saved) {
