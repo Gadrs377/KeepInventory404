@@ -40,6 +40,11 @@ const PICK_GUARD_MS = 450;
 const HINT_CYCLE_MS = 4200;
 const QUALITY_MS = 1200;
 const NATIVE_MAX_SIDE = 2400;
+// Mesma data em tantas imagens diferentes, bem à frente das outras: a câmera
+// pergunta "É esta?" em vez de esperar um rótulo que talvez nunca apareça
+// (a validade às vezes fica longe do "VAL", noutra linha da embalagem).
+const ASK_AFTER = 4;
+const LEAD = 2;
 const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } };
 
 const ISSUE_TEXT = {
@@ -56,7 +61,7 @@ const DEBUG_EVENT = {
   pick: 'data virou botão', tap: 'tocou na data', confirmed: 'confirmou sozinho', shutter: 'foto automática',
   native: 'foto do celular', hard: 'avisou que está difícil', ask: 'perguntou "é esta data?"', issue: 'aviso de imagem',
   'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
-  'medium-failed': 'Paddle medium falhou', error: 'leitura falhou',
+  'medium-failed': 'Paddle medium falhou', error: 'leitura falhou', declined: 'respondeu que não é',
 };
 
 function claimCamera(on) {
@@ -123,6 +128,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       <div class="exp-picks" role="group" aria-label="Datas lidas" aria-live="polite">
         <p class="exp-picks-hint">As datas lidas aparecem aqui</p>
       </div>
+      <div class="exp-ask" role="group" aria-live="polite" hidden>
+        <p class="exp-ask-text"></p>
+        <div class="exp-ask-actions">
+          <button type="button" class="btn btn-primary" data-ask-yes>Sim, é esta</button>
+          <button type="button" class="btn btn-quiet" data-ask-no>Não é</button>
+        </div>
+      </div>
       <div class="exp-struggle" hidden>
         <p class="exp-struggle-hint" aria-live="polite"></p>
         <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Usar a câmera do celular</span></button>
@@ -144,6 +156,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     const struggleHint = $('.exp-struggle-hint', host);
     const photoBtn = $('[data-photo]', host);
     const photoInput = $('[data-photo-input]', host);
+    const askBox = $('.exp-ask', host);
+    const askText = $('.exp-ask-text', host);
     const canvas = document.createElement('canvas');
     const original = document.createElement('canvas');
     // Fotos têm canvas próprios: a leitura ao vivo pode voltar a rodar enquanto
@@ -182,6 +196,11 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     let lastEngine = 'paddle';
     let visibilityEpoch = 0;
     const shown = new Set();
+    // Cada data: em quantas imagens diferentes apareceu (os filtros de uma foto
+    // contam como uma imagem) e em quantas veio com rótulo de validade.
+    const seen = new Map();
+    let asking = null;
+    const declined = new Set();
     let turn = 0;
     let paddleTurn = 0;
     let struggleTimer = null;
@@ -195,7 +214,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     let issueStreak = 0;
     let shownIssue = null;
 
-    function setStatus(text) { status.textContent = text; shownIssue = null; }
+    // Com a pergunta "É esta?" aberta, as instruções de rotina não tiram a
+    // atenção dela; só erros e o andamento da foto do celular (`urgent`).
+    function setStatus(text, { urgent = false } = {}) {
+      status.textContent = asking && !urgent ? 'Confira a data abaixo' : text;
+      shownIssue = null;
+    }
 
     // ---------- Diagnóstico ----------
     // Cada tentativa (motor, filtro, texto lido, datas e por que a votação
@@ -275,7 +299,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     }
 
     function becomeHard() {
-      if (hard) return;
+      // Já existe uma data vista várias vezes esperando resposta: não é hora
+      // de dizer que a embalagem está difícil.
+      if (hard || asking) return;
       hard = true;
       note({ kind: 'event', what: 'hard' });
       struggleHint.textContent = HARD_TEXT;
@@ -296,7 +322,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       btn.dataset.iso = iso;
       // Data inteira e curta ("15/10/26"): o CSS mostra a que cabe com respiro.
       const [y, m, d] = iso.split('-');
-      btn.innerHTML = `${icon('calendar')}<span class="exp-pick-long">${formatDate(iso)}</span><span class="exp-pick-short" aria-hidden="true">${d}/${m}/${y.slice(2)}</span>`;
+      btn.innerHTML = `${icon('calendar')}<span class="exp-pick-long">${formatDate(iso)}</span><span class="exp-pick-short" aria-hidden="true">${d}/${m}/${y.slice(2)}</span><span class="exp-pick-count" aria-hidden="true"></span>`;
       btn.setAttribute('aria-label', `Usar ${formatDate(iso)}`);
       picks.append(btn);
       picks.dataset.changed = String(performance.now());
@@ -357,7 +383,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (alive) {
           paddleLiveState = 'failed';
           note({ kind: 'event', what: 'small-failed' });
-          setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data');
+          setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data', { urgent: true });
         }
         paddleLive.dispose();
       });
@@ -376,23 +402,78 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       });
     }
 
-    // Guarda a evidência (recorte + texto cru) e põe a data numa vaga, se houver.
-    function recordCandidates(candidates, evidenceCanvas) {
+    // Guarda a evidência (recorte + texto cru), põe a data numa vaga, se
+    // houver, e conta em quantas imagens diferentes cada data apareceu.
+    function recordCandidates(candidates, evidenceCanvas, source) {
       for (const found of candidates) {
         if (!evidence.has(found.iso) && evidence.size < MAX_PICKS) evidence.set(found.iso, {
           image: evidenceCanvas.toDataURL('image/jpeg', .8), raw: found.raw,
           monthOnly: /^\d{1,2}\s*[/.\- ]\s*\d{2,4}$|^\d{4}$/.test(found.raw),
         });
+        const s = seen.get(found.iso) || { sources: new Set(), labeled: 0 };
+        s.sources.add(source);
+        if (found.labeled) s.labeled++;
+        seen.set(found.iso, s);
         addPick(found.iso);
       }
+      if (candidates.length) updatePicks();
     }
+
+    // A data à frente (em imagens diferentes) entre as que estão nas vagas.
+    function leader() {
+      const ranked = [...shown].map((iso) => ({ iso, n: seen.get(iso)?.sources.size || 0 })).sort((a, b) => b.n - a.n);
+      const first = ranked[0];
+      if (!first || first.n - (ranked[1]?.n || 0) < LEAD) return null;
+      return first;
+    }
+
+    // Quantas vezes cada data foi vista, e a mais provável em destaque. Nada
+    // muda de lugar: só o número e o fundo da data.
+    function updatePicks() {
+      const lead = leader();
+      for (const btn of picks.querySelectorAll('.exp-pick')) {
+        const n = seen.get(btn.dataset.iso)?.sources.size || 0;
+        $('.exp-pick-count', btn).textContent = n >= 2 ? `${n}×` : '';
+        btn.classList.toggle('is-likely', !!lead && lead.n >= 2 && lead.iso === btn.dataset.iso);
+        btn.setAttribute('aria-label', `Usar ${formatDate(btn.dataset.iso)}${n >= 2 ? `, lida ${n} vezes` : ''}`);
+      }
+      maybeAsk(lead);
+    }
+
+    // Pergunta sobre a data mais vista. Só uma data futura, ou que já veio com
+    // rótulo de validade: a fabricação (sempre passada) não vira pergunta.
+    function maybeAsk(lead) {
+      if (asking || !lead || lead.n < ASK_AFTER || declined.has(lead.iso) || skip.includes(lead.iso)) return;
+      const past = lead.iso < new Date().toISOString().slice(0, 10);
+      if (past && !seen.get(lead.iso).labeled) return;
+      asking = lead.iso;
+      askText.textContent = `Vi ${formatDate(lead.iso)} em ${lead.n} imagens. É a validade?`;
+      askBox.hidden = false;
+      setStatus('Confira a data abaixo', { urgent: true });
+      note({ kind: 'event', what: 'ask', iso: lead.iso, detail: `${lead.n} imagens` });
+      vibrate(15);
+    }
+    $('[data-ask-yes]', askBox).addEventListener('click', () => {
+      if (!asking) return;
+      vibrate(20);
+      note({ kind: 'event', what: 'tap', iso: asking, detail: 'pergunta' });
+      done(asking);
+    });
+    $('[data-ask-no]', askBox).addEventListener('click', () => {
+      if (!asking) return;
+      note({ kind: 'event', what: 'declined', iso: asking });
+      declined.add(asking);
+      asking = null;
+      askBox.hidden = true;
+      setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
+    });
 
     // O que atrapalha dentro da mira (pouca luz, reflexo, tremido). Só fala
     // depois de ver o mesmo problema duas vezes seguidas, e só volta à
     // instrução normal quando ele some duas vezes: nada de texto piscando.
     function checkQuality() {
       const now = performance.now();
-      if (nativeReading || now - lastQualityAt < QUALITY_MS) return;
+      if (nativeReading || asking || now - lastQualityAt < QUALITY_MS) return;
       lastQualityAt = now;
       let issue;
       try {
@@ -462,7 +543,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
             score += textScore(result);
             const candidates = findExpiryCandidates(result.text);
             found += candidates.length;
-            recordCandidates(candidates, photoEvidence);
+            recordCandidates(candidates, photoEvidence, source);
             const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame: `${source}-${i}`, source, at: performance.now() });
             noteRead({ engine, variant, source, result, candidates }, photoCanvas);
             i++;
@@ -473,7 +554,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
       if (stopped()) return { score, found };
       if (waitForMedium && paddleBurstState === 'loading') {
-        setStatus('Lendo a sua foto com mais cuidado');
+        setStatus('Lendo a sua foto com mais cuidado', { urgent: true });
         try { await loadingPaddleBurst; } catch { /* segue com o small */ }
         if (!alive) return { score, found };
       }
@@ -515,10 +596,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       bursting = true; nativeReading = true;
       const seq = burstSeq++;
       note({ kind: 'event', what: 'native', detail: photoSource(seq) });
-      setStatus('Lendo a sua foto');
+      setStatus('Lendo a sua foto', { urgent: true });
       try {
         let bitmap;
-        try { bitmap = await createImageBitmap(file); } catch { setStatus('Não deu para abrir a foto. Tente de novo ou digite a data'); return; }
+        try { bitmap = await createImageBitmap(file); } catch { setStatus('Não deu para abrir a foto. Tente de novo ou digite a data', { urgent: true }); return; }
         if (!alive) return;
         const photo = document.createElement('canvas');
         const k = Math.min(1, NATIVE_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
@@ -564,7 +645,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         video.srcObject = stream;
         await video.play().catch(() => {});
       } catch {
-        setStatus('A câmera parou. Toque em Digitar a data, ou feche e abra de novo');
+        setStatus('A câmera parou. Toque em Digitar a data, ou feche e abra de novo', { urgent: true });
       }
     }
 
@@ -595,14 +676,14 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           note({ kind: 'event', what: 'error', detail: engine });
           if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.dispose(); }
           else if (++tessErrors >= 3) tessFailed = true;
-          setStatus('Tente outro ângulo ou digite a data');
+          setStatus('Tente outro ângulo ou digite a data', { urgent: true });
           await pause(250);
           continue;
         } finally { liveReading = false; }
         if (!alive) return;
         if (document.hidden || epoch !== visibilityEpoch) continue;
         const candidates = findExpiryCandidates(result.text);
-        recordCandidates(candidates, original);
+        recordCandidates(candidates, original, `video-${frame.toFixed(2)}`);
         const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
         noteRead({ engine, variant, source: `video-${frame.toFixed(2)}`, result, candidates }, canvas);
         if (accepted) {
@@ -621,7 +702,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       try {
         stream = await navigator.mediaDevices.getUserMedia(CAMERA);
       } catch {
-        setStatus('Sem acesso à câmera. Digite a data.');
+        setStatus('Sem acesso à câmera. Digite a data.', { urgent: true });
         claimCamera(false);
         return;
       }

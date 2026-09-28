@@ -21,6 +21,7 @@ const items = JSON.parse(await readFile('tests/real/manifest.json')).filter((m) 
 // O que a pessoa viu, tirado do registro da câmera (ver expiryCam.js).
 function summarize(log, reference) {
   const shown = log.filter((e) => e.kind === 'event' && (e.what === 'pick' || e.what === 'confirmed'));
+  const asks = log.filter((e) => e.kind === 'event' && e.what === 'ask');
   const correct = shown.find((e) => e.iso === reference);
   const wrong = shown.filter((e) => e.iso !== reference);
   const reads = log.filter((e) => e.kind === 'read');
@@ -31,6 +32,9 @@ function summarize(log, reference) {
   for (const e of reads) byEngine[e.engine] = (byEngine[e.engine] || 0) + 1;
   return {
     correctShownAt: correct ? correct.t : null,
+    // "É esta data?": quando perguntou a certa, e se perguntou alguma errada.
+    correctAskedAt: asks.find((e) => e.iso === reference)?.t ?? null,
+    wrongAsked: asks.filter((e) => e.iso !== reference).map((e) => e.iso),
     wrongShownBefore: wrong.filter((e) => !correct || e.t < correct.t).map((e) => e.iso),
     wrongShown: [...new Set(wrong.map((e) => e.iso))],
     reads: reads.length,
@@ -131,6 +135,7 @@ try {
     for (const [tier, r] of Object.entries(tiers)) console.log(`  ${tier}: ${r.framesWithText}/${r.frames} quadros com texto, ${r.framesWithDateFragment} com fragmento de data, ${r.readsOfReference} leram a validade, ${r.msPerFrame} ms/quadro, datas erradas: ${r.wrongDates.join(', ') || 'nenhuma'}`);
     console.log(`  fluxo completo: ${flow.accepted ? `confirmou ${flow.accepted}` : 'não confirmou'} em ${(flow.ms / 1000).toFixed(0)} s; sugeriu digitar: ${flow.suggestedTyping}; tinha foto para mostrar: ${flow.hadPhotoForTyping}`);
     console.log(`  data certa para a pessoa: ${flow.correctShownAt == null ? 'nunca' : `${(flow.correctShownAt / 1000).toFixed(1)} s`}; datas erradas antes: ${flow.wrongShownBefore.join(', ') || 'nenhuma'}; erradas no total: ${flow.wrongShown.join(', ') || 'nenhuma'}`);
+    console.log(`  perguntou "é esta?": ${flow.correctAskedAt == null ? 'não perguntou a certa' : `a certa em ${(flow.correctAskedAt / 1000).toFixed(1)} s`}; perguntas erradas: ${flow.wrongAsked.join(', ') || 'nenhuma'}`);
     console.log(`  leituras: ${flow.reads} (${flow.readsByEngine}); com a data certa: ${flow.readsOfReference}; por que não confirmaram: ${Object.entries(flow.refusals).map(([k, n]) => `${k} ${n}`).join(', ') || '—'}; confiança nelas: ${flow.referenceConfidence.join(', ') || '—'}`);
     await page.close();
   }
