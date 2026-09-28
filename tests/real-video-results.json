@@ -9,69 +9,64 @@
     "tiers": {
       "small": {
         "frames": 30,
-        "framesWithText": 19,
+        "framesWithText": 18,
         "framesWithDateFragment": 0,
         "readsOfReference": 0,
         "wrongDates": [],
-        "msPerFrame": 640,
+        "msPerFrame": 660,
         "reads": [
           {
-            "t": 0.01,
+            "t": 0,
             "text": "211 | CE | DE | \"L. | OTE:1291",
             "dates": []
           },
           {
-            "t": 0.52,
+            "t": 0.51,
             "text": "LIFIL | LOTE:1291",
             "dates": []
           },
           {
             "t": 1.02,
-            "text": "JFL: | LOTE:1291",
+            "text": "FAB:: PIDER | LIFIL | LOTE:12912",
             "dates": []
           },
           {
             "t": 1.52,
-            "text": "2 S | LOTE:1291225",
+            "text": "JFIL | LOTE:1291225",
             "dates": []
           },
           {
-            "t": 2.02,
-            "text": "RH | 尚 | JF11",
+            "t": 2.04,
+            "text": "me | AE | F11 | E:1",
             "dates": []
           },
           {
-            "t": 3.04,
-            "text": "29/",
-            "dates": []
-          },
-          {
-            "t": 4.04,
+            "t": 4.05,
             "text": "BE",
             "dates": []
           },
           {
-            "t": 4.55,
+            "t": 4.56,
             "text": "E:1291225",
             "dates": []
           },
           {
-            "t": 5.07,
+            "t": 5.06,
             "text": "[0TE:1291225",
             "dates": []
           },
           {
-            "t": 6.59,
-            "text": "中举三品牌至三室",
+            "t": 6.57,
+            "text": "洋三年至三童",
             "dates": []
           },
           {
-            "t": 7.09,
-            "text": "HE/ | UFIL LOTE:1291225",
+            "t": 7.08,
+            "text": "UFIL LOTE:1291225",
             "dates": []
           },
           {
-            "t": 8.6,
+            "t": 8.59,
             "text": "I8",
             "dates": []
           },
@@ -81,103 +76,103 @@
             "dates": []
           },
           {
-            "t": 10.13,
+            "t": 10.11,
             "text": "FFE | LIFIL",
             "dates": []
           },
           {
-            "t": 11.16,
-            "text": "FFE | LFL | LOTE:1",
+            "t": 11.12,
+            "text": "LOTE:12ST:",
             "dates": []
           },
           {
-            "t": 11.68,
-            "text": "BE",
+            "t": 11.62,
+            "text": "BE | 91",
             "dates": []
           },
           {
-            "t": 12.69,
-            "text": "LFIL: | LOTE:1291225",
+            "t": 12.13,
+            "text": "1111",
             "dates": []
           },
           {
-            "t": 13.2,
-            "text": "111",
+            "t": 12.63,
+            "text": "LFIL | LOTE:1291225",
             "dates": []
           },
           {
-            "t": 14.71,
-            "text": ":1291225",
+            "t": 14.66,
+            "text": "CE",
             "dates": []
           }
         ]
       },
       "medium": {
         "frames": 30,
-        "framesWithText": 21,
-        "framesWithDateFragment": 3,
+        "framesWithText": 20,
+        "framesWithDateFragment": 5,
         "readsOfReference": 0,
         "wrongDates": [],
-        "msPerFrame": 3800,
+        "msPerFrame": 3783,
         "reads": [
           {
-            "t": 0.01,
+            "t": 0,
             "text": "-11 | OTE:1291",
             "dates": []
           },
           {
-            "t": 0.52,
+            "t": 0.51,
             "text": "LUFIL LOTET129T225",
             "dates": []
           },
           {
-            "t": 1.02,
-            "text": "JAL:",
-            "dates": []
-          },
-          {
             "t": 1.52,
-            "text": "LOTE:1291225",
+            "text": "A330E25 .IFIL | LOTE:1291225",
             "dates": []
           },
           {
-            "t": 2.02,
-            "text": "R1 | DE | JAL DE | JOTE:1 S9",
+            "t": 2.04,
+            "text": "FIL | LOTE:129T",
             "dates": []
           },
           {
-            "t": 2.53,
-            "text": "FEBEE8",
+            "t": 2.54,
+            "text": "188 | DE",
             "dates": []
           },
           {
-            "t": 4.55,
+            "t": 3.05,
+            "text": "福",
+            "dates": []
+          },
+          {
+            "t": 4.56,
             "text": "280E2<25 E:1291225",
             "dates": []
           },
           {
-            "t": 5.07,
+            "t": 5.06,
             "text": "FA8/29/0EZ 20 | 0TE:1291225",
             "dates": []
           },
           {
-            "t": 5.59,
+            "t": 5.56,
             "text": "[183/8/23 | 0TE:1291225",
             "dates": []
           },
           {
-            "t": 6.09,
-            "text": "福 | 112",
+            "t": 6.07,
+            "text": "2218E",
             "dates": []
           },
           {
-            "t": 6.59,
-            "text": "中华茶乐0军通三店理",
+            "t": 7.08,
+            "text": "DEZ | UFL E:1291225 | LOT",
             "dates": []
           },
           {
-            "t": 7.09,
-            "text": "UAIL LOTE:1291225",
+            "t": 7.59,
+            "text": "1春",
             "dates": []
           },
           {
@@ -191,38 +186,33 @@
             "dates": []
           },
           {
-            "t": 10.13,
+            "t": 10.11,
             "text": "FAB:22/ | LUAL | LOTE:129T",
             "dates": []
           },
           {
-            "t": 11.16,
-            "text": "LOTE:129T225",
+            "t": 11.12,
+            "text": "UAL | LOTE:1291225",
             "dates": []
           },
           {
-            "t": 11.68,
-            "text": "DTE-1291",
+            "t": 11.62,
+            "text": "DEZ | F DEZ | ET1291225",
             "dates": []
           },
           {
-            "t": 12.69,
-            "text": "LOTE:1291225",
+            "t": 12.63,
+            "text": "LOTE:1291225 UFIL",
             "dates": []
           },
           {
-            "t": 13.2,
-            "text": "yl | 4 | DE | fnn | 17",
+            "t": 13.64,
+            "text": "E:1291225",
             "dates": []
           },
           {
-            "t": 13.7,
-            "text": "29/DE",
-            "dates": []
-          },
-          {
-            "t": 14.71,
-            "text": "LOTET1291225",
+            "t": 14.66,
+            "text": "Fl 29/0E | 0TET1291225",
             "dates": []
           }
         ]
@@ -230,7 +220,939 @@
     },
     "flow": {
       "accepted": null,
-      "ms": 90006,
+      "ms": 90005,
+      "suggestedTyping": true,
+      "hadPhotoForTyping": true
+    }
+  },
+  {
+    "file": "tampa-plastico-relevo.webm",
+    "reference": {
+      "val": "2026-12-01",
+      "fab": "2026-08-06",
+      "lote": "20:42 A"
+    },
+    "tiers": {
+      "small": {
+        "frames": 31,
+        "framesWithText": 15,
+        "framesWithDateFragment": 8,
+        "readsOfReference": 0,
+        "wrongDates": [],
+        "msPerFrame": 828,
+        "reads": [
+          {
+            "t": 0.01,
+            "text": "PL250.10",
+            "dates": []
+          },
+          {
+            "t": 0.52,
+            "text": "PL 250.101 F:06/08/26 | :04/13/26",
+            "dates": []
+          },
+          {
+            "t": 1.03,
+            "text": "PL250.10 | ms à exa",
+            "dates": []
+          },
+          {
+            "t": 1.53,
+            "text": "PL250",
+            "dates": []
+          },
+          {
+            "t": 2.04,
+            "text": "PL250",
+            "dates": []
+          },
+          {
+            "t": 4.07,
+            "text": "PL 250. | L.J.  6 | …….) | 6",
+            "dates": []
+          },
+          {
+            "t": 4.58,
+            "text": "PL 250.10 F:06/08/26 | 20: 42",
+            "dates": []
+          },
+          {
+            "t": 5.08,
+            "text": "PL250. | 2",
+            "dates": []
+          },
+          {
+            "t": 7.62,
+            "text": "心 | F:06/08/26 | :64/18/26 | L:20:42 A",
+            "dates": []
+          },
+          {
+            "t": 8.65,
+            "text": "F:06/08/26",
+            "dates": []
+          },
+          {
+            "t": 9.15,
+            "text": "F:06/08 | 0",
+            "dates": []
+          },
+          {
+            "t": 9.66,
+            "text": "F:06/08/26 | 20:42",
+            "dates": []
+          },
+          {
+            "t": 11.7,
+            "text": "FI0SD82S | Wiy",
+            "dates": []
+          },
+          {
+            "t": 12.2,
+            "text": "PL250 | Ld.. 福8 | 70 ex",
+            "dates": []
+          },
+          {
+            "t": 14.73,
+            "text": "PL250 | 28 78 c",
+            "dates": []
+          }
+        ]
+      },
+      "medium": {
+        "frames": 31,
+        "framesWithText": 27,
+        "framesWithDateFragment": 16,
+        "readsOfReference": 0,
+        "wrongDates": [
+          "2026-12-04",
+          "2026-08-06"
+        ],
+        "msPerFrame": 5586,
+        "reads": [
+          {
+            "t": 0.01,
+            "text": "PL 250.40 | 心 | 2",
+            "dates": []
+          },
+          {
+            "t": 0.52,
+            "text": "F:06/08/26 | 1:04/13/26 | L:20:42 A | 8.6 | 四",
+            "dates": []
+          },
+          {
+            "t": 1.03,
+            "text": "PL 250.101 | L.k..",
+            "dates": []
+          },
+          {
+            "t": 1.53,
+            "text": "POSIT",
+            "dates": []
+          },
+          {
+            "t": 2.04,
+            "text": "PL250.101 | ..d..",
+            "dates": []
+          },
+          {
+            "t": 2.54,
+            "text": "F:06/08/26 | 04/12/26",
+            "dates": [
+              "2026-12-04"
+            ]
+          },
+          {
+            "t": 3.05,
+            "text": "F:06/08/26",
+            "dates": []
+          },
+          {
+            "t": 3.56,
+            "text": "L...",
+            "dates": []
+          },
+          {
+            "t": 4.07,
+            "text": "PL250.10 | L... | 门",
+            "dates": []
+          },
+          {
+            "t": 4.58,
+            "text": "PL 250.10 | F:06/08/26 | L:20:42 C",
+            "dates": []
+          },
+          {
+            "t": 5.08,
+            "text": "PL250.101",
+            "dates": []
+          },
+          {
+            "t": 5.58,
+            "text": "一 | 4. 1 | boog",
+            "dates": []
+          },
+          {
+            "t": 6.09,
+            "text": "1 | L | 一 | 一 | 7 | bo00",
+            "dates": []
+          },
+          {
+            "t": 7.11,
+            "text": "000 8 | 一 3 | 000 | .o | 一 | 0o.o",
+            "dates": []
+          },
+          {
+            "t": 7.62,
+            "text": "F:06/08/26",
+            "dates": []
+          },
+          {
+            "t": 8.13,
+            "text": "1",
+            "dates": []
+          },
+          {
+            "t": 8.65,
+            "text": "i",
+            "dates": []
+          },
+          {
+            "t": 9.15,
+            "text": "7 1 5 | 1 | a J | 1 5",
+            "dates": []
+          },
+          {
+            "t": 9.66,
+            "text": "人 | 门",
+            "dates": []
+          },
+          {
+            "t": 10.17,
+            "text": "250. | L....",
+            "dates": []
+          },
+          {
+            "t": 10.68,
+            "text": "250.101 1...3.. | 3.6",
+            "dates": []
+          },
+          {
+            "t": 11.7,
+            "text": "F106/00",
+            "dates": []
+          },
+          {
+            "t": 12.2,
+            "text": "L..d..",
+            "dates": []
+          },
+          {
+            "t": 13.21,
+            "text": "06/08/26 | A",
+            "dates": [
+              "2026-08-06"
+            ]
+          },
+          {
+            "t": 14.22,
+            "text": "F:06/08/26 | :04/12/26 | :20:42 A",
+            "dates": [
+              "2026-12-04"
+            ]
+          },
+          {
+            "t": 14.73,
+            "text": "PL250.101 26 | … ex.",
+            "dates": []
+          },
+          {
+            "t": 15.23,
+            "text": "PL250.1 | l...i.. 26 | 26 | 0",
+            "dates": []
+          }
+        ]
+      }
+    },
+    "flow": {
+      "accepted": null,
+      "ms": 90010,
+      "suggestedTyping": true,
+      "hadPhotoForTyping": true
+    }
+  },
+  {
+    "file": "copo-tinta-impressa.webm",
+    "reference": {
+      "val": "2026-09-17",
+      "fab": "2024-06-05",
+      "lote": "10:26 F"
+    },
+    "tiers": {
+      "small": {
+        "frames": 25,
+        "framesWithText": 25,
+        "framesWithDateFragment": 25,
+        "readsOfReference": 7,
+        "wrongDates": [],
+        "msPerFrame": 683,
+        "reads": [
+          {
+            "t": 0,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 0.51,
+            "text": "FBB:05/06/21 | 10I",
+            "dates": []
+          },
+          {
+            "t": 1.01,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 1.52,
+            "text": "FAB:05/08/24 | RL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 2.03,
+            "text": "FRB:05/06/24 | 电L:17/09/26",
+            "dates": []
+          },
+          {
+            "t": 2.53,
+            "text": "FAB:05/06/2/ | UAL:17/09 | 10:24",
+            "dates": []
+          },
+          {
+            "t": 3.04,
+            "text": "FAB:05/06/21",
+            "dates": []
+          },
+          {
+            "t": 3.54,
+            "text": "EAB:05/06/24",
+            "dates": []
+          },
+          {
+            "t": 4.04,
+            "text": "FAB:05/06/2/ | UAL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 4.56,
+            "text": "FAB:05/06/2 | UAL:17/09/ | 10:26",
+            "dates": []
+          },
+          {
+            "t": 5.06,
+            "text": "FAB:05/06/2 | UAL:17/09/2 | 10:26",
+            "dates": []
+          },
+          {
+            "t": 5.56,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 6.06,
+            "text": "05/06/24 | 17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 6.57,
+            "text": "FAB:05/06/E | 09L:17/09/24",
+            "dates": []
+          },
+          {
+            "t": 7.07,
+            "text": "FAB:05/06/ | AL:17/09/",
+            "dates": []
+          },
+          {
+            "t": 7.57,
+            "text": "AB:05/06/24 | JAL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 8.07,
+            "text": "AB:05/06/24 | PL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 8.57,
+            "text": "FAB:05/06/24 | 9L:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 9.08,
+            "text": "FAB:05/06. | UAL:17/09/",
+            "dates": []
+          },
+          {
+            "t": 9.58,
+            "text": "FAB:05/06. | U9:17/09.",
+            "dates": []
+          },
+          {
+            "t": 10.08,
+            "text": "FAB:05/06/24 | 101:17/00::",
+            "dates": []
+          },
+          {
+            "t": 10.58,
+            "text": "PB:05/06/21",
+            "dates": []
+          },
+          {
+            "t": 11.08,
+            "text": "FAB:05/08/24 | U9L:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 11.58,
+            "text": "FAB:05/06/2 | UAL:17/09/",
+            "dates": []
+          },
+          {
+            "t": 12.09,
+            "text": "FAB:05/08/24 | U9L:17/09/2",
+            "dates": []
+          }
+        ]
+      },
+      "medium": {
+        "frames": 25,
+        "framesWithText": 25,
+        "framesWithDateFragment": 25,
+        "readsOfReference": 9,
+        "wrongDates": [
+          "2026-08-05"
+        ],
+        "msPerFrame": 3997,
+        "reads": [
+          {
+            "t": 0,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 0.51,
+            "text": "FA5:05/08/2 | 1101-47",
+            "dates": []
+          },
+          {
+            "t": 1.01,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 1.52,
+            "text": "FA6:05/08/26 | 图L:17/09/26",
+            "dates": [
+              "2026-08-05"
+            ]
+          },
+          {
+            "t": 2.03,
+            "text": "FAB:05/08/2 | 图:17/09/26 | ià.S",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 2.53,
+            "text": "FAB:05/08/24 | 10:22",
+            "dates": []
+          },
+          {
+            "t": 3.04,
+            "text": "CAB:05/08/2A",
+            "dates": []
+          },
+          {
+            "t": 3.54,
+            "text": "FAB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 4.04,
+            "text": "FAB:05/08/2 | VAL:17/09/46",
+            "dates": []
+          },
+          {
+            "t": 4.56,
+            "text": "FAB:05/08/24 | UAL:17/09/26 | 10:26 f",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 5.06,
+            "text": "FAB:05/08/2 | VAL:17/09/2 | 10:26",
+            "dates": []
+          },
+          {
+            "t": 5.56,
+            "text": "FAB:05/08/24 | 9L:17/09/26 | 10:26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 6.06,
+            "text": "05/08/24 | 17/09/26 | 10:26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 6.57,
+            "text": "FAB:05/08/2 | UAL:17/09/24",
+            "dates": []
+          },
+          {
+            "t": 7.07,
+            "text": "FA6:05/08/ | L:17/09/",
+            "dates": []
+          },
+          {
+            "t": 7.57,
+            "text": "AB:05/08/24 | AL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 8.07,
+            "text": "AB:05/08/24 | AL:17/09",
+            "dates": []
+          },
+          {
+            "t": 8.57,
+            "text": "FAB:05/08/24 | U9L:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 9.08,
+            "text": "FAB:05/08/ | VAL:17/09/ | oc",
+            "dates": []
+          },
+          {
+            "t": 9.58,
+            "text": "FA6:05/06 | 9L:17/09.",
+            "dates": []
+          },
+          {
+            "t": 10.08,
+            "text": "FAB:05/08/24 | U9L:17/09.co",
+            "dates": []
+          },
+          {
+            "t": 10.58,
+            "text": "PRB:05/08/24",
+            "dates": []
+          },
+          {
+            "t": 11.08,
+            "text": "FAB:05/08/24 | UAL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 11.58,
+            "text": "FAB:05/08/24 | AL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          },
+          {
+            "t": 12.09,
+            "text": "FAB:05/08/24 | UAL:17/09/26",
+            "dates": [
+              "2026-09-17"
+            ]
+          }
+        ]
+      }
+    },
+    "flow": {
+      "accepted": null,
+      "ms": 90004,
+      "suggestedTyping": true,
+      "hadPhotoForTyping": true
+    }
+  },
+  {
+    "file": "chocolate-tinta-prata-foil.webm",
+    "reference": {
+      "val": "2027-08-11",
+      "lote": "CC22326493"
+    },
+    "tiers": {
+      "small": {
+        "frames": 28,
+        "framesWithText": 26,
+        "framesWithDateFragment": 19,
+        "readsOfReference": 8,
+        "wrongDates": [
+          "2027-08-31",
+          "2030-01-31"
+        ],
+        "msPerFrame": 2159,
+        "reads": [
+          {
+            "t": 0,
+            "text": "TANHA-DE-CAJU, AVELA, | XCCO.SELLEENPOIO | LOTE 11/08/27 CC22326493 | OUTO FABRICADO POR TOP CAU INO.E COM. DE CHOCOLATES LTDA.- RUA SILVA TELES, BZ1-PARI-SAO PAUIO -P-CNPI OJZ I3.300.PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPIN 33.033.028/0020-41. IMPORTADOYDISTRIBUIDO POR: EN PARAGUAY:TROVES | UC B000IGI-O. RS.PA N 036981 MANTER EM LOCAL FRESCO, SECO E INODORO, EVITANDO SOL CALDR E UMIDADE MANTENER EN WUGAR RESES | STRIA BRASILENA VD’), de los cuales: Az",
+            "dates": []
+          },
+          {
+            "t": 0.5,
+            "text": "ANHA-DE-CAJU, AVELÃ | BE CACAG SUERDIE LECHE ENPOLVO | LOTE | 11/08/27 CC22326493 | DUTO FABRICADO POR TOP CAU IND.E COM.DE CHOCOLATES LIDA.-RUA SILVA TELES,821 -PARI-SAO PAULO-SP-CNPI N 0O.132.D 3.300.PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPI N 33.033.028/0020-41.IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY: TROVAT |  B000IGI3-0. R.S.PA N 036981 MANTER EM LOCAL FRESCO. SECO E INODOORO, EVITANDO SOL CALOR E UMIDADE MANTENER EN LUGAR FRE | TRIA BRASILENA cuales:",
+            "dates": []
+          },
+          {
+            "t": 1.01,
+            "text": "SOCIAL E ECONOMICO | 08/27 CC223",
+            "dates": [
+              "2027-08-31"
+            ]
+          },
+          {
+            "t": 1.53,
+            "text": "(9) | 17 3 | totins (0) 12 | 0.1 12 | au maturaday (g) 19 DESENVOLVIMENTO | 4.8 24 | as trann (g) 09 0.1 | 0 SOCIAL E ECONOMICO | imantores (0) 31 0.B | 00 21 | 1 | a  juia porção. | MEM | ICOS:CONTEN DE WHA IN, GA IE NA ISAIMA GN   N | PODE CONTER AMENDOIM, AMÉNDOA, CATAMA-DE-CAJU. | LCONTEM ALACTES ERA | DESDIA PER CASTANA DE CONSUMIR ANDESDE/LOTE | ETRIGOYBELEDAD | W. RUSCELINO UBISOHEA DE OUVEIRA, TRINR ",
+            "dates": []
+          },
+          {
+            "t": 2.05,
+            "text": "CC22326493 04 | 2",
+            "dates": []
+          },
+          {
+            "t": 2.56,
+            "text": "WOAOSDEENIOn | ESREJIDE | 11/08/27 CC | PRODUTO FABRICADO POR TOP CAU IND.E COM. DE CHOCDLATES LIDA | VEIRA, 1330O.PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPI N*31033 | BO/T RUC BO00IG13-O. R.S.P.A. N 03G98I MANIER EM LOCAL FRESCO, S6CO 00 | INDUSTRIA BRASILEÑA |  cuadraditos). Veior enereétice 13a kcai",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 3.07,
+            "text": "(N",
+            "dates": []
+          },
+          {
+            "t": 3.58,
+            "text": "11/08/27 CC2232",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 4.09,
+            "text": "11/08/27 CC2",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 4.6,
+            "text": "DAGE SNENE E | AMENDOA CASTANHS-DE-CANL NELA | CONSUMP ANTES DE ILE",
+            "dates": []
+          },
+          {
+            "t": 5.11,
+            "text": "ACAO MANIEADE CACAG SUENIELEDE NPOLVO | ANTESDE/LOTE: 11/08/27 CC22 | LX DE OUVEIRA, 13.300, PARTE CIDADE INDUSTRIAL CUNITIGA PH ENPI N° 1.013DZ0/00Z0-41 IMPORLA00S 1iton) Vaior energeuco 133 kcal = 567 kJ (7% VD*): Carbonidratos 14  (% VO). d | 1a (15% VD*), de as Guaies: Grasas saluradas 4.8 g (22% v n de 2.000 koal u 8.400 kJ Sue valcree darioe",
+            "dates": []
+          },
+          {
+            "t": 6.13,
+            "text": "11/08/27 CC2 | 5g6",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 6.64,
+            "text": "VO PASTA OC CACAO MANIE D CACAO SATI OELEDNE ENPOLVO | SUMIR ANTES DE /LOTE: | 11/08/27 | UN WN LUUIAU AL PIUUUIN FAURAAUU PUN MUHUELLA ORAJIL LIUA RI ANKLUIN | DO CODIGO IC, PRODUTO FABRICADO POR TOP CAU IND. E COM, DE CHOCOLATES LIDA -RUA SAVA IFUES &-R-S | SCHEK DE OLIVEIRA, I3J00. PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPI N 3.0330Z8/0020-4 | EN800016130/1 RUC 800016L3-0. H.S.PA. N036981 MANTER EM LOCAL FRESCO. SECO EINC00O EWIAND0 SL NREUME  | A BRASILEIRA/INDUSTRIA BRASILENA | ón: 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7% VD°): Cartobidratos N4 (% vo%  | 17 n(2% Vn): Grasas lotales 8.1 a (15% VD*) de 0s Cales Grasas saturas 4.8s2% 0",
+            "dates": []
+          },
+          {
+            "t": 7.15,
+            "text": "11/08/27 | TPROUTOFABRICADO POR TOP CAU IND ECOM DECHOKESU- | A300.PARTE-CIDADEINDUSTRIALCURITBA- | .80001613-0..5.P.AN036981MAN7ER | MOUGIHIA BRASILENA | Pxcon 2g (6 cusdraditos) Valor anergótico 133 keal e 557 N  | 17(2% V0), Grasan totales 8.1 g (13% v01 ",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 7.66,
+            "text": "ERAPARTE-CIDADE INDUSTRIAL-CURITIBAPR-ONP | G3RUC B000613-0.R.S.P.A.N\":036981 MANTER EM LOCARES | GIERANOILSTRIA BRASILENA | 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7",
+            "dates": []
+          },
+          {
+            "t": 8.17,
+            "text": "MLLINU AUDNUAALA UC ULICI | IA LUTE PAELCUIUU UU, LUUIUU LL, rRVUVTU rAOn LOTE PRECEDIDO DO CODIGO TC, PRODUTO FABRICADO POR TOP CAU IND E COM. DE CHOCOLATESLTDAL-RUA SIEVA TELES BZI | JUSCELINO KUBITSCHEK DE OLIVEIRA, I3.300, PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNP N 3LL0ZSV0020-47PORTAD | TEL: 21210556. RE N 800016130/1 RUC 80001613-0. R.S.PA.N\":036981 MANTER EM LOCAL FRESCO. SEDDE INOD0RD.EMITANDO S | MEDAD. INDÚSTRIA BRASILEIRA/ INDUSTRIA BRASILEÑA | ONAL: Porción: 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7% VD*): Carbohidrat | didos 11 g; Proteinas 1,7 g (2% VD*); Grasas totales 8,1 g (15% VD*), de las cuales: Grasas sat |  VD*): Sodio 24 mg (1% VD*). (*) % Valores Diarios con base a una dieta de 2.000 kcal u 8.400 k | e sus necesidades energéticas.",
+            "dates": []
+          },
+          {
+            "t": 8.68,
+            "text": "11/08/27 CC2232649 | RECEDIDO 0O COOKO I | JNO KUBITSCHEK DE OLUVEIRA I.30 PARIE CSASE NUGIA 0 | INDUSTRIA BRASAEIRA INDUSTRIA BRACRENG | : Porción: 25 g (6 cuadraditos) Valor arergetco 133 kcal = 5 u % 0' Cansteca | 11 g; Proteinas 1.7 g (2% vD7: Grasas totaes 81 gits% on  lasoa |  Sodio 24 mg (1% VD7). (°) % Valores Claros con base a ure dea  2tcau",
+            "dates": [
+              "2030-01-31",
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 9.19,
+            "text": "4-DE-CAJO, AVELA, | SUERDOELECHEENPOLVO | 11/08/27 CC22326493 04:50 | AUTS | LELINU AUDIJLNEA UC ULITICINA, UDVU. PRRIE UUAUE INDUSIRIAL LURITDAIPS- | BRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA. - RUA SILVA TELES. 82I - PARI - SÁO PAULO - SP - CNPI N 00.J3Z O1O/O00I-80, | ARTE-CIDADE INDUSTRIAL-CURITIBA/PR - CNPI N* 33.033.028/0020-47, IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY: TROVATO CISA. CALLÉ | SL3-0. RS.PA N O3G98I MANTER EM LOCAL FRÉSCD, SECO E INÓDORO, EVITANDO SOL, CALOR E UMIDADE MANTENER EN LUGAR FRESCD, SECD E | SILENA | os) Valor energético 133 kcal = 557 kJ (7% VD*); Carbohidratos 14 g (5% VD*), de los cuales: Azúcares | ): Grasas totales 8.1 a /15% VD*). de jas cuales:",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 9.7,
+            "text": "LSRCANTES LSUINN E PRUGKERO | STANHA-DE-CAJU, AVELÃ, | DE CACAO SUERODE LENE ENPOLVO | LOTE: | 11/08/27 CC22326493 04:50 | JUSUEUNU AUDITSLACA UE UUITEIMA, ISOJUU. PAMIE-LIURUE INUUSTHIALLU | TO FABRICADO POR TOP CAUIND.E COM.DE CHOCOLATES LTOA-RUA SILVA TELES.B21-PARI-SÁO PAULO-SP-NPIN 9O.II2 | 300, PARTE-CIDADE INOUSTRIAL-CURITIBA/PR·CNPI N 33.033.02S/0020-47 IMPORTADO Y DISTRIBUIDO POR:EN PARAGUAY: TROVATO CISALE | BOOOIGIJ-0 RS.PA N 03G98I MANTER EM LOCAL FRÉSCO, SECO E INODORO, EVITANDO SOL, CALOR E UMIDADE MANTENER EN LUGAR FRESUT SEIDE | A BRASILENA | aditos) Valor energético 133 kcal = 557 kJ (7% VD*); Carbohidratos 14 a (5% VD*). de lcs cuales: Azicarss",
+            "dates": []
+          },
+          {
+            "t": 10.22,
+            "text": "DY | CC22326493 04",
+            "dates": []
+          },
+          {
+            "t": 10.73,
+            "text": "ESURADA RASRUNES HNE PAGAERN |  AMÈNDOA CASTANHA-DE-CAJU, AVELÁ | RSAEODO MNEDECSADLENEENPOLVO | NSUMIR ANTES DE /LOTE: 11/08/27 CC2 | EG DO COOIGO IC PRODUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA. -RUA SILVA TELES, BZI-PARI- BISCHEKDE OLIVEIRA 3300 PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPIN 33.033.OZB/00Z0-41.IMPORTADOYDISTRIBUIDO POR G13-0. RS.PA N 0369BI MANTER EM LOCAL FRESCO, SECO E INODORO, EVITANDO SOL CALOR E UMIDADE WNER A | EN",
+            "dates": []
+          },
+          {
+            "t": 11.24,
+            "text": "5 WWW.LACTA.COM.BRJOCOALIFE | 3 | 1 | SAIBAMAIS SAIBA MAIS | ela porção. IMAGEM MERAMENTE ILUSTRATIVA | OROUHA VESETAL, GORDURA DE MANTEIGA DESIORATADA EMULSACANTES: LECITINA E POUIGUICEROL | PODE CONTER AMENDOIM, AMÈNDOA, CASTANHA-DE-CAJU. AVELÃ. | TES:AZÓCARLLECHE ENTERAEN POLVO, PASTADE CACAO, MANTECADE CICAO SUERO DELECHEENPOLVO | HZANTE. | RA, CASTAÑA DE CONSUMIR ANTES DE/LOTE: | 11/08/27 CC2 | NFUNPAIA LUIE PRELEUIUV UWLULIUU LL FRVUUIU TROTILAVY PUR BVRULLLL URAJIL | O-41. PARA LOTE PRECEDIDO DO CODIGO TC, PRODUTO FABRICADO POR TOP CAU IND.E COM. DE CHOCOLATES LTDA-HUA SIRVA IES --S | YDA AY HUSCEUINO NOBITSCHEK DE OUVEIRA 13 300 PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-(NPI N330330Z9/00Z0-4",
+            "dates": []
+          },
+          {
+            "t": 11.75,
+            "text": "SAIBA MAIS",
+            "dates": []
+          },
+          {
+            "t": 12.26,
+            "text": "ANE NDOA CASTANNA-DE-CAUU, AVELA | WOE |  G0ES7/100 11/08/27 CC22 | PRODUTOFABNICADO PORTOP CAU IND ECOM DE CHOCOLATES LTDA -PUIA SAVA ELES S-P SPAN O3698I MANIER EM LOCAL FRESCO, SECO E INOOGRO, EVMGO L AR",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 13.29,
+            "text": "CAE",
+            "dates": []
+          },
+          {
+            "t": 13.79,
+            "text": "S | 2 SOCIAL E ECO | 24 WWW.1ALTA.COM.BMICO | 3 SAIBA MAIS | 1 |  MERARENTE LUSTRATIVA | ESROINES EOTINA EPNGLAERO | ÉNDOA CASTANHA-DE-CAJU, AVELÁ | ENRIIG NSRUEOOALIMTAGE OMO SIEREETEMEENPOAVO | E ANTESDE/LOTE 11/08/27 CC22326493",
+            "dates": []
+          }
+        ]
+      },
+      "medium": {
+        "frames": 28,
+        "framesWithText": 28,
+        "framesWithDateFragment": 23,
+        "readsOfReference": 12,
+        "wrongDates": [
+          "2027-08-31"
+        ],
+        "msPerFrame": 10999,
+        "reads": [
+          {
+            "t": 0,
+            "text": "TANHA-DE-CAJU, AVELÁ, | OO.SELDEINING | LOTE: 11/08/27 CC22326493 0450 | OUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA. -RUA SILVA TELES, BZ1 -PARI-SÃO PAULO-SP-CMPINOOJEZONN PU   . UIN  J  ,,    | 13.300. PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPI Nº 33.033.028/0020-41. IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY TROVATB UC B0-O RSPA  036981 MANTER EM LOCAL FRESCO, SECO E INODORO, EVITANDO SOL, CALOR E UMIDADE MANTENER EA R | STRIA BRASILENA g (5% VD°), de los cuales: Az",
+            "dates": []
+          },
+          {
+            "t": 0.5,
+            "text": "ANHA-DE-CAJU, AVELÁ, | DE CACAO. SUERD DE LECHE EN POLVO | LOTE: 11/08/27 CC22326493 04:50 | DUTO FABRICADO POR TOP CAU IND. ECOM. DE CHOCOLATES LIDA.-RUA SILVA TELES.BZI-PARI-SÁO PAULO -SP-CNPIN° OO.132.O 13.300. PARTE-CIDADE INDUSTRIAL-CURITIBA/PR-CNPI N° 33.033.028/002O-41. IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY: TROVAT | C BO00IGI3-0. R.S.PA N 036981 MANTER EM LOCAL FRESCO. SECO E INODORO, EVITANDO SOL CALOR E UMIDADE MANTENER EN LUGAR FRE | TRIABRASILENA",
+            "dates": []
+          },
+          {
+            "t": 1.01,
+            "text": "SOCIAL EECONOMICO | 08/27 CC2232649",
+            "dates": [
+              "2027-08-31"
+            ]
+          },
+          {
+            "t": 1.53,
+            "text": "n(0) | 17 3 | totas (0) 12 | 0.1 12 | at maturadas () 19 4.0 DESENVOLVIMENTO | 24 | as frana (g) 07 0.1 | ID SOCIAL E ECONOMICO | mantores (0) 33 08 | 1 | 0O 21 | hual de e juia porção. | BAAEM HEAM NE N | ICOS: CONTENDE PODE CONTER AMENDOM AMNDOA (A-DE-A | CONTE AKAMINE IEAPIN PRTE OCA | DE SDJA P CASTAÑA DE CONSUMIR ANTES DE/LOTE: | ETRIGOYELEBAD | IV. RUSCELINO UBITSOREK DE QUVEIRA,  ",
+            "dates": []
+          },
+          {
+            "t": 2.05,
+            "text": "11/08/27 CC22326493 04 | seturadas 4 8 c (22",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 2.56,
+            "text": "ESTEJIOTE | 11/08/27 CC223 | PRODUTO FABRICADO POR TOP CAU IND. E COM. OE CHOCOLATES LIDAMA VA | VEIRA, 13.30O, PARTE-CIDADE INDUSTRIAL CURITIBA/PR- CNPI N9 31033029/002 | INDUSTRIA BRASILEÑA | cuadraditos) Valor enernético 13a keal e 44z k/7% vyy",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 3.07,
+            "text": "A",
+            "dates": []
+          },
+          {
+            "t": 3.58,
+            "text": "11/08/27 CC2232649",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 4.09,
+            "text": "11/08/27 CC2232",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 4.6,
+            "text": "ONKENNENE5 | CONTER AMENDOINL AMENDOA CASTANHA DE-CANL BELA | Y   | STANA DE CONGUMP ANTES DE LE | 108/2T_CC",
+            "dates": []
+          },
+          {
+            "t": 5.11,
+            "text": "NDOA, CASTANHA-DE-CAJO S | 11/08/27 CC22326 | ANTES DE/LOTE: | EX DE OL/VERA 13.3GO. PARTE-CIDADE INDUSTRIAL-CURITIGA/PR CNPIN 3LO33OZ0/G0ZO-47 MPORTA007 () Vaor nereco 133 ka 567 k (7 VD): Cada 14 | g (15% VD°), de las cudies: Orasas sauadas 43 g:22% de 2000   8.400 k Suv  | IRA/INDUSTRIA BRASILENA",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 5.62,
+            "text": "1",
+            "dates": []
+          },
+          {
+            "t": 6.13,
+            "text": "11/08/27 CC223264",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 6.64,
+            "text": " ASIO A   | SUMIRANTESDE/LOTE: | 11/08/27 CC | UV UA LUUIV L, PHUUVIU FABNILAUN PUN SUHUELLA BRAJIL LIUA AT AKLUU AUDINJLDEA VR WIHUA LAK PA I | DO CODIGO TC PRODUTO FABRICADO POR TOP CAU IND. E COM, DE CHOCOLATES LIDA-RUA SIA TEES ---- | SCHEK DE OLIVEIRA, 13.JOO. PARTE-CIDADE INDUSTRIAL-CURITIA/PR CNPI N* 33.033OZ/OO2O-41 O0 R  | EN 80001G130/1 RUC 80001G13-0, ALS.PA N 036991 MANTER EM LOCAL FRESCO SECO ENO ETAN0 L (U  | A BRASILEIRA/INDUSTRIA BRASILENA | ón: 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7% VD°) Cartohidratos 4g (5% V0% ",
+            "dates": []
+          },
+          {
+            "t": 7.15,
+            "text": "11/08/27Co |  RUTO FABRICADO POR TOP CAU IND. E CON DE CHEU | 00.PARTE-CIDADE INDUSTRIAL-CURITA |   000113-0. .S.PAN036981 MANT  | RAERA NOUSTRIA BRASILENA | Ppon 25   cuadraditos) Valor anergético 133 kcal = 57 |  (2% VD°), Grasas totaies 8.1 g (13% 101  ",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 7.66,
+            "text": "T PRUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLAES | ERA PARTE-CIDADE INDUSTRIAL CURITIBAPR-OP | 0613-0. R.S.P.A.N:036981 MANTER EM LOCAL RE | G NUSTRIA BRASILEÑA | 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7",
+            "dates": []
+          },
+          {
+            "t": 8.17,
+            "text": "SA LUIE PNCLEUIDU UU LUDIUU LL, HUUVTU TADNAUV | LOTE PRECEDIDO DO CODIGO TC, PRODUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LIDAL -RUA SILVA TELES BZI | JUSCELINO KUBITSCHEK DE OLIVEIRA, 13.300, PARTE-CIDADE INDUSTRIAL-CURITIBA/PR -CNPI N 3303L0Z8/0020-47. INPORTAD | TEL: 21210556. RE N'800016130/1 RUC 80001613-0. R.S.PA. N036981 MANTER EM LOCAL FRESCO, SEDDE INOD0RD, EMITAND0 SO | MEDAD. INDÚSTRIA BRASILEIRA/INDUSTRIA BRASILEÑA | ONAL: Porción: 25 g (6 cuadraditos) Valor energético 133 kcal = 557 kJ (7% VD*): Carbohidrat | didos 11 g; Proteinas 1,7 g (2% VD*); Grasas totales 8, 1 g (15% VD*), de las cuales: Grasas sat | VD*); Sodio 24 mg (1% VD*). (*) % Valores Diarios con base a una dieta de 2.000 kcal u 8.400 k | e sus necesidades energéticas.",
+            "dates": []
+          },
+          {
+            "t": 8.68,
+            "text": "AENPIRNLPETASE KCIO MMELIASE OE SESPN | CONSAUMIN ANIES DE JIDIE 11/08/27 CC22326 493 9 |   w , Fmy RIE CEDIDO DO COOGO IL PRODUTOF ABRILADO PIE OP AU NG EON SE SHDSUESTL UP E | JNO KUBITSCHEK DE OLVEIFA, EL300 PRIE CEAGE NDIGTRAE CIRITEARR SP PE | INDUSTRIA BRASILLIRA INDUSTRIA BRAGEN | : Porción: 25 g (6 cuadraditos) Valor erergetco 133 kcal = 5T % 10 Caoa  E  11 g: Proteinas 1.7 g (2% VD': Grasas tutaes 8& 1 g % v0 de an aes Gaa sat   | ) Sodio 24 mg (1% VD). () % Valores Diaros con ase a ua dea de 2nal i a",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 9.19,
+            "text": "A-DE-CAJO, AVELA, | SUERO DE LECHE EN POLVO | 11/08/27 CC22326493 04:50 | ADIHAVV TUO MOHUCLLE BRASIL LTA. AT. JOOCCLIRU AUDITSLNCA UC ULITCINA, ODUO, PARIE- LUADE INDUSTMIAL-CONITDAIM | BRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA. - RUA SILVA TELES. 82I - PARI - SÁO PAULO -SP -CNPJ Nº 00.132 010/0001-80, | PARTE-CIDADE INDUSTRIAL-CURITIBA/PR -CNPI N 33.O33.028/0020-47. IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY: TROVATO CISA. CALLE | S3-O. RSPA N O36981 MANTER EM LOCAL FRESCO. SECO E INODORO, EVITANDO SOL, CALOR E UMIDADE MANTENER EN LUGAR FRESCO, SECO E | SILENA | s) Valor energético 133 kcal = 557 kJ (7% VD*); Carbohidratos 14 g (5% VD*), de los cuales: Azúcares |  Grasas totaies 8 1 a (15% VD) de las cuales: Grasas satur",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 9.7,
+            "text": "ILSIRCANTES: LECTINA E POLIGUCEROL | STANHA-DE-CAJU, AVELÃ, | DECACASUEDELEHEENPOLVO. | LOTE: | 11/08/27 CC22326493 04:50 | UMIV FNONILAUU PON MURUCLLE DRAJIL LIK AI. JUSCUNU AUDI JLCA UL UINLINA, ISJUU PAML- LADE INUUSTHIALOSDA | TO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTOA-RUA SILVA TELES, B21-PARI -SÁO PAULO -SP -NPIN° 902DO0 | 300, PARTE-CIDADE INOUSTRIAL-CURITIBA/PR- CNPI N° 33.033.OZS/0020-47. IMPORTADO Y DISTRIBUIDO POR: EN PARAGUAY: TROVATO CISAL OE | BOODIGIJ-O. IRLS PA N O369BI MANTER EM LOCAL FRESCO, SECO E INODORO, EVITANDO SOL, CALOR E UMIDADE MANTENER EN LUGAR FRESOL SEE | ABRASILENA | aditos) Valor energético 133 kcal = 557 kJ (7% VD*): Carbohidratos 14 g (5% VD*), de lcs cuales: Azicares",
+            "dates": []
+          },
+          {
+            "t": 10.22,
+            "text": "MEDON EO   | NSRESE | 11/08/27 CC22326493 04",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 10.73,
+            "text": "SRAA ASHUWES NE PUGAERR | AMENDOA CASTANHA-DE-CAJU AVELÀ | BIRL PASTADE IDIO MINTEDIDE OIIG SIETINE LEN EN POLVO | NSUMIR ANTES DE/LOTE: 11/08/27 CC22 |  DD CODIGO I PRODUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA. -RUA SILVA TELES, BZI -PARI -SAD PAULO--OMPI IBISCHEK DE OLIVEIRA 13 J00, PARTE-CIDADE INDUSTRIAL-CURITIBA/PR- CNPI N 33.033.OZ8/O0ZO-41. IMPORTADO Y DISTRIBUID0 POR E AE A 6 E  RUC 0G13-0 R.S.PA N 0369BI MANTER EM LOCAL FRESCO, SECO E INODORO, EVITANDO SOL CALOR E UMIDAE  | ISTRIA BRASHLEIRA/INDUSTRIA BRASILENA 6 cuadraditos) Valor energético 133 kcal = 557 kJ (7% VD); Carbohidratos 14 g (5% VD) d  (15% VD*), de las cuales: Grasas saturadas 4,8 g (22% VD), G | k Sus vaores daos pde ",
+            "dates": []
+          },
+          {
+            "t": 11.24,
+            "text": "5 WWW.LACTA.COM.BRJCOCOALIFE | 3 | 1 | SAIBAMAIS SAIRA MAIS | ela porção. IMAGEMMERAMENTEILUSTRATIVA | OROUNA VEGETAL GORDURA DE MANTEIGA DESIORATADA EMULSIRCANTES: LECTINA E POUGUCEROL | PODE CONTER AMENDOIM, AMÈNDOA, CASTANHA-DE-CAJU, AVELA, | AEE | IZANTE. | RA, CASTAÑA DE CONSUMIR ANTESDE/LOTE: | 11/08/27 CC223264 | O-4T. PARA LOTE PRE CEDIDO DO CODIGO TC. PRODUTO FABRICADO POR TOP CAU IND. E COM. DE CHOCOLATES LTDA -HUA S ES --S | AY MUSCELINO KUBITSCHEY DE OLIVEIRA 13 1OO PARTE-CIDADE INDLUSTRIAL CURITIBA PR- CNPI N 13033OZ9/00Z0-4 OST01S",
+            "dates": []
+          },
+          {
+            "t": 11.75,
+            "text": "SAIRA MATS LAIBA | BRN | 11/08/27 CC22326493 0 |  U M AIX UNO AGUI SUHAK UL UATYHA, TJDD, P",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 12.26,
+            "text": "AMENDOA (ASTANHA-OE-CAJUAVELA | 11/08/27 CC223264 | SOKE A  300 NNE-CIDADE INDUSTRIAL-CURITIBA/PR·CNPI N 31033020T002O-41 IMPT   AN EM LOCA FRESCO, SECO E N. ",
+            "dates": [
+              "2027-08-11"
+            ]
+          },
+          {
+            "t": 12.77,
+            "text": "1",
+            "dates": []
+          },
+          {
+            "t": 13.29,
+            "text": "DESENWOUINENO | SORALEEUONTHIRD",
+            "dates": []
+          },
+          {
+            "t": 13.79,
+            "text": "3 | SOCIAL E ECO | WWW.S4ETA.COM.DHICO | 24 | 3 | 3 SAIBA MAIS | MEM MERANENIE USTRATIVA | PHUESIRCINTES SOTINA E POUGULEROL |  M CASTAA DE-CAJU, AVELÀ, | NIPING VISTAIDE OIDIL IMITEADE COMADO SUERG DE LEIMEEN POLIO | SUMR ANTES DE /LOTE 11/08/27 CC22326493",
+            "dates": []
+          }
+        ]
+      }
+    },
+    "flow": {
+      "accepted": null,
+      "ms": 90004,
       "suggestedTyping": true,
       "hadPhotoForTyping": true
     }

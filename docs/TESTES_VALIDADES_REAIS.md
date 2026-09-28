@@ -136,6 +136,60 @@ adicionar uma camada "medium" (maior e mais lenta) só para a foto nítida
   mas isso não foi suficiente para fechar a votação com confiança/quadros
   distintos suficientes dentro do tempo testado.
 
+## Oitavo teste: mais três embalagens reais (vídeo) — 28/09/2026
+
+Três vídeos novos em `tests/real/`, medidos com `tests/real-video.mjs`
+(pequeno cript acrescentado no teste anterior): os dois motores (small e
+medium) rodando sobre os mesmos 25–31 quadros de cada vídeo, e o fluxo
+completo do app por até 90 s. Nenhum teste usa resposta fornecida ao OCR.
+
+| Embalagem | Validade real | small: leram certo / quadros | medium: leram certo / quadros | datas erradas (ambos) | fluxo completo |
+|---|---|---|---|---|---|
+| Tampa plástica, relevo por pontos | 01/12/2026 | 0/31 | 0/31 | 2 (medium) | não confirmou |
+| Copo, tinta impressa (bom contraste) | 17/09/2026 | 7/25 | 9/25 | 1 (medium) | **não confirmou** |
+| Chocolate, tinta prata sobre alumínio | 11/08/2027 | 8/28 | 12/28 | 2 (small), 1 (medium) | **não confirmou** |
+| Lata, gravação a laser (teste anterior) | 29/12/2028 | 0/30 | 0/30 | nenhuma | não confirmou |
+
+Nenhum dos quatro confirmou sozinho uma data errada — a votação exigindo
+rótulo, dois quadros distintos e vantagem de dois votos segurou em todos os
+casos, mesmo quando a leitura bruta de um motor errava ocasionalmente.
+
+**O achado importante está nas linhas 2 e 3.** O copo tem tinta preta bem
+legível — o small sozinho leu a validade certa em 7 de 25 quadros, sem
+nenhuma leitura errada. Era, de longe, o caso mais fácil dos quatro. Mesmo
+assim o fluxo completo não confirmou. Investigando o porquê:
+
+A mira da câmera (`aim`) cobre só uns 12% da altura do quadro (calculado
+nesta sessão, numa tela de celular comum). Comparando a mesma imagem com a
+mira desenhada em cima:
+
+- No copo, a mira — mesmo bem centralizada na linha `VAL:17/09/26` — corta
+  os dígitos ao meio, sobra só uma tira de 604×57 px sem contexto nenhum
+  (nem `FAB` nem `10:26` por perto). Rótulo e dígitos completos importam
+  para a votação confirmar sozinha (`VAL` sem ambiguidade); uma tira cortada
+  no meio da linha atrapalha exatamente isso.
+- No chocolate, em outros quadros a mira caiu abaixo da própria linha de
+  texto, pegando só metal liso.
+
+Ou seja: o motor consegue ler a validade quando tem a linha inteira (7–12
+acertos em poucos quadros, para um recorte manual generoso), mas a mira real
+é fina o bastante para cortar essa mesma linha ao meio mesmo quando está bem
+posicionada. Isso é diferente da lata e da tampa, onde o motor não lê a
+validade nem com a imagem inteira — ali o problema é o material, não a
+mira.
+
+**Ressalva sobre o método:** o teste do fluxo completo usa um vídeo tocando
+em loop, sem ninguém reposicionando a câmera para manter o texto na mira —
+o que uma pessoa de verdade faria ao vivo. Isso provavelmente piora o
+resultado do teste em relação ao uso real (a pessoa corrigiria o
+enquadramento), mas o problema de a mira cortar uma linha de texto ao meio
+mesmo bem centralizada é geométrico, independente de quem está segurando o
+celular.
+
+Screenshots comparando a mira com a região recortada estão descritos em
+detalhe na conversa; não foram salvos no repositório (não fazem parte do
+material de teste, só da investigação).
+
 Conclusão: mesmo pagando o custo de um modelo bem maior e mais lento, esta
 lata específica (gravação a laser em metal, sem nenhum contraste de tinta)
 continua sem solução completa. Continua sendo o limite conhecido mais duro
