@@ -60,6 +60,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS p (e INTEGER PRIMARY KEY, n BLOB NOT NULL, i INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS w (id INTEGER PRIMARY KEY, t TEXT NOT NULL UNIQUE)',
   'CREATE TABLE IF NOT EXISTS c (k TEXT PRIMARY KEY, v TEXT NOT NULL)',
+  // Foto reduzida (wsrv.nl) do que veio da web, que não é de loja.
+  'CREATE TABLE IF NOT EXISTS f (e INTEGER PRIMARY KEY, u TEXT NOT NULL)',
 ];
 const MAX_PARAMS = 99; // o D1 aceita até 100 parâmetros por consulta
 
@@ -213,11 +215,16 @@ export async function catalogGet(db, code) {
   const text = new Map(results.map((r) => [r.id, r.t]));
   const i = Number(row.i);
   const store = CATALOG_STORES[i % 64];
+  let image = imageUrlOf(i);
+  if (!image && i % 64 === NO_STORE) {
+    const f = await db.prepare('SELECT u FROM f WHERE e = ?').bind(e).first().catch(() => null);
+    image = f ? f.u : '';
+  }
   return {
     name: nameIds.map((id) => text.get(id) || '').join(' ').trim(),
     brand: brandId ? text.get(brandId) || '' : '',
     ean: String(code).trim(),
-    image: imageUrlOf(i),
+    image,
     category: catId ? text.get(catId) || '' : '',
     store: store ? store[0] : 'catalogo',
     source: 'catalogo',
@@ -235,7 +242,12 @@ export async function catalogLearn(db, products) {
   }
   if (!rows.length) return 0;
   await ensureSchema(db);
-  return saveRows(db, rows);
+  const saved = await saveRows(db, rows);
+  const photos = [].concat(products || []).filter((p) => p && gtinNumber(p.ean) && !STORE_OF.has(p.store) && /^https:\/\/wsrv\.nl\//.test(p.image || ''));
+  if (photos.length) {
+    await db.batch(photos.map((p) => db.prepare('INSERT INTO f (e, u) VALUES (?, ?) ON CONFLICT(e) DO UPDATE SET u = excluded.u').bind(gtinNumber(p.ean), p.image)));
+  }
+  return saved;
 }
 
 // ---------- O robô ----------

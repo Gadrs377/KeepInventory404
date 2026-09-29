@@ -177,9 +177,13 @@ export async function lookup(ean, env = {}, ctx = null) {
   if (db) {
     const hit = await catalogGet(db, ean).catch(() => null);
     if (hit) {
-      // Veio de catálogo ou da web: o banco não guarda essa foto; tenta o Cosmos.
-      const image = hit.image || await cosmosImage(ean);
-      return { found: true, product: { ...hit, image, size: sizeOf(hit.name) } };
+      // Sem foto (veio de catálogo ou da web antes da foto): Cosmos e, se não
+      // tiver, a busca na web; a foto achada fica guardada no banco.
+      let image = hit.image || await cosmosImage(ean);
+      if (!image && gtinOk(ean)) image = ((await lookupWeb(ean, env).catch(() => null)) || {}).image || '';
+      const product = { ...hit, image, size: sizeOf(hit.name) };
+      if (image && !hit.image && ctx) ctx.waitUntil(catalogLearn(db, product).catch(() => {}));
+      return { found: true, product };
     }
   }
   const result = await lookupLive(ean, env);

@@ -101,6 +101,16 @@ await test('produto de fora das lojas (CadastroProduto) entra sem foto', async (
   assert.equal(p.store, 'catalogo');
 });
 
+await test('produto achado na web guarda a foto reduzida', async () => {
+  const db = fakeD1();
+  const image = 'https://wsrv.nl/?url=https%3A%2F%2Fsugarkingdom.cl%2Fp.png&w=200';
+  await catalogLearn(db, { name: 'Recheio cobert bom principio 1,01kg pistache', ean: '7897500607265', store: 'api.cosmos.bluesoft.com.br', image });
+  assert.equal((await catalogGet(db, '7897500607265')).image, image);
+  // Foto de outro endereço (não reduzida) não entra.
+  await catalogLearn(db, { name: 'Sabonete Maran', ean: '7896394807379', store: 'cadastroproduto.com.br', image: 'https://x.com/1.jpg' });
+  assert.equal((await catalogGet(db, '7896394807379')).image, '');
+});
+
 await test('muitas palavras novas de uma vez (mais de 100 parâmetros)', async () => {
   const db = fakeD1();
   const base = 789100000000;
