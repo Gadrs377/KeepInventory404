@@ -480,7 +480,20 @@ export async function diag(env = {}) {
     mercadoLivre: await areaByName('Detergente Ypê Neutro 500ml'),
     // Chaves guardadas no repassador (só se existem; o valor nunca aparece).
     chaves: { tavily: !!env.TAVILY_API_KEY, cosmos: !!env.COSMOS_TOKEN, kodebar: !!env.KODEBAR_KEY },
+    // Foto reduzida (wsrv.nl) e busca na web, vistas daqui.
+    fotoWeb: await probe(() => smallImageOk('https://cdn-cosmos.bluesoft.com.br/products/7896412802409')),
+    buscaWeb: await probe(async () => { const d = await tavilySearch(env, '7897500607265', 'basic', { include_images: true, include_image_descriptions: true }); return { paginas: (d.results || []).length, imagens: (d.images || []).length, pistache: pickWebImages(d, 'Recheio cobert bom principio 1,01kg pistache').length }; }),
   };
+}
+
+async function probe(fn) {
+  const t0 = Date.now();
+  try {
+    const r = await fn();
+    return { ok: true, ms: Date.now() - t0, r };
+  } catch (err) {
+    return { ok: false, ms: Date.now() - t0, erro: String(err && err.message || err) };
+  }
 }
 
 // ---------- Ambiente pelo nome (Mercado Livre) ----------
