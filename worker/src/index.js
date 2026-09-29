@@ -252,7 +252,27 @@ export async function diag(env = {}) {
     storesOk: rows.filter((r) => r.status === 'ok').length,
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
     catalogo: env.CATALOG ? await catalogStats(env.CATALOG) : { ligado: false },
+    mercadoLivre: await probeMercadoLivre(),
   };
+}
+
+// Teste: o Mercado Livre adivinha a categoria pelo nome (consulta pública, sem
+// chave). Ainda não é usado; o /diag mostra se ele responde a partir da Cloudflare.
+async function probeMercadoLivre() {
+  const names = ['Detergente Ypê Neutro 500ml', 'Sabonete Dove Karité 90g', 'Dorflex 36 comprimidos'];
+  const t0 = Date.now();
+  const out = await Promise.all(names.map(async (q) => {
+    try {
+      const d = JSON.parse(await fetchText(`https://api.mercadolibre.com/sites/MLB/domain_discovery/search?limit=1&q=${encodeURIComponent(q)}`, { Accept: 'application/json' }));
+      const hit = Array.isArray(d) && d[0];
+      if (!hit) return { q, status: 'vazio' };
+      const cat = JSON.parse(await fetchText(`https://api.mercadolibre.com/categories/${hit.category_id}`, { Accept: 'application/json' }));
+      return { q, status: 'ok', path: (cat.path_from_root || []).map((x) => x.name).join(' > ') };
+    } catch (err) {
+      return { q, status: String(err && err.message || err) };
+    }
+  }));
+  return { ms: Date.now() - t0, results: out };
 }
 
 const IDENTIFY_PROMPT = `Você vê a foto de uma embalagem de produto de supermercado ou farmácia do Brasil.
