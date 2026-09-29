@@ -59,6 +59,13 @@
   --glass-highlight: rgba(255, 255, 255, 0.70);
   --glass-shadow: 0 10px 32px rgba(22, 24, 23, 0.14);
   --img-outline: oklch(0 0 0 / 0.1);
+  /* Validade: o âmbar de "acabando", que também é a cor com que o iPhone marca
+     o texto reconhecido pela câmera. Destaque só no que importa na leitura:
+     a mira que viu uma data, a data mais provável, o "Sim", o caminho
+     recomendado. --val-ink: texto e ícones (6,8:1 no papel). */
+  --val: #F2C230;
+  --val-ink: #7A5200;
+  --val-soft: color-mix(in oklab, var(--val) 28%, var(--paper));
 
   /* Schibsted Grotesk nos textos (firme, de jornal, boa em frase longa);
      Urbanist nos títulos, nomes e números (geométrica, redonda, com charme). */
@@ -95,6 +102,8 @@
     --glass-highlight: rgba(255, 255, 255, 0.08);
     --glass-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
     --img-outline: oklch(1 0 0 / 0.1);
+    --val-ink: #F5C451;
+    --val-soft: color-mix(in oklab, var(--val) 20%, var(--paper));
     color-scheme: dark;
   }
 }
@@ -1926,13 +1935,53 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 /* Instrução sobre a imagem, na mesma cápsula dos outros avisos da câmera */
 .exp-status {
   position: absolute; z-index: 2; top: 10px; left: 50%; translate: -50% 0;
-  width: max-content; max-width: calc(100% - 20px);
+  width: max-content; max-width: calc(100% - 20px); overflow: hidden;
   padding: 8px 14px; border-radius: 999px;
   background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
-  font-size: 0.8824rem; font-weight: 600; text-align: center; text-wrap: balance;
+  /* Mesmo vidro escuro da lanterna: flutua sobre o vídeo, que se move */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 20px rgba(0, 0, 0, 0.3);
+  font-size: 0.8824rem; font-weight: 600; text-align: center; white-space: nowrap;
   font-variant-numeric: tabular-nums; /* "Preparando o leitor (1ª vez) 45%" */
 }
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; } }
+/* Uma linha (a cápsula anima a largura, js); texto grande pode quebrar */
+/* Centrado e sem reticências: enquanto a cápsula muda de largura, o texto
+   novo é recortado igual dos dois lados (flex centralizado transborda para
+   os dois lados), não aparece "abai…" */
+.exp-status-text { display: flex; justify-content: center; }
+.text-large .exp-status { white-space: normal; text-wrap: balance; }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .exp-status {
+    background: var(--glass-media);
+    -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* A mira da validade: cantos brancos; viu uma data, ficam âmbar e a mira
+   respira (mola com um toque de rebote); aceitou, a mira trava: encolhe um
+   pouco, o miolo ganha um véu âmbar e o resto escurece. */
+@property --aim-color { syntax: '<color>'; inherits: true; initial-value: #FFFFFF; }
+.exp-vf .aim {
+  --aim-color: #FFFFFF;
+  transition-property: --aim-color, scale, background-color, box-shadow;
+  transition-duration: 250ms, 450ms, 250ms, 300ms;
+  transition-timing-function: var(--ease), var(--spring-bouncy), var(--ease), var(--ease);
+}
+.exp-vf .aim::before, .exp-vf .aim::after {
+  background:
+    linear-gradient(var(--aim-color), var(--aim-color)) left top / 22px 3px no-repeat,
+    linear-gradient(var(--aim-color), var(--aim-color)) left top / 3px 22px no-repeat,
+    linear-gradient(var(--aim-color), var(--aim-color)) right top / 22px 3px no-repeat,
+    linear-gradient(var(--aim-color), var(--aim-color)) right top / 3px 22px no-repeat;
+}
+.exp-vf.is-seen .aim { --aim-color: var(--val); scale: 1.03; }
+.exp-vf.is-locked .aim {
+  --aim-color: var(--val); scale: 0.96;
+  background-color: color-mix(in oklab, var(--val) 16%, transparent);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) { .exp-vf .aim { transition-property: --aim-color, background-color, box-shadow; } .exp-vf.is-seen .aim, .exp-vf.is-locked .aim { scale: none; } }
 
 /* ---------- Texto do tamanho escolhido no iPhone (Dynamic Type) ----------
    Títulos crescem junto, mais devagar (como o Large Title do iOS: 34 vira 44
@@ -2145,12 +2194,13 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink);
   font-family: var(--font-num); font-weight: 800; font-size: 0.9412rem; font-variant-numeric: tabular-nums;
   white-space: nowrap; cursor: pointer;
-  transition-property: opacity, flex-grow, scale, background-color;
-  transition-duration: 200ms, 300ms, 150ms, 150ms;
-  transition-timing-function: var(--ease), cubic-bezier(0.2, 0, 0, 1), var(--ease), var(--ease);
+  transition-property: opacity, flex-grow, scale, background-color, filter, box-shadow;
+  transition-duration: 200ms, 300ms, 240ms, 200ms, 240ms, 200ms;
+  transition-timing-function: var(--ease), cubic-bezier(0.2, 0, 0, 1), var(--spring), var(--ease), var(--ease), var(--ease);
 }
-.exp-pick .icon { flex: none; width: 16px; height: 16px; }
-.exp-pick.is-new { opacity: 0; flex-grow: 0; }
+.exp-pick .icon { flex: none; width: 16px; height: 16px; color: var(--val-ink); }
+/* Chega crescendo de um leve desfoque, com a mola do app */
+.exp-pick.is-new { opacity: 0; flex-grow: 0; scale: 0.92; filter: blur(4px); }
 .exp-pick:active { scale: 0.96; background: color-mix(in oklab, var(--ink) 14%, transparent); }
 /* Sem espaço com respiro: primeiro sai o calendário, depois o ano fica com
    dois dígitos (três datas numa tela estreita) */
@@ -2163,18 +2213,25 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
    forte. Nada troca de lugar: só o número e o fundo mudam. */
 /* No canto, fora do fluxo: cabe mesmo com três datas numa tela estreita */
 .exp-pick { position: relative; }
-.exp-pick-count { position: absolute; top: 4px; inset-inline: 0; text-align: center; font-size: 0.6471rem; font-weight: 700; line-height: 1; color: var(--ink-2); }
+.exp-pick-count { position: absolute; top: 4px; inset-inline: 0; text-align: center; font-size: 0.6471rem; font-weight: 800; line-height: 1; color: var(--val-ink); }
 .exp-pick:has(.exp-pick-count:not(:empty)) > span:not(.exp-pick-count) { translate: 0 3px; }
 .exp-pick-count:empty { display: none; }
-.exp-pick.is-likely { background: color-mix(in oklab, var(--mode, var(--ink)) 18%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--mode, var(--ink)) 55%, transparent); }
+/* A mais provável: marcador âmbar, como o texto que o iPhone reconhece */
+.exp-pick.is-likely { background: var(--val-soft); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--val) 75%, transparent); }
+@media (prefers-reduced-motion: reduce) { .exp-pick.is-new { scale: none; filter: none; } }
 
 /* "11/08/2027 é a validade?". Cartão com respiro de 8 em volta dos botões
    (raio 14): 14 + 8 = 22, concêntrico. */
 .exp-ask {
   display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 8px; border-radius: 22px;
-  background: color-mix(in oklab, var(--mode, var(--ink)) 10%, transparent);
-  animation: fade-in 400ms var(--ease);
+  background: var(--val-soft);
+  animation: card-in 480ms var(--spring);
 }
+/* Cartões que entram na folha (pergunta, painel): sobem um pouco, com mola */
+@keyframes card-in { from { opacity: 0; translate: 0 10px; scale: 0.98; } }
+/* "Sim" é a ação principal: âmbar com texto escuro, como a etiqueta "Acabando" */
+.exp-ask [data-ask-yes], .exp-find [data-find-yes] { background: var(--val); border-color: transparent; color: #161817; }
+.exp-ask [data-ask-no] { background: color-mix(in oklab, var(--paper) 70%, transparent); }
 .exp-ask[hidden] { display: none; }
 .exp-ask-text { margin: 0; padding: 8px 8px 2px; font-weight: 600; text-align: center; text-wrap: balance; font-variant-numeric: tabular-nums; }
 .exp-ask-actions { display: flex; gap: 8px; }
@@ -2188,9 +2245,9 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   margin-top: 12px; padding: 8px 8px 12px; border-radius: 22px;
   background: color-mix(in oklab, var(--ink) 5%, transparent);
-  animation: fade-in 400ms var(--ease);
+  animation: card-in 480ms var(--spring);
 }
-@media (prefers-reduced-motion: reduce) { .exp-find { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .exp-find, .exp-ask { animation: fade-in 200ms var(--ease); } }
 .sheet-page > .exp-find { margin-top: 0; } /* na folha, o espaço entre as partes já é o gap */
 .exp-find[hidden] { display: none; }
 .exp-find-title { margin: 0; padding-top: 6px; font-weight: 700; text-align: center; text-wrap: balance; }
@@ -2198,13 +2255,17 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-find-img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; cursor: crosshair; touch-action: manipulation; }
 .exp-find-box {
   position: absolute; pointer-events: none; border-radius: 8px;
-  border: 2px solid #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55), 0 0 0 9999px rgba(0, 0, 0, 0.38);
+  border: 2px solid var(--val); box-shadow: 0 0 12px color-mix(in oklab, var(--val) 55%, transparent), 0 0 0 9999px rgba(0, 0, 0, 0.38);
 }
 @media (prefers-reduced-motion: no-preference) { .exp-find-box { transition: left 200ms var(--ease), top 200ms var(--ease), width 200ms var(--ease), height 200ms var(--ease); } }
 .exp-find-busy {
   position: absolute; inset: auto 8px 8px 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 8px 12px; border-radius: 999px; line-height: 1.3; font-size: 0.8235rem; font-weight: 600;
-  background: rgba(0, 0, 0, 0.66); color: #fff;
+  background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .exp-find-busy { background: var(--glass-media); -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate)); backdrop-filter: blur(16px) saturate(var(--glass-saturate)); }
 }
 .exp-find-busy[hidden] { display: none; }
 .exp-find-note { margin: 0; color: var(--ink-2); font-size: 0.8235rem; text-align: center; text-wrap: pretty; }
@@ -2233,8 +2294,8 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   transition-property: scale, background-color; transition-duration: 150ms; transition-timing-function: var(--ease);
 }
 /* Na barra o destaque é só o fundo (o respiro já é o mesmo): nada se mexe. */
-.exp-bar .exp-alt.is-suggested { animation: none; }
-.exp-bar .exp-alt .icon { width: 20px; height: 20px; }
+.exp-bar .exp-alt.is-suggested { animation: none; background: var(--val-soft); color: var(--ink); }
+.exp-bar .exp-alt .icon { width: 20px; height: 20px; color: var(--val-ink); }
 /* "Tirar foto" ou "Digitar a data" vira o caminho sugerido */
 .exp-alt.is-suggested {
   padding-inline: 20px; border-radius: 999px;

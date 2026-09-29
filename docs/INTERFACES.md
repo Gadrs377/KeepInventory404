@@ -1523,3 +1523,32 @@ A tela de validade tinha ficado com coisa demais, e as partes brigavam:
   preparação com números de largura fixa.
 - O estado vai em `data-state` na câmera ('' | 'dica' | 'foto' | 'dificil'),
   usado pelos testes. `sw.js` v75.
+
+## Versão 3.57: cor e movimento na câmera de validade
+
+"Muito monocromático e sem fluidez; queria algo mais Apple." A folha de
+validade usava só a tinta (--mode = --ink). O que mudou, por camada:
+
+| Parte | Camada | Vidro | Por quê |
+|---|---|---|---|
+| Vídeo | conteúdo | não | é o que a pessoa olha |
+| Cápsula de instrução | flutua sobre o vídeo | sim, o escuro da lanterna (`--glass-media`, blur 16) | o vídeo se move por baixo |
+| Datas, pergunta, painel, barra | dentro da folha | não (sem vidro sobre vidro) | preenchimentos e a cor da validade |
+
+- **Cor da validade** (`--val`, `--val-ink`, `--val-soft`): o âmbar de
+  "acabando", que também é a cor com que o iPhone marca texto reconhecido na
+  câmera. Só no que importa: os cantos da mira quando uma leitura acha data,
+  a data mais provável (marcador âmbar), o número "3×", o "Sim" (âmbar com
+  texto escuro, como a etiqueta "Acabando"), a moldura do palpite no painel
+  e o botão recomendado. `--val-ink` tem 6,8:1 no papel; no escuro, #F5C451.
+- **Movimento** (as molas `--spring` / `--spring-bouncy` do app):
+  - a cápsula muda de largura com mola e o texto novo entra de um leve
+    desfoque; o texto fica centrado e é recortado igual dos dois lados
+    durante a troca (sem "abai…");
+  - a mira: viu uma data, os cantos ficam âmbar e ela "respira" (1,03, mola
+    com rebote); aceitou, ela trava (0,96, véu âmbar, resto mais escuro) por
+    420 ms e só então vem a confirmação;
+  - as datas entram crescendo de um leve desfoque; o "3×" sobe rolando;
+  - a pergunta e o painel sobem 10 px com mola (`card-in`).
+  Com "reduzir movimento": só cor e opacidade, e a confirmação é imediata.
+- Cor animada da mira por `@property --aim-color`. `sw.js` v76.

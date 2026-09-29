@@ -58,6 +58,10 @@ const LEAD = 2;
 // navegador entrega o mais perto (o registro diz quanto veio).
 const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } } };
 
+// A mola do app (--spring, css/app.css), para as animações feitas em JS.
+let springCache = null;
+const SPRING = () => springCache || (springCache = (getComputedStyle(document.documentElement).getPropertyValue('--spring').trim() || 'cubic-bezier(0.2, 0, 0, 1)'));
+
 // Uma instrução só, curta (cabe numa linha na cápsula sobre o vídeo). O que
 // fazer muda com o estado; quem escolhe o texto é idleText().
 const ISSUE_TEXT = {
@@ -162,7 +166,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         <video muted playsinline aria-label="Imagem da câmera"></video>
         <div class="aim exp-aim" aria-hidden="true"></div>
         <div class="exp-shutter" aria-hidden="true"></div>
-        <p class="exp-status" role="status">Abrindo a câmera</p>
+        <p class="exp-status" role="status"><span class="exp-status-text">Abrindo a câmera</span></p>
         <div class="cam-tools" hidden><button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button></div>
       </div>
       <div class="exp-picks" role="group" aria-label="Datas lidas" aria-live="polite">
@@ -286,8 +290,33 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // Com a pergunta "É esta?" aberta, as instruções de rotina não tiram a
     // atenção dela; só erros e o andamento da foto do celular (`urgent`).
     function setStatus(text, { urgent = false } = {}) {
-      status.textContent = asking && !urgent ? 'Confira a data abaixo' : text;
+      showStatus(asking && !urgent ? 'Confira a data abaixo' : text);
       shownIssue = null;
+    }
+    // A cápsula muda de largura com a mola do app e o texto novo entra
+    // saindo de um leve desfoque (como os rótulos da câmera do iPhone).
+    // `plain`: só troca o texto (porcentagem de preparação, que muda sempre).
+    const statusText = $('.exp-status-text', status);
+    function showStatus(text, { plain = false } = {}) {
+      if (statusText.textContent === text) return;
+      const from = status.getBoundingClientRect().width;
+      statusText.textContent = text;
+      if (plain || reducedMotion() || !from || !status.animate) return;
+      const to = status.getBoundingClientRect().width;
+      try {
+        if (Math.abs(to - from) > 1) status.animate([{ width: `${from}px` }, { width: `${to}px` }], { duration: 420, easing: SPRING() });
+        statusText.animate([{ opacity: 0, filter: 'blur(4px)', transform: 'translateY(3px)' }, { opacity: 1, filter: 'blur(0)', transform: 'none' }], { duration: 260, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      } catch { /* sem animação */ }
+    }
+
+    // A mira: pisca em âmbar quando uma leitura acha data (o iPhone marca
+    // assim o texto que a câmera reconhece) e trava quando a data é aceita.
+    const vf = $('.exp-vf', host);
+    let seenTimer = 0;
+    function aimSeen() {
+      vf.classList.add('is-seen');
+      clearTimeout(seenTimer);
+      seenTimer = setTimeout(() => vf.classList.remove('is-seen'), 700);
     }
     // A instrução de rotina, conforme o momento. Uma só, na cápsula do vídeo
     // (antes havia outra embaixo e as duas às vezes se contradiziam).
@@ -456,7 +485,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // A folha fechou com a câmera aberta: solta a câmera.
     const gone = new MutationObserver(() => { if (!host.isConnected) finish(null); });
     gone.observe(document.body, { childList: true, subtree: true });
-    const done = (iso) => { gone.disconnect(); finish(iso); };
+    // Data aceita: a mira trava em âmbar por um instante (a pessoa vê que foi
+    // aquela) e só então a folha segue para a confirmação.
+    let locking = false;
+    const done = (iso) => {
+      if (!iso || reducedMotion()) { gone.disconnect(); finish(iso); return; }
+      if (locking) return;
+      locking = true;
+      vf.classList.add('is-locked');
+      setTimeout(() => { gone.disconnect(); finish(iso); }, 420);
+    };
 
     stop = () => done(null);
     torchBtn.addEventListener('click', async () => {
@@ -494,7 +532,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (tessState !== 'idle' || !alive) return loadingTess;
       tessState = 'loading';
       loadingTess = ocrWorker((p) => {
-        if (alive && tessState === 'loading' && paddleLiveState !== 'ready') status.textContent = `Preparando o leitor (1ª vez) ${Math.round(p * 100)}%`;
+        if (alive && tessState === 'loading' && paddleLiveState !== 'ready') showStatus(`Preparando o leitor (1ª vez) ${Math.round(p * 100)}%`, { plain: true });
       }).then(() => { tessState = 'ready'; note({ kind: 'event', what: 'tess-ready' }); }).catch(() => {
         tessState = 'failed'; tessFailed = true;
         if (alive && paddleLiveState === 'failed') setStatus('Não deu para ler. Digite a data', { urgent: true });
@@ -529,7 +567,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         seen.set(found.iso, s);
         addPick(found.iso);
       }
-      if (candidates.length) updatePicks();
+      if (candidates.length) { updatePicks(); aimSeen(); }
     }
 
     // A data à frente (em imagens diferentes) entre as que estão nas vagas.
@@ -546,7 +584,15 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       const lead = leader();
       for (const btn of picks.querySelectorAll('.exp-pick')) {
         const n = seen.get(btn.dataset.iso)?.sources.size || 0;
-        $('.exp-pick-count', btn).textContent = n >= 2 ? `${n}×` : '';
+        const count = $('.exp-pick-count', btn);
+        const label = n >= 2 ? `${n}×` : '';
+        if (count.textContent !== label) {
+          count.textContent = label;
+          // O número sobe rolando, como os contadores do app.
+          if (label && !reducedMotion() && count.animate) {
+            try { count.animate([{ transform: 'translateY(60%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: SPRING() }); } catch { /* segue */ }
+          }
+        }
         btn.classList.toggle('is-likely', !!lead && lead.n >= 2 && lead.iso === btn.dataset.iso);
         btn.setAttribute('aria-label', `Usar ${formatDate(btn.dataset.iso)}${n >= 2 ? `, lida ${n} vezes` : ''}`);
       }
@@ -607,7 +653,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       } catch { return; }
       if (issue === lastIssue) issueStreak++; else { lastIssue = issue; issueStreak = 1; }
       if (issueStreak < 2) return;
-      if (issue && shownIssue !== issue) { status.textContent = ISSUE_TEXT[issue]; shownIssue = issue; note({ kind: 'event', what: 'issue', detail: issue }); }
+      if (issue && shownIssue !== issue) { showStatus(ISSUE_TEXT[issue]); shownIssue = issue; note({ kind: 'event', what: 'issue', detail: issue }); }
       else if (!issue && shownIssue) idle();
     }
 
