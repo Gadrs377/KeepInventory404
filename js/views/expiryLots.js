@@ -9,6 +9,7 @@
 
 import { parseExpiry, expiryInputValue, formatDate, formatDateLong, relativeDays, daysUntil } from '../dates.js';
 import { readExpiryWithCamera } from './expiryCam.js';
+import { summarizeCamera, usageSave } from '../expiryUsage.js';
 import { $, esc, icon, stepper, plural, openSheet, reducedMotion } from '../ui.js';
 
 // ---------- Páginas dentro da folha ----------
@@ -88,6 +89,10 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   let bestPhoto = null;
   // A data que a câmera viu em mais imagens: já vem escrita ao digitar.
   let likely = null;
+  // Registro do uso real (js/expiryUsage.js): uma entrada por abertura da
+  // câmera, atualizada quando a pessoa digita e quando salva.
+  let visit = null;
+  const track = (changes) => { if (!visit) return; Object.assign(visit, changes); usageSave(visit); };
 
   // Página 1: ler com a câmera (ou ir para digitar).
   function scanPage({ asRoot = false } = {}) {
@@ -101,7 +106,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       if (reading) return;
       evidence = null;
       typeBtn.classList.remove('is-suggested');
-      reading = readExpiryWithCamera($('.exp-cam', el), {
+      const t0 = performance.now();
+      visit = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, at: new Date().toISOString(), saved: false };
+      const cam = readExpiryWithCamera($('.exp-cam', el), {
         skip: [...confirmed, ...lots.map((l) => l.expiresAt)],
         onEvidence: (value) => { evidence = value; },
         onBestPhoto: (url) => { bestPhoto = url; },
@@ -111,8 +118,10 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         // "Digitar a data" de dentro do painel de fotos: o mesmo caminho do botão.
         onType: () => typeBtn.click(),
       });
-      reading.then((iso) => {
+      reading = cam;
+      cam.then((iso) => {
         reading = null;
+        track({ ms: Math.round(performance.now() - t0), iso: iso || null, ...summarizeCamera(cam.log(), iso) });
         if (iso && el.isConnected && !el.hidden) confirmPage(iso, evidence);
       });
     };
@@ -180,7 +189,12 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     const go = () => {
       const iso = parseExpiry(input.value);
       // A foto olhada para digitar vai junto para a confirmação, como prova.
-      if (iso) { confirmPage(iso, photo ? { image: photo, monthOnly: /^\d{1,2}\/\d{2,4}$/.test(input.value.trim()) } : null); return; }
+      if (iso) {
+        // Digitou: a câmera tinha acertado (a data sugerida ficou) ou não?
+        track({ how: 'digitou', iso, cameraGuess: guess ? guess.iso : null, keptGuess: guess ? guess.iso === iso : null });
+        confirmPage(iso, photo ? { image: photo, monthOnly: /^\d{1,2}\/\d{2,4}$/.test(input.value.trim()) } : null);
+        return;
+      }
       input.setAttribute('aria-invalid', 'true');
       note.classList.add('is-error');
       note.textContent = 'Use dia/mês/ano (15/10/26) ou mês/ano (10/26).';
@@ -237,11 +251,13 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     refresh();
     $('[data-done]', el).addEventListener('click', () => {
       lots.push({ expiresAt: iso, qty: qty() });
+      track({ saved: true, savedIso: iso });
       finish();
     });
     // Guarda esta e volta a ler a próxima.
     more.addEventListener('click', () => {
       lots.push({ expiresAt: iso, qty: qty() });
+      track({ saved: true, savedIso: iso });
       nav.pop(scanIndex);
     });
     nav.push(el, { title: 'Validade' });

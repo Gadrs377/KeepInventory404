@@ -14,6 +14,7 @@ import { $, esc, icon, toast, download } from '../ui.js';
 import { BANCADA_URL, copyForBancada } from '../expiryDebug.js';
 import { gpuAllowed, gpuOffReason, gpuReset } from '../gpuGuard.js';
 import { readExpiryWithCamera } from './expiryCam.js';
+import { usageList, usageClear } from '../expiryUsage.js';
 
 const SAMPLES = { copo: 'vendor/paddle/amostras/copo.jpg', chocolate: 'vendor/paddle/amostras/chocolate.jpg' };
 const ENGINES = {
@@ -104,6 +105,11 @@ export default function mountTestes(root) {
         <button type="button" class="btn btn-primary" data-camrun>Rodar a câmera com os vídeos</button>
         <div class="tests-cam" data-camhost hidden></div>
         <div data-camtable></div>
+
+        <h2 class="list-title">Uso real da validade</h2>
+        <p class="group-note">Cada vez que a câmera de validade abriu de verdade (fora desta tela): quanto levou e como terminou. Vai junto no "Enviar para o Claude".</p>
+        <div data-usage></div>
+        <button type="button" class="btn btn-quiet btn-sm" data-usage-clear>Apagar o registro de uso</button>
 
         <h2 class="list-title">Resolução da câmera</h2>
         <p class="group-note">Abre a câmera de trás pedindo 12 MP (4:3), 4K e 1080p e mostra quanto o celular entrega de verdade.</p>
@@ -570,6 +576,31 @@ export default function mountTestes(root) {
 
   renderCamTable(); // resultados guardados de antes
 
+  // Uso real (js/expiryUsage.js): o resumo e as 15 últimas.
+  const usageHost = $('[data-usage]', root);
+  function renderUsage() {
+    const list = usageList();
+    if (!list.length) { usageHost.innerHTML = '<p class="group-note">Nenhuma leitura ainda.</p>'; return; }
+    const count = {};
+    for (const e of list) count[e.how || '?'] = (count[e.how || '?'] || 0) + 1;
+    const byCamera = list.filter((e) => ['sozinho', 'pergunta', 'botão', 'painel'].includes(e.how) && e.ms != null);
+    const typed = list.filter((e) => e.how === 'digitou');
+    const kept = typed.filter((e) => e.keptGuess).length;
+    const secs = (ms) => (ms == null ? '—' : `${Math.round(ms / 1000)} s`);
+    const when = (iso) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+    usageHost.innerHTML = `
+      <p class="group-note">${list.length} leituras · ${Object.entries(count).map(([k, n]) => `${esc(k)} ${n}`).join(' · ')}${byCamera.length ? ` · pela câmera, mediana ${secs(median(byCamera.map((e) => e.ms)))}` : ''}${typed.length ? ` · digitou ${typed.length} (a data sugerida ficou em ${kept})` : ''}</p>
+      <table class="tests-table"><thead><tr><th>Quando</th><th>Como</th><th>Tempo</th><th>Salvou</th></tr></thead><tbody>
+      ${list.slice(-15).reverse().map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.how || '?')}</td><td>${secs(e.ms)}</td><td>${e.saved ? 'sim' : 'não'}</td></tr>`).join('')}
+      </tbody></table>`;
+  }
+  renderUsage();
+  $('[data-usage-clear]', root).addEventListener('click', () => {
+    if (!confirm('Apagar o registro de uso da validade?')) return;
+    usageClear();
+    renderUsage();
+  });
+
   $('[data-camres]', root).addEventListener('click', async () => {
     say('— Resolução da câmera —');
     const out = { kind: 'camera-res', imageCapture: 'ImageCapture' in window, asks: [] };
@@ -637,6 +668,7 @@ export default function mountTestes(root) {
   function forBancada() {
     const copy = JSON.parse(JSON.stringify(report));
     copy.log = log.textContent.slice(0, 12000); // mais recente primeiro
+    copy.usoReal = usageList().slice(-100);
     let text = JSON.stringify(copy);
     for (const r of copy.runs) { if (text.length < 230000) break; if (r.thumb) { r.thumb = null; text = JSON.stringify(copy); } }
     while (text.length >= 230000 && copy.runs.length > 1) { copy.runs.shift(); copy.cortado = true; text = JSON.stringify(copy); }

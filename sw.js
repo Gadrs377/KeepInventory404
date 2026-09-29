@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v73';
+const VERSION = 'v74';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -59,6 +59,7 @@ const APP_FILES = [
   './js/gpuGuard.js',
   './js/dateRegion.js',
   './js/dotPrint.js',
+  './js/expiryUsage.js',
   './js/views/expiryCam.js',
   './js/views/expiryFind.js',
   './js/views/expiryLots.js',

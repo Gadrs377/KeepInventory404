@@ -1,6 +1,6 @@
 // Fluxo da câmera de validade no navegador, com câmera e leitor simulados
 // (ver harness.mjs). Cada teste abre um Chromium próprio. Leva uns minutos:
-// o Paddle de verdade carrega quando o Tesseract não resolve.
+// o medium (e, nas fotos do celular, o small) é o Paddle de verdade.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, openExpirySheet, bigPhoto, waitStatus } from './harness.mjs';
@@ -16,9 +16,26 @@ test('duas imagens com VAL confirmam sozinhas e salvam', async () => {
   try {
     await cam.page.waitForSelector('.exp-confirm-date', { timeout: 30000 });
     assert.match(await cam.page.$eval('.exp-confirm-date', (e) => e.textContent), /15 de outubro de 2026/);
+    // Só o Paddle leu: o Tesseract nem carregou.
+    assert.deepEqual([...new Set(await cam.page.evaluate(() => window.__calls.map((c) => c.engine)))], ['paddle']);
+    assert.equal(await cam.page.evaluate(() => typeof window.Tesseract), 'undefined');
     await cam.page.click('[data-done]');
     await cam.page.waitForTimeout(500);
     assert.deepEqual(await cam.lots(), ['2026-10-15']);
+    // Registro do uso real: confirmou sozinho e salvou.
+    const [use] = await cam.page.evaluate(() => JSON.parse(localStorage.getItem('ki.validade.uso')));
+    assert.equal(use.how, 'sozinho'); assert.equal(use.saved, true); assert.equal(use.iso, '2026-10-15');
+    assert.ok(use.ms > 0 && use.reads >= 2, JSON.stringify(use));
+    noErrors(cam.errors);
+  } finally { await cam.close(); }
+});
+
+test('sem o Paddle, o Tesseract assume a câmera e confirma', async () => {
+  const cam = await openExpirySheet(server, { ocr: { fallback: 'VAL 15/10/26' }, paddle: 'broken' });
+  try {
+    await cam.page.waitForSelector('.exp-confirm-date', { timeout: 60000 });
+    assert.match(await cam.page.$eval('.exp-confirm-date', (e) => e.textContent), /15 de outubro de 2026/);
+    assert.deepEqual([...new Set(await cam.page.evaluate(() => window.__calls.map((c) => c.engine)))], ['tesseract']);
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });
@@ -97,12 +114,14 @@ test('embalagem difícil: fotos automáticas, aviso, digitar olhando a melhor fo
     await cam.page.click('[data-done]');
     await cam.page.waitForTimeout(500);
     assert.deepEqual(await cam.lots(), ['2026-10-15']);
+    const [use] = await cam.page.evaluate(() => JSON.parse(localStorage.getItem('ki.validade.uso')));
+    assert.equal(use.how, 'digitou'); assert.equal(use.saved, true); assert.equal(use.hard, true);
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });
 
 test('foto do celular: vira botão e abre o painel; "Sim" lê só o pedaço e confirma', async () => {
-  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 } });
+  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 }, paddle: 'real' });
   try {
     await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
     const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
@@ -124,7 +143,7 @@ test('foto do celular: vira botão e abre o painel; "Sim" lê só o pedaço e co
 });
 
 test('painel: tocar longe da data mostra "Não consegui ler aí" com o pedaço e Digitar', async () => {
-  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 } });
+  const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 }, paddle: 'real' });
   try {
     await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
     const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
@@ -162,6 +181,16 @@ test('diagnóstico (?debug): mostra o motivo de cada leitura e copia em JSON', a
     assert.ok(copied.log.some((e) => e.kind === 'read' && e.result === 'unlabeled' && e.dates[0].iso === '2027-08-11'));
     // "Enviar para o Claude" abre a Bancada (a página que guarda os resultados).
     assert.match(await cam.page.getAttribute('[data-debug-send]', 'href'), /^https:\/\/claude\.ai\/artifact\//);
+    noErrors(cam.errors);
+  } finally { await cam.close(); }
+});
+
+test('texto na mira e nenhuma data: sugere a foto do celular cedo', async () => {
+  const cam = await openExpirySheet(server, { ocr: { fallback: 'LOTE ABC FAB', delay: 150 } });
+  try {
+    await cam.page.waitForSelector('[data-photo].is-suggested', { timeout: 40000 });
+    assert.match(await cam.page.$eval('.exp-struggle-hint', (e) => e.textContent), /Tire uma foto com a câmera do celular/);
+    assert.equal(await cam.page.$('.exp-struggle.is-hard'), null, 'ainda não é a mensagem de "difícil"');
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });

@@ -1,7 +1,8 @@
 // Base dos testes de interface da câmera de validade: servidor estático do
 // próprio repositório, Chromium com um vídeo falso como câmera (gerado aqui,
-// sem arquivos binários no repositório) e o Tesseract simulado, para cada
-// teste decidir o que o "leitor" enxerga.
+// sem arquivos binários no repositório) e os leitores simulados (o Paddle
+// small, que lê a câmera, e o Tesseract, de reserva), para cada teste decidir
+// o que o "leitor" enxerga. O medium é o de verdade.
 //
 // Rodar: node --test tests/ui/
 // Playwright vem de experiments/ocr (npm install lá) ou de PLAYWRIGHT=caminho
@@ -48,6 +49,35 @@ export async function fakeVideo(name, luma, { width = 640, height = 480, frames 
   return file;
 }
 
+// Worker falso do Paddle (vendor/paddle/v3/worker.js): o small pergunta à
+// página, por BroadcastChannel, o que "leu" (window.__ocr); o medium carrega
+// o worker de verdade (servido como worker-real.js) e passa a mensagem.
+const FAKE_PADDLE_WORKER = `
+const tag = Math.random().toString(36).slice(2);
+const ch = new BroadcastChannel('fake-paddle');
+const waiting = new Map(); let n = 0;
+ch.onmessage = ({ data }) => { if (data.tag !== tag) return; const r = waiting.get(data.id); if (r) { waiting.delete(data.id); r(data); } };
+async function onMsg(e) {
+  const { id, type } = e.data;
+  if (type === 'init' && e.data.tier !== 'small') {
+    self.removeEventListener('message', onMsg);
+    await import('./worker-real.js');
+    self.dispatchEvent(new MessageEvent('message', { data: e.data }));
+    return;
+  }
+  if (type === 'read') {
+    const q = ++n;
+    const reply = await new Promise((res) => { waiting.set(q, res); ch.postMessage({ ask: q, tag, w: e.data.width }); });
+    const lines = String(reply.text || '').split('\\n').filter(Boolean);
+    const items = lines.map((t, i) => ({ text: t, score: 0.9, poly: [[10, 10 + i * 40], [10 + t.length * 14, 10 + i * 40], [10 + t.length * 14, 40 + i * 40], [10, 40 + i * 40]] }));
+    self.postMessage({ id, items });
+    return;
+  }
+  self.postMessage({ id });
+}
+self.addEventListener('message', onMsg);
+`;
+
 export const VIDEOS = {
   plain: (x, y) => 214, // liso: nada nítido
   dark: () => 20,
@@ -64,13 +94,35 @@ export const VIDEOS = {
  *   celular chega lá) lê photoText.
  *   delay: ms por leitura.
  */
-export async function openExpirySheet(server, { video = 'plain', ocr = {}, query = '', width = 390, permissions = [] } = {}) {
+export async function openExpirySheet(server, { video = 'plain', ocr = {}, query = '', width = 390, permissions = [], paddle = 'fake' } = {}) {
   const file = await fakeVideo(video, VIDEOS[video]);
   const browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-video-capture=${file}`] });
-  const ctx = await browser.newContext({ viewport: { width, height: 844 }, permissions: ['camera', ...permissions] });
+  const ctx = await browser.newContext({ viewport: { width, height: 844 }, permissions: ['camera', ...permissions], serviceWorkers: 'block' });
+  // paddle: 'fake' (o small responde window.__ocr), 'real' (fotos de verdade)
+  // ou 'broken' (o Paddle não carrega: a câmera cai para o Tesseract).
+  if (paddle === 'broken') {
+    await ctx.route('**/vendor/paddle/**/worker.js', (route) => route.fulfill({ contentType: 'text/javascript', body: "self.onmessage = (e) => self.postMessage({ id: e.data.id, error: 'Paddle quebrado (teste)' });" }));
+  }
+  if (paddle === 'fake') {
+    await ctx.route('**/vendor/paddle/v3/worker.js', (route) => route.fulfill({ contentType: 'text/javascript', body: FAKE_PADDLE_WORKER }));
+    await ctx.route('**/vendor/paddle/v3/worker-real.js', async (route) => route.fulfill({ contentType: 'text/javascript', body: await readFile(join(ROOT, 'vendor/paddle/v3/worker.js')) }));
+  }
   await ctx.addInitScript((ocr) => {
     window.__ocr = { texts: [], fallback: '', photoWidth: 0, photoText: '', delay: 60, ...ocr };
     window.__calls = []; window.__shutters = 0;
+    const answer = (width) => {
+      const o = window.__ocr;
+      return o.photoWidth && width >= o.photoWidth ? o.photoText : o.texts.length ? o.texts.shift() : o.fallback;
+    };
+    // O Paddle small falso (ver FAKE_PADDLE_WORKER) pergunta aqui.
+    const fake = new BroadcastChannel('fake-paddle');
+    fake.onmessage = async ({ data }) => {
+      if (!data.ask) return;
+      const text = answer(data.w);
+      window.__calls.push({ w: data.w, text, engine: 'paddle' });
+      await new Promise((r) => setTimeout(r, window.__ocr.delay));
+      fake.postMessage({ tag: data.tag, id: data.ask, text });
+    };
     const animate = Element.prototype.animate;
     Element.prototype.animate = function (...a) { if (this.classList && this.classList.contains('exp-shutter')) window.__shutters++; return animate.apply(this, a); };
     let real;
@@ -79,10 +131,9 @@ export async function openExpirySheet(server, { video = 'plain', ocr = {}, query
       real = { ...v, createWorker: async (...a) => {
         const w = await create(...a);
         return { ...w, setParameters: (...x) => w.setParameters(...x), recognize: async (canvas) => {
-          const o = window.__ocr;
-          const text = o.photoWidth && canvas.width >= o.photoWidth ? o.photoText : o.texts.length ? o.texts.shift() : o.fallback;
-          window.__calls.push({ w: canvas.width, text });
-          await new Promise((r) => setTimeout(r, o.delay));
+          const text = answer(canvas.width);
+          window.__calls.push({ w: canvas.width, text, engine: 'tesseract' });
+          await new Promise((r) => setTimeout(r, window.__ocr.delay));
           return { data: { text, confidence: text ? 90 : 0 } };
         } };
       } };

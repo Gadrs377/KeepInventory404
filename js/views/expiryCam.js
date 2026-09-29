@@ -22,7 +22,7 @@
 // oferece a câmera do próprio celular (foco, HDR e resolução cheia) e, se a
 // embalagem continuar difícil, sugere digitar olhando a melhor foto.
 
-import { ocrWorker, prepareFrame, readResult, releaseOcr, thickenDark } from '../ocr.js';
+import { ocrWorker, prepareFrame, readResult, releaseOcr } from '../ocr.js';
 import { readDotPrint } from '../dotPrint.js';
 import { createPaddleReader, createSmallReader, sharedReader } from '../paddleOcr.js';
 import { textRows } from '../ocrLayout.js';
@@ -64,6 +64,9 @@ const ISSUE_TEXT = {
   blur: 'Segure parado, com a data dentro da mira',
 };
 const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Mostre onde está a validade numa das fotos abaixo, ou digite a data.';
+// Texto na mira, nenhuma data, por esse tempo: sugere a foto do celular.
+const PHOTO_HINT_MS = 14000;
+const PHOTO_HINT = 'Vejo texto, mas a data não sai pelo vídeo. Tire uma foto com a câmera do celular: ela sai bem mais nítida.';
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const photoSource = (seq) => `photo-${seq}`;
@@ -73,7 +76,7 @@ const DEBUG_EVENT = {
   native: 'foto do celular', hard: 'avisou que está difícil', ask: 'perguntou "é esta data?"', issue: 'aviso de imagem',
   camera: 'câmera', 'small-ready': 'Paddle small pronto', 'small-failed': 'Paddle small falhou', 'medium-ready': 'Paddle medium pronto',
   'medium-failed': 'Paddle medium falhou', error: 'leitura falhou', declined: 'respondeu que não é',
-  'find-photo': 'foto no painel', 'find-yes': 'confirmou o palpite', 'find-tap': 'tocou na foto', 'find-read': 'leu o pedaço',
+  'suggest-photo': 'sugeriu a foto do celular', 'find-photo': 'foto no painel', 'find-yes': 'confirmou o palpite', 'find-tap': 'tocou na foto', 'find-read': 'leu o pedaço',
   'find-fail': 'não leu o pedaço', 'find-none': 'não está em nenhuma', 'find-switch': 'trocou de foto',
 };
 
@@ -239,8 +242,15 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     const paddleBurst = sharedReader('medium', () => createPaddleReader('medium'));
     let paddleBurstState = 'idle';
     let loadingPaddleBurst = null;
+    // O Tesseract é só reserva: nos vídeos reais, 133 leituras dele não acharam
+    // a data certa nenhuma vez, e as datas erradas que viravam botão eram dele
+    // (docs/INTERFACES.md, versão 3.55). Carrega só se o Paddle falhar, ou no
+    // modo "Antes" da tela de testes (como era).
     let tessFailed = false;
+    let tessState = 'idle';
+    let loadingTess = null;
     let tessErrors = 0;
+    const tessOn = () => legacy || paddleLiveState === 'failed';
     let frameTime = -1;
     let activeSince = performance.now();
     let lastEngine = 'paddle';
@@ -255,6 +265,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     let turn = 0;
     let paddleTurn = 0;
     let struggleTimer = null;
+    let photoSuggested = false;
+    let textNoDate = 0; // leituras ao vivo com texto e nenhuma data
     let hintPhase = 0;
     let burstSeq = 0;
     let burstsWithoutConfirm = 0;
@@ -330,7 +342,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       // Voltando da câmera do celular: não recomeça do zero, só religa a
       // câmera daqui (o iOS pode ter encerrado a trilha).
       if (nativeOpen) { if (!document.hidden) ensureCamera(); return; }
-      consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; armStruggleHelp();
+      consensus.reset(); frameTime = -1; activeSince = performance.now(); visibilityEpoch++; textNoDate = 0; armStruggleHelp();
     };
     document.addEventListener('visibilitychange', visibilityChanged);
 
@@ -345,8 +357,16 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         const elapsed = performance.now() - activeSince;
         if (elapsed < STRUGGLE_MS) return;
         if (elapsed >= HARD_AFTER_MS && bestScore >= 0) becomeHard();
+        // O leitor vê texto na mira, mas nenhuma data: é a lata, a tampa em
+        // relevo. Pelo vídeo quase nunca sai; a foto do celular, pelo painel,
+        // sai. Sugere a foto já, em vez de esperar a embalagem "ficar difícil".
+        if (!photoSuggested && !hard && elapsed >= PHOTO_HINT_MS && !shown.size && textNoDate >= 6) {
+          photoSuggested = true;
+          photoBtn.classList.add('is-suggested');
+          note({ kind: 'event', what: 'suggest-photo', detail: `${textNoDate} leituras com texto e sem data` });
+        }
         hintPhase = struggle.hidden ? 0 : (hintPhase + 1) % TILT_HINTS.length;
-        struggleHint.textContent = hard ? HARD_TEXT : TILT_HINTS[hintPhase];
+        struggleHint.textContent = hard ? HARD_TEXT : photoSuggested ? PHOTO_HINT : TILT_HINTS[hintPhase];
         struggle.classList.toggle('is-hard', hard);
         struggle.hidden = false;
         if (!bursting) takeSharpPhoto();
@@ -440,10 +460,23 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (alive) {
           paddleLiveState = 'failed';
           note({ kind: 'event', what: 'small-failed' });
+          startTesseract();
           setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data', { urgent: true });
         }
         paddleLive.kill();
       });
+    }
+
+    function startTesseract() {
+      if (tessState !== 'idle' || !alive) return loadingTess;
+      tessState = 'loading';
+      loadingTess = ocrWorker((p) => {
+        if (alive && tessState === 'loading' && paddleLiveState !== 'ready') status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`;
+      }).then(() => { tessState = 'ready'; note({ kind: 'event', what: 'tess-ready' }); }).catch(() => {
+        tessState = 'failed'; tessFailed = true;
+        if (alive && paddleLiveState === 'failed') setStatus('Não foi possível ler. Digite a data.', { urgent: true });
+      });
+      return loadingTess;
     }
 
     // Em segundo plano e sem aviso: nenhuma leitura espera por ele, exceto a
@@ -603,7 +636,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     async function readStill({ still, box, seq, tessVariants, paddleVariants, yields = false, stopWhenFound = false, onProgress = () => {} }) {
       const source = photoSource(seq);
       let i = 0; let score = 0; let found = 0; let sure = false;
-      const total = (tessFailed ? 0 : tessVariants.length) + paddleVariants.length;
+      const useTess = tessOn() && tessState === 'ready';
+      const total = (useTess ? tessVariants.length : 0) + paddleVariants.length;
       const stopped = () => !alive || (yields && nativePending) || (stopWhenFound && sure);
       async function tryVariants(engine, variants, read, exclusive = false) {
         if (exclusive) busy = true;
@@ -630,7 +664,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           }
         } finally { if (exclusive) busy = false; }
       }
-      if (!tessFailed) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
+      if (useTess) await tryVariants('tesseract', tessVariants, (c, v) => readResult(c, { psm: v.psm }));
       if (stopped()) return { score, found };
       // Nas fotos, só o leitor rápido: o detalhado (medium) lê o pedaço do
       // palpite (readGuessAuto) ou o que a pessoa mostrar no painel.
@@ -719,6 +753,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         let found = 0;
         if (paddleLiveState !== 'ready') {
           // Sem o Paddle: o Tesseract lê a foto inteira, como antes.
+          await startTesseract();
+          if (!alive) return;
           ({ found } = await readStill({
             still: photo, box: PHOTO_BOX, seq, tessVariants: PHOTO_TESSERACT_VARIANTS, paddleVariants: [], stopWhenFound: true,
             onProgress: (n, total) => setStatus(`Lendo a sua foto (${n} de ${total})`, { urgent: true }),
@@ -864,7 +900,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           finally { busy = false; }
         }
       } catch { /* segue com o Tesseract */ }
-      if (!tessFailed) {
+      // O Tesseract só entra se nenhum Paddle leu.
+      if (!texts.length) await startTesseract();
+      if (!texts.length && tessState === 'ready') {
         for (const [mode, psm] of [['gray', 6], ['sauvola', 6]]) {
           if (!alive) return { status: 'ok' };
           const c = document.createElement('canvas');
@@ -881,17 +919,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         else if (dots.texts.length) note({ kind: 'event', what: 'find-read', detail: `pontos sem acordo: ${dots.texts.map((t) => `“${t.replace(/\s+/g, ' ').slice(0, 30)}”`).join(' · ')}` });
       }
       if (!alive) return { status: 'ok' };
-      // Nenhuma data: tenta de novo com os pontinhos "engordados" (validade
-      // impressa em pontos, como nas tampas).
-      if (!texts.some((t) => parse(t).length) && paddleBurstState === 'ready') {
-        for (const passes of [4, 5]) {
-          if (!alive) return { status: 'ok' };
-          progress('Tentando de novo, com os pontos juntos');
-          try { texts.push([`medium pontos ${passes}`, (await paddleBurst.read(thickenDark(crop, passes))).text, 2]); } catch { /* segue */ }
-          if (findExpiryCandidates(texts[texts.length - 1][1]).length) break;
-        }
-      }
-      if (!alive) return { status: 'ok' };
+      // (Até a versão 3.54 havia mais uma tentativa com os pontos "engordados",
+      // 4 e 5 passadas: uma leitura só, sem votação, que podia confirmar data
+      // errada. A leitura de pontinhos acima faz o mesmo papel, votando.)
       note({ kind: 'event', what: 'find-read', detail: `${Math.round(performance.now() - t0)} ms: ${texts.map(([e, t]) => `${e} “${t.replace(/\s+/g, ' ').slice(0, 50)}”`).join(' · ')}` }, crop);
       if (full.close) full.close();
       const byIso = new Map();
@@ -956,13 +986,15 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       while (alive) {
         if (busy) { await pause(150); continue; } // uma foto está sendo lida
         if (document.hidden || video.readyState < 2 || !video.videoWidth || video.currentTime === frameTime) { await pause(150); continue; }
-        if (tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddleLive();
+        // Modo "Antes": Tesseract primeiro, Paddle depois de algumas leituras.
+        if (!legacy || tessFailed || needsPaddle(turn, performance.now() - activeSince)) startPaddleLive();
         // Do not run inference while Paddle is compiling its models: that
         // peak is already expensive on a phone. Cancellation terminates it.
         if (paddleLiveState === 'loading') { await loadingPaddleLive; continue; }
         if (tessFailed && paddleLiveState !== 'ready') return;
+        const engine = paddleLiveState === 'ready' && (!tessOn() || tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
+        if (engine === 'tesseract' && tessState !== 'ready') { startTesseract(); await pause(150); continue; }
         checkQuality();
-        const engine = paddleLiveState === 'ready' && (tessFailed || lastEngine !== 'paddle') ? 'paddle' : 'tesseract';
         lastEngine = engine;
         const frame = video.currentTime; frameTime = frame;
         const epoch = visibilityEpoch;
@@ -977,7 +1009,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         } catch {
           if (!alive) return;
           note({ kind: 'event', what: 'error', detail: engine });
-          if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.kill(); }
+          if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.kill(); startTesseract(); }
           else if (++tessErrors >= 3) tessFailed = true;
           setStatus('Tente outro ângulo ou digite a data', { urgent: true });
           await pause(250);
@@ -986,6 +1018,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (!alive) return;
         if (document.hidden || epoch !== visibilityEpoch) continue;
         const candidates = findExpiryCandidates(result.text);
+        if (!candidates.length && (String(result.text).match(/[A-Z0-9]/gi) || []).length >= 4) textNoDate++;
         recordCandidates(candidates, original, `video-${frame.toFixed(2)}`);
         const accepted = consensus.add({ candidates, engine, confidence: result.confidence, frame, at: performance.now() });
         noteRead({ engine, variant, source: `video-${frame.toFixed(2)}`, result, candidates }, canvas);
@@ -1023,11 +1056,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       // Foco contínuo, quando a câmera deixa: a data fica perto da lente.
       try { if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch { /* segue */ }
       setStatus('Preparando o leitor de validade');
-      try {
-        await ocrWorker((p) => { if (alive) status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`; });
-      } catch {
-        tessFailed = true;
-        if (alive) startPaddleLive();
+      if (legacy) {
+        await startTesseract();
+        if (tessFailed && alive) startPaddleLive();
+      } else {
+        startPaddleLive();
+        try { await loadingPaddleLive; } catch { /* segue com o Tesseract */ }
       }
       if (!alive) return;
       setStatus('Aponte para a data de validade');

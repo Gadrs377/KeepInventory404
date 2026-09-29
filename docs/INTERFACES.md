@@ -1460,3 +1460,36 @@ usada: não dá para saber para que lado girou. `sw.js` v73.
 
 Com o vídeo do copo inteiro, em pé (1080×1600): as fotos foram para o painel
 como 1080×608, o palpite achou a validade e confirmou 17/09/2026.
+
+## Versão 3.55: menos camadas, e o uso real medido
+
+Uma revisão crítica do fluxo, com os 4 vídeos reais contados leitura por
+leitura:
+
+- **O Tesseract saiu da câmera.** Em 133 leituras ao vivo ele não achou a
+  data certa nenhuma vez; as datas erradas que viravam botão (lata, tampa)
+  eram dele; e ele vinha primeiro, segurando o Paddle (que só entrava depois
+  de 6 tentativas, ou 3 e 7 s) e disputando processador e memória. Agora o
+  Paddle small lê desde o começo (pronto em ~3 s no Chromium; na GPU do
+  iPhone, 0,66 s por leitura) e o Tesseract só carrega se o Paddle falhar
+  (ele assume a câmera, as fotos e o painel). O modo "Antes" da tela de
+  testes continua como era, para comparar. No painel, o Tesseract só entra
+  sem nenhum Paddle.
+- **Registro do uso real** (`js/expiryUsage.js`): cada abertura da câmera de
+  validade guarda no celular quanto levou e como terminou (sozinho,
+  pergunta, botão, painel, digitou, saiu da câmera), se salvou, e se a data
+  sugerida ao digitar ficou. A tela de testes mostra o resumo ("Uso real da
+  validade") e manda junto no "Enviar para o Claude".
+- **Foto sugerida mais cedo:** texto na mira (6 leituras com texto) e nenhuma
+  data depois de 14 s: "Vejo texto, mas a data não sai pelo vídeo. Tire uma
+  foto com a câmera do celular", com o botão em destaque. Antes, a primeira
+  ajuda desse tipo vinha aos 35–40 s.
+- **Limpeza:** saiu a tentativa de "engordar" os pontos no painel (4 e 5
+  passadas): uma leitura só, sem votação, que podia confirmar data errada. A
+  leitura de pontinhos (3.51) faz o mesmo papel, votando.
+
+Nos vídeos, no Chromium: copo confirmou em 12 s (era 21), chocolate em 36 s
+(era 40–47 s ou nada), a tampa mostrou a data certa (19,6 s) pela primeira
+vez, a lata sugeriu a foto aos 24 s. Os testes de interface simulam o Paddle
+small (worker falso por `BroadcastChannel`, `tests/ui/harness.mjs`) e têm um
+teste para a câmera sem Paddle (cai para o Tesseract). `sw.js` v74.
