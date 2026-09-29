@@ -281,7 +281,9 @@ export async function lookupWeb(ean, env = {}, t0 = Date.now()) {
 export function smallWebImage(url) {
   // Servidor de imagens do WordPress (i0.wp.com/site/...): o wsrv recusa; vai direto ao site.
   const direct = String(url).replace(/^https:\/\/i\d\.wp\.com\/([^?]+).*$/, 'https://$1');
-  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '320', h: '320', fit: 'contain', cbg: 'white', output: 'webp', q: '85' })}`;
+  // bg=white tira a transparência: WebP com perda borra a borda transparente
+  // (franja em volta da embalagem) e ainda fica mais leve (13 KB em vez de 18).
+  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '320', h: '320', fit: 'contain', cbg: 'white', bg: 'white', output: 'webp', q: '85' })}`;
 }
 
 async function smallImageOk(url) {

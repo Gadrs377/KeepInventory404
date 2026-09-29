@@ -44,4 +44,5 @@ const small = new URL(smallWebImage('https://i0.wp.com/sugarkingdom.cl/p.png?fit
 assert.equal(small.host, 'wsrv.nl');
 assert.equal(small.searchParams.get('url'), 'https://sugarkingdom.cl/p.png');
 assert.equal(small.searchParams.get('w'), '320');
+assert.equal(small.searchParams.get('bg'), 'white', 'sem transparência');
 console.log('15 testes passaram');
