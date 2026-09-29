@@ -19,7 +19,7 @@
 //   POST /identify              -> lê a embalagem numa foto (IA grátis da Cloudflare)
 //                                  e devolve marca, produto, tamanho e um texto de busca
 
-import { catalogGet, catalogLearn, catalogStep, catalogStats } from './catalog.js';
+import { catalogGet, catalogLearn, catalogStep, catalogStats, photoSave, photoGet } from './catalog.js';
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
 // antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
@@ -100,6 +100,8 @@ export default {
     if (origin && !allowed) return json({ error: 'Origem não autorizada' }, 403);
 
     try {
+      // Foto guardada no catálogo (Cosmos ou web, já reduzida). Pedido de <img>: sem Origin.
+      if (url.pathname.startsWith('/foto/')) return await servePhoto(url.pathname.slice(6), env);
       switch (url.pathname) {
         case '/':
         case '/health':
@@ -107,8 +109,8 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          // v4: respostas guardadas antes das fotos em 320x320 ficam para trás.
-          return withCors(await cached(ctx, `lookup:v4:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
+          // v5: respostas guardadas antes da foto guardada no catálogo ficam para trás.
+          return withCors(await cached(ctx, `lookup:v5:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
@@ -173,26 +175,28 @@ export default {
 // consultas grátis por dia) e Kodebar (50 por dia).
 // Antes de tudo, o catálogo próprio; o que vem de fora entra nele.
 export async function lookup(ean, env = {}, ctx = null) {
+  const t0 = Date.now();
   const db = env.CATALOG;
+  let result = null;
   if (db) {
     const hit = await catalogGet(db, ean).catch(() => null);
     if (hit) {
-      // Sem foto (veio de catálogo ou da web antes da foto): Cosmos e, se não
-      // tiver, a busca na web; a foto achada fica guardada no banco.
-      let image = hit.image || await cosmosImage(ean);
-      if (!image && gtinOk(ean)) image = ((await lookupWeb(ean, env).catch(() => null)) || {}).image || '';
-      const product = { ...hit, image, size: sizeOf(hit.name) };
-      if (image && !hit.image && ctx) ctx.waitUntil(catalogLearn(db, product).catch(() => {}));
-      return { found: true, product };
+      const { photo, ...p } = hit;
+      result = { found: true, product: { ...p, image: p.image || (photo ? photoPath(ean) : ''), size: sizeOf(p.name) } };
     }
   }
-  const result = await lookupLive(ean, env);
-  if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
+  if (!result) {
+    result = await lookupLive(ean, env, t0);
+    if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
+  }
+  // Sem foto (catálogo de código, ou guardado antes): Cosmos e, se não tiver,
+  // as imagens da busca na web. O que veio da web já tentou as duas.
+  const product = result.found && result.product;
+  if (product && !product.image && !product.page && db) product.image = await findPhoto(ean, product.name, env, t0);
   return result;
 }
 
-async function lookupLive(ean, env) {
-  const t0 = Date.now();
+async function lookupLive(ean, env, t0 = Date.now()) {
   const found = await lookupStores(ean);
   if (found.found) return found;
   const catalogs = [lookupCadastroProduto(ean), lookupSystax(ean)];
@@ -259,47 +263,70 @@ export async function lookupWeb(ean, env = {}, t0 = Date.now()) {
     const found = pickWebProduct(data, ean);
     if (!found) continue;
     const product = { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
-    product.image = await cosmosImage(ean);
-    for (const url of pickWebImages(data, found.name).slice(0, 2)) {
-      if (product.image) break;
-      product.image = await smallImageOk(url);
-    }
+    product.image = await photoFrom(env, ean, [cosmosUrl(ean), ...pickWebImages(data, found.name).slice(0, 2)]);
     return product;
   }
   return null;
 }
 
-// ---------- Foto do que veio da web ----------
-// 1) Cosmos pelo código exato: quando tem, é do produto certo. Em 34 códigos
-//    de marcas grandes, 28 tinham; dos difíceis (Stikadinho 160g, pistache Bom
-//    Princípio, Maran), nenhum. 2) As imagens da busca, só se a descrição citar
-//    2 palavras do nome (Stikadinho e pistache vieram certos assim).
-// Foto do Cosmos pesa em média 328 KB (até 1,6 MB): tudo passa pelo wsrv.nl
-// (grátis, código aberto, sem chave), que devolve 320x320 em WebP qualidade 85 (7 a 18 KB).
-// O repassador pede a foto reduzida uma vez: se o wsrv devolver imagem, vale
-// (e fica no cache dele); se não (sem foto, endereço que ele recusa), não.
-export function smallWebImage(url) {
-  // Servidor de imagens do WordPress (i0.wp.com/site/...): o wsrv recusa; vai direto ao site.
-  const direct = String(url).replace(/^https:\/\/i\d\.wp\.com\/([^?]+).*$/, 'https://$1');
-  // bg=white tira a transparência: WebP com perda borra a borda transparente
-  // (franja em volta da embalagem) e ainda fica mais leve (13 KB em vez de 18).
-  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '320', h: '320', fit: 'contain', cbg: 'white', bg: 'white', output: 'webp', q: '85' })}`;
-}
+// ---------- Foto do que não é de loja ----------
+// Fontes: 1) Cosmos pelo código exato (quando tem, é do produto certo; em 34
+// códigos de marcas grandes, 28 tinham; dos difíceis, nenhum). 2) As imagens
+// da busca na web, só se a descrição citar 2 palavras do nome.
+// A própria Cloudflare reduz (cf.image; 5.000 fotos novas por mês grátis,
+// depois as novas param até o mês seguinte, sem cobrança): 320x320, fundo
+// branco (sem a franja da transparência no WebP), WebP qualidade 85, ~15 KB.
+// O repassador guarda os bytes no catálogo (tabela foto) e serve em
+// /foto/{código}: não depende do site de origem continuar no ar.
+// Foto de loja não passa por aqui: a loja já manda 320x320.
+export const PHOTO_OPTS = { width: 320, height: 320, fit: 'pad', background: '#FFFFFF', format: 'webp', quality: 85 };
+const PHOTO_MAX = 200_000;
 
-async function smallImageOk(url) {
-  const small = smallWebImage(url);
+export const photoPath = (ean) => `/foto/${ean}`;
+export const cosmosUrl = (ean) => `https://cdn-cosmos.bluesoft.com.br/products/${ean}`;
+
+// Resolve com os bytes da foto reduzida, ou null (sem foto, página de erro,
+// redução que falhou ou cota do mês acabou).
+async function smallPhoto(url) {
+  // Servidor de imagens do WordPress (i0.wp.com/site/...): vai direto ao site.
+  const direct = String(url).replace(/^https:\/\/i\d\.wp\.com\/([^?]+).*$/, 'https://$1');
   try {
-    const res = await fetch(small, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(4000) });
-    const type = res.headers.get('content-type') || '';
-    if (res.body) res.body.cancel().catch(() => {});
-    return res.ok && type.startsWith('image/') ? small : '';
+    const res = await fetch(direct, { headers: { 'User-Agent': UA }, cf: { image: PHOTO_OPTS }, signal: AbortSignal.timeout(6000) });
+    const resized = res.headers.get('cf-resized') || '';
+    if (!res.ok || res.headers.get('content-type') !== 'image/webp' || (resized && !/internal=ok/.test(resized))) {
+      if (res.body) res.body.cancel().catch(() => {});
+      return null;
+    }
+    const bytes = await res.arrayBuffer();
+    return bytes.byteLength > 300 && bytes.byteLength < PHOTO_MAX ? bytes : null;
   } catch {
-    return '';
+    return null;
   }
 }
 
-export function cosmosImage(ean) {
-  return smallImageOk(`https://cdn-cosmos.bluesoft.com.br/products/${ean}`);
+// A primeira das fontes que der foto fica guardada; resolve com /foto/{código} ou ''.
+async function photoFrom(env, ean, urls) {
+  const db = env.CATALOG;
+  if (!db) return '';
+  for (const url of urls) {
+    const bytes = await smallPhoto(url);
+    if (bytes && await photoSave(db, ean, bytes, url).catch(() => false)) return photoPath(ean);
+  }
+  return '';
+}
+
+async function findPhoto(ean, name, env, t0) {
+  const cosmos = await photoFrom(env, ean, [cosmosUrl(ean)]);
+  if (cosmos || !gtinOk(ean) || Date.now() - t0 + WEB_TIMEOUT > LOOKUP_BUDGET) return cosmos;
+  const data = await tavilySearch(env, ean, 'basic', { include_images: true, include_image_descriptions: true }).catch(() => null);
+  return photoFrom(env, ean, pickWebImages(data, name).slice(0, 2));
+}
+
+async function servePhoto(code, env) {
+  const bytes = /^\d{8,14}$/.test(code) && env && env.CATALOG ? await photoGet(env.CATALOG, code) : null;
+  if (!bytes) return new Response('', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  // 30 dias: a foto quase nunca muda, mas pode ser trocada por uma melhor.
+  return new Response(bytes, { headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=2592000', 'Access-Control-Allow-Origin': '*' } });
 }
 
 // Imagens da busca cuja descrição cita 2 palavras do nome, na ordem da busca.
@@ -330,7 +357,7 @@ export async function searchWeb(read, env = {}) {
   if (tokensOf(q).length < 2) return [];
   const data = await tavilySearch(env, q, 'basic', { include_domains: WEB_EAN_SITES, max_results: 10 });
   const found = pickWebByName(data, read);
-  await Promise.all(found.map(async (p) => { p.image = await cosmosImage(p.ean); }));
+  await Promise.all(found.map(async (p) => { p.image = await photoFrom(env, p.ean, [cosmosUrl(p.ean)]); }));
   return found;
 }
 
@@ -482,15 +509,9 @@ export async function diag(env = {}) {
     mercadoLivre: await areaByName('Detergente Ypê Neutro 500ml'),
     // Chaves guardadas no repassador (só se existem; o valor nunca aparece).
     chaves: { tavily: !!env.TAVILY_API_KEY, cosmos: !!env.COSMOS_TOKEN, kodebar: !!env.KODEBAR_KEY },
-    // Foto reduzida (wsrv.nl) e busca na web, vistas daqui.
-    fotoWeb: await probe(() => smallImageOk('https://cdn-cosmos.bluesoft.com.br/products/7896412802409')),
-    // Teste: a Cloudflare reduz a foto sozinha (cf.image, 5.000 por mês grátis)?
-    fotoCloudflare: await probe(async () => {
-      const res = await fetch('https://cdn-cosmos.bluesoft.com.br/products/7896412802409', { cf: { image: { width: 320, height: 320, fit: 'pad', background: '#FFFFFF', format: 'webp', quality: 85 } } });
-      const body = await res.arrayBuffer();
-      return { status: res.status, tipo: res.headers.get('content-type'), bytes: body.byteLength, resized: res.headers.get('cf-resized') };
-    }),
-    buscaWeb: await probe(async () => { const d = await tavilySearch(env, '7897500607265', 'basic', { include_images: true, include_image_descriptions: true }); return { paginas: (d.results || []).length, imagens: (d.images || []).length, pistache: pickWebImages(d, 'Recheio cobert bom principio 1,01kg pistache').length }; }),
+    // A Cloudflare reduz a foto daqui? (a mesma foto conta uma vez por mês)
+    foto: await probe(async () => { const b = await smallPhoto(cosmosUrl('7896412802409')); return b ? `${b.byteLength} bytes WebP` : 'falhou'; }),
+    fotosGuardadas: env.CATALOG ? await env.CATALOG.prepare('SELECT count(*) AS n FROM foto').first().then((r) => r.n).catch(() => 0) : 0,
   };
 }
 

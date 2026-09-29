@@ -60,8 +60,10 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS p (e INTEGER PRIMARY KEY, n BLOB NOT NULL, i INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS w (id INTEGER PRIMARY KEY, t TEXT NOT NULL UNIQUE)',
   'CREATE TABLE IF NOT EXISTS c (k TEXT PRIMARY KEY, v TEXT NOT NULL)',
-  // Foto reduzida (wsrv.nl) do que veio da web, que não é de loja.
-  'CREATE TABLE IF NOT EXISTS f (e INTEGER PRIMARY KEY, u TEXT NOT NULL)',
+  // Foto do que não é de loja (Cosmos, web): os bytes em WebP 320x320 (~15 KB)
+  // e o endereço de onde veio. A de loja fica na loja (id da imagem em p.i).
+  'CREATE TABLE IF NOT EXISTS foto (e INTEGER PRIMARY KEY, b BLOB NOT NULL, o TEXT NOT NULL)',
+  'DROP TABLE IF EXISTS f',
 ];
 const MAX_PARAMS = 99; // o D1 aceita até 100 parâmetros por consulta
 
@@ -215,11 +217,9 @@ export async function catalogGet(db, code) {
   const text = new Map(results.map((r) => [r.id, r.t]));
   const i = Number(row.i);
   const store = CATALOG_STORES[i % 64];
-  let image = imageUrlOf(i);
-  if (!image && i % 64 === NO_STORE) {
-    const f = await db.prepare('SELECT u FROM f WHERE e = ?').bind(e).first().catch(() => null);
-    image = f ? f.u : '';
-  }
+  const image = imageUrlOf(i);
+  const photo = !image && i % 64 === NO_STORE
+    && !!(await db.prepare('SELECT 1 AS x FROM foto WHERE e = ?').bind(e).first().catch(() => null));
   return {
     name: nameIds.map((id) => text.get(id) || '').join(' ').trim(),
     brand: brandId ? text.get(brandId) || '' : '',
@@ -228,7 +228,27 @@ export async function catalogGet(db, code) {
     category: catId ? text.get(catId) || '' : '',
     store: store ? store[0] : 'catalogo',
     source: 'catalogo',
+    photo,
   };
+}
+
+// ---------- Fotos guardadas ----------
+
+export async function photoSave(db, code, bytes, origin) {
+  const e = gtinNumber(code);
+  if (!e || !bytes || !bytes.byteLength) return false;
+  await ensureSchema(db);
+  await db.prepare('INSERT INTO foto (e, b, o) VALUES (?, ?, ?) ON CONFLICT(e) DO UPDATE SET b = excluded.b, o = excluded.o')
+    .bind(e, bytes, String(origin || '').slice(0, 500)).run();
+  return true;
+}
+
+// Resolve com os bytes (Uint8Array) ou null.
+export async function photoGet(db, code) {
+  const e = gtinNumber(code);
+  if (!e) return null;
+  const row = await db.prepare('SELECT b FROM foto WHERE e = ?').bind(e).first().catch(() => null);
+  return row && row.b ? new Uint8Array(row.b) : null;
 }
 
 // Produtos achados ao vivo (lojas, catálogos de código de barras) entram no catálogo.
@@ -242,12 +262,7 @@ export async function catalogLearn(db, products) {
   }
   if (!rows.length) return 0;
   await ensureSchema(db);
-  const saved = await saveRows(db, rows);
-  const photos = [].concat(products || []).filter((p) => p && gtinNumber(p.ean) && !STORE_OF.has(p.store) && /^https:\/\/wsrv\.nl\//.test(p.image || ''));
-  if (photos.length) {
-    await db.batch(photos.map((p) => db.prepare('INSERT INTO f (e, u) VALUES (?, ?) ON CONFLICT(e) DO UPDATE SET u = excluded.u').bind(gtinNumber(p.ean), p.image)));
-  }
-  return saved;
+  return saveRows(db, rows);
 }
 
 // ---------- O robô ----------

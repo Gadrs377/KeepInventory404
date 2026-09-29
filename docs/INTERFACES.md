@@ -1608,7 +1608,9 @@ tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
   número na web (SYSTEM_DESIGN 5.4). O app espera até 20 s (antes 12 s).
 - **Foto:** com menos de 3 sugestões das lojas, entram até 3 da web (Cosmos e
   Systax), com o código de barras, no fim da lista "Qual destes?".
-- **Foto do que vem da web:** do Cosmos ou da própria busca, reduzida pelo
-  wsrv.nl para 320x320 em WebP (7 a 18 KB). Fotos das lojas também em
-  320x320 (antes 200x200, borradas na folha do produto).
-- `sw.js` v79.
+- **Foto do que vem da web:** do Cosmos ou da própria busca, reduzida pela
+  Cloudflare para 320x320 em WebP (~15 KB), guardada no catálogo e servida
+  pelo repassador (`/foto/{código}`); o celular guarda para usar sem
+  internet. Fotos das lojas também em 320x320 (antes 200x200, borradas na
+  folha do produto). A foto que a casa tira continua só no celular.
+- `sw.js` v80.

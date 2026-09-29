@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v79';
+const VERSION = 'v80';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -125,9 +125,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Fotos de produto das lojas (VTEX) também vão para o cache.
+  // Fotos de produto das lojas (VTEX), as guardadas pelo repassador (/foto/) e
+  // as antigas reduzidas pelo wsrv.nl também vão para o cache.
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || url.hostname.endsWith('openfoodfacts.org')
-    || url.hostname.endsWith('vteximg.com.br') || url.hostname.endsWith('vtexassets.com')) {
+    || url.hostname.endsWith('vteximg.com.br') || url.hostname.endsWith('vtexassets.com') || url.hostname === 'wsrv.nl'
+    || (url.hostname.endsWith('.workers.dev') && url.pathname.startsWith('/foto/'))) {
     event.respondWith(cacheFirst(request));
   }
 });

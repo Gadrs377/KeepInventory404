@@ -281,20 +281,31 @@ créditos grátis por mês; sem ela, modo sem chave com limite):
   Fescopan, Camil, Neosaldina e o espaguete Santa Amália, cujo torteloni não
   passa). Entra no fim da lista, marcado `web: true`: é sugestão, nunca
   decide sozinho.
-- **Foto:** primeiro o Cosmos pelo código exato
+- **Foto do que não é de loja:** primeiro o Cosmos pelo código exato
   (`cdn-cosmos.bluesoft.com.br/products/{EAN}`): em 34 códigos de marcas
   grandes, 28 tinham; dos difíceis (Stikadinho 160g, pistache Bom Princípio,
-  Maran), nenhum. Depois as imagens que a busca pelo código já devolve (sem
-  crédito a mais), só se a descrição citar 2 palavras do nome ("pistachios"
-  vale por pistache). Medido: pistache, Maran e Orquídea com a foto certa.
-  Foto do Cosmos pesa em média 328 KB (até 1,6 MB); tudo passa pelo
-  **wsrv.nl** (grátis, código aberto, sem chave): 320x320 em WebP qualidade
-  85, de 7 a 18 KB. 320 porque a maior miniatura do app tem 104 pt (~312
-  pixels no celular); com 200x200 o texto da embalagem borrava. Fundo
-  branco (`bg=white`): a transparência do original, com WebP com perda, deixava
-  franja em volta da embalagem. As fotos das
-  lojas também vêm em 320x320 (a VTEX já manda WebP ao navegador, ~9 KB). O repassador pede a foto reduzida antes de usar; se o wsrv recusar o
-  endereço (o servidor de imagens do WordPress, por exemplo), tenta a próxima.
+  Maran), nenhum. Depois as imagens que a busca pelo código devolve, só se a
+  descrição citar 2 palavras do nome ("pistachios" vale por pistache).
+  Medido: pistache, Maran e Orquídea com a foto certa.
+  - **Redução pela própria Cloudflare** (`cf.image` no `fetch`, funciona no
+    `workers.dev` do plano grátis): 320x320, fundo branco, WebP qualidade 85,
+    ~15 KB (a do Cosmos tem em média 328 KB, até 1,6 MB). Grátis até 5.000
+    fotos novas por mês; passando, as novas param até o mês seguinte, sem
+    cobrança. Fundo branco porque WebP com perda borra a borda transparente
+    (franja em volta da embalagem). 320 porque a maior miniatura do app tem
+    104 pt (~312 pixels no celular).
+  - **Guardada no catálogo** (tabela `foto`: código, bytes, endereço de onde
+    veio) e servida em `/foto/{código}` (30 dias de cache). Não depende do
+    site de origem continuar no ar. O celular guarda essas fotos para usar
+    sem internet (`sw.js`).
+  - Antes era o wsrv.nl (grátis, mas guarda só de 7 a 31 dias, recusa alguns
+    sites e limita pedidos por IP). Opções avaliadas para guardar: KV (só mil
+    gravações por dia), R2 (pede cartão), Cloudflare Images (só pago).
+  - Foto de loja não passa por aqui: a própria loja manda 320x320 (a VTEX
+    já entrega WebP ao navegador, ~9 KB).
+  - **A foto que a casa tira fica só no celular** (LGPD): vira a miniatura
+    do produto no aparelho e não vai para o catálogo. Na identificação por
+    foto, a imagem vai à IA só para ler a embalagem e não é guardada.
 - Tudo que a web acha entra no catálogo próprio (5.5): a segunda vez não gasta.
 
 Fontes avaliadas:

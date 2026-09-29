@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import {
   varints, unvarints, tidyName, gtinNumber, imageUrlOf, packImage, rowsFromVtex, leavesOf,
-  saveRows, catalogGet, catalogLearn, catalogStep, catalogStats, ensureSchema, CATALOG_STORES, PAGE,
+  saveRows, catalogGet, catalogLearn, photoSave, photoGet, catalogStep, catalogStats, ensureSchema, CATALOG_STORES, PAGE,
 } from '../src/catalog.js';
 
 // D1 de mentira: prepare().bind().first()/all()/run() e batch().
@@ -101,14 +101,20 @@ await test('produto de fora das lojas (CadastroProduto) entra sem foto', async (
   assert.equal(p.store, 'catalogo');
 });
 
-await test('produto achado na web guarda a foto reduzida', async () => {
+await test('foto de fora das lojas: bytes guardados no banco', async () => {
   const db = fakeD1();
-  const image = 'https://wsrv.nl/?url=https%3A%2F%2Fsugarkingdom.cl%2Fp.png&w=200';
-  await catalogLearn(db, { name: 'Recheio cobert bom principio 1,01kg pistache', ean: '7897500607265', store: 'api.cosmos.bluesoft.com.br', image });
-  assert.equal((await catalogGet(db, '7897500607265')).image, image);
-  // Foto de outro endereço (não reduzida) não entra.
-  await catalogLearn(db, { name: 'Sabonete Maran', ean: '7896394807379', store: 'cadastroproduto.com.br', image: 'https://x.com/1.jpg' });
-  assert.equal((await catalogGet(db, '7896394807379')).image, '');
+  await catalogLearn(db, { name: 'Recheio cobert bom principio 1,01kg pistache', ean: '7897500607265', store: 'api.cosmos.bluesoft.com.br' });
+  assert.equal((await catalogGet(db, '7897500607265')).photo, false);
+  const bytes = new Uint8Array([82, 73, 70, 70, 1, 2, 3]).buffer;
+  assert.equal(await photoSave(db, '7897500607265', bytes, 'https://sugarkingdom.cl/p.png'), true);
+  const p = await catalogGet(db, '7897500607265');
+  assert.equal(p.photo, true);
+  assert.equal(p.image, '');
+  assert.deepEqual(Array.from(await photoGet(db, '07897500607265')), [82, 73, 70, 70, 1, 2, 3]);
+  assert.equal(await photoGet(db, '7896394807379'), null);
+  // Produto de loja usa a foto da loja, não pergunta ao banco de fotos.
+  await catalogLearn(db, { name: 'Detergente', ean: '7896098900208', store: 'www.zaffari.com.br', image: 'https://zaffari.vteximg.com.br/arquivos/ids/123456-320-320' });
+  assert.equal((await catalogGet(db, '7896098900208')).photo, false);
 });
 
 await test('muitas palavras novas de uma vez (mais de 100 parâmetros)', async () => {

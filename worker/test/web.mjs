@@ -1,6 +1,6 @@
 // Escolha da página do código de barras na web (sem rede): node test/web.mjs
 import assert from 'node:assert/strict';
-import { pickWebProduct, pickWebByName, gtinOk, pickWebImages, smallWebImage } from '../src/index.js';
+import { pickWebProduct, pickWebByName, gtinOk, pickWebImages, PHOTO_OPTS, photoPath } from '../src/index.js';
 
 const r = (title, url, content = '', score = 0.5) => ({ title, url, content, score });
 assert.equal(pickWebProduct({ results: [
@@ -39,10 +39,7 @@ const imgs = { images: [
 ] };
 assert.deepEqual(pickWebImages(imgs, 'Recheio cobert bom principio 1,01kg pistache'), ['https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1']);
 assert.deepEqual(pickWebImages(imgs, 'Sab maran 80g erva doce'), []);
-// Reduz pelo wsrv.nl; o servidor do WordPress vai direto ao site (o wsrv recusa).
-const small = new URL(smallWebImage('https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1'));
-assert.equal(small.host, 'wsrv.nl');
-assert.equal(small.searchParams.get('url'), 'https://sugarkingdom.cl/p.png');
-assert.equal(small.searchParams.get('w'), '320');
-assert.equal(small.searchParams.get('bg'), 'white', 'sem transparência');
+// Foto reduzida pela própria Cloudflare: 320x320, fundo branco, WebP.
+assert.deepEqual(PHOTO_OPTS, { width: 320, height: 320, fit: 'pad', background: '#FFFFFF', format: 'webp', quality: 85 });
+assert.equal(photoPath('7897500607265'), '/foto/7897500607265');
 console.log('15 testes passaram');

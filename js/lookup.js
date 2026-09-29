@@ -132,7 +132,7 @@ function fromStore(p) {
     name: String(p.name || '').trim(),
     brand: String(p.brand || '').trim(),
     size: String(p.size || '').trim(),
-    image: safeImage(p.image),
+    image: safeImage(photoUrl(p.image)),
     category: String(p.category || ''),
     ean: /^\d{8,14}$/.test(p.ean || '') ? p.ean : '',
     source: 'loja',
@@ -156,6 +156,12 @@ async function apiGet(path, timeout, outerSignal) {
 
 function capitalize(s) {
   return s ? s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1) : s;
+}
+
+// Foto guardada pelo repassador (Cosmos ou web): vem como /foto/{código}.
+function photoUrl(image) {
+  const s = String(image || '');
+  return /^\/foto\/\d{8,14}$/.test(s) ? `${API_URL}${s}` : s;
 }
 
 function safeImage(url) {
