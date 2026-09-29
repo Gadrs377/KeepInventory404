@@ -23,9 +23,10 @@ export const PADDLE_VARIANTS = ['raw', 'gray', 'otsu', 'red', 'blue'].map(mode =
 // mudar a luz (ajuda com relevo/reflexo) e oferece tirar uma foto parada, que
 // aguenta um recorte maior por não ter o tremor do vídeo contínuo.
 export const STRUGGLE_MS = 10000;
+// Curtas: cabem numa linha na cápsula sobre o vídeo.
 export const TILT_HINTS = [
-  'Incline a embalagem bem devagar, mantendo a validade na mira',
-  'Ou mude a direção da luz, sem tirar a validade da mira',
+  'Incline a embalagem devagar',
+  'Mude a luz de lado',
 ];
 // Os cinco filtros distintos (sem as variações de segmentação/rotação, que
 // existem para variar entre quadros de vídeo, menos úteis numa foto só), com

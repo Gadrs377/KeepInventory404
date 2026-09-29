@@ -58,15 +58,15 @@ const LEAD = 2;
 // navegador entrega o mais perto (o registro diz quanto veio).
 const CAMERA = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } } };
 
+// Uma instrução só, curta (cabe numa linha na cápsula sobre o vídeo). O que
+// fazer muda com o estado; quem escolhe o texto é idleText().
 const ISSUE_TEXT = {
-  dark: 'Está escuro. Acenda uma luz perto da embalagem',
-  glare: 'Tem reflexo em cima da data. Incline um pouco para tirar o brilho',
-  blur: 'Segure parado, com a data dentro da mira',
+  dark: 'Pouca luz. Acenda uma luz perto',
+  glare: 'Reflexo na data. Incline um pouco',
+  blur: 'Segure parado',
 };
-const HARD_TEXT = 'Essa embalagem está difícil de ler pela câmera. Mostre onde está a validade numa das fotos abaixo, ou digite a data.';
 // Texto na mira, nenhuma data, por esse tempo: sugere a foto do celular.
 const PHOTO_HINT_MS = 14000;
-const PHOTO_HINT = 'Vejo texto, mas a data não sai pelo vídeo. Tire uma foto com a câmera do celular: ela sai bem mais nítida.';
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const photoSource = (seq) => `photo-${seq}`;
@@ -150,7 +150,7 @@ function textScore({ text = '', confidence = 0 }) {
  * `debug`: mostra o painel de diagnóstico (padrão: opção em Mais ou ?debug).
  * A promessa também tem `.log()`, o registro de cada tentativa e evento.
  */
-export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, onType = null, debug = debugEnabled(), experiment = {} } = {}) {
+export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, onBestPhoto = () => {}, onHard = () => {}, onLikely = () => {}, onType = null, debug = debugEnabled(), experiment = {}, bar = null } = {}) {
   const useGpu = experiment.gpu !== false;
   const legacy = !!experiment.legacy;
   const log = [];
@@ -175,10 +175,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           <button type="button" class="btn btn-quiet" data-ask-no>Não</button>
         </div>
       </div>
-      <div class="exp-struggle" hidden>
-        <p class="exp-struggle-hint" aria-live="polite"></p>
-        <div class="exp-find" hidden></div>
-        <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Usar a câmera do celular</span></button>
+      <div class="exp-find" hidden></div>
+      <div class="exp-bar">
+        <button type="button" class="btn exp-alt" data-photo>${icon('camera')}<span>Tirar foto</span></button>
         <input type="file" accept="image/*" capture="environment" hidden data-photo-input>
       </div>${debug ? `
       <details class="exp-debug" open>
@@ -194,12 +193,18 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     const status = $('.exp-status', host);
     const picks = $('.exp-picks', host);
     const torchBtn = $('[data-torch]', host);
-    const struggle = $('.exp-struggle', host);
-    const struggleHint = $('.exp-struggle-hint', host);
     const photoBtn = $('[data-photo]', host);
     const photoInput = $('[data-photo-input]', host);
+    // A barra de ações fica fora da câmera quando quem chama tem uma (a folha
+    // de validade põe "Tirar foto" ao lado de "Digitar a data").
+    const ownBar = $('.exp-bar', host);
+    if (bar) { bar.prepend(photoBtn, photoInput); ownBar.remove(); }
+    // O painel de fotos vem depois da barra: "Tirar foto" e "Digitar a data"
+    // ficam sempre no mesmo lugar, à vista, e o painel abre embaixo.
+    const findHostEl = $('.exp-find', host);
+    (bar || ownBar).after(findHostEl);
     const askBox = $('.exp-ask', host);
-    const findHost = $('.exp-find', host);
+    const findHost = findHostEl;
     const findPanel = createFindPanel(findHost, {
       onRead: (region, photo, progress) => readRegion(region, photo, progress),
       onType: (crop) => { if (crop) { try { onBestPhoto(crop); } catch { /* segue */ } } if (onType) onType(); },
@@ -266,6 +271,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     let paddleTurn = 0;
     let struggleTimer = null;
     let photoSuggested = false;
+    let struggling = false; // passou de STRUGGLE_MS sem confirmar
     let textNoDate = 0; // leituras ao vivo com texto e nenhuma data
     let hintPhase = 0;
     let burstSeq = 0;
@@ -283,6 +289,17 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       status.textContent = asking && !urgent ? 'Confira a data abaixo' : text;
       shownIssue = null;
     }
+    // A instrução de rotina, conforme o momento. Uma só, na cápsula do vídeo
+    // (antes havia outra embaixo e as duas às vezes se contradiziam).
+    function idleText() {
+      if (hard) return findPanel.count ? 'Mostre a validade na foto abaixo' : 'Tire uma foto ou digite a data';
+      if (photoSuggested) return 'Tire uma foto com o celular';
+      if (struggling) return TILT_HINTS[hintPhase];
+      return shown.size ? 'Toque na data certa, ou continue' : 'Aponte para a validade';
+    }
+    const idle = () => setStatus(idleText());
+    // Estado para o CSS e os testes: '' | 'dica' | 'foto' | 'dificil'.
+    const setState = () => { host.dataset.state = hard ? 'dificil' : photoSuggested ? 'foto' : struggling ? 'dica' : ''; };
 
     // ---------- Diagnóstico ----------
     // Cada tentativa (motor, filtro, texto lido, datas e por que a votação
@@ -351,7 +368,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // Cada foto é independente: quem decide é a mesma votação de sempre.
     function armStruggleHelp() {
       clearInterval(struggleTimer);
-      struggle.hidden = true;
+      struggling = false;
+      setState();
       struggleTimer = setInterval(() => {
         if (!alive || document.hidden || nativeOpen) return;
         const elapsed = performance.now() - activeSince;
@@ -363,12 +381,15 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (!photoSuggested && !hard && elapsed >= PHOTO_HINT_MS && !shown.size && textNoDate >= 6) {
           photoSuggested = true;
           photoBtn.classList.add('is-suggested');
+          setState();
+          if (!nativeReading) idle();
           note({ kind: 'event', what: 'suggest-photo', detail: `${textNoDate} leituras com texto e sem data` });
         }
-        hintPhase = struggle.hidden ? 0 : (hintPhase + 1) % TILT_HINTS.length;
-        struggleHint.textContent = hard ? HARD_TEXT : photoSuggested ? PHOTO_HINT : TILT_HINTS[hintPhase];
-        struggle.classList.toggle('is-hard', hard);
-        struggle.hidden = false;
+        hintPhase = struggling ? (hintPhase + 1) % TILT_HINTS.length : 0;
+        struggling = true;
+        setState();
+        // Não atropela o aviso de imagem (escuro, reflexo) nem a pergunta.
+        if (!shownIssue && !nativeReading) idle();
         if (!bursting) takeSharpPhoto();
       }, HINT_CYCLE_MS);
     }
@@ -380,8 +401,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       hard = true;
       note({ kind: 'event', what: 'hard' });
       findPanel.open();
-      struggleHint.textContent = HARD_TEXT;
-      struggle.classList.add('is-hard');
+      photoBtn.classList.add('is-suggested');
+      setState();
+      idle();
       try { onHard(); } catch { /* a câmera segue */ }
     }
 
@@ -422,6 +444,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       paddleLive.dispose();
       paddleBurst.dispose();
       findPanel.dispose();
+      if (bar) { photoBtn.remove(); photoInput.remove(); findHostEl.remove(); }
       releaseOcr();
       document.removeEventListener('visibilitychange', visibilityChanged);
       if (stream) stream.getTracks().forEach((t) => t.stop());
@@ -447,12 +470,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     function startPaddleLive() {
       if (paddleLiveState !== 'idle' || !alive) return;
       paddleLiveState = 'loading';
-      setStatus('Só um instante');
+      setStatus('Preparando o leitor');
       loadingPaddleLive = paddleLive.ready().then(() => {
         if (!alive) return;
         paddleLiveState = 'ready';
         note({ kind: 'event', what: 'small-ready', detail: paddleLive.backend() === 'gpu' ? 'GPU' : 'sem GPU' });
-        setStatus('Mantenha a validade na mira');
+        idle();
         // Com o small pronto, a embalagem já se mostrou difícil: prepara o
         // medium em segundo plano, para as fotos não precisarem esperar.
         startPaddleBurst();
@@ -461,7 +484,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           paddleLiveState = 'failed';
           note({ kind: 'event', what: 'small-failed' });
           startTesseract();
-          setStatus(tessFailed ? 'Não foi possível ler. Digite a data.' : 'Continue apontando ou digite a data', { urgent: true });
+          setStatus(tessFailed ? 'Não deu para ler. Digite a data' : 'Continue apontando', { urgent: true });
         }
         paddleLive.kill();
       });
@@ -471,10 +494,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (tessState !== 'idle' || !alive) return loadingTess;
       tessState = 'loading';
       loadingTess = ocrWorker((p) => {
-        if (alive && tessState === 'loading' && paddleLiveState !== 'ready') status.textContent = `Preparando o leitor de validade (só na primeira vez) ${Math.round(p * 100)}%`;
+        if (alive && tessState === 'loading' && paddleLiveState !== 'ready') status.textContent = `Preparando o leitor (1ª vez) ${Math.round(p * 100)}%`;
       }).then(() => { tessState = 'ready'; note({ kind: 'event', what: 'tess-ready' }); }).catch(() => {
         tessState = 'failed'; tessFailed = true;
-        if (alive && paddleLiveState === 'failed') setStatus('Não foi possível ler. Digite a data.', { urgent: true });
+        if (alive && paddleLiveState === 'failed') setStatus('Não deu para ler. Digite a data', { urgent: true });
       });
       return loadingTess;
     }
@@ -546,7 +569,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       const past = lead.iso < new Date().toISOString().slice(0, 10);
       if (past && !seen.get(lead.iso).labeled) return;
       asking = lead.iso;
-      askText.textContent = `Li ${formatDate(lead.iso)} mais de uma vez. É a validade?`;
+      askText.textContent = `${formatDate(lead.iso)} é a validade?`;
       askBox.hidden = false;
       setStatus('Confira a data abaixo', { urgent: true });
       note({ kind: 'event', what: 'ask', iso: lead.iso, detail: `${lead.n} imagens` });
@@ -565,7 +588,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       asking = null;
       tellLikely(leader());
       askBox.hidden = true;
-      setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
+      idle();
     });
 
     // O que atrapalha dentro da mira (pouca luz, reflexo, tremido). Só fala
@@ -573,7 +596,9 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
     // instrução normal quando ele some duas vezes: nada de texto piscando.
     function checkQuality() {
       const now = performance.now();
-      if (nativeReading || asking || now - lastQualityAt < QUALITY_MS) return;
+      // Com a foto sugerida (ou a embalagem difícil), o que importa é tirar a
+      // foto: "Segure parado" por cima disso só confundiria.
+      if (nativeReading || asking || photoSuggested || hard || now - lastQualityAt < QUALITY_MS) return;
       lastQualityAt = now;
       let issue;
       try {
@@ -583,7 +608,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (issue === lastIssue) issueStreak++; else { lastIssue = issue; issueStreak = 1; }
       if (issueStreak < 2) return;
       if (issue && shownIssue !== issue) { status.textContent = ISSUE_TEXT[issue]; shownIssue = issue; note({ kind: 'event', what: 'issue', detail: issue }); }
-      else if (!issue && shownIssue) setStatus('Mantenha a validade na mira');
+      else if (!issue && shownIssue) idle();
     }
 
     // Um piscar branco na imagem: a foto automática foi tirada agora.
@@ -686,7 +711,8 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (!alive || !shot) return;
         shutter();
         note({ kind: 'event', what: 'shutter', detail: `${photoSource(seq)}, ${shot.how}` });
-        setStatus('Foto tirada. Lendo');
+        // Sem "Lendo a foto": o piscar branco já diz que a foto foi tirada, e
+        // a instrução do momento (incline, tire uma foto…) continua valendo.
         prepareFrame(shot.still, { mode: 'raw', width: 900, maxH: 700, box: shot.box }, photoEvidence);
         const { score } = await readStill({
           ...shot, seq, yields: true,
@@ -697,7 +723,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         keepBest(score, shot.still, shot.box);
         if (legacy) {
           if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
-          setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
+          idle();
           return;
         }
         // Para o painel e o palpite, só a faixa que aparecia na tela (sem o
@@ -713,7 +739,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         if (pooled.guess && !nativePending) await readGuessAuto(pooled, photoSource(seq));
         if (!alive || nativePending) return;
         if (++burstsWithoutConfirm >= HARD_AFTER_BURSTS) becomeHard();
-        setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
+        idle();
       } finally {
         // A foto do ImageCapture (4032×3024 no iPhone) ocupa ~48 MB aberta.
         if (shot && shot.still && shot.still.close) shot.still.close();
@@ -736,7 +762,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       setStatus('Lendo a sua foto', { urgent: true });
       try {
         let bitmap;
-        try { bitmap = await createImageBitmap(file); } catch { setStatus('Não deu para abrir a foto. Tente de novo ou digite a data', { urgent: true }); return; }
+        try { bitmap = await createImageBitmap(file); } catch { setStatus('Não abriu a foto. Tente de novo', { urgent: true }); return; }
         if (!alive) return;
         const photo = document.createElement('canvas');
         const k = Math.min(1, NATIVE_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
@@ -768,7 +794,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         found += candidates.length;
         // Foto que a pessoa mesma tirou é a melhor para conferir a olho.
         keepBest(1e6, photo, PHOTO_BOX);
-        setStatus(found ? 'Achei uma data. Toque nela, ou confira na foto abaixo' : guess ? 'Confira na foto abaixo se a validade está marcada' : 'Toque na foto abaixo onde está a validade', { urgent: true });
+        setStatus(found ? 'Achei uma data. Confira abaixo' : guess ? 'Confira a foto abaixo' : 'Toque na foto onde está a data', { urgent: true });
         findHost.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
       } finally {
         if (alive) { bursting = false; nativeReading = false; }
@@ -978,7 +1004,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         video.srcObject = stream;
         await video.play().catch(() => {});
       } catch {
-        setStatus('A câmera parou. Toque em Digitar a data, ou feche e abra de novo', { urgent: true });
+        setStatus('A câmera parou. Feche e abra de novo', { urgent: true });
       }
     }
 
@@ -1011,7 +1037,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           note({ kind: 'event', what: 'error', detail: engine });
           if (engine === 'paddle') { paddleLiveState = 'failed'; paddleLive.kill(); startTesseract(); }
           else if (++tessErrors >= 3) tessFailed = true;
-          setStatus('Tente outro ângulo ou digite a data', { urgent: true });
+          setStatus('Tente outro ângulo', { urgent: true });
           await pause(250);
           continue;
         } finally { liveReading = false; }
@@ -1026,7 +1052,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           note({ kind: 'event', what: 'confirmed', iso: accepted });
           beep('ok'); vibrate(40); done(accepted); return;
         }
-        if (candidates.some(c => c.ambiguous)) setStatus('Há mais de uma data. Toque na validade correta');
+        if (candidates.some(c => c.ambiguous)) setStatus('Mais de uma data. Toque na certa');
         // Yield to camera/interaction and avoid immediately rereading the same
         // decoded frame. The next pass uses a fresh frame and another variant.
         await pause(engine === 'paddle' ? 220 : 120);
@@ -1038,7 +1064,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       try {
         stream = await navigator.mediaDevices.getUserMedia(CAMERA);
       } catch {
-        setStatus('Sem acesso à câmera. Digite a data.', { urgent: true });
+        setStatus('Sem acesso à câmera. Digite a data', { urgent: true });
         claimCamera(false);
         return;
       }
@@ -1055,7 +1081,7 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (caps.torch) { torchBtn.hidden = false; torchBtn.parentElement.hidden = false; }
       // Foco contínuo, quando a câmera deixa: a data fica perto da lente.
       try { if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch { /* segue */ }
-      setStatus('Preparando o leitor de validade');
+      setStatus('Preparando o leitor');
       if (legacy) {
         await startTesseract();
         if (tessFailed && alive) startPaddleLive();
@@ -1064,10 +1090,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         try { await loadingPaddleLive; } catch { /* segue com o Tesseract */ }
       }
       if (!alive) return;
-      setStatus('Aponte para a data de validade');
+      idle();
       activeSince = performance.now();
       armStruggleHelp();
-      loop().catch(() => { if (alive) setStatus('Não foi possível ler. Digite a data.'); });
+      loop().catch(() => { if (alive) setStatus('Não deu para ler. Digite a data'); });
     })();
   });
   promise.stop = () => stop();

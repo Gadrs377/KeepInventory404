@@ -98,7 +98,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   function scanPage({ asRoot = false } = {}) {
     const el = page(`
       <div class="exp-cam"></div>
-      <button type="button" class="btn exp-alt" data-type>${icon('keyboard')}Digitar a data</button>`, 'exp-scan');
+      <div class="exp-bar"><button type="button" class="btn exp-alt" data-type>${icon('keyboard')}<span>Digitar a data</span></button></div>`, 'exp-scan');
     let reading = null;
     let evidence = null;
     const typeBtn = $('[data-type]', el);
@@ -109,6 +109,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       const t0 = performance.now();
       visit = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, at: new Date().toISOString(), saved: false };
       const cam = readExpiryWithCamera($('.exp-cam', el), {
+        // "Tirar foto" entra na barra, ao lado de "Digitar a data".
+        bar: $('.exp-bar', el),
         skip: [...confirmed, ...lots.map((l) => l.expiresAt)],
         onEvidence: (value) => { evidence = value; },
         onBestPhoto: (url) => { bestPhoto = url; },

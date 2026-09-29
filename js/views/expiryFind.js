@@ -52,6 +52,7 @@ export function createFindPanel(host, { onRead, onType, note = () => {} }) {
   const failEl = $('[data-find-fail]', host);
   const cropImg = $('[data-find-crop]', host);
   const yesBtn = $('[data-find-yes]', host);
+  const noneBtn = $('[data-find-none]', host);
   const others = $('[data-find-others]', host);
   const strip = $('[data-find-strip]', host);
 
@@ -84,6 +85,7 @@ export function createFindPanel(host, { onRead, onType, note = () => {} }) {
     const guessing = !!region && region === selected.guess && !selected.guessFailed;
     title.textContent = guessing ? 'A validade está aqui?' : 'Toque onde está a validade';
     yesBtn.hidden = !guessing || busy;
+    noneBtn.textContent = photos.length > 1 ? 'Não está em nenhuma' : 'Não está aqui';
     if (!busy && failEl.hidden) noteEl.textContent = guessing ? 'Não? Toque onde ela está.' : '';
     const rest = photos.filter((p) => p !== selected);
     others.hidden = !rest.length;
@@ -143,7 +145,7 @@ export function createFindPanel(host, { onRead, onType, note = () => {} }) {
     note('find-switch', { foto: selected.id });
     render();
   });
-  $('[data-find-none]', host).addEventListener('click', () => {
+  noneBtn.addEventListener('click', () => {
     if (busy) return;
     dismissed = true;
     note('find-none', { fotos: photos.length });

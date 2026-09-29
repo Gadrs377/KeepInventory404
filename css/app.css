@@ -1930,6 +1930,7 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
   padding: 8px 14px; border-radius: 999px;
   background: rgba(22, 24, 23, 0.86); color: #F1F2F0;
   font-size: 0.8824rem; font-weight: 600; text-align: center; text-wrap: balance;
+  font-variant-numeric: tabular-nums; /* "Preparando o leitor (1ª vez) 45%" */
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .exp-status { background: #161817; } }
 
@@ -2167,36 +2168,32 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-pick-count:empty { display: none; }
 .exp-pick.is-likely { background: color-mix(in oklab, var(--mode, var(--ink)) 18%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--mode, var(--ink)) 55%, transparent); }
 
-/* "Vi 11/08/2027 em 4 imagens. É a validade?" */
+/* "11/08/2027 é a validade?". Cartão com respiro de 8 em volta dos botões
+   (raio 14): 14 + 8 = 22, concêntrico. */
 .exp-ask {
-  display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding: 14px 16px; border-radius: 20px;
+  display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 8px; border-radius: 22px;
   background: color-mix(in oklab, var(--mode, var(--ink)) 10%, transparent);
   animation: fade-in 400ms var(--ease);
 }
 .exp-ask[hidden] { display: none; }
-.exp-ask-text { margin: 0; font-weight: 600; text-align: center; text-wrap: balance; }
+.exp-ask-text { margin: 0; padding: 8px 8px 2px; font-weight: 600; text-align: center; text-wrap: balance; font-variant-numeric: tabular-nums; }
 .exp-ask-actions { display: flex; gap: 8px; }
 .exp-ask-actions .btn { flex: 1; }
 @media (prefers-reduced-motion: reduce) { .exp-ask { animation: none; } }
 
-/* Depois de um tempo sem confirmar: sugere inclinar a caixa ou mudar a luz
-   (ajuda com relevo/reflexo) e o botão de foto parada. Entra suave, no mesmo
-   espírito das cápsulas de data acima. */
-.exp-struggle {
+/* "A validade está aqui?": a melhor foto com o palpite marcado (o resto
+   escurece), toque para corrigir, e as outras fotos numa fileira */
+/* Cartão próprio, como a pergunta: respiro 8, raio 22, a foto com 14. */
+.exp-find {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  margin-top: 14px; padding: 14px 16px; border-radius: 20px;
+  margin-top: 12px; padding: 8px 8px 12px; border-radius: 22px;
   background: color-mix(in oklab, var(--ink) 5%, transparent);
   animation: fade-in 400ms var(--ease);
 }
-.exp-struggle-hint { margin: 0; color: var(--ink-2); font-size: 0.8235rem; text-align: center; text-wrap: pretty; }
-@media (prefers-reduced-motion: reduce) { .exp-struggle { animation: none; } }
-/* A câmera admitiu que a embalagem está difícil: o texto fica mais presente */
-.exp-struggle.is-hard .exp-struggle-hint { color: var(--ink); font-weight: 600; }
-/* "A validade está aqui?": a melhor foto com o palpite marcado (o resto
-   escurece), toque para corrigir, e as outras fotos numa fileira */
-.exp-find { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .exp-find { animation: none; } }
+.sheet-page > .exp-find { margin-top: 0; } /* na folha, o espaço entre as partes já é o gap */
 .exp-find[hidden] { display: none; }
-.exp-find-title { margin: 0; font-weight: 700; text-align: center; text-wrap: balance; }
+.exp-find-title { margin: 0; padding-top: 6px; font-weight: 700; text-align: center; text-wrap: balance; }
 .exp-find-frame { position: relative; display: inline-block; max-width: 100%; line-height: 0; border-radius: 14px; overflow: hidden; outline: 1px solid var(--img-outline, transparent); outline-offset: -1px; }
 .exp-find-img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; cursor: crosshair; touch-action: manipulation; }
 .exp-find-box {
@@ -2214,17 +2211,31 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-find-note:empty { display: none; }
 .exp-find-fail { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .exp-find-fail[hidden] { display: none; }
-.exp-find-crop { display: block; max-width: 100%; max-height: 120px; border-radius: 10px; image-rendering: auto; }
-.exp-find-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.exp-find-crop { display: block; max-width: 100%; max-height: 120px; border-radius: 10px; image-rendering: auto; outline: 1px solid var(--img-outline); outline-offset: -1px; }
+.exp-find-actions { align-self: stretch; display: flex; gap: 8px; }
+.exp-find-actions .btn { flex: 1; }
+.exp-find-actions .btn[hidden] { display: none; }
 .exp-find-others { align-self: stretch; display: flex; flex-direction: column; gap: 6px; }
 .exp-find-others[hidden] { display: none; }
 .exp-find-strip { display: flex; gap: 8px; justify-content: center; }
-.exp-find-thumb { width: 64px; height: 64px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--shelf); cursor: pointer; }
+.exp-find-thumb { width: 64px; height: 64px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--shelf); cursor: pointer; outline: 1px solid var(--img-outline); outline-offset: -1px; transition-property: scale; transition-duration: 150ms; }
 .exp-find-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.exp-find-thumb:active { scale: 0.95; }
+.exp-find-thumb:active { scale: 0.96; }
 /* Piscar branco quando a foto automática é tirada (o js anima a opacidade) */
 .exp-shutter { position: absolute; inset: 0; z-index: 1; background: #fff; opacity: 0; pointer-events: none; }
-/* "Digitar a data" vira o caminho sugerido quando a câmera desiste */
+/* As saídas da câmera, sempre no mesmo lugar e sempre à vista: "Tirar foto"
+   (a câmera do celular) e "Digitar a data", lado a lado. Nada aparece ou
+   some: o caminho que a câmera recomenda só ganha fundo. */
+.exp-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.exp-cam .exp-bar { margin-top: 12px; }
+.exp-bar .exp-alt {
+  flex: 0 1 auto; padding-inline: 20px; border-radius: 999px;
+  transition-property: scale, background-color; transition-duration: 150ms; transition-timing-function: var(--ease);
+}
+/* Na barra o destaque é só o fundo (o respiro já é o mesmo): nada se mexe. */
+.exp-bar .exp-alt.is-suggested { animation: none; }
+.exp-bar .exp-alt .icon { width: 20px; height: 20px; }
+/* "Tirar foto" ou "Digitar a data" vira o caminho sugerido */
 .exp-alt.is-suggested {
   padding-inline: 20px; border-radius: 999px;
   background: color-mix(in oklab, var(--mode, var(--ink)) 13%, transparent);

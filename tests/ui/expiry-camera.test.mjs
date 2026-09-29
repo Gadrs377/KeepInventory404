@@ -57,7 +57,7 @@ test('data sem rótulo vista várias vezes vira pergunta; "Não" guarda o botão
   const cam = await openExpirySheet(server, { ocr: { fallback: '11/08/27 CC22326', delay: 150 } });
   try {
     await cam.page.waitForSelector('.exp-ask:not([hidden])', { timeout: 30000 });
-    assert.match(await cam.page.$eval('.exp-ask-text', (e) => e.textContent), /Li 11\/08\/2027 mais de uma vez\. É a validade\?/);
+    assert.match(await cam.page.$eval('.exp-ask-text', (e) => e.textContent), /11\/08\/2027 é a validade\?/);
     assert.match(await cam.status(), /Confira a data abaixo/);
     // Nunca confirma sozinha: sem rótulo, só a pessoa decide.
     assert.equal(await cam.page.$('.exp-confirm-date'), null);
@@ -100,7 +100,8 @@ test('digitar já vem com a data mais vista, selecionada', async () => {
 test('embalagem difícil: fotos automáticas, aviso, digitar olhando a melhor foto', async () => {
   const cam = await openExpirySheet(server);
   try {
-    await cam.page.waitForSelector('.exp-struggle.is-hard', { timeout: 120000 });
+    await cam.page.waitForSelector('.exp-cam[data-state="dificil"]', { timeout: 120000 });
+    assert.ok(await cam.page.$eval('[data-photo]', (e) => e.classList.contains('is-suggested')), 'Tirar foto em destaque');
     assert.ok(await cam.page.evaluate(() => window.__shutters) >= 1, 'tirou foto automática');
     assert.ok(await cam.page.$eval('[data-type]', (e) => e.classList.contains('is-suggested')));
     await cam.page.click('[data-type]');
@@ -123,7 +124,7 @@ test('embalagem difícil: fotos automáticas, aviso, digitar olhando a melhor fo
 test('foto do celular: vira botão e abre o painel; "Sim" lê só o pedaço e confirma', async () => {
   const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 }, paddle: 'real' });
   try {
-    await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
+    await cam.page.waitForSelector('.exp-bar [data-photo]', { timeout: 30000 });
     const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
     assert.equal(await (await chooser.element()).getAttribute('capture'), 'environment');
     await chooser.setFiles(await bigPhoto(cam.page));
@@ -145,7 +146,7 @@ test('foto do celular: vira botão e abre o painel; "Sim" lê só o pedaço e co
 test('painel: tocar longe da data mostra "Não consegui ler aí" com o pedaço e Digitar', async () => {
   const cam = await openExpirySheet(server, { ocr: { photoWidth: 99999 }, paddle: 'real' });
   try {
-    await cam.page.waitForSelector('.exp-struggle:not([hidden])', { timeout: 30000 });
+    await cam.page.waitForSelector('.exp-bar [data-photo]', { timeout: 30000 });
     const [chooser] = await Promise.all([cam.page.waitForEvent('filechooser'), cam.page.click('[data-photo]')]);
     await chooser.setFiles(await bigPhoto(cam.page));
     await cam.page.waitForSelector('.exp-find:not([hidden]) [data-find-yes]:not([hidden])', { timeout: 180000 });
@@ -160,7 +161,7 @@ test('painel: tocar longe da data mostra "Não consegui ler aí" com o pedaço e
   } finally { await cam.close(); }
 });
 
-for (const [video, re] of [['dark', /escuro/], ['glare', /reflexo/], ['plain', /Segure parado/]]) {
+for (const [video, re] of [['dark', /Pouca luz/], ['glare', /reflexo/], ['plain', /Segure parado/]]) {
   test(`aviso de imagem: ${video}`, async () => {
     const cam = await openExpirySheet(server, { video });
     try {
@@ -189,8 +190,8 @@ test('texto na mira e nenhuma data: sugere a foto do celular cedo', async () => 
   const cam = await openExpirySheet(server, { ocr: { fallback: 'LOTE ABC FAB', delay: 150 } });
   try {
     await cam.page.waitForSelector('[data-photo].is-suggested', { timeout: 40000 });
-    assert.match(await cam.page.$eval('.exp-struggle-hint', (e) => e.textContent), /Tire uma foto com a câmera do celular/);
-    assert.equal(await cam.page.$('.exp-struggle.is-hard'), null, 'ainda não é a mensagem de "difícil"');
+    assert.match(await cam.page.$eval('.exp-status', (e) => e.textContent), /Tire uma foto com o celular/);
+    assert.equal(await cam.page.$eval('.exp-cam', (e) => e.dataset.state), 'foto', 'ainda não é o "difícil"');
     noErrors(cam.errors);
   } finally { await cam.close(); }
 });

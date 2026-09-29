@@ -1493,3 +1493,33 @@ Nos vídeos, no Chromium: copo confirmou em 12 s (era 21), chocolate em 36 s
 vez, a lata sugeriu a foto aos 24 s. Os testes de interface simulam o Paddle
 small (worker falso por `BroadcastChannel`, `tests/ui/harness.mjs`) e têm um
 teste para a câmera sem Paddle (cai para o Tesseract). `sw.js` v74.
+
+## Versão 3.56: a tela da câmera, arrumada
+
+A tela de validade tinha ficado com coisa demais, e as partes brigavam:
+
+- **Duas instruções ao mesmo tempo.** A cápsula sobre o vídeo dizia uma coisa
+  ("Segure parado, com a data dentro da mira") e o texto embaixo, outra
+  ("Incline a embalagem…", "Tire uma foto…"). Agora há uma instrução só, na
+  cápsula, curta (cabe numa linha), escolhida por `idleText()` conforme o
+  momento: "Aponte para a validade" → "Incline a embalagem devagar" / "Mude a
+  luz de lado" → "Tire uma foto com o celular" → "Mostre a validade na foto
+  abaixo". Avisos de imagem ("Pouca luz…", "Reflexo na data…", "Segure
+  parado") entram por cima só antes da foto ser sugerida. As fotos
+  automáticas não trocam mais o texto ("Lendo a foto"): o piscar branco basta.
+- **O botão da foto aparecia tarde e ficava escondido.** "Tirar foto" agora
+  está sempre à vista, numa barra fixa ao lado de "Digitar a data", logo
+  abaixo das datas (a câmera põe o botão na barra da folha, opção `bar`). O
+  painel "A validade está aqui?" abre embaixo da barra, então nada empurra os
+  botões para fora da tela. O caminho recomendado (foto, ou foto e digitar
+  quando está difícil) só ganha fundo; o respiro é o mesmo, nada se mexe.
+- **Cartões concêntricos.** A pergunta e o painel são cartões de raio 22 com
+  respiro 8, os botões de dentro têm raio 14 (14 + 8 = 22), a foto do painel
+  também. Os botões do painel ("Sim", "Não está aqui") dividem a largura como
+  os da pergunta. Miniaturas e o pedaço ampliado ganharam o contorno de 1 px
+  das imagens; o toque nas miniaturas usa 0,96, como o resto do app.
+- **Textos:** "11/08/2027 é a validade?" (a data e a contagem já estão no
+  botão logo acima); "Não está aqui" quando só há uma foto; porcentagem da
+  preparação com números de largura fixa.
+- O estado vai em `data-state` na câmera ('' | 'dica' | 'foto' | 'dificil'),
+  usado pelos testes. `sw.js` v75.
