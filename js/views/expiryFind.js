@@ -172,7 +172,7 @@ export function createFindPanel(host, { onRead, onType, note = () => {} }) {
         URL.revokeObjectURL(drop.url);
       }
       if (select || !selected) { selected = photo; dismissed = false; }
-      note('find-photo', { foto: photo.id, origem: photo.source, palpite: !!photo.guess, fotos: photos.length });
+      note('find-photo', { foto: photo.id, origem: photo.source, palpite: !!photo.guess, fotos: photos.length, tamanho: `${photo.w}×${photo.h}` });
       render();
       return true;
     },

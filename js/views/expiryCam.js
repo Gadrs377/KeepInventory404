@@ -99,6 +99,23 @@ function aimBox(video, aim) {
   return { x: clamp(x), y: clamp(y), w: Math.min(w, 1 - clamp(x)), h: Math.min(h, 1 - clamp(y)) };
 }
 
+// A parte do quadro que aparece na tela (o vídeo preenche a caixa cortando
+// as sobras): em pé, no iPhone, uns 42% da altura, no meio.
+function visibleBox(video) { return aimBox(video, video); }
+
+// Recorta a faixa `box` (normalizada) de uma imagem, em resolução cheia.
+// Largura inteira: só corta em cima e embaixo. null se não há o que cortar.
+function cropBand(source, box) {
+  if (!box || box.h >= 0.98) return null;
+  const W = source.width; const H = source.height;
+  const y0 = Math.max(0, Math.floor(box.y * H)); const y1 = Math.min(H, Math.ceil((box.y + box.h) * H));
+  if (y1 - y0 < 16) return null;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = y1 - y0;
+  c.getContext('2d').drawImage(source, 0, y0, W, y1 - y0, 0, 0, W, y1 - y0);
+  return c;
+}
+
 // A foto do ImageCapture costuma ter outra proporção que o vídeo (4:3 contra
 // 16:9): o vídeo é um recorte central do mesmo sensor. Leva a mira para a foto.
 function mapBox(box, vw, vh, pw, ph) {
@@ -561,14 +578,21 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           // takePhoto() pode nunca responder se a trilha cair no meio.
           const blob = await Promise.race([new ImageCapture(track).takePhoto(), pause(3000).then(() => { throw new Error('foto demorou'); })]);
           const photo = await createImageBitmap(blob);
-          return { still: photo, blob, how: `foto ${photo.width}×${photo.height}`, box: mapBox(box, video.videoWidth, video.videoHeight, photo.width, photo.height) };
+          // Foto deitada com o vídeo em pé (ou o contrário): não dá para
+          // saber para que lado girou, e a mira cairia no lugar errado.
+          if ((photo.width > photo.height) !== (video.videoWidth > video.videoHeight)) {
+            if (photo.close) photo.close();
+            throw new Error(`foto ${photo.width}×${photo.height} em outra orientação`);
+          }
+          const map = (b) => mapBox(b, video.videoWidth, video.videoHeight, photo.width, photo.height);
+          return { still: photo, blob, how: `foto ${photo.width}×${photo.height}`, box: map(box), view: map(visibleBox(video)) };
         } catch { /* segue com o quadro do vídeo */ }
       }
       if (!video.videoWidth) return null;
       const frame = document.createElement('canvas');
       frame.width = video.videoWidth; frame.height = video.videoHeight;
       frame.getContext('2d').drawImage(video, 0, 0);
-      return { still: frame, how: `quadro ${frame.width}×${frame.height}`, box };
+      return { still: frame, how: `quadro ${frame.width}×${frame.height}`, box, view: visibleBox(video) };
     }
 
     // Lê uma foto: Tesseract primeiro, depois o Paddle rápido (small). Todos os
@@ -642,7 +666,12 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
           setStatus(shown.size ? 'Toque na validade certa ou continue apontando' : 'Mantenha a validade na mira');
           return;
         }
-        const pooled = { ...(await addPhotoToPool(shot.still, 'auto', score, false, shot.blob || null)), still: shot.still };
+        // Para o painel e o palpite, só a faixa que aparecia na tela (sem o
+        // que ficava cortado em cima e embaixo): o leitor rápido procura a
+        // validade só ali, e a faixa cabe nos 1600 px quase sem reduzir (a
+        // foto inteira em pé perdia mais da metade dos pixels).
+        const band = cropBand(shot.still, shot.view);
+        const pooled = { ...(await addPhotoToPool(band || shot.still, 'auto', score, false, band ? null : shot.blob || null)), still: band || shot.still };
         if (!alive) return;
         recordCandidates(pooled.candidates, photoEvidence, photoSource(seq));
         // Recorte automático: onde o rápido acha que está a validade, o

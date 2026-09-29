@@ -1441,3 +1441,22 @@ Da tela de testes no iPhone (iOS 27, app instalado):
   tocada à mão (confirmou sem "confirmed" no registro) e não contam.
 
 `sw.js` v71.
+
+## Versão 3.54: a foto automática é só a faixa da tela
+
+Ideia de quem usa: a mira fica no meio, na vertical; o que fica cortado em
+cima e embaixo da tela não precisa ser procurado. Até aqui, cada foto
+automática ia inteira para o painel e para o leitor rápido achar as linhas
+(o palpite de onde está a validade), reduzida a 1600 px: em pé, o quadro 4K
+(2160×3840) virava 900×1600, e o texto chegava ao leitor com 42% do tamanho.
+
+Agora a foto automática é cortada na faixa que aparecia na tela (largura
+inteira, `visibleBox` + `cropBand`): em pé, uns 42% da altura. O quadro 4K
+vira 2160×~1600, que cabe nos 1600 px com 74% do tamanho, e o leitor só
+procura ali. O painel também mostra só essa faixa, que é o que a pessoa via.
+A foto do celular (botão da câmera) continua inteira: ali a pessoa enquadrou.
+A foto do ImageCapture deitada com o vídeo em pé (ou o contrário) não é
+usada: não dá para saber para que lado girou. `sw.js` v73.
+
+Com o vídeo do copo inteiro, em pé (1080×1600): as fotos foram para o painel
+como 1080×608, o palpite achou a validade e confirmou 17/09/2026.
