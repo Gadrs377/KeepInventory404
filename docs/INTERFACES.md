@@ -1601,3 +1601,11 @@ tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
   souber, o campo "Onde fica" fica âmbar (`--val-soft`) com "Não tenho
   certeza. Confira onde fica.", que some ao tocar num ambiente.
 - Testes: `tests/areas.test.mjs`, `tests/ui/area.test.mjs`. `sw.js` v78.
+
+## Versão 3.61: produto que ninguém tem, pela web
+
+- **Código:** quando lojas e catálogos não conhecem, o repassador procura o
+  número na web (SYSTEM_DESIGN 5.4). O app espera até 20 s (antes 12 s).
+- **Foto:** com menos de 3 sugestões das lojas, entram até 3 da web (Cosmos e
+  Systax), com o código de barras, no fim da lista "Qual destes?".
+- `sw.js` v79.

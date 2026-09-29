@@ -262,6 +262,27 @@ e, se o Worker tiver a chave, **Cosmos** (`COSMOS_TOKEN`) e **Kodebar**
 Catálogo devolve nome em maiúsculas de cupom; o Worker passa para letra de
 frase e devolve sem foto nem categoria.
 
+**Web (Tavily), o último recurso.** Com a chave `TAVILY_API_KEY` (1.000
+créditos grátis por mês; sem ela, modo sem chave com limite):
+
+- **Pelo código:** só depois que lojas e catálogos não acharam, e só se o
+  dígito verificador estiver certo (leitura errada não gasta). Busca o número;
+  vale a página com o código exato no título ou no endereço (só no texto pegou
+  um PDF de prefeitura). Básica (1 crédito) e, se não achar e ainda couber no
+  tempo, avançada (2). O repassador termina em até 17 s; o app espera 20 s.
+  Medido: pistache Bom Princípio (5 s no total) e sabonete Maran, que ninguém
+  mais tinha. Código que não existe: ~9 s até dizer que não achou.
+- **Pela foto:** se as lojas trouxerem menos de 3 sugestões, busca marca,
+  produto, variante e tamanho só no Cosmos e no Systax (põem o código no
+  endereço). Marca obrigatória e 3 de 4 palavras no título ("SAB" vale por
+  sabonete; "500gr" por 500g). Medido com 11 embalagens: em 6 o produto
+  certo veio entre as sugestões (Maran, Orquídea integral, Ypê, Veja, Nescau,
+  Tirolez), às vezes ao lado da versão light; 5 vazias (Bom Princípio,
+  Fescopan, Camil, Neosaldina e o espaguete Santa Amália, cujo torteloni não
+  passa). Entra no fim da lista, marcado `web: true`: é sugestão, nunca
+  decide sozinho.
+- Tudo que a web acha entra no catálogo próprio (5.5): a segunda vez não gasta.
+
 Fontes avaliadas:
 
 | Fonte | Como acessa | Resultado |

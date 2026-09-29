@@ -141,6 +141,12 @@ export default {
           const read = await identify(env.AI, image, model);
           // Já devolve as sugestões das lojas, para o celular fazer uma chamada só.
           read.results = await searchCascade(read, (q) => cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)).then((r) => r.json()));
+          // Lojas acharam pouco: a web pelo que a foto mostra (entra no fim da lista).
+          if (read.results.length < 3) {
+            const web = await searchWeb(read, env).catch(() => []);
+            for (const p of web) if (!read.results.some((x) => x.ean === p.ean)) read.results.push({ ...p, web: true });
+            if (web.length && env.CATALOG) ctx.waitUntil(catalogLearn(env.CATALOG, web).catch(() => {}));
+          }
           return withCors(json(read), allowed);
         }
         default:
@@ -177,6 +183,7 @@ export async function lookup(ean, env = {}, ctx = null) {
 }
 
 async function lookupLive(ean, env) {
+  const t0 = Date.now();
   const found = await lookupStores(ean);
   if (found.found) return found;
   const catalogs = [lookupCadastroProduto(ean), lookupSystax(ean)];
@@ -186,9 +193,20 @@ async function lookupLive(ean, env) {
     return { found: true, product: await Promise.any(catalogs) };
   } catch {
     // Último recurso: o código na web (atacadistas, lojas pequenas, catálogos).
-    const web = await lookupWeb(ean, env).catch(() => null);
+    // Só depois dos catálogos, para gastar a cota só com o que ninguém tem.
+    // Código com dígito verificador errado é leitura errada: não gasta.
+    if (!gtinOk(ean)) return { found: false };
+    const web = await lookupWeb(ean, env, t0).catch(() => null);
     return web ? { found: true, product: web } : { found: false };
   }
+}
+
+export function gtinOk(code) {
+  const d = [...String(code)].map(Number);
+  if (d.length < 8 || d.some(Number.isNaN)) return false;
+  const check = d.pop();
+  const sum = d.reverse().reduce((a, x, i) => a + x * (i % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === check;
 }
 
 // ---------- Código de barras na web (Tavily) ----------
@@ -196,31 +214,94 @@ async function lookupLive(ean, env) {
 // EXATO (13 ou 14 dígitos) no título ou no endereço. Medido com
 // dois códigos que nenhuma loja tinha: pistache Bom Princípio (Fescopan,
 // Cosmos) e sabonete Maran (Martins Atacado, Cosmos). Com TAVILY_API_KEY usa a
-// cota grátis da conta (1.000 por mês); sem ela, o modo sem chave, com limite.
-export async function lookupWeb(ean, env = {}) {
+// cota grátis da conta (1.000 créditos por mês); sem ela, o modo sem chave.
+const WEB_TIMEOUT = 6000;
+// O app espera 20 s pelo /lookup; a busca avançada só começa se ainda couber.
+const LOOKUP_BUDGET = 17000;
+
+async function tavilySearch(env, query, depth, extra = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (env.TAVILY_API_KEY) headers.Authorization = `Bearer ${env.TAVILY_API_KEY}`;
   else headers['X-Tavily-Access-Mode'] = 'keyless';
-  // A busca básica às vezes não traz a página; a avançada (2 créditos) só
-  // entra quando a básica não achou.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), WEB_TIMEOUT);
+  try {
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ query, max_results: 10, search_depth: depth, ...extra }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function lookupWeb(ean, env = {}, t0 = Date.now()) {
+  // A busca básica (1 crédito) às vezes não traz a página; a avançada (2) só
+  // entra quando a básica não achou e ainda dá tempo.
   for (const depth of ['basic', 'advanced']) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const res = await fetch('https://api.tavily.com/search', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ query: ean, max_results: 10, search_depth: depth }),
-        signal: ctrl.signal,
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const found = pickWebProduct(await res.json(), ean);
-      if (found) return { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
-    } finally {
-      clearTimeout(timer);
-    }
+    if (depth === 'advanced' && Date.now() - t0 + WEB_TIMEOUT > LOOKUP_BUDGET) break;
+    const found = pickWebProduct(await tavilySearch(env, ean, depth), ean);
+    if (found) return { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
   }
   return null;
+}
+
+// ---------- Produto na web pelo que a foto mostra ----------
+// Quando as lojas não acham o que a IA leu na embalagem, procura o nome nos
+// catálogos de código de barras da web (Cosmos e Systax, que põem o código no
+// endereço de cada produto). Cada página ganha nota pelas palavras da foto que
+// aparecem no título (tipo, sabor, tamanho; "SAB" vale por "sabonete"), e a
+// marca é obrigatória. Pode vir parecido e não igual, por isso é só sugestão.
+const WEB_EAN_SITES = ['cosmos.bluesoft.com.br', 'systax.com.br'];
+
+export async function searchWeb(read, env = {}) {
+  const q = [read.brand, read.product, read.variant, read.size].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim() || read.query || '';
+  if (tokensOf(q).length < 2) return [];
+  const data = await tavilySearch(env, q, 'basic', { include_domains: WEB_EAN_SITES, max_results: 10 });
+  return pickWebByName(data, read);
+}
+
+// Palavras sem acento; "500gr", "500 g" e "500g" viram "500".
+function webWords(s) {
+  return normalize(s).replace(/(\d)[,.](\d)/g, '$1$2').replace(/(\d+)\s*(g|gr|grs|kg|ml|l|lt|un)\b/g, '$1')
+    .split(/[^a-z0-9]+/).filter((w) => w.length >= 2 && !['de', 'da', 'do', 'em', 'com', 'para', 'sabor'].includes(w));
+}
+
+// Uma palavra da foto está no título se for igual, ou se uma for começo da
+// outra com 3 letras ou mais (nome de cupom: "sab", "cobert", "achoc").
+function hasWord(title, w) {
+  return title.some((t) => t === w || (/\D/.test(w) && Math.min(t.length, w.length) >= 3 && (t.startsWith(w) || w.startsWith(t))));
+}
+
+export function pickWebByName(data, read = {}) {
+  const brand = webWords(read.brand || '');
+  const rest = webWords([read.product, read.variant, read.size].filter(Boolean).join(' ')).filter((w) => !brand.includes(w));
+  const out = [];
+  for (const r of (data && data.results) || []) {
+    const m = String(r.url || '').match(/\/(?:produtos|ean)\/0?(\d{13})(?!\d)/);
+    if (!m || !gtinOk(m[1]) || out.some((p) => p.ean === m[1])) continue;
+    const ean = m[1];
+    let host = '';
+    try { host = new URL(r.url).hostname.replace(/^www\./, ''); } catch { continue; }
+    const title = decodeEntities(r.title || '');
+    const words = webWords(title.replace(/^Systax\s*-\s*/i, ''));
+    // Marca: basta uma palavra dela com 4 letras ou mais ("Sta Amália", "B Princípio").
+    const strong = brand.filter((w) => w.length >= 4);
+    if (brand.length && !(strong.length ? strong : brand).some((w) => hasWord(words, w))) continue;
+    const hit = rest.filter((w) => hasWord(words, w)).length;
+    const score = rest.length ? hit / rest.length : 1;
+    // 3 de 4 palavras: o torteloni Santa Amália (2 de 3) não passa por espaguete.
+    if (score < 0.75) continue;
+    const name = cleanWebTitle(title.replace(/^Systax\s*-\s*/i, ''), ean);
+    if (name.replace(/[^\p{L}]/gu, '').length < 4) continue;
+    out.push({ ...catalogProduct(name, read.brand || '', ean, host), score });
+  }
+  out.sort((x, y) => y.score - x.score);
+  return out.slice(0, 3).map(({ score, ...p }) => p);
 }
 
 // Das páginas achadas, a melhor que cita o código exato. O título vira o nome:
