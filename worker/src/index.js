@@ -99,6 +99,13 @@ export default {
         }
         case '/diag':
           return withCors(json(await diag()), allowed);
+        // Experimento (não usado pelo app): o Preço da Hora Bahia responde
+        // a partir da Cloudflare? Ver docs/INTERFACES.md, versão 3.59.
+        case '/diag/precodahora': {
+          const gtin = (url.searchParams.get('gtin') || '').trim();
+          if (!/^\d{8,14}$/.test(gtin)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
+          return withCors(json(await precoDaHora(gtin)), allowed);
+        }
         case '/identify': {
           if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
           const body = await request.json().catch(() => null);
@@ -276,6 +283,54 @@ function parseJsonLoose(text) {
 // Não têm foto boa nem categoria de loja: devolvem nome, marca e tamanho, que
 // é o que o app precisa. Os nomes vêm em maiúsculas de cupom ("ARROZ TIPO 1
 // CAMIL 1KG") e ficam com letra de frase.
+
+// Preço da Hora Bahia (SEFAZ-BA): preços e descrições tiradas das notas
+// fiscais emitidas no estado nas últimas 72 horas, pelo código de barras.
+// Sem chave: o site dá um token numa página e aceita a busca com ele.
+// Experimento; devolve o diagnóstico inteiro (tempos, status, descrições).
+export async function precoDaHora(gtin, { lat = -12.97, lon = -38.5 } = {}) {
+  const base = 'https://precodahora.ba.gov.br';
+  const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1';
+  const out = { gtin };
+  const t0 = Date.now();
+  try {
+    const page = await fetch(`${base}/produtos/`, { headers: { 'User-Agent': ua } });
+    out.pageStatus = page.status;
+    const html = await page.text();
+    const token = (/id="validate"[^>]*data-id="([^"]+)"/.exec(html) || [])[1] || '';
+    const setCookies = typeof page.headers.getSetCookie === 'function' ? page.headers.getSetCookie() : [page.headers.get('set-cookie') || ''];
+    const cookie = setCookies.map((c) => c.split(';')[0]).filter(Boolean).join('; ');
+    out.token = !!token; out.pageMs = Date.now() - t0;
+    const form = new URLSearchParams({
+      termo: '', gtin, cnpj: '', horas: '72', anp: '', codmun: '', latitude: String(lat), longitude: String(lon), raio: '15',
+      precomax: '0', precomin: '0', pagina: '1', ordenar: 'preco.asc', categorias: '', processo: 'carregar',
+      totalCategorias: '', totalRegistros: '0', totalPaginas: '0', pageview: 'lista',
+    });
+    const t1 = Date.now();
+    const res = await fetch(`${base}/produtos/`, {
+      method: 'POST',
+      headers: {
+        'User-Agent': ua, 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest', Cookie: cookie,
+        Referer: `${base}/produtos/`, Origin: base, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      },
+      body: form.toString(),
+    });
+    out.searchStatus = res.status; out.searchMs = Date.now() - t1;
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch { out.body = text.slice(0, 200); }
+    const rows = (data && data.resultado) || [];
+    const count = new Map();
+    for (const r of rows) { const d = r && r.produto && r.produto.descricao; if (d) count.set(d, (count.get(d) || 0) + 1); }
+    out.found = rows.length > 0;
+    out.rows = rows.length;
+    out.descriptions = [...count.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  } catch (err) {
+    out.error = String(err && err.message || err);
+  }
+  out.ms = Date.now() - t0;
+  return out;
+}
 
 async function fetchText(url, headers = {}, timeout = STORE_TIMEOUT) {
   const ctrl = new AbortController();
