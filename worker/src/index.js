@@ -154,8 +154,9 @@ export default {
 
 // Código de barras: primeiro as lojas (nome completo, foto e categoria). Se
 // nenhuma conhece, os catálogos de código de barras (seção 5.4 do system design):
-// CadastroProduto (página pública, 945 mil produtos) e, quando o Worker tem a
-// chave, Cosmos (Bluesoft, 25 consultas grátis por dia) e Kodebar (50 por dia).
+// CadastroProduto (página pública, 945 mil produtos), Systax (página pública
+// com nome e NCM) e, quando o Worker tem a chave, Cosmos (Bluesoft, 25
+// consultas grátis por dia) e Kodebar (50 por dia).
 // Antes de tudo, o catálogo próprio; o que vem de fora entra nele.
 export async function lookup(ean, env = {}, ctx = null) {
   const db = env.CATALOG;
@@ -171,7 +172,7 @@ export async function lookup(ean, env = {}, ctx = null) {
 async function lookupLive(ean, env) {
   const found = await lookupStores(ean);
   if (found.found) return found;
-  const catalogs = [lookupCadastroProduto(ean)];
+  const catalogs = [lookupCadastroProduto(ean), lookupSystax(ean)];
   if (env.COSMOS_TOKEN) catalogs.push(lookupCosmos(ean, env.COSMOS_TOKEN));
   if (env.KODEBAR_KEY) catalogs.push(lookupKodebar(ean, env.KODEBAR_KEY));
   try {
@@ -353,6 +354,54 @@ export async function lookupCadastroProduto(ean) {
   return catalogProduct(decodeEntities(block.name), block.brand && decodeEntities(block.brand.name), ean, 'cadastroproduto.com.br');
 }
 
+// Página pública de classificação fiscal: https://www.systax.com.br/ean/{GTIN-14}.
+// Consulta pontual, só quando nenhuma loja conhece o código.
+export async function lookupSystax(ean) {
+  const gtin = ean.padStart(14, '0');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), STORE_TIMEOUT);
+  try {
+    const res = await fetch(`https://www.systax.com.br/ean/${gtin}`, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // A página vem em ISO-8859-1; ler como UTF-8 estragaria os acentos.
+    const latin = /charset=(iso-8859-1|latin1|windows-1252)/i.test(res.headers.get('content-type') || '');
+    const html = latin ? latin1(new Uint8Array(await res.arrayBuffer())) : await res.text();
+    const found = parseSystax(html, ean);
+    if (!found) throw new Error('não encontrado');
+    return { ...catalogProduct(found.name, '', ean, 'systax.com.br'), ncm: found.ncm };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Código que a Systax não tem: ela responde 200 com a página de um código
+// PARECIDO (pedido 7897500607265, pistache; veio 7897500607388, creme de avelã
+// da mesma marca). Só vale se o GTIN do produto principal da página (o bloco
+// "main_ean", antes dos "Produtos semelhantes") for o pedido, os dois com 14
+// dígitos; o endereço canônico da página também tem de ser o dele.
+export function parseSystax(html, ean) {
+  const want = String(ean).padStart(14, '0');
+  const start = html.indexOf('id="main_ean"');
+  if (start < 0) return null;
+  const end = html.indexOf('id="box_list_ean"', start);
+  const block = html.slice(start, end < 0 ? start + 20000 : end);
+  const gtin = (/GTIN\/EAN:\s*<a[^>]*>\s*(\d{8,14})\s*<\/a>/.exec(block) || [])[1];
+  if (!gtin || gtin.padStart(14, '0') !== want) return null;
+  const canonical = /<link rel="canonical" href="[^"]*\/ean\/(\d{8,14})/.exec(html);
+  if (canonical && canonical[1].padStart(14, '0') !== want) return null;
+  const h2 = (/<h2[^>]*>([\s\S]*?)<\/h2>/.exec(block) || [])[1] || '';
+  const name = decodeEntities(h2.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+  const ncm = (/\/classificacaofiscal\/ncm\/(\d{8})/.exec(block) || [])[1] || '';
+  return { name: name.charAt(0).toLocaleUpperCase('pt-BR') + name.slice(1), ncm };
+}
+
+function latin1(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+  return out;
+}
+
 export async function lookupCosmos(ean, token) {
   const data = JSON.parse(await fetchText(`https://api.cosmos.bluesoft.com.br/gtins/${ean}.json`, { 'X-Cosmos-Token': token, Accept: 'application/json' }));
   return catalogProduct(data.description, data.brand && data.brand.name, ean, 'cosmos.bluesoft.com.br');
@@ -364,7 +413,7 @@ export async function lookupKodebar(ean, key) {
 }
 
 function decodeEntities(s) {
-  return String(s || '').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  return String(s || '').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 }
 
 // "ARROZ AGULHINHA TIPO 1 CAMIL 1KG" -> "Arroz agulhinha tipo 1 Camil 1kg": letra de

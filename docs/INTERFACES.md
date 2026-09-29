@@ -1580,3 +1580,8 @@ Nada muda na tela; o código de barras é reconhecido mais vezes.
   enchido por um robô a cada minuto e pelo que as lojas acham ao vivo. O
   `/lookup` olha nele primeiro. ~25 bytes por produto. A resposta vem com
   `source: 'catalogo'`; o app trata como loja. Sem mudança no `sw.js`.
+- **Systax** como mais um catálogo de código de barras (depois das lojas, em
+  paralelo com o CadastroProduto): nome e NCM (`ncm` na resposta). A página
+  de um código que ela não tem mostra outro parecido com HTTP 200; só vale
+  quando o produto principal da página tem o mesmo GTIN pedido (14 dígitos).
+  Testes: `node test/systax.mjs` (com `REDE=1`, as páginas reais).

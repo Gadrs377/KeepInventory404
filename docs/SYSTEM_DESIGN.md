@@ -254,7 +254,8 @@ O que ficou de fora: polpas de fruta, kombucha e massas frescas de marcas
 regionais. O que o app já conhece não é consultado de novo.
 
 Cascata no Worker (`lookup`): lojas → se nenhuma achou, em paralelo,
-**CadastroProduto** (página pública com JSON-LD, 945 mil produtos, sem chave)
+**CadastroProduto** (página pública com JSON-LD, 945 mil produtos, sem chave),
+**Systax** (página pública de classificação fiscal, nome e NCM, sem chave)
 e, se o Worker tiver a chave, **Cosmos** (`COSMOS_TOKEN`) e **Kodebar**
 (`KODEBAR_KEY`). O Open Food Facts continua sendo consultado pelo celular.
 Catálogo devolve nome em maiúsculas de cupom; o Worker passa para letra de
@@ -268,6 +269,7 @@ Fontes avaliadas:
 | Open Food Facts | API aberta | 94/195 sozinho; só comida (36 mil produtos do Brasil) |
 | Open Beauty / Products Facts | API aberta | 0 e 3 de 195: quase sem produto brasileiro |
 | CadastroProduto | Página pública por código | 25/59 sozinho; +6 que ninguém tinha. Limita consultas seguidas (uso doméstico passa longe). Base completa em CSV: R$ 299, não compensa (cobre menos que as lojas) |
+| Systax | Página pública `systax.com.br/ean/{GTIN com 14 dígitos}` | 6 de 10 códigos difíceis, com nome e NCM (10/2026). Código que não tem: responde 200 com a página de um código **parecido** (pedido 7897500607265, pistache Bom Princípio; veio 7897500607388, creme de avelã da mesma marca). O Worker só aceita se o GTIN do bloco principal (`main_ean`) e o endereço canônico forem o pedido, com 14 dígitos; os "semelhantes" não contam. Página em ISO-8859-1, ~240 KB. Sem API pública confirmada: só consulta pontual, quando nenhuma loja conhece |
 | Cosmos (Bluesoft) | API com chave grátis, 25 consultas/dia | Maior catálogo brasileiro de GTIN. Não medido (precisa de conta) |
 | Kodebar | API com chave grátis, 50 consultas/dia | Base de PDVs reais. Não medido (precisa de conta) |
 | DotCompany | API com chave, créditos | 1,9 mi de itens, R$ 0,04 por consulta |
