@@ -484,6 +484,12 @@ export async function diag(env = {}) {
     chaves: { tavily: !!env.TAVILY_API_KEY, cosmos: !!env.COSMOS_TOKEN, kodebar: !!env.KODEBAR_KEY },
     // Foto reduzida (wsrv.nl) e busca na web, vistas daqui.
     fotoWeb: await probe(() => smallImageOk('https://cdn-cosmos.bluesoft.com.br/products/7896412802409')),
+    // Teste: a Cloudflare reduz a foto sozinha (cf.image, 5.000 por mês grátis)?
+    fotoCloudflare: await probe(async () => {
+      const res = await fetch('https://cdn-cosmos.bluesoft.com.br/products/7896412802409', { cf: { image: { width: 320, height: 320, fit: 'pad', background: '#FFFFFF', format: 'webp', quality: 85 } } });
+      const body = await res.arrayBuffer();
+      return { status: res.status, tipo: res.headers.get('content-type'), bytes: body.byteLength, resized: res.headers.get('cf-resized') };
+    }),
     buscaWeb: await probe(async () => { const d = await tavilySearch(env, '7897500607265', 'basic', { include_images: true, include_image_descriptions: true }); return { paginas: (d.results || []).length, imagens: (d.images || []).length, pistache: pickWebImages(d, 'Recheio cobert bom principio 1,01kg pistache').length }; }),
   };
 }
