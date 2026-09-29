@@ -1614,3 +1614,11 @@ tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
   internet. Fotos das lojas também em 320x320 (antes 200x200, borradas na
   folha do produto). A foto que a casa tira continua só no celular.
 - `sw.js` v80.
+
+## Versão 3.62: telemetria
+
+- O app registra sozinho aberturas, telas, erros, buscas (código, nome, foto
+  com IA, nota fiscal), cadastros (com o palpite de ambiente contra a escolha
+  final) e cada uso da câmera da validade, e manda em lote ao repassador
+  (SYSTEM_DESIGN 5.7). Nada muda na tela.
+- `sw.js` v81; `APP_VERSION` em `js/config.js` (igual, conferido em teste).

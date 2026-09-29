@@ -15,6 +15,7 @@ import { onChange, listProducts } from './store.js';
 import { loadAreaModel, setAreaHints } from './areas.js';
 import { unlockAudio } from './sound.js';
 import { enableSwipeBack } from './swipeBack.js';
+import { tel, telStart } from './telemetry.js';
 
 const ROUTES = [
   [/^\/?$/, mountArmario],
@@ -87,6 +88,7 @@ async function route() {
   swipedBack = false;
   if (prevPath !== null) scrollMem.set(prevPath, window.scrollY);
   const restoreY = kind === 'push' || kind === 'up' ? 0 : scrollMem.get(path) || 0;
+  if (prevPath !== path) tel('tela', { rota: path, de: prevPath });
   prevPath = path;
   rememberTab(path);
   closeMenu();
@@ -194,6 +196,7 @@ document.addEventListener('pointerdown', (e) => {
   el.style.setProperty('--press-y', `${e.clientY - r.top}px`);
 }, { passive: true });
 window.addEventListener('hashchange', route);
+telStart();
 onChange(() => refreshShopBadge());
 
 // Ambiente dos produtos novos: o modelo treinado com as lojas (carrega uma vez,

@@ -4,6 +4,7 @@
 
 import { productsByBarcode } from './store.js';
 import { API_URL } from './config.js';
+import { tel } from './telemetry.js';
 import { medByEan, medInfo } from './remedios.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
@@ -34,15 +35,32 @@ export function checkDigitOk(code) {
 // Resolve com { status: 'local', products } quando o código já está no armário
 // (um ou mais produtos), ou com o resultado de lookupRemote.
 export async function lookup(code) {
+  const t0 = performance.now();
   const local = code.startsWith('SEM-') ? [] : await productsByBarcode(code);
-  if (local.length) return { status: 'local', products: local };
+  if (local.length) {
+    tel('codigo', { codigo: code, status: 'local', nomes: local.slice(0, 3).map((p) => p.name), ms: Math.round(performance.now() - t0) });
+    return { status: 'local', products: local };
+  }
   return lookupRemote(code);
 }
+
+const photoKind = (url) => (!url ? '' : url.startsWith('data:') ? 'do celular' : url.includes('/foto/') ? 'guardada' : /vteximg|vtexassets/.test(url) ? 'loja' : /openfoodfacts/.test(url) ? 'off' : 'outra');
 
 // Resolve com { status: 'found' | 'notfound' | 'offline', info? }
 // Consulta Open Food Facts e as lojas (pelo repassador) ao mesmo tempo. As lojas
 // têm nomes completos em português e cobrem limpeza e beleza, então têm preferência.
 export async function lookupRemote(code) {
+  const t0 = performance.now();
+  const r = await lookupRemoteRaw(code);
+  const info = r.info || {};
+  tel('codigo', {
+    codigo: code, status: r.status, fonte: info.source || '', nome: info.name || '', marca: info.brand || '',
+    categoria: info.category || '', foto: photoKind(info.image), online: navigator.onLine, ms: Math.round(performance.now() - t0),
+  });
+  return r;
+}
+
+async function lookupRemoteRaw(code) {
   if (code.startsWith('SEM-')) return { status: 'notfound' };
   // Remédio: os dados oficiais da Anvisa valem mais que os das lojas (e sem foto).
   // A parte da base já consultada fica guardada no celular e vale sem internet.
@@ -114,8 +132,11 @@ const WEB_AREAS = ['cozinha', 'limpeza', 'beleza', 'remedios'];
 export async function areaFromWeb(name, signal) {
   try {
     const data = await apiGet(`/area?q=${encodeURIComponent(name)}`, 6000, signal);
-    return data && data.found && WEB_AREAS.includes(data.area) ? data.area : null;
-  } catch {
+    const area = data && data.found && WEB_AREAS.includes(data.area) ? data.area : null;
+    tel('ambiente-web', { nome: name, area });
+    return area;
+  } catch (err) {
+    if (!(signal && signal.aborted)) tel('ambiente-web', { nome: name, erro: String(err && err.message || err) });
     return null;
   }
 }
@@ -123,8 +144,17 @@ export async function areaFromWeb(name, signal) {
 // Busca por nome nas lojas. Resolve com a lista de produtos (pode ser vazia).
 // Lança erro se o repassador estiver fora do ar.
 export async function searchStores(query, signal) {
-  const data = await apiGet(`/search?q=${encodeURIComponent(query)}`, 9000, signal);
-  return (data.results || []).filter((p) => p && p.name).map(fromStore);
+  const t0 = performance.now();
+  try {
+    const data = await apiGet(`/search?q=${encodeURIComponent(query)}`, 9000, signal);
+    const list = (data.results || []).filter((p) => p && p.name).map(fromStore);
+    tel('busca', { q: query, n: list.length, primeiros: list.slice(0, 3).map((p) => p.name), ms: Math.round(performance.now() - t0) });
+    return list;
+  } catch (err) {
+    // Cancelada porque a pessoa continuou digitando: não é falha.
+    if (!(signal && signal.aborted)) tel('busca', { q: query, erro: String(err && err.message || err), ms: Math.round(performance.now() - t0) });
+    throw err;
+  }
 }
 
 function fromStore(p) {
@@ -171,6 +201,22 @@ function safeImage(url) {
 // Manda a foto da embalagem para a IA do repassador. Resolve com o que ela leu
 // ({ brand, product, variant, size, query }) e as sugestões das lojas (results).
 export async function identifyPhoto(dataUrl) {
+  const t0 = performance.now();
+  try {
+    const r = await identifyPhotoRaw(dataUrl);
+    tel('foto-ia', {
+      leu: { marca: r.brand, produto: r.product, variante: r.variant, tamanho: r.size, busca: r.query },
+      sugestoes: r.results.length, web: r.webCount || 0, primeiras: r.results.slice(0, 3).map((p) => p.name),
+      kb: Math.round(dataUrl.length * 0.75 / 1024), ms: Math.round(performance.now() - t0),
+    });
+    return r;
+  } catch (err) {
+    tel('foto-ia', { erro: String(err && err.message || err), ms: Math.round(performance.now() - t0) });
+    throw err;
+  }
+}
+
+async function identifyPhotoRaw(dataUrl) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 45000);
   try {
@@ -182,7 +228,8 @@ export async function identifyPhoto(dataUrl) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return { ...data, results: (data.results || []).filter((p) => p && p.name).map(fromStore) };
+    const raw = (data.results || []).filter((p) => p && p.name);
+    return { ...data, webCount: raw.filter((p) => p.web).length, results: raw.map(fromStore) };
   } finally {
     clearTimeout(timer);
   }
@@ -207,6 +254,18 @@ export function notaParam(text) {
 }
 
 export async function fetchNota(p) {
+  const t0 = performance.now();
+  try {
+    const data = await fetchNotaRaw(p);
+    tel('nota', { chave: String(p).slice(0, 44), loja: (data.store && data.store.name) || '', total: data.total, itens: (data.items || []).length, codigosNosItens: (data.items || []).filter((i) => /^\d{8,14}$/.test(String(i.code || ''))).length, ms: Math.round(performance.now() - t0) });
+    return data;
+  } catch (err) {
+    tel('nota', { chave: String(p).slice(0, 44), erro: String(err && err.message || err), ms: Math.round(performance.now() - t0) });
+    throw err;
+  }
+}
+
+async function fetchNotaRaw(p) {
   if (!navigator.onLine) throw new Error('Sem internet para buscar a nota.');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 25000);

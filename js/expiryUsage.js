@@ -3,6 +3,8 @@
 // no celular (localStorage) e vai para a Bancada pela tela de testes, para
 // medir o app no uso de verdade em vez de só nos vídeos de teste.
 
+import { tel } from './telemetry.js';
+
 const KEY = 'ki.validade.uso';
 const MAX = 200;
 
@@ -17,6 +19,8 @@ export function usageSave(entry) {
     list.push({ ...entry });
     localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX)));
   } catch { /* sem espaço ou sem localStorage: o app segue */ }
+  // Mesma visita, mesmo id: a telemetria guarda a versão mais nova.
+  tel('validade', entry, `val-${entry.id}`);
 }
 
 export function usageClear() {

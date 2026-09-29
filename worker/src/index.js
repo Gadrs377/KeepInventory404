@@ -20,6 +20,7 @@
 //                                  e devolve marca, produto, tamanho e um texto de busca
 
 import { catalogGet, catalogLearn, catalogStep, catalogStats, photoSave, photoGet } from './catalog.js';
+import { telSave, telRead, telCount, telPrune, telKey } from './telemetry.js';
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
 // antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
@@ -94,8 +95,8 @@ export default {
     const allowed = allowedOrigin(origin, env);
 
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), allowed);
-    const isIdentify = url.pathname === '/identify';
-    if (request.method !== (isIdentify ? 'POST' : 'GET')) return withCors(json({ error: 'Método não permitido' }, 405), allowed);
+    const methods = { '/identify': ['POST'], '/telemetria': ['GET', 'POST'] }[url.pathname] || ['GET'];
+    if (!methods.includes(request.method)) return withCors(json({ error: 'Método não permitido' }, 405), allowed);
     // Chamadas de navegador vindas de outro site são recusadas.
     if (origin && !allowed) return json({ error: 'Origem não autorizada' }, 403);
 
@@ -110,18 +111,33 @@ export default {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
           // v5: respostas guardadas antes da foto guardada no catálogo ficam para trás.
-          return withCors(await cached(ctx, `lookup:v5:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
+          return withCors(await cached(ctx, `lookup:v5:${ean}`, 7 * DAY, async () => {
+            const t0 = Date.now();
+            const r = await lookup(ean, env, ctx);
+            const p = r.found ? r.product : {};
+            tel(env, ctx, 'r-codigo', { codigo: ean, achou: !!r.found, nome: p.name || '', fonte: p.store || '', pagina: p.page || '', foto: photoKind(p.image), ms: Date.now() - t0 });
+            return r;
+          }), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
           if (normalize(q).length < 2) return withCors(json({ error: 'Digite pelo menos 2 letras.' }, 400), allowed);
-          return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, () => search(q, env, ctx)), allowed);
+          return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, async () => {
+            const t0 = Date.now();
+            const r = await search(q, env, ctx);
+            tel(env, ctx, 'r-busca', { q, n: r.results.length, primeiros: r.results.slice(0, 3).map((x) => x.name), ms: Date.now() - t0 });
+            return r;
+          }), allowed);
         }
         case '/area': {
           // O app só pergunta quando não tem certeza do ambiente (areas.js).
           const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
           if (normalize(q).length < 3) return withCors(json({ error: 'Nome curto demais.' }, 400), allowed);
-          return withCors(await cached(ctx, `area:${normalize(q)}`, 30 * DAY, () => areaByName(q)), allowed);
+          return withCors(await cached(ctx, `area:${normalize(q)}`, 30 * DAY, async () => {
+            const r = await areaByName(q);
+            tel(env, ctx, 'r-ambiente', { nome: q, area: r.area || '', caminho: r.path || '', erro: r.error || '' });
+            return r;
+          }), allowed);
         }
         case '/nfce': {
           // Nota fiscal do consumidor (NFC-e) pelo parâmetro "p" do QR Code.
@@ -133,6 +149,8 @@ export default {
         }
         case '/diag':
           return withCors(json(await diag(env)), allowed);
+        case '/telemetria':
+          return withCors(await telemetry(request, url, env), allowed);
         case '/identify': {
           if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
           const body = await request.json().catch(() => null);
@@ -141,6 +159,7 @@ export default {
             return withCors(json({ error: 'Envie uma foto JPEG, PNG ou WebP de até 1 MB' }, 400), allowed);
           }
           const model = VISION_MODELS.includes(url.searchParams.get('model')) ? url.searchParams.get('model') : VISION_MODELS[0];
+          const t0 = Date.now();
           const read = await identify(env.AI, image, model);
           // Já devolve as sugestões das lojas, para o celular fazer uma chamada só.
           read.results = await searchCascade(read, (q) => cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)).then((r) => r.json()));
@@ -150,21 +169,60 @@ export default {
             for (const p of web) if (!read.results.some((x) => x.ean === p.ean)) read.results.push({ ...p, web: true });
             if (web.length && env.CATALOG) ctx.waitUntil(catalogLearn(env.CATALOG, web).catch(() => {}));
           }
+          tel(env, ctx, 'r-foto-ia', {
+            leu: { marca: read.brand, produto: read.product, variante: read.variant, tamanho: read.size, busca: read.query },
+            iaMs: read.ms, ms: Date.now() - t0, kb: Math.round(image.length * 0.75 / 1024),
+            sugestoes: read.results.length, web: read.results.filter((x) => x.web).length, primeiras: read.results.slice(0, 3).map((x) => x.name),
+          });
           return withCors(json(read), allowed);
         }
         default:
           return withCors(json({ error: 'Rota não encontrada' }, 404), allowed);
       }
     } catch (err) {
+      tel(env, ctx, 'r-erro', { rota: url.pathname, busca: url.search.slice(0, 200), erro: String(err && err.message || err), pilha: String(err && err.stack || '').slice(0, 800) });
       return withCors(json({ error: 'Falha no repassador', detail: String(err && err.message || err) }, 500), allowed);
     }
   },
 
   // Robô do catálogo (wrangler.toml, [triggers]): uma página de uma loja por vez.
+  // Uma vez por hora, apaga a telemetria com mais de 90 dias.
   async scheduled(event, env, ctx) {
-    if (env && env.CATALOG) ctx.waitUntil(catalogStep(env.CATALOG));
+    if (!env || !env.CATALOG) return;
+    ctx.waitUntil(catalogStep(env.CATALOG));
+    if (new Date(event.scheduledTime || Date.now()).getUTCMinutes() === 7) ctx.waitUntil(telPrune(env.CATALOG).catch(() => {}));
   },
 };
+
+// ---------- Telemetria (worker/src/telemetry.js) ----------
+
+// Registro do próprio repassador, sem atrasar a resposta.
+function tel(env, ctx, k, d) {
+  if (!env || !env.CATALOG || !ctx || !ctx.waitUntil) return;
+  ctx.waitUntil(telSave(env.CATALOG, [{ k, d, s: 'repassador' }]).catch(() => {}));
+}
+
+const photoKind = (url) => (!url ? '' : String(url).startsWith('/foto/') ? 'guardada' : /vteximg|vtexassets/.test(url) ? 'loja' : 'outra');
+
+// POST: o app manda uma fila de eventos (texto JSON, pelo sendBeacon).
+// GET: leitura, só com ?chave= (telKey). ?desde=2026-09-29 &tipo=codigo &limite=500
+async function telemetry(request, url, env) {
+  const db = env && env.CATALOG;
+  if (!db) return json({ error: 'Sem banco' }, 503);
+  if (request.method === 'POST') {
+    const text = await request.text();
+    if (text.length > 400_000) return json({ error: 'Grande demais' }, 413);
+    let events;
+    try { events = JSON.parse(text); } catch { return json({ error: 'JSON inválido' }, 400); }
+    return json({ ok: true, guardados: await telSave(db, events) });
+  }
+  const key = await telKey(env);
+  if (!key || url.searchParams.get('chave') !== key) return json({ error: 'Chave errada' }, 403);
+  const since = Date.parse(url.searchParams.get('desde') || '') || Date.now() - 7 * 86400000;
+  const kind = (url.searchParams.get('tipo') || '').slice(0, 30);
+  const limit = Number(url.searchParams.get('limite')) || 500;
+  return json({ total: await telCount(db), eventos: await telRead(db, { since, kind, limit }) });
+}
 
 // ---------- Consultas ----------
 

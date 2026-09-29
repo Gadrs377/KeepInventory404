@@ -10,6 +10,7 @@ import { lookup, lookupRemote, searchStores, identifyPhoto, areaFromWeb } from '
 import { searchProducts, highlight } from '../search.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessAreaInfo } from '../areas.js';
+import { tel } from '../telemetry.js';
 import { expiryRowHtml, bindExpiryRow } from './expiryLots.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
@@ -376,6 +377,10 @@ async function newForm(ctx, result, { photo = null } = {}) {
   const firstGuess = guessAreaInfo(info);
   let area = firstGuess.area;
   let areaTouched = false;
+  // Telemetria do cadastro: o último palpite e o que a web respondeu.
+  let lastGuess = firstGuess;
+  let webArea = null;
+  const openedAt = performance.now();
 
   body.innerHTML = `
     <form class="stack" novalidate>
@@ -450,6 +455,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       areaCtrl = new AbortController();
       const web = await areaFromWeb(name, areaCtrl.signal);
       if (!web || areaTouched || !body.isConnected || (nameInput.value.trim() || info.name || '') !== name) return;
+      webArea = web;
       setArea(web);
       showUnsure(false);
     }, 500);
@@ -457,6 +463,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
   function applyGuess(p) {
     if (areaTouched) return;
     const g = guessAreaInfo(p);
+    lastGuess = g;
+    webArea = null;
     setArea(g.area);
     showUnsure(!g.sure);
     if (g.sure) { clearTimeout(areaTimer); if (areaCtrl) areaCtrl.abort(); } else askWeb(String(p.name || '').trim());
@@ -668,6 +676,13 @@ async function newForm(ctx, result, { photo = null } = {}) {
     };
     // Remédio nunca guarda foto (regra da Anvisa).
     if (area === 'remedios') newInfo.image = '';
+    tel('cadastro', {
+      codigo: barcode, modo: mode, qtd: n, status: result.status, fonte: newInfo.source,
+      nomeAchado: info.name || '', nome: newInfo.name, nomeMudou: !!info.name && info.name !== newInfo.name,
+      foto: newInfo.image ? (String(newInfo.image).startsWith('data:') ? 'do celular' : 'da busca') : '',
+      ambiente: area, palpite: lastGuess, palpiteWeb: webArea, escolhidoAMao: areaTouched,
+      acertou: area === (webArea || lastGuess.area), validade: !!expiresAt, segundos: Math.round((performance.now() - openedAt) / 1000),
+    });
     if (mode === 'entrada') return { kind: 'entrada', ...(await addStock(id, n, newInfo, expiresAt)), n };
     const product = await ensureProduct(id, newInfo);
     await setCounted(id, n);

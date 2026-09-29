@@ -399,6 +399,37 @@ cupom), só palavras (76–89% no cupom), Open Food Facts pelo código (achou 16
 tem produtos com dado errado) e Mercado Livre pelo nome (respondeu 89%,
 acertou 91%; erra remédio de receita, não responde bebida alcoólica).
 
+
+### 5.7 Telemetria (`js/telemetry.js`, `worker/src/telemetry.js`)
+
+O app e o repassador registram sozinhos o uso de verdade, para medir e
+melhorar sem depender de alguém colar resultados na Bancada. Por enquanto só
+a casa usa o app, então vai tudo: nome do produto, código, o que a IA leu.
+
+| Tipo | Onde | O que guarda |
+| --- | --- | --- |
+| `abriu` | app | navegador, instalado ou não, tamanho da tela, GPU |
+| `tela` | app | cada troca de tela |
+| `erro` | app | mensagem, arquivo:linha, pilha, tela (erros e promessas sem tratamento) |
+| `codigo` | app | código, resultado (local, achou, não achou, sem internet), fonte, nome, tipo de foto, tempo |
+| `busca` | app | o que foi digitado, quantos resultados, os 3 primeiros, tempo |
+| `foto-ia` | app | o que a IA leu, quantas sugestões (e quantas da web), tempo |
+| `nota` | app | chave, loja, total, itens e quantos itens têm código de barras |
+| `ambiente-web` | app | nome e o ambiente que o Mercado Livre deu |
+| `cadastro` | app | produto salvo: fonte, nome achado e o final, palpite de ambiente, se a pessoa trocou, tempo na folha |
+| `validade` | app | cada abertura da câmera da validade (o mesmo resumo de `expiryUsage.js`), atualizada ao digitar e ao salvar |
+| `r-codigo`, `r-busca`, `r-ambiente`, `r-foto-ia`, `r-erro` | repassador | as mesmas consultas vistas do servidor (só quando não vieram do cache): fonte, página da web, foto, tempo |
+
+- **Envio:** fila no `localStorage` (até 300 eventos), em lotes de 40 pelo
+  `sendBeacon` (texto puro, sem pedido de licença do CORS) a cada 10 s, ao
+  juntar 20 e quando o app vai para segundo plano. Sem internet, espera.
+- **Guarda:** tabela `tel` no D1 do catálogo; mesmo `id` substitui (a visita
+  da validade). Uma vez por hora o robô apaga o que tem mais de 90 dias.
+- **Leitura:** `GET /telemetria?chave=…&desde=…&tipo=…`, ou
+  `node scripts/telemetria.mjs`. O repositório é público, então a chave não
+  fica no código: é derivada da chave da Tavily (só o repassador e quem a tem
+  conseguem calcular).
+
 ### 5.1 Um código, vários produtos
 
 Acontece de verdade: fabricante que reusa o mesmo código em sabores diferentes,
