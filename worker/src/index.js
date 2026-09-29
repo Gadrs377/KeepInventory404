@@ -107,7 +107,8 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          return withCors(await cached(ctx, `lookup:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
+          // v2: respostas guardadas antes da foto da web ficam para trás.
+          return withCors(await cached(ctx, `lookup:v2:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
