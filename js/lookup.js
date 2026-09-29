@@ -7,6 +7,14 @@ import { API_URL } from './config.js';
 import { medByEan, medInfo } from './remedios.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
+// Os bancos irmãos do Open Food Facts (grátis, sem limite, mesmo formato):
+// beleza e higiene, e produtos da casa (limpeza, pilha…). Têm pouco produto
+// brasileiro (≈500 e ≈190 em set/2026), mas custam só uma consulta em paralelo.
+const OFF_FAMILY = [
+  ['off', OFF_URL],
+  ['obf', 'https://world.openbeautyfacts.org/api/v2/product/'],
+  ['opf', 'https://world.openproductsfacts.org/api/v2/product/'],
+];
 const FIELDS = 'product_name,product_name_pt,generic_name_pt,brands,quantity,image_front_small_url';
 
 export function isValidCode(code) {
@@ -53,11 +61,19 @@ export async function lookupRemote(code) {
   return { status: 'notfound' };
 }
 
+// Open Food Facts e irmãos ao mesmo tempo; vale o primeiro da lista que achar.
 async function lookupOff(code) {
+  const all = await Promise.all(OFF_FAMILY.map(([source, url]) => lookupOffOne(code, url, source)));
+  const found = all.find((r) => r.status === 'found');
+  if (found) return found;
+  return all.every((r) => r.status === 'offline') ? { status: 'offline' } : { status: 'notfound' };
+}
+
+async function lookupOffOne(code, base, source) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(`${OFF_URL}${encodeURIComponent(code)}?fields=${FIELDS}`, { signal: ctrl.signal });
+    const res = await fetch(`${base}${encodeURIComponent(code)}?fields=${FIELDS}`, { signal: ctrl.signal });
     if (res.status === 404) return { status: 'notfound' };
     if (!res.ok) return { status: 'offline' };
     const data = await res.json();
@@ -70,7 +86,7 @@ async function lookupOff(code) {
       brand,
       size: (p.quantity || '').trim(),
       image: safeImage(p.image_front_small_url),
-      source: 'off',
+      source,
     };
     return { status: name ? 'found' : 'notfound', info };
   } catch {

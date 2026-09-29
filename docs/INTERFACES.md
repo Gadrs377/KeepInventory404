@@ -1552,3 +1552,15 @@ validade usava só a tinta (--mode = --ink). O que mudou, por camada:
   - a pergunta e o painel sobem 10 px com mola (`card-in`).
   Com "reduzir movimento": só cor e opacidade, e a confirmação é imediata.
 - Cor animada da mira por `@property --aim-color`. `sw.js` v76.
+
+## Versão 3.58: os bancos irmãos do Open Food Facts
+
+O código de barras agora também é procurado no **Open Beauty Facts** (beleza
+e higiene) e no **Open Products Facts** (casa, limpeza, pilhas…), em paralelo
+com o Open Food Facts, depois das lojas. Grátis, sem chave e sem limite,
+mesmo formato de resposta. Vale o primeiro da lista que achar (comida, beleza,
+casa); a origem fica no produto (`source`: 'off', 'obf' ou 'opf'). Têm pouco
+produto brasileiro (≈500 e ≈190 em set/2026), então o ganho é pequeno, mas o
+custo também: uma consulta a mais, ao mesmo tempo que as outras.
+Conferido: creme dental Boni (7890310111489) vem do OBF, pilha Panasonic
+(7896067203125) do OPF, leite condensado Moça (7891000100103) do OFF. `sw.js` v77.

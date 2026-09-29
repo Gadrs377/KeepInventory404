@@ -53,7 +53,7 @@ export default async function mountProduto(root, { code }) {
             <h1 class="page-title">${esc(p.name)}</h1>
             ${subtitle(p) ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
             ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
-            ${p.source === 'loja' || p.source === 'off' || p.source === 'anvisa' || p.source === 'foto' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
+            ${p.source === 'loja' || ['off', 'obf', 'opf'].includes(p.source) || p.source === 'anvisa' || p.source === 'foto' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
           </div>
         </section>
 
