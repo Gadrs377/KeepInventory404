@@ -106,7 +106,7 @@ export default function mountTestes(root) {
         <div data-camtable></div>
 
         <h2 class="list-title">Resolução da câmera</h2>
-        <p class="group-note">Abre a câmera de trás pedindo 4K e depois 1080p e mostra quanto o celular entrega de verdade.</p>
+        <p class="group-note">Abre a câmera de trás pedindo 12 MP (4:3), 4K e 1080p e mostra quanto o celular entrega de verdade.</p>
         <button type="button" class="btn btn-quiet" data-camres>Ver a resolução da câmera</button>
 
         <a class="btn btn-primary" data-send href="${BANCADA_URL}" target="_blank" rel="noopener">Enviar para o Claude</a>
@@ -573,7 +573,7 @@ export default function mountTestes(root) {
   $('[data-camres]', root).addEventListener('click', async () => {
     say('— Resolução da câmera —');
     const out = { kind: 'camera-res', imageCapture: 'ImageCapture' in window, asks: [] };
-    for (const [label, width, height] of [['4K', 3840, 2160], ['1080p', 1920, 1080]]) {
+    for (const [label, width, height] of [['12 MP (4:3)', 4032, 3024], ['4K', 3840, 2160], ['1080p', 1920, 1080]]) {
       let stream = null;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: width }, height: { ideal: height } } });
