@@ -260,6 +260,18 @@ export async function diag(env = {}) {
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
     catalogo: env.CATALOG ? await catalogStats(env.CATALOG) : { ligado: false },
     mercadoLivre: await areaByName('Detergente Ypê Neutro 500ml'),
+    // Teste temporário: a busca do Mercado Livre pelo código responde daqui?
+    mercadoLivreBusca: await Promise.all([
+      '/sites/MLB/search?q=7896394807379&limit=1',
+      '/products/search?status=active&site_id=MLB&product_identifier=7896394807379',
+    ].map(async (path) => {
+      try {
+        const res = await fetch(`https://api.mercadolibre.com${path}`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+        return { path, status: res.status, body: (await res.text()).slice(0, 200) };
+      } catch (err) {
+        return { path, erro: String(err && err.message || err) };
+      }
+    })),
   };
 }
 
