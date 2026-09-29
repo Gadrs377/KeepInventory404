@@ -43,5 +43,5 @@ assert.deepEqual(pickWebImages(imgs, 'Sab maran 80g erva doce'), []);
 const small = new URL(smallWebImage('https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1'));
 assert.equal(small.host, 'wsrv.nl');
 assert.equal(small.searchParams.get('url'), 'https://sugarkingdom.cl/p.png');
-assert.equal(small.searchParams.get('w'), '200');
+assert.equal(small.searchParams.get('w'), '320');
 console.log('15 testes passaram');

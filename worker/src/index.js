@@ -107,8 +107,8 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          // v3: respostas guardadas antes da foto da web ficam para trás.
-          return withCors(await cached(ctx, `lookup:v3:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
+          // v4: respostas guardadas antes das fotos em 320x320 ficam para trás.
+          return withCors(await cached(ctx, `lookup:v4:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
@@ -275,13 +275,13 @@ export async function lookupWeb(ean, env = {}, t0 = Date.now()) {
 //    Princípio, Maran), nenhum. 2) As imagens da busca, só se a descrição citar
 //    2 palavras do nome (Stikadinho e pistache vieram certos assim).
 // Foto do Cosmos pesa em média 328 KB (até 1,6 MB): tudo passa pelo wsrv.nl
-// (grátis, código aberto, sem chave), que devolve 200x200 em WebP (~9 KB).
+// (grátis, código aberto, sem chave), que devolve 320x320 em WebP qualidade 85 (7 a 18 KB).
 // O repassador pede a foto reduzida uma vez: se o wsrv devolver imagem, vale
 // (e fica no cache dele); se não (sem foto, endereço que ele recusa), não.
 export function smallWebImage(url) {
   // Servidor de imagens do WordPress (i0.wp.com/site/...): o wsrv recusa; vai direto ao site.
   const direct = String(url).replace(/^https:\/\/i\d\.wp\.com\/([^?]+).*$/, 'https://$1');
-  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '200', h: '200', fit: 'contain', cbg: 'white', output: 'webp', q: '80' })}`;
+  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '320', h: '320', fit: 'contain', cbg: 'white', output: 'webp', q: '85' })}`;
 }
 
 async function smallImageOk(url) {
@@ -744,10 +744,10 @@ export function toProduct(p, host, wantedEan) {
   };
 }
 
-// Pede à loja a versão 200x200 da foto (bem mais leve no celular).
+// Pede à loja a versão 320x320 da foto: a maior miniatura do app tem 104 pt, ~312 pixels no celular.
 export function smallImage(url) {
   const https = url.replace(/^http:/, 'https:');
-  return https.replace(/\/arquivos\/ids\/(\d+)(?:-\d+-\d+)?\//, '/arquivos/ids/$1-200-200/');
+  return https.replace(/\/arquivos\/ids\/(\d+)(?:-\d+-\d+)?\//, '/arquivos/ids/$1-320-320/');
 }
 
 export function sizeOf(name) {

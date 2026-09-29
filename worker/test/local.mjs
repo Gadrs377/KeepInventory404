@@ -12,7 +12,7 @@ const call = async (path, origin = 'https://gadrs377.github.io') => {
 assert.equal(sizeOf('Leite Condensado Moça Lata 395g'), '395 g');
 assert.equal(sizeOf('Desinfetante Sanol 2l Lavanda'), '2 l');
 assert.equal(sizeOf('Sabão Líquido 1,5 Litros'), '1,5 l');
-assert.equal(smallImage('https://x.vtexassets.com/arquivos/ids/564471/foto.jpg'), 'https://x.vtexassets.com/arquivos/ids/564471-200-200/foto.jpg');
+assert.equal(smallImage('https://x.vtexassets.com/arquivos/ids/564471/foto.jpg'), 'https://x.vtexassets.com/arquivos/ids/564471-320-320/foto.jpg');
 
 let r = await call('/health');
 assert.equal(r.status, 200); assert.equal(r.cors, 'https://gadrs377.github.io');

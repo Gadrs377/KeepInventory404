@@ -63,9 +63,9 @@ await test('código de barras: dígito verificador e zeros à esquerda', () => {
 });
 
 await test('foto: loja e número da imagem num número só', () => {
-  assert.equal(imageUrlOf(packImage(0, 123456)), 'https://zaffari.vteximg.com.br/arquivos/ids/123456-200-200');
+  assert.equal(imageUrlOf(packImage(0, 123456)), 'https://zaffari.vteximg.com.br/arquivos/ids/123456-320-320');
   const carrefour = CATALOG_STORES.findIndex(([h]) => h.startsWith('carrefourbrfood'));
-  assert.equal(imageUrlOf(packImage(carrefour, 9)), 'https://carrefourbr.vteximg.com.br/arquivos/ids/9-200-200');
+  assert.equal(imageUrlOf(packImage(carrefour, 9)), 'https://carrefourbr.vteximg.com.br/arquivos/ids/9-320-320');
   assert.equal(imageUrlOf(packImage(63, 0)), '');
   assert.ok(CATALOG_STORES.length < 63);
 });
@@ -79,7 +79,7 @@ await test('grava e lê de volta: nome, marca, categoria, foto', async () => {
   assert.equal(p.name, 'Detergente Líquido Ypê Neutro 500ml');
   assert.equal(p.brand, 'Ypê');
   assert.equal(p.category, '/Limpeza/Cuidados com a cozinha/Lava louça/');
-  assert.equal(p.image, 'https://zaffari.vteximg.com.br/arquivos/ids/123456-200-200');
+  assert.equal(p.image, 'https://zaffari.vteximg.com.br/arquivos/ids/123456-320-320');
   assert.equal(p.store, 'www.zaffari.com.br');
   assert.equal(await catalogGet(db, '7891000100103'), null);
   // Repetido não grava de novo; palavras repetidas não duplicam o dicionário.

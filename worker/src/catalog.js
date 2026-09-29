@@ -15,7 +15,7 @@
 //   do nome, um 0 e mais dois números: a categoria inteira ("/Limpeza/Cuidados
 //   com a cozinha/Lava louça/") e a marca, cada uma uma "palavra" só.
 // - p.i: loja e foto num número só: número da imagem × 64 + loja. O endereço
-//   da foto é remontado: https://{conta}.vteximg.com.br/arquivos/ids/{n}-200-200
+//   da foto é remontado: https://{conta}.vteximg.com.br/arquivos/ids/{n}-320-320
 // - O tamanho não é guardado: sai do nome.
 
 // Lojas do catálogo: [endereço da busca, conta das imagens]. SÓ ACRESCENTAR NO
@@ -113,7 +113,7 @@ export const packImage = (store, imageId) => (imageId || 0) * 64 + store;
 export function imageUrlOf(i) {
   const store = i % 64; const id = Math.floor(i / 64);
   const s = CATALOG_STORES[store];
-  return s && id ? `https://${s[1]}.vteximg.com.br/arquivos/ids/${id}-200-200` : '';
+  return s && id ? `https://${s[1]}.vteximg.com.br/arquivos/ids/${id}-320-320` : '';
 }
 
 // Produto da VTEX -> linhas do catálogo (uma por item com código de barras).

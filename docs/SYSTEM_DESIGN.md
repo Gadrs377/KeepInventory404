@@ -288,8 +288,10 @@ créditos grátis por mês; sem ela, modo sem chave com limite):
   crédito a mais), só se a descrição citar 2 palavras do nome ("pistachios"
   vale por pistache). Medido: pistache, Maran e Orquídea com a foto certa.
   Foto do Cosmos pesa em média 328 KB (até 1,6 MB); tudo passa pelo
-  **wsrv.nl** (grátis, código aberto, sem chave): 200x200 em WebP, de 2 a
-  9 KB. O repassador pede a foto reduzida antes de usar; se o wsrv recusar o
+  **wsrv.nl** (grátis, código aberto, sem chave): 320x320 em WebP qualidade
+  85, de 7 a 18 KB. 320 porque a maior miniatura do app tem 104 pt (~312
+  pixels no celular); com 200x200 o texto da embalagem borrava. As fotos das
+  lojas também vêm em 320x320 (a VTEX já manda WebP ao navegador, ~9 KB). O repassador pede a foto reduzida antes de usar; se o wsrv recusar o
   endereço (o servidor de imagens do WordPress, por exemplo), tenta a próxima.
 - Tudo que a web acha entra no catálogo próprio (5.5): a segunda vez não gasta.
 
