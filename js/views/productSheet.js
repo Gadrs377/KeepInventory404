@@ -6,10 +6,10 @@
 // próprio etiquetada com o mesmo número). Nesse caso a folha primeiro pergunta
 // qual deles está na mão, e sempre deixa cadastrar mais um com o mesmo código.
 
-import { lookup, lookupRemote, searchStores, identifyPhoto } from '../lookup.js';
+import { lookup, lookupRemote, searchStores, identifyPhoto, areaFromWeb } from '../lookup.js';
 import { searchProducts, highlight } from '../search.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
-import { AREAS, guessArea } from '../areas.js';
+import { AREAS, guessAreaInfo } from '../areas.js';
 import { expiryRowHtml, bindExpiryRow } from './expiryLots.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
@@ -373,7 +373,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
     entrada: { min: 1, max: 999, value: ctx.qty || 1 },
     contagem: { min: 0, max: 999, value: 1 },
   }[mode];
-  let area = guessArea(info);
+  const firstGuess = guessAreaInfo(info);
+  let area = firstGuess.area;
   let areaTouched = false;
 
   body.innerHTML = `
@@ -393,12 +394,13 @@ async function newForm(ctx, result, { photo = null } = {}) {
           <input type="file" accept="image/*" capture="environment" data-photo class="sr-only">
         </label>`}
       </div>
-      <fieldset class="segmented">
+      <fieldset class="segmented" data-area>
         <legend class="field-label">Onde fica</legend>
         <div class="segmented-track">
           ${AREAS.map((a) => `
             <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === area ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
         </div>
+        <p class="area-hint" data-area-hint hidden>Não tenho certeza. Confira onde fica.</p>
       </fieldset>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
@@ -422,6 +424,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
   });
   expiry = bindExpiryRow(body, { total: () => step.value, form: $('form', body) });
 
+  const areaBox = $('[data-area]', body);
+  const areaHint = $('[data-area-hint]', body);
   function setArea(id, fromUser = false) {
     if (fromUser) areaTouched = true;
     else if (areaTouched) return;
@@ -429,9 +433,40 @@ async function newForm(ctx, result, { photo = null } = {}) {
     const radio = $(`input[name=area][value="${id}"]`, body);
     if (radio) radio.checked = true;
   }
-  $('.segmented', body).addEventListener('change', (e) => {
-    if (e.target.name === 'area') setArea(e.target.value, true);
-  });
+  function showUnsure(unsure) {
+    const on = unsure && !areaTouched;
+    areaHint.hidden = !on;
+    areaBox.classList.toggle('is-unsure', on);
+  }
+  // Sem certeza (areas.js): pergunta ao Mercado Livre pelo repassador; se ele
+  // também não souber, a folha pede para conferir.
+  let areaCtrl = null;
+  let areaTimer = 0;
+  function askWeb(name) {
+    clearTimeout(areaTimer);
+    if (areaCtrl) areaCtrl.abort();
+    if (name.length < 3 || areaTouched) return;
+    areaTimer = setTimeout(async () => {
+      areaCtrl = new AbortController();
+      const web = await areaFromWeb(name, areaCtrl.signal);
+      if (!web || areaTouched || !body.isConnected || (nameInput.value.trim() || info.name || '') !== name) return;
+      setArea(web);
+      showUnsure(false);
+    }, 500);
+  }
+  function applyGuess(p) {
+    if (areaTouched) return;
+    const g = guessAreaInfo(p);
+    setArea(g.area);
+    showUnsure(!g.sure);
+    if (g.sure) { clearTimeout(areaTimer); if (areaCtrl) areaCtrl.abort(); } else askWeb(String(p.name || '').trim());
+  }
+  // Clique também: tocar no ambiente que já estava marcado confirma a escolha
+  // (e ensina), mas não dispara "change".
+  const pickArea = (e) => { if (e.target.name === 'area') { setArea(e.target.value, true); showUnsure(false); } };
+  $('.segmented', body).addEventListener('change', pickArea);
+  $('.segmented', body).addEventListener('click', pickArea);
+  if (!firstGuess.sure) { showUnsure(true); askWeb(String(info.name || '').trim()); }
 
   // Sem código, o produto pode já estar no armário: ele aparece primeiro.
   let locals = [];
@@ -473,7 +508,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     nameError.hidden = true;
     list.hidden = true;
     status.textContent = '';
-    setArea(guessArea(info));
+    applyGuess(info);
     headHost.innerHTML = head({ ...info, code: barcode }, null);
     $('[data-msg]', body).textContent = auto
       ? 'As lojas não têm esse produto. Nome, marca e tamanho vieram da foto: confira antes de salvar.'
@@ -501,7 +536,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
   nameInput.addEventListener('input', () => {
     const q = nameInput.value.trim();
     if (q) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
-    setArea(guessArea({ ...info, name: q }));
+    applyGuess({ ...info, name: q });
     clearTimeout(timer);
     if (ctrl) ctrl.abort();
     // O que já está no armário aparece na hora; as lojas chegam depois.
@@ -541,7 +576,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     nameInput.value = p.name;
     list.hidden = true;
     status.textContent = '';
-    setArea(guessArea(p));
+    applyGuess(p);
     headHost.innerHTML = head({ ...p, code: barcode }, null);
     $('[data-msg]', body).textContent = 'Confira o nome antes de salvar.';
     if (photoBtn) photoBtn.hidden = true;
@@ -564,7 +599,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
         fromPhoto = photoProduct(read, mini);
         if (result.status === 'from-photo') { info = {}; result = { status: 'notfound', info }; }
         if (fromPhoto && !nameInput.value.trim()) nameInput.value = fromPhoto.name;
-        if (fromPhoto) setArea(guessArea(fromPhoto));
+        if (fromPhoto) applyGuess(fromPhoto);
         // Lojas acharam: a lista mostra, e no fim dá para usar o que a foto leu.
         // Não acharam: o que a foto leu é a única opção e já entra no formulário.
         if (read.results.length) {
@@ -626,6 +661,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
       ...(result.status === 'other' ? {} : rest),
       name: nameInput.value.trim(),
       area,
+      // Escolhido à mão: ensina os próximos parecidos (areas.js).
+      areaByUser: areaTouched,
       barcodes: barcode.startsWith('SEM-') ? [] : [barcode],
       source: result.status === 'found' ? (info.source || 'off') : result.status === 'from-photo' ? 'foto' : 'manual',
     };

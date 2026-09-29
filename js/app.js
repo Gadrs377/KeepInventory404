@@ -11,7 +11,8 @@ import mountCupons from './views/cupons.js';
 import mountTestes from './views/testes.js';
 import { closeSheet, closeMenu, hideStaleToast, collapsingTitle, toast, updateTabBar, $ } from './ui.js';
 import { refreshShopBadge } from './shop.js';
-import { onChange } from './store.js';
+import { onChange, listProducts } from './store.js';
+import { loadAreaModel, setAreaHints } from './areas.js';
 import { unlockAudio } from './sound.js';
 import { enableSwipeBack } from './swipeBack.js';
 
@@ -194,6 +195,13 @@ document.addEventListener('pointerdown', (e) => {
 }, { passive: true });
 window.addEventListener('hashchange', route);
 onChange(() => refreshShopBadge());
+
+// Ambiente dos produtos novos: o modelo treinado com as lojas (carrega uma vez,
+// fica no cache do service worker) e o que a casa já corrigiu.
+loadAreaModel();
+const refreshAreaHints = () => listProducts().then(setAreaHints).catch(() => {});
+refreshAreaHints();
+onChange(refreshAreaHints);
 
 // Sem internet o app continua funcionando; só não busca nomes nas lojas.
 window.addEventListener('offline', () => toast('Sem internet. O armário continua funcionando; nomes novos você digita.', { duration: 4500 }));

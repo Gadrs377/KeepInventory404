@@ -107,6 +107,18 @@ async function lookupStores(code) {
   }
 }
 
+// Ambiente pelo nome, quando o app não tem certeza (areas.js): o repassador
+// pergunta a categoria ao Mercado Livre. Resolve com o ambiente ou null.
+const WEB_AREAS = ['cozinha', 'limpeza', 'beleza', 'remedios'];
+export async function areaFromWeb(name, signal) {
+  try {
+    const data = await apiGet(`/area?q=${encodeURIComponent(name)}`, 6000, signal);
+    return data && data.found && WEB_AREAS.includes(data.area) ? data.area : null;
+  } catch {
+    return null;
+  }
+}
+
 // Busca por nome nas lojas. Resolve com a lista de produtos (pode ser vazia).
 // Lança erro se o repassador estiver fora do ar.
 export async function searchStores(query, signal) {

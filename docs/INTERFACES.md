@@ -1585,3 +1585,19 @@ Nada muda na tela; o código de barras é reconhecido mais vezes.
   de um código que ela não tem mostra outro parecido com HTTP 200; só vale
   quando o produto principal da página tem o mesmo GTIN pedido (14 dígitos).
   Testes: `node test/systax.mjs` (com `REDE=1`, as páginas reais).
+
+## Versão 3.60: o ambiente certo, sozinho
+
+Produto novo cai no ambiente certo muito mais vezes, e o app avisa quando não
+tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
+
+- **Aprende com a casa:** escolher o ambiente à mão (inclusive tocar no que já
+  estava marcado) ou trocar na página do produto ensina os próximos com o
+  mesmo começo de nome.
+- **Categoria da loja lida por palavras** ("Limpeza e Lavanderia", "Drogaria").
+- **Modelo no aparelho** (`data/area-model.json`), sem internet: acerta 98%
+  só pelo nome, 96% com nome de cupom.
+- **Sem certeza:** pergunta ao Mercado Livre pelo repassador; se ninguém
+  souber, o campo "Onde fica" fica âmbar (`--val-soft`) com "Não tenho
+  certeza. Confira onde fica.", que some ao tocar num ambiente.
+- Testes: `tests/areas.test.mjs`, `tests/ui/area.test.mjs`. `sw.js` v78.

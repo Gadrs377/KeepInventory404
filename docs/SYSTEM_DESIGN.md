@@ -185,6 +185,7 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
 | `GET /lookup?ean=` | Primeiro o catálogo próprio (seção 5.5). Não está lá: consulta 27 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais. Nenhuma achou: os catálogos de código de barras (seção 5.4). O que achar ao vivo entra no catálogo próprio | 7 dias (não encontrado: 1 dia) |
 | `GET /search?q=` | Busca por nome no Zaffari, em 4 supermercados e em 2 farmácias (Zaffari primeiro), intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
 | `POST /identify` | Recebe a foto da embalagem (JPEG até 1 MB), a IA da Cloudflare (Llama 4 Scout) lê marca, produto, variante e tamanho, e o Worker busca em cascata (busca sugerida, marca + produto + variante, marca + produto, marca) até juntar 6 sugestões | a busca usa o cache da `/search` |
+| `GET /area?q=` | Ambiente da casa pelo nome, pela categoria que o Mercado Livre adivinha (seção 5.6). Só quando o app não tem certeza | 30 dias |
 | `GET /diag` | Testa cada loja a partir da Cloudflare e mostra o catálogo próprio (produtos, rodadas, erros, onde o robô está) | sem cache |
 
 - Só consulta a lista fixa de lojas (não é um proxy aberto) e só responde a
@@ -313,6 +314,44 @@ depender de a loja estar no ar, e guardar o que um dia sumir do site.
   como antes.
 - **Testes:** `node test/catalog.mjs` (sem rede; o D1 é imitado com o SQLite
   do Node).
+
+### 5.6 Ambiente do produto (`areas.js`, `areaModel.js`)
+
+Cozinha, Limpeza, Beleza ou Remédios. Vale a primeira fonte que tiver certeza
+(`guessAreaInfo` devolve `{ area, sure, by }`):
+
+1. **Anvisa** (`med`): remédio.
+2. **A casa:** produto em que alguém escolheu o ambiente à mão ganha
+   `areaByUser`; as duas primeiras palavras do nome ensinam os próximos
+   ("Vela aromática" em Beleza leva as outras "Vela aromática" para lá). Só a
+   primeira palavra vale quando nada mais tem certeza. Vai junto no backup.
+3. **Exceções da casa:** papel higiênico, saco de lixo etc. na limpeza.
+4. **Categoria da loja, por palavras:** "Limpeza e Lavanderia", "Higiene e
+   Perfumaria", "Drogaria/Medicamentos". Segmento misto ("Higiene e Limpeza")
+   não decide.
+5. **Palavras conhecidas do nome** ("sabonete", "detergente"...).
+6. **Modelo:** Naive Bayes com pedaços de 3 a 5 letras das palavras, treinado
+   com 7.408 produtos de 12 lojas pelo departamento (`scripts/area-model.mjs`
+   gera `data/area-model.json`, 247 KB, ~70 KB comprimido). Decide sozinho com
+   confiança ≥ 0,7.
+7. **Sem certeza:** a folha pergunta ao repassador (`GET /area?q=`, categoria
+   do Mercado Livre pelo nome, cache de 30 dias). Se ele também não souber, o
+   campo "Onde fica" fica âmbar com "Não tenho certeza. Confira onde fica."
+
+Medido em 879 produtos de 3 lojas que o treino não viu (Carrefour, Sam's,
+Drogaria São Paulo; `node scripts/area-model.mjs --avaliar`):
+
+| | Acerto | Decide sozinho (e acerta) |
+| --- | --- | --- |
+| Antes, só com o nome | 88% (remédios 0%) | 45% (100%) |
+| Agora, só com o nome | 98% | 95% (100%) |
+| Agora, nome de cupom ("DET YPE NEUTRO") | 96% | 91% (99%) |
+| Agora, nome + categoria da loja | 100% | 100% |
+
+Comparados antes de escolher: regressão logística (97%, 88% no nome de
+cupom), só palavras (76–89% no cupom), Open Food Facts pelo código (achou 16%;
+tem produtos com dado errado) e Mercado Livre pelo nome (respondeu 89%,
+acertou 91%; erra remédio de receita, não responde bebida alcoólica).
 
 ### 5.1 Um código, vários produtos
 

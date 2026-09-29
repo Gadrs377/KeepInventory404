@@ -834,6 +834,10 @@ mark.hit { background: none; color: var(--ink); }
 }
 .segment input:checked + span { background: var(--paper); color: var(--ink); box-shadow: 0 3px 8px rgba(22, 24, 23, 0.12), 0 0 0 0.5px rgba(22, 24, 23, 0.06); }
 .segment input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 1px; }
+/* O app não teve certeza do ambiente: a trilha ganha a cor de "confira" e um
+   aviso curto embaixo. Some quando a pessoa toca num ambiente. */
+.segmented.is-unsure .segmented-track { background: var(--val-soft); }
+.area-hint { margin: 6px 0 0; font-size: 0.8824rem; font-weight: 700; color: var(--val-ink); text-wrap: pretty; }
 
 /* ---------- Validade ---------- */
 

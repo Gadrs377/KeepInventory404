@@ -57,6 +57,8 @@ function newProduct(code, info = {}) {
     updatedAt: now,
     // Remédio achado na base da Anvisa: princípio ativo, tarja, registro etc.
     ...(info.med ? { med: info.med } : {}),
+    // Ambiente escolhido à mão: ensina os próximos produtos parecidos (areas.js).
+    ...(info.areaByUser ? { areaByUser: true } : {}),
   };
 }
 
@@ -180,6 +182,8 @@ export async function updateProduct(code, fields) {
     area: AREA_IDS.includes(fields.area) ? fields.area : (p.area || guessArea(p)),
     updatedAt: Date.now(),
   };
+  // Trocou o ambiente: a casa ensinou onde isso fica (areas.js, setAreaHints).
+  if (next.area !== p.area) next.areaByUser = true;
   await put('products', next);
   emit();
   return next;
