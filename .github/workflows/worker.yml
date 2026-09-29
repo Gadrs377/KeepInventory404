@@ -16,6 +16,8 @@ jobs:
       # Opcionais: chaves grátis dos catálogos de código de barras (README).
       COSMOS_TOKEN: ${{ secrets.COSMOS_TOKEN }}
       KODEBAR_KEY: ${{ secrets.KODEBAR_KEY }}
+      # Opcional: busca do código de barras na web (tavily.com, 1.000 por mês grátis).
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Verificar se os segredos existem
@@ -59,7 +61,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
       - name: Chaves dos catálogos de código de barras (se existirem)
-        if: env.COSMOS_TOKEN != '' || env.KODEBAR_KEY != ''
+        if: env.COSMOS_TOKEN != '' || env.KODEBAR_KEY != '' || env.TAVILY_API_KEY != ''
         working-directory: worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -67,3 +69,4 @@ jobs:
         run: |
           if [ -n "$COSMOS_TOKEN" ]; then printf '%s' "$COSMOS_TOKEN" | npx --yes wrangler secret put COSMOS_TOKEN; fi
           if [ -n "$KODEBAR_KEY" ]; then printf '%s' "$KODEBAR_KEY" | npx --yes wrangler secret put KODEBAR_KEY; fi
+          if [ -n "$TAVILY_API_KEY" ]; then printf '%s' "$TAVILY_API_KEY" | npx --yes wrangler secret put TAVILY_API_KEY; fi

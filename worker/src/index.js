@@ -185,8 +185,78 @@ async function lookupLive(ean, env) {
   try {
     return { found: true, product: await Promise.any(catalogs) };
   } catch {
-    return { found: false };
+    // Último recurso: o código na web (atacadistas, lojas pequenas, catálogos).
+    const web = await lookupWeb(ean, env).catch(() => null);
+    return web ? { found: true, product: web } : { found: false };
   }
+}
+
+// ---------- Código de barras na web (Tavily) ----------
+// Busca o número do código na web e só aceita página que traga o código
+// EXATO (13 ou 14 dígitos) no título ou no endereço. Medido com
+// dois códigos que nenhuma loja tinha: pistache Bom Princípio (Fescopan,
+// Cosmos) e sabonete Maran (Martins Atacado, Cosmos). Com TAVILY_API_KEY usa a
+// cota grátis da conta (1.000 por mês); sem ela, o modo sem chave, com limite.
+export async function lookupWeb(ean, env = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (env.TAVILY_API_KEY) headers.Authorization = `Bearer ${env.TAVILY_API_KEY}`;
+  else headers['X-Tavily-Access-Mode'] = 'keyless';
+  // A busca básica às vezes não traz a página; a avançada (2 créditos) só
+  // entra quando a básica não achou.
+  for (const depth of ['basic', 'advanced']) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const res = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query: ean, max_results: 10, search_depth: depth }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const found = pickWebProduct(await res.json(), ean);
+      if (found) return { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}
+
+// Das páginas achadas, a melhor que cita o código exato. O título vira o nome:
+// sem o código, sem o nome do site ("| Martins Atacado") e sem "GTIN/EAN".
+export function pickWebProduct(data, ean) {
+  const digits = String(ean).replace(/^0+/, '');
+  const exact = new RegExp(`(^|\\D)0*${digits}(\\D|$)`);
+  const cands = [];
+  for (const r of (data && data.results) || []) {
+    // O código tem de estar no título ou no endereço (página do produto). Só
+    // no texto pega lista qualquer: um PDF da prefeitura citava um Orquídea.
+    if (!exact.test(r.title || '') && !exact.test(r.url || '')) continue;
+    let host = '';
+    try { host = new URL(r.url).hostname.replace(/^www\./, ''); } catch { continue; }
+    const name = cleanWebTitle(r.title || '', digits);
+    if (name.replace(/[^\p{L}]/gu, '').length < 4) continue;
+    // Título com o código é página do produto; letras maiúsculas e minúsculas
+    // misturadas costumam ser nome de loja (melhor que o cadastro fiscal).
+    const capitalized = (name.match(/(^|\s)\p{Lu}\p{Ll}/gu) || []).length;
+    const score = (r.score || 0) + (capitalized >= 2 && name !== name.toUpperCase() ? 0.3 : 0);
+    cands.push({ name, host, url: r.url, score });
+  }
+  cands.sort((a, b) => b.score - a.score);
+  return cands[0] || null;
+}
+
+// Partes do título que são do site, não do produto.
+const WEB_TITLE_JUNK = /^(cosmos|bluesoft|mercado ?livre|amazon(\.com\.br)?|shopee|magalu|americanas|cadastro de produto.*|.*tributa[cç][aã]o.*|.*\bncm\b.*|(gtin|ean|upc)(\/(gtin|ean|upc))*\s*:?\s*)$/i;
+
+function cleanWebTitle(title, digits) {
+  const first = decodeEntities(title).split(/\s+[|•]\s+/)[0].replace(new RegExp(`0*${digits}`, 'g'), ' ');
+  const parts = first.split(/\s+[-–—]\s+/).map((x) => x.replace(/\s+/g, ' ').trim()).filter((x) => x && !WEB_TITLE_JUNK.test(x));
+  let t = parts.join(' ').replace(/\b(GTIN|EAN|UPC)\b\s*[:/-]?/gi, ' ');
+  t = t.replace(/^[\s\-–—:|,.]+|[\s\-–—:|,.]+$/g, '').replace(/\s+/g, ' ').trim();
+  if (t && t === t.toLowerCase()) t = t.charAt(0).toLocaleUpperCase('pt-BR') + t.slice(1);
+  return t.slice(0, 120);
 }
 
 async function lookupStores(ean) {
@@ -260,18 +330,8 @@ export async function diag(env = {}) {
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
     catalogo: env.CATALOG ? await catalogStats(env.CATALOG) : { ligado: false },
     mercadoLivre: await areaByName('Detergente Ypê Neutro 500ml'),
-    // Teste temporário: a busca do Mercado Livre pelo código responde daqui?
-    mercadoLivreBusca: await Promise.all([
-      '/sites/MLB/search?q=7896394807379&limit=1',
-      '/products/search?status=active&site_id=MLB&product_identifier=7896394807379',
-    ].map(async (path) => {
-      try {
-        const res = await fetch(`https://api.mercadolibre.com${path}`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-        return { path, status: res.status, body: (await res.text()).slice(0, 200) };
-      } catch (err) {
-        return { path, erro: String(err && err.message || err) };
-      }
-    })),
+    // Chaves guardadas no repassador (só se existem; o valor nunca aparece).
+    chaves: { tavily: !!env.TAVILY_API_KEY, cosmos: !!env.COSMOS_TOKEN, kodebar: !!env.KODEBAR_KEY },
   };
 }
 
