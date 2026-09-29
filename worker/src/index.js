@@ -11,9 +11,14 @@
 //   GET /health                 -> { ok: true }
 //   GET /lookup?ean=789...      -> produto pelo código de barras (primeira loja que achar)
 //   GET /search?q=moça 395      -> lista de produtos pelo nome
-//   GET /diag                   -> testa cada loja a partir da Cloudflare
+//   GET /diag                   -> testa cada loja a partir da Cloudflare (e mostra o catálogo)
+//
+// Catálogo próprio (catalog.js): um banco D1 que um robô agendado enche aos
+// poucos com os produtos das lojas. O /lookup olha nele primeiro.
 //   POST /identify              -> lê a embalagem numa foto (IA grátis da Cloudflare)
 //                                  e devolve marca, produto, tamanho e um texto de busca
+
+import { catalogGet, catalogLearn, catalogStep, catalogStats } from './catalog.js';
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
 // antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
@@ -37,16 +42,35 @@ export const LOOKUP_STORES = [
   'www.zonasul.com.br',
   'www.gbarbosa.com.br',
   'www.bretas.com.br',
+  // Acrescentados em 10/2026. Em amostras de 25 produtos de cada catálogo, o
+  // app não conhecia: Sam's 13, São João 10, Cobasi 9 (de 16), Atacadão 9
+  // (e 17 de 44 marcas pequenas vendidas no Nordeste), Rissul 7, Super Muffato
+  // e Prezunic 6, Lojas Rede 4, Comper 3, Carrefour 2. Extrafarma: 0, ficou fora.
+  'www.atacadao.com.br',
+  'www.samsclub.com.br',
+  'www.saojoaofarmacias.com.br',
+  'www.cobasi.com.br',
+  'www.rissul.com.br',
+  'www.supermuffato.com.br',
+  'www.prezunic.com.br',
+  // O site principal destes recusa o repassador; o endereço de bastidores da
+  // VTEX (conta.vtexcommercestable.com.br) responde a mesma busca pública.
+  'lojasrede.vtexcommercestable.com.br',
+  'comper.vtexcommercestable.com.br',
+  'carrefourbrfood.vtexcommercestable.com.br',
 ];
 
 // Busca por nome: o Zaffari primeiro (as sugestões dele aparecem no topo),
-// depois 3 supermercados e 1 farmácia (10 de 10 no teste).
+// depois 3 supermercados e 1 farmácia (10 de 10 no teste), e os gaúchos.
 export const SEARCH_STORES = [
   'www.zaffari.com.br',
   'www.covabra.com.br',
   'www.coopsupermercado.com.br',
   'www.savegnago.com.br',
   'www.drogariasaopaulo.com.br',
+  // Gaúchos: marcas do RS e a farmácia (10/2026).
+  'www.rissul.com.br',
+  'www.saojoaofarmacias.com.br',
 ];
 
 // Modelos de visão do Workers AI (cota grátis diária). O primeiro é o padrão;
@@ -82,12 +106,12 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          return withCors(await cached(ctx, `lookup:${ean}`, 7 * DAY, () => lookup(ean, env)), allowed);
+          return withCors(await cached(ctx, `lookup:${ean}`, 7 * DAY, () => lookup(ean, env, ctx)), allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
           if (normalize(q).length < 2) return withCors(json({ error: 'Digite pelo menos 2 letras.' }, 400), allowed);
-          return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, () => search(q)), allowed);
+          return withCors(await cached(ctx, `search:${normalize(q)}`, DAY, () => search(q, env, ctx)), allowed);
         }
         case '/nfce': {
           // Nota fiscal do consumidor (NFC-e) pelo parâmetro "p" do QR Code.
@@ -98,7 +122,7 @@ export default {
           return withCors(await cached(ctx, `nfce:${key}`, 30 * DAY, () => fetchNfce(p, key)), allowed);
         }
         case '/diag':
-          return withCors(json(await diag()), allowed);
+          return withCors(json(await diag(env)), allowed);
         case '/identify': {
           if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
           const body = await request.json().catch(() => null);
@@ -119,6 +143,11 @@ export default {
       return withCors(json({ error: 'Falha no repassador', detail: String(err && err.message || err) }, 500), allowed);
     }
   },
+
+  // Robô do catálogo (wrangler.toml, [triggers]): uma página de uma loja por vez.
+  async scheduled(event, env, ctx) {
+    if (env && env.CATALOG) ctx.waitUntil(catalogStep(env.CATALOG));
+  },
 };
 
 // ---------- Consultas ----------
@@ -127,7 +156,19 @@ export default {
 // nenhuma conhece, os catálogos de código de barras (seção 5.4 do system design):
 // CadastroProduto (página pública, 945 mil produtos) e, quando o Worker tem a
 // chave, Cosmos (Bluesoft, 25 consultas grátis por dia) e Kodebar (50 por dia).
-export async function lookup(ean, env = {}) {
+// Antes de tudo, o catálogo próprio; o que vem de fora entra nele.
+export async function lookup(ean, env = {}, ctx = null) {
+  const db = env.CATALOG;
+  if (db) {
+    const hit = await catalogGet(db, ean).catch(() => null);
+    if (hit) return { found: true, product: { ...hit, size: sizeOf(hit.name) } };
+  }
+  const result = await lookupLive(ean, env);
+  if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
+  return result;
+}
+
+async function lookupLive(ean, env) {
   const found = await lookupStores(ean);
   if (found.found) return found;
   const catalogs = [lookupCadastroProduto(ean)];
@@ -161,7 +202,7 @@ async function lookupStores(ean) {
   }
 }
 
-export async function search(q) {
+export async function search(q, env = {}, ctx = null) {
   const tokens = tokensOf(q);
   const lists = await Promise.allSettled(SEARCH_STORES.map((host) =>
     storeJson(host, `/api/io/_v/api/intelligent-search/product_search/?${new URLSearchParams({ query: q, count: '8' })}`)
@@ -181,10 +222,12 @@ export async function search(q) {
       out.push(p);
     }
   }
+  // Tudo que as lojas devolveram (com código de barras) também entra no catálogo.
+  if (env.CATALOG && ctx) ctx.waitUntil(catalogLearn(env.CATALOG, perStore.flat()).catch(() => {}));
   return { results: out.slice(0, 12) };
 }
 
-export async function diag() {
+export async function diag(env = {}) {
   const probes = ['7891024134702', '7891000100103'];
   const rows = await Promise.all(LOOKUP_STORES.map(async (host) => {
     const t0 = Date.now();
@@ -205,6 +248,7 @@ export async function diag() {
     stores: rows,
     storesOk: rows.filter((r) => r.hits > 0).length,
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
+    catalogo: env.CATALOG ? await catalogStats(env.CATALOG) : { ligado: false },
   };
 }
 

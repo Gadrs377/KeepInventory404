@@ -1564,3 +1564,19 @@ produto brasileiro (≈500 e ≈190 em set/2026), então o ganho é pequeno, mas
 custo também: uma consulta a mais, ao mesmo tempo que as outras.
 Conferido: creme dental Boni (7890310111489) vem do OBF, pilha Panasonic
 (7896067203125) do OPF, leite condensado Moça (7891000100103) do OFF. `sw.js` v77.
+
+## Versão 3.59: mais lojas e catálogo próprio (só o repassador)
+
+Nada muda na tela; o código de barras é reconhecido mais vezes.
+
+- **10 lojas novas** no `/lookup` (27 no total): Atacadão, Sam's Club, São
+  João Farmácias, Cobasi, Rissul, Super Muffato, Prezunic, Lojas Rede, Comper
+  e Carrefour. As três últimas bloqueiam o repassador no site principal e
+  respondem pelo endereço de bastidores da VTEX
+  (`conta.vtexcommercestable.com.br`). Rissul e São João também entram na
+  busca por nome. Exemplo: sabonete Maran (7896394807379), que só o Atacadão
+  conhecia.
+- **Catálogo próprio** (SYSTEM_DESIGN 5.5): banco D1 grátis da Cloudflare,
+  enchido por um robô a cada minuto e pelo que as lojas acham ao vivo. O
+  `/lookup` olha nele primeiro. ~25 bytes por produto. A resposta vem com
+  `source: 'catalogo'`; o app trata como loja. Sem mudança no `sw.js`.

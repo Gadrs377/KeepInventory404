@@ -27,6 +27,31 @@ jobs:
             echo "::error::Faltam os segredos CLOUDFLARE_API_TOKEN e/ou CLOUDFLARE_ACCOUNT_ID em Settings > Secrets and variables > Actions."
             exit 1
           fi
+      # Catálogo próprio (worker/src/catalog.js): cria o banco D1 grátis na
+      # primeira vez e liga no Worker. Se a chave da Cloudflare não tiver
+      # permissão de D1, o Worker é publicado sem o catálogo, como antes.
+      - name: Banco do catálogo (D1)
+        id: d1
+        continue-on-error: true
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          NAME=keepinventory-catalogo
+          find_id() { npx --yes wrangler d1 list --json | jq -r --arg n "$NAME" '.[] | select(.name == $n) | .uuid' | head -n1; }
+          ID="$(find_id)"
+          if [ -z "$ID" ]; then
+            npx --yes wrangler d1 create "$NAME"
+            ID="$(find_id)"
+          fi
+          if [ -z "$ID" ]; then echo "::warning::Não consegui criar o banco D1 do catálogo."; exit 1; fi
+          printf '\n[[d1_databases]]\nbinding = "CATALOG"\ndatabase_name = "%s"\ndatabase_id = "%s"\n' "$NAME" "$ID" >> wrangler.toml
+          echo "Catálogo ligado: $NAME ($ID)"
+      - name: Avisar se o catálogo ficou de fora
+        if: steps.d1.outcome == 'failure'
+        run: echo "::warning::O Worker vai sem o catálogo próprio. A chave CLOUDFLARE_API_TOKEN precisa da permissão 'Account > D1 > Edit' (dash.cloudflare.com > My Profile > API Tokens > editar a chave)."
       - name: Publicar
         uses: cloudflare/wrangler-action@v3
         with:

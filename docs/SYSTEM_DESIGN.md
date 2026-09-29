@@ -182,10 +182,10 @@ liberam CORS. O Worker faz essas consultas e devolve um formato único.
 
 | Rota | O que faz | Cache |
 | --- | --- | --- |
-| `GET /lookup?ean=` | Consulta 17 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais. Nenhuma achou: os catálogos de código de barras (seção 5.4) | 7 dias (não encontrado: 1 dia) |
-| `GET /search?q=` | Busca por nome no Zaffari, em 3 supermercados e em 1 farmácia (Zaffari primeiro), intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
+| `GET /lookup?ean=` | Primeiro o catálogo próprio (seção 5.5). Não está lá: consulta 27 lojas em paralelo e devolve a primeira que achar; o Zaffari (onde a casa compra) tem preferência se responder em até 0,8 s a mais. Nenhuma achou: os catálogos de código de barras (seção 5.4). O que achar ao vivo entra no catálogo próprio | 7 dias (não encontrado: 1 dia) |
+| `GET /search?q=` | Busca por nome no Zaffari, em 4 supermercados e em 2 farmácias (Zaffari primeiro), intercala, remove repetidos e mantém só o que tem cada palavra digitada no começo de uma palavra do produto | 1 dia |
 | `POST /identify` | Recebe a foto da embalagem (JPEG até 1 MB), a IA da Cloudflare (Llama 4 Scout) lê marca, produto, variante e tamanho, e o Worker busca em cascata (busca sugerida, marca + produto + variante, marca + produto, marca) até juntar 6 sugestões | a busca usa o cache da `/search` |
-| `GET /diag` | Testa cada loja a partir da Cloudflare | sem cache |
+| `GET /diag` | Testa cada loja a partir da Cloudflare e mostra o catálogo próprio (produtos, rodadas, erros, onde o robô está) | sem cache |
 
 - Só consulta a lista fixa de lojas (não é um proxy aberto) e só responde a
   chamadas de navegador vindas do endereço do app (`ALLOWED_ORIGINS`).
@@ -264,7 +264,7 @@ Fontes avaliadas:
 
 | Fonte | Como acessa | Resultado |
 | --- | --- | --- |
-| Lojas VTEX (17) | Busca pública por EAN | A melhor: nome completo, foto, categoria. 3 novas acrescentadas |
+| Lojas VTEX (27) | Busca pública por EAN | A melhor: nome completo, foto, categoria. 3 novas em 09/2026, 10 em 10/2026 |
 | Open Food Facts | API aberta | 94/195 sozinho; só comida (36 mil produtos do Brasil) |
 | Open Beauty / Products Facts | API aberta | 0 e 3 de 195: quase sem produto brasileiro |
 | CadastroProduto | Página pública por código | 25/59 sozinho; +6 que ninguém tinha. Limita consultas seguidas (uso doméstico passa longe). Base completa em CSV: R$ 299, não compensa (cobre menos que as lojas) |
@@ -275,6 +275,42 @@ Fontes avaliadas:
 | Menor Preço (Nota Paraná) | API do app oficial | Para quem não é o app, devolve dados falsos (proteção). Descartado |
 | Mercado Livre | API | Exige conta de desenvolvedor e token do usuário. Descartado |
 | UPCitemdb, Open EAN/GTIN DB | API aberta | Quase sem produto brasileiro, limite baixo |
+
+### 5.5 Catálogo próprio (`worker/src/catalog.js`, Cloudflare D1)
+
+Um banco SQLite grátis da Cloudflare (D1: 5 GB, 5 milhões de linhas lidas e
+100 mil escritas por dia) com os produtos das lojas, para responder sem
+depender de a loja estar no ar, e guardar o que um dia sumir do site.
+
+- **Robô:** o Worker roda a cada minuto (`[triggers]` no `wrangler.toml`) e
+  copia uma página de 20 produtos de uma categoria de uma loja
+  (`fq=C:/departamento/categoria/`, até `_from=2500`). Acabou a categoria,
+  vai para a próxima; acabou a loja, a próxima. ~29 mil produtos por dia no
+  máximo, bem abaixo das 100 mil escritas. A tentativa é anotada antes de
+  baixar: três tentativas sem sucesso no mesmo lugar pulam a categoria.
+- **Aprende sozinho:** o que o `/lookup` e o `/search` acham ao vivo também
+  entra (CadastroProduto, Cosmos e Kodebar entram sem foto nem categoria).
+- **Formato, feito para caber muito:**
+
+  | Tabela | Colunas | Conteúdo |
+  | --- | --- | --- |
+  | `p` | `e INTEGER PRIMARY KEY, n BLOB, i INTEGER` | Código de barras como número e chave (é o rowid, sem índice extra). `n`: números das palavras do nome em varint, um 0, a categoria e a marca (cada uma uma "palavra" só). `i`: número da foto × 64 + loja |
+  | `w` | `id INTEGER PRIMARY KEY, t TEXT UNIQUE` | Dicionário de palavras |
+  | `c` | `k TEXT PRIMARY KEY, v TEXT` | Onde o robô está, categorias de cada loja, contadores |
+
+  A foto é remontada: `https://{conta}.vteximg.com.br/arquivos/ids/{n}-200-200`
+  (a conta de imagens de cada loja está em `CATALOG_STORES`, que só pode
+  crescer no fim). Tamanho sai do nome.
+- **Medido** (1.307 produtos reais de 60 páginas, `REDE=1 node test/catalog.mjs`):
+  24,7 bytes de dados por produto (o nome codificado: 16,7 bytes, contra ~40
+  em texto), ~41 bytes com as páginas do SQLite. Um milhão de produtos ≈ 45 MB;
+  os 5 GB dariam para mais de 100 milhões.
+- **Banco:** criado e ligado pelo `.github/workflows/worker.yml` na
+  publicação (binding `CATALOG`). A chave `CLOUDFLARE_API_TOKEN` precisa de
+  **Account › D1 › Edit**; sem isso, o Worker sai sem o catálogo e funciona
+  como antes.
+- **Testes:** `node test/catalog.mjs` (sem rede; o D1 é imitado com o SQLite
+  do Node).
 
 ### 5.1 Um código, vários produtos
 

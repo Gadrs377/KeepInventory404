@@ -9,3 +9,9 @@ ALLOWED_ORIGINS = "https://gadrs377.github.io,http://localhost:8080"
 # IA grátis da Cloudflare (Workers AI), usada em /identify.
 [ai]
 binding = "AI"
+
+# Robô do catálogo próprio (src/catalog.js): uma página de uma loja por minuto.
+# O banco D1 (binding CATALOG) é criado e ligado pelo GitHub Actions na hora
+# de publicar (.github/workflows/worker.yml); sem ele o robô não faz nada.
+[triggers]
+crons = ["* * * * *"]
