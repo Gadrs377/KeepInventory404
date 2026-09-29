@@ -175,7 +175,11 @@ export async function lookup(ean, env = {}, ctx = null) {
   const db = env.CATALOG;
   if (db) {
     const hit = await catalogGet(db, ean).catch(() => null);
-    if (hit) return { found: true, product: { ...hit, size: sizeOf(hit.name) } };
+    if (hit) {
+      // Veio de catálogo ou da web: o banco não guarda essa foto; tenta o Cosmos.
+      const image = hit.image || await cosmosImage(ean);
+      return { found: true, product: { ...hit, image, size: sizeOf(hit.name) } };
+    }
   }
   const result = await lookupLive(ean, env);
   if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
@@ -241,13 +245,69 @@ async function tavilySearch(env, query, depth, extra = {}) {
 
 export async function lookupWeb(ean, env = {}, t0 = Date.now()) {
   // A busca básica (1 crédito) às vezes não traz a página; a avançada (2) só
-  // entra quando a básica não achou e ainda dá tempo.
+  // entra quando a básica não achou e ainda dá tempo. As imagens vêm na mesma
+  // resposta, sem crédito a mais.
   for (const depth of ['basic', 'advanced']) {
     if (depth === 'advanced' && Date.now() - t0 + WEB_TIMEOUT > LOOKUP_BUDGET) break;
-    const found = pickWebProduct(await tavilySearch(env, ean, depth), ean);
-    if (found) return { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
+    // Busca que demorou demais não derruba tudo: tenta a próxima.
+    const data = await tavilySearch(env, ean, depth, { include_images: true, include_image_descriptions: true }).catch(() => null);
+    const found = pickWebProduct(data, ean);
+    if (!found) continue;
+    const product = { ...catalogProduct(found.name, '', ean, found.host), page: found.url };
+    product.image = await cosmosImage(ean);
+    for (const url of pickWebImages(data, found.name).slice(0, 2)) {
+      if (product.image) break;
+      product.image = await smallImageOk(url);
+    }
+    return product;
   }
   return null;
+}
+
+// ---------- Foto do que veio da web ----------
+// 1) Cosmos pelo código exato: quando tem, é do produto certo. Em 34 códigos
+//    de marcas grandes, 28 tinham; dos difíceis (Stikadinho 160g, pistache Bom
+//    Princípio, Maran), nenhum. 2) As imagens da busca, só se a descrição citar
+//    2 palavras do nome (Stikadinho e pistache vieram certos assim).
+// Foto do Cosmos pesa em média 328 KB (até 1,6 MB): tudo passa pelo wsrv.nl
+// (grátis, código aberto, sem chave), que devolve 200x200 em WebP (~9 KB).
+// O repassador pede a foto reduzida uma vez: se o wsrv devolver imagem, vale
+// (e fica no cache dele); se não (sem foto, endereço que ele recusa), não.
+export function smallWebImage(url) {
+  // Servidor de imagens do WordPress (i0.wp.com/site/...): o wsrv recusa; vai direto ao site.
+  const direct = String(url).replace(/^https:\/\/i\d\.wp\.com\/([^?]+).*$/, 'https://$1');
+  return `https://wsrv.nl/?${new URLSearchParams({ url: direct, w: '200', h: '200', fit: 'contain', cbg: 'white', output: 'webp', q: '80' })}`;
+}
+
+async function smallImageOk(url) {
+  const small = smallWebImage(url);
+  try {
+    const res = await fetch(small, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(4000) });
+    const type = res.headers.get('content-type') || '';
+    if (res.body) res.body.cancel().catch(() => {});
+    return res.ok && type.startsWith('image/') ? small : '';
+  } catch {
+    return '';
+  }
+}
+
+export function cosmosImage(ean) {
+  return smallImageOk(`https://cdn-cosmos.bluesoft.com.br/products/${ean}`);
+}
+
+// Imagens da busca cuja descrição cita 2 palavras do nome, na ordem da busca.
+export function pickWebImages(data, name) {
+  const words = webWords(name).filter((w) => w.length >= 4 && /\D/.test(w));
+  const out = [];
+  for (const img of (data && data.images) || []) {
+    const url = typeof img === 'string' ? img : img && img.url;
+    const desc = webWords(typeof img === 'string' ? '' : img.description || '');
+    if (!/^https:\/\//.test(url || '')) continue;
+    // Descrição em inglês: "pistachios" vale por "pistache" (6 primeiras letras).
+    const hits = words.filter((w) => hasWord(desc, w) || desc.some((d) => d.length >= 6 && w.length >= 6 && d.slice(0, 6) === w.slice(0, 6)));
+    if (hits.length >= 2) out.push(url);
+  }
+  return out;
 }
 
 // ---------- Produto na web pelo que a foto mostra ----------
@@ -262,7 +322,9 @@ export async function searchWeb(read, env = {}) {
   const q = [read.brand, read.product, read.variant, read.size].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim() || read.query || '';
   if (tokensOf(q).length < 2) return [];
   const data = await tavilySearch(env, q, 'basic', { include_domains: WEB_EAN_SITES, max_results: 10 });
-  return pickWebByName(data, read);
+  const found = pickWebByName(data, read);
+  await Promise.all(found.map(async (p) => { p.image = await cosmosImage(p.ean); }));
+  return found;
 }
 
 // Palavras sem acento; "500gr", "500 g" e "500g" viram "500".

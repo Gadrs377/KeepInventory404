@@ -1,6 +1,6 @@
 // Escolha da página do código de barras na web (sem rede): node test/web.mjs
 import assert from 'node:assert/strict';
-import { pickWebProduct, pickWebByName, gtinOk } from '../src/index.js';
+import { pickWebProduct, pickWebByName, gtinOk, pickWebImages, smallWebImage } from '../src/index.js';
 
 const r = (title, url, content = '', score = 0.5) => ({ title, url, content, score });
 assert.equal(pickWebProduct({ results: [
@@ -32,4 +32,16 @@ const maran = pickWebByName({ results: [
 assert.equal(maran.length, 1, 'mesmo código, uma sugestão só');
 assert.equal(maran[0].ean, '7896394807379');
 assert.equal(maran[0].name, 'Sab Maran 80g erva doce');
-console.log('11 testes passaram');
+// Foto: só a imagem cuja descrição cita 2 palavras do nome (em inglês também).
+const imgs = { images: [
+  { url: 'https://target.scene7.com/x.jpg', description: 'A cylindrical container of Up&Up Gentle Infant Formula' },
+  { url: 'https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1', description: 'A package of pistachios from the brand Bom Princípio stands upright' },
+] };
+assert.deepEqual(pickWebImages(imgs, 'Recheio cobert bom principio 1,01kg pistache'), ['https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1']);
+assert.deepEqual(pickWebImages(imgs, 'Sab maran 80g erva doce'), []);
+// Reduz pelo wsrv.nl; o servidor do WordPress vai direto ao site (o wsrv recusa).
+const small = new URL(smallWebImage('https://i0.wp.com/sugarkingdom.cl/p.png?fit=1080%2C1080&ssl=1'));
+assert.equal(small.host, 'wsrv.nl');
+assert.equal(small.searchParams.get('url'), 'https://sugarkingdom.cl/p.png');
+assert.equal(small.searchParams.get('w'), '200');
+console.log('15 testes passaram');

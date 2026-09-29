@@ -1608,4 +1608,6 @@ tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
   número na web (SYSTEM_DESIGN 5.4). O app espera até 20 s (antes 12 s).
 - **Foto:** com menos de 3 sugestões das lojas, entram até 3 da web (Cosmos e
   Systax), com o código de barras, no fim da lista "Qual destes?".
+- **Foto do que vem da web:** do Cosmos ou da própria busca, reduzida pelo
+  wsrv.nl para 200x200 (2 a 9 KB).
 - `sw.js` v79.
