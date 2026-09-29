@@ -228,7 +228,9 @@ export async function search(q, env = {}, ctx = null) {
 }
 
 export async function diag(env = {}) {
-  const probes = ['7891024134702', '7891000100103'];
+  // Um código por loja: o plano grátis deixa 50 consultas externas por
+  // chamada (27 lojas + 7 da busca de amostra).
+  const probes = ['7891000100103'];
   const rows = await Promise.all(LOOKUP_STORES.map(async (host) => {
     const t0 = Date.now();
     let hits = 0;
@@ -246,7 +248,7 @@ export async function diag(env = {}) {
   const s = await search('sanol lavanda').catch((err) => ({ error: String(err) }));
   return {
     stores: rows,
-    storesOk: rows.filter((r) => r.hits > 0).length,
+    storesOk: rows.filter((r) => r.status === 'ok').length,
     searchSample: (s.results || []).slice(0, 3).map((p) => `${p.name} [${p.ean}]`),
     catalogo: env.CATALOG ? await catalogStats(env.CATALOG) : { ligado: false },
   };
