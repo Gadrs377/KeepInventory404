@@ -37,6 +37,14 @@ A crítica deste plano e o desenho que sai dela estão em
 
 ---
 
+### 1.1 Decididas depois do desenho novo
+
+- **Bips diferentes:** um que sobe para Guardar e um que desce para Tirar.
+- **O leitor sempre abre em Guardar**, o modo inicial (não no último usado).
+- **O aviso de vencimento é configurável:** a pessoa escolhe o dia e a hora do
+  resumo da semana e liga ou desliga o aviso na véspera (Mais › Avisos).
+- **A crítica do plano** fica neste documento (seção 11).
+
 ## 2. Ordem de execução (proposta)
 
 1. **Telemetria nova** (seção 3.3). Pequena, invisível, e mede o que falta
@@ -608,3 +616,178 @@ físicas) continuam no [ROADMAP](ROADMAP.md).
 | Nome digitado à mão no catálogo compartilhado | Pode ser pessoal ou abreviado |
 | Foto tirada pela pessoa no catálogo compartilhado | LGPD |
 | Trocar de modo arrastando a imagem da câmera | Troca sem querer é o erro mais caro |
+
+---
+
+## 11. Crítica do plano (30/09/2026)
+
+Feita depois de juntar tudo, com retorno, fricção, obscuridade, posição na
+tela, ciência do comportamento, a HIG e o design system. O desenho que sai
+dela está em [DESIGN_NOVO.md](DESIGN_NOVO.md).
+
+### 11.1 O plano esquece o maior risco do app: a Saída esquecida
+
+O armário só fica certo se o que sai for registrado. Guardar tem um gatilho
+natural (chegou do mercado, tem a nota fiscal). **Tirar não tem**: a pessoa
+está cozinhando, com a mão ocupada, e o registro é um custo sem recompensa na
+hora. É o padrão clássico de hábito que não pega (sem gatilho, sem recompensa
+imediata).
+
+O plano mede isso (diferenças da Contagem, seção 3.3), mas quase não
+age. No desenho:
+
+- **Tirar custa um toque a menos:** o "−" da linha do Armário continua, e o
+  leitor abre no último modo usado.
+- **Quando algo acaba, a recompensa é imediata:** "Acabou. Era a última." com
+  "Pôr nas Compras" ali mesmo. Registrar a saída passa a render a lista de
+  compras, e não só a trabalho.
+- **O Conferir mostra o que ficou errado** ("Era 1, contou 3") e corrige numa
+  passada.
+- **"Joguei fora"** é um Tirar no momento em que o produto vai para o lixo, que
+  é quando a pessoa lembra (já decidido no ROADMAP para as embalagens com várias
+  unidades).
+
+### 11.2 Troca de modo sem querer (erro de modo)
+
+Guardar e Tirar usam o mesmo gesto (ler o código). Isso é o que Don Norman
+chama de **erro de modo**, e é silencioso. Defesas em camadas, todas no
+desenho:
+
+1. **O modo fica longe do polegar:** o seletor Guardar/Tirar fica na faixa do
+   alto. Trocar é uma decisão, não um esbarrão. Nada de arrastar a imagem.
+2. **A faixa inteira tem a cor do modo** (verde ou beterraba), no canto do olho.
+3. **O sinal está onde o olho está:** o cartão da leitura mostra **+1** ou
+   **−1** numa etiqueta na cor do modo.
+4. **O som também muda** (Proposto): bip que sobe para Guardar e que desce para
+   Tirar. É retorno por mais de um canal, como pede a HIG.
+5. **O − do cartão desfaz** na hora, sem procurar.
+
+### 11.3 O voto "pelo uso" nos nomes da comunidade é enviesado
+
+Eu tinha proposto que salvar sem mexer no nome valesse como "é isso". Mas a
+maioria das pessoas aceita o que vem pronto (**efeito padrão** e **viés de
+automação**): quem não troca um nome ruim não está confirmando nada, só está
+com pressa. Os votos iam confirmar nomes errados.
+
+**No desenho:** o voto é **explícito e de um toque** ("É este" / "Não é
+este"), e só aparece quando o nome é da comunidade. Não votar não conta nada.
+
+### 11.4 "Usar o que a IA leu" por último: o primeiro da lista ganha
+
+Numa lista, as pessoas tendem a escolher o primeiro item (**efeito de
+primazia**). Se a busca pelas lojas trouxer produtos errados em cima, eles vão
+ser escolhidos, e o nome "em aramaico" entra do mesmo jeito.
+
+**No desenho** (mantendo a decisão de deixar "Usar o que está na embalagem"
+por último):
+
+- o que a IA leu aparece **no topo, como contexto** ("Na embalagem: Pó para
+  Pudim Baunilha Royal 50g");
+- **só entram resultados da mesma marca e do mesmo tamanho** que a IA leu. Se
+  nenhum bate, a lista fica só com "Usar o que está na embalagem".
+
+### 11.5 Textos que falam de si
+
+O design system proíbe o texto de falar de si ("nada de 'o app faz' nem 'não
+entendi'"). O plano e o primeiro desenho quebravam isso:
+
+| Antes | Agora |
+|---|---|
+| Não achei este código nas lojas | Nenhuma loja tem este código |
+| Achei na internet: X · É esse? | Na internet: X · É este? |
+| Vi o QR Code de uma nota | Nota fiscal do Zaffari |
+| Achei uma data. Segure mais um pouco | (sem texto; a moldura muda de cor) |
+| Não tenho certeza. Confira onde fica. | (só depois do nome; sem "tenho") |
+
+E os termos fixos: o leitor passa a dizer **Guardar** e **Tirar** em vez de
+"Entrada" e "Saída". O resto do app já usa esses verbos, e verbo diz a ação.
+
+### 11.6 Trocar o cupom por um aviso tira o ponto alto
+
+O plano sugeria trocar o cupom depois do Concluir por um aviso ("3 produtos
+guardados · Ver cupom"). Pela **regra do pico e do fim**, as pessoas lembram
+de uma experiência pelo momento mais forte e pelo fim. O cupom saindo da
+impressora é esse momento, e é a identidade do app ("caixa do mercado").
+
+**No desenho:** o cupom fica **vivo dentro do leitor**, enchendo enquanto se lê
+(com a linha nova destacada). No Concluir, a impressão continua, mas curta e
+fechável com um toque em qualquer lugar.
+
+### 11.7 O primeiro desenho da câmera quebrava o design system
+
+| Regra do design system | Primeiro desenho | Agora |
+|---|---|---|
+| Fundo branco, fios, cor só com significado | Tudo escuro | Papel branco; a câmera é uma janela |
+| Vidro só na camada que flutua; no máximo 2 | Cartões, dicas e bandeja em vidro | Vidro só na barra de baixo e na lanterna |
+| Etiqueta de gôndola, cupom, linha vermelha | Nenhum dos três | Os três de volta |
+| Faixa do topo mostra o modo | Pílula no rodapé | Faixa na cor do modo |
+| Ícone só se universal | "Sem código?" em pílula | "Digitar" e "Nota fiscal" com nome |
+
+### 11.8 Conferir o armário pode cansar
+
+Juntar Contar e Validade numa passada é bom, mas a passada fica longa (23
+produtos, uns 40 s cada). Contra o cansaço:
+
+- **Progresso sempre à vista** ("9 de 23", anel na faixa). Perto do fim a pessoa
+  acelera (**efeito do gradiente de meta**).
+- **"Pular"** na data: a data nunca trava a contagem.
+- **Revisar a qualquer hora**, sem precisar chegar ao fim.
+- O que já tem data **não para nada**: aparece no cartão e a câmera segue.
+
+### 11.9 O tempo de virar o produto (da telemetria)
+
+Depois do código, a pessoa leva de 1 a 6 s virando o produto. O desenho usa
+esse tempo em vez de brigar com ele:
+
+- o produto sobe para o topo e a mira vira uma faixa de data;
+- o texto diz **"Vire e mostre a data"** e, embaixo, "Sem pressa: a câmera
+  espera você virar o produto";
+- nada exige toque nesse intervalo.
+
+### 11.10 Folha em cima de câmera que parece viva
+
+A telemetria e o relato mostraram: com a folha aberta, a imagem seguia ao
+vivo, e ele continuava apontando. **No desenho:** quando uma folha abre sobre
+o leitor, a câmera **escurece** e mostra **"Câmera pausada"**. E o caso mais
+comum ("todas já têm data") nem abre folha: vira o cartão.
+
+### 11.11 Uma folha por vez
+
+A HIG pede uma folha por vez. O "código novo" tem 4 passos (sem loja → foto →
+lendo → é um destes → formulário). **É uma folha só que muda de conteúdo**,
+não folhas empilhadas.
+
+### 11.12 A internet chegando no meio da decisão
+
+As opções aparecem aos ~2,5 s, com a busca na web ainda rodando. Se o
+resultado da web empurrar os botões para baixo, a pessoa toca no botão
+errado. **No desenho:** o resultado da web ocupa **o lugar da linha "Ainda
+procurando na internet"**, embaixo dos botões. Nada se mexe em cima.
+
+### 11.13 A espera da foto
+
+A leitura da embalagem leva ~5 s. Espera com a **própria foto à vista** e uma
+**barra de progresso que anda**, dizendo o que está sendo feito ("Nome, marca e
+tamanho", depois "Procura nas lojas"). Espera explicada parece mais curta.
+
+### 11.14 Backup está tarde demais na ordem
+
+As datas de uma noite inteira estão só num celular. Perder isso dói mais do
+que ganhar qualquer tela nova (**aversão à perda**), e a cópia automática é
+barata. **Proposta:** subir o backup automático para logo depois da
+telemetria.
+
+### 11.15 Aviso de vencimento sem virar barulho
+
+- **Horário fixo**, criando o hábito: um resumo no **sábado de manhã** (antes da
+  lista de compras) e um aviso na **véspera** do que vence.
+- **A permissão é pedida na hora certa** (HIG): depois da primeira data salva
+  ("Avisar quando algo for vencer?"), nunca ao abrir o app.
+- Liga e desliga em Mais › Avisos.
+
+### 11.16 "Joguei fora" não é vermelho
+
+O vermelho do design system é só para erro e ação destrutiva. Jogar fora um
+produto vencido é um **Tirar** comum, então fica na cor do Tirar (beterraba).
+O vermelho fica para "Remover do armário" (apagar o produto), que vai para o
+fim do Editar, em texto.
