@@ -49,6 +49,15 @@ A crítica deste plano e o desenho que sai dela estão em
   existindo. Os três saem do mesmo botão "Conferir" do Armário (um menu) e de
   Mais, para não voltar a espalhar as entradas.
 - **Fim do Conferir: "Aplicar e concluir".**
+- **"Pede atenção", do mais urgente ao menos:** vencidos, vencem esta semana,
+  acabando, zerados e dias sem conferir. Cada bloco some quando está em zero.
+  **"Sem data" sai** (nunca zera, porque sal e açúcar não têm data, e vira
+  paisagem); o número vai para o menu do Conferir ("Só marcar validades · 5
+  produtos sem data").
+- **Histórico em forma de diário, com os verbos dos botões:** "Guardou 2",
+  "Tirou 1", "Contou 3 (eram 1)", "Marcou a validade 12/03/2027", "Jogou fora
+  1". Sai "Entrada de 4". Atualizar os termos fixos do design system (seção 8)
+  quando aplicar.
 
 ## 2. Ordem de execução (proposta)
 

@@ -288,9 +288,10 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 - **Aviso de vencimento configurável:** dia e hora do resumo, e véspera liga
   ou desliga.
 
-**Em aberto:**
+- **"Pede atenção":** vencidos, vencem esta semana, acabando, zerados e dias
+  sem conferir, nessa ordem, cada um só quando houver. "Sem data" vai para o
+  menu do Conferir.
+- **Histórico como diário:** Guardou 2, Tirou 1, Contou 3 (eram 1), Marcou a
+  validade…, Jogou fora 1.
 
-1. "Pede atenção": vencem, acabando, zerado, sem data e o lembrete do Conferir. Ficam esses?
-3. Histórico: "Guardou 2 / Tirou 1" ou "Entrada de 4"?
-2. ~~Conferir substitui o Contar e o modo Validade?~~ Decidido: os três
-   continuam (seção 2.9).
+**Em aberto:** nada. O design está fechado para aplicar.
