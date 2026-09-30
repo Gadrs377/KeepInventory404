@@ -290,6 +290,7 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 
 **Em aberto:**
 
-1. "Pede atenção": os três blocos (vencem, acabando, sem data), ou outros?
+1. "Pede atenção": vencem, acabando, zerado, sem data e o lembrete do Conferir. Ficam esses?
+3. Histórico: "Guardou 2 / Tirou 1" ou "Entrada de 4"?
 2. ~~Conferir substitui o Contar e o modo Validade?~~ Decidido: os três
    continuam (seção 2.9).
