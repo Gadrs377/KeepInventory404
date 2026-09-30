@@ -2534,3 +2534,11 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .comm-vote .btn { flex: 1; min-height: 44px; }
 .comm-done { font-size: var(--text-callout); color: var(--ink-2); }
 .sheet-text:empty { display: none; }
+
+/* Câmera pausada com uma folha aberta (3.73) */
+.cam-paused { position: absolute; inset-inline: 0; margin-inline: auto; inset-block-start: 12px; width: max-content; padding: 6px 12px; border-radius: 14px; background: rgba(22, 24, 23, 0.86); color: #fff; font-weight: 600; font-size: var(--text-footnote); opacity: 0; transition: opacity 150ms var(--ease); pointer-events: none; z-index: 3; }
+.viewfinder.is-paused .cam-paused { opacity: 1; }
+.viewfinder video { transition: filter 150ms var(--ease); }
+.viewfinder.is-paused video { filter: brightness(0.45) grayscale(0.4); }
+.viewfinder.is-paused .aim { opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) { .cam-paused, .viewfinder video { transition: none; } }

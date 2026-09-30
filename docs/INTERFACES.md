@@ -1792,3 +1792,24 @@ Quinto passo da nova versão (PLANO_MELHORIAS, seção 6; SYSTEM_DESIGN, 5.9).
 - Ícone novo: `users` (Phosphor bold).
 - `sw.js` v91.
 
+## Versão 3.73: validade e histórico
+
+Sexto passo da nova versão (PLANO_MELHORIAS, seção 4).
+
+- **Fabricação e validade com o mesmo dia e mês** ("18/02/24" e "18/02/27"): fica
+  a mais distante, que conta como rotulada (`js/dates.js`). Eram os dois erros de
+  ano da telemetria de 30/09.
+- **Câmera pausada visível:** com uma folha aberta sobre o leitor, a imagem
+  escurece e mostra "Câmera pausada" (depois de 400 ms, para não piscar).
+- **Leitura difícil mais cedo:** a sugestão da foto do celular aos 8 s (antes
+  14 s) e o "difícil", que oferece digitar, aos 15 s (antes 35 s).
+- **Modo Validade, "todas com data" sem folha:** um aviso "Leite Integral 1L: já
+  tem data. 15/10/2026 (2)." com **Abrir**, e a câmera segue lendo.
+- **Data que já passou:** depois de marcar, o aviso diz "venceu há 51 dias" com
+  **Jogar fora** (remédio: **Separar para descartar**, e lembra que as farmácias
+  recebem). Jogar fora é um movimento novo, `descarte`: sai do armário, não conta
+  como consumo, e oferece **Adicionar às Compras**.
+- **Histórico como diário:** "Guardou 2", "Tirou 1", "Jogou fora 1", "Contou 3
+  (eram 1)", "Ajustou para 4 (eram 5)" (produto e Mais).
+- `sw.js` v92.
+

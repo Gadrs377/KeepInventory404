@@ -95,7 +95,7 @@ test('ao abrir: lista do armário com as datas já marcadas; tocar marca sem ler
   } finally { await s.ctx.close(); }
 });
 
-test('todas com data: não abre a câmera, mostra as datas', async () => {
+test('todas com data: sem folha, um aviso com as datas e a câmera segue', async () => {
   const s = await openMode(async () => {
     const st = await import('/js/store.js');
     await st.addStock('7891000100103', 2, { name: 'Leite Integral 1L', area: 'cozinha', barcodes: ['7891000100103'] });
@@ -103,8 +103,9 @@ test('todas com data: não abre a câmera, mostra as datas', async () => {
   });
   try {
     await s.readCode(LEITE);
-    await s.page.waitForSelector('.sheet [data-act]');
-    assert.match(await s.page.textContent('.sheet'), /Todas as 2 unidades já têm data.*15\/10\/2026.*2 unidades/s);
+    await s.page.waitForFunction(() => /já tem data/.test(document.body.textContent));
+    assert.match(await s.page.textContent('body'), /Leite Integral 1L: já tem data\. 15\/10(\/2026)? \(2\)/);
+    assert.equal(await s.page.evaluate(() => document.body.classList.contains('has-sheet')), false, 'nenhuma folha em cima da câmera');
     assert.equal(await s.page.isVisible('.exp-cam'), false);
   } finally { await s.ctx.close(); }
 });

@@ -188,8 +188,10 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 
 ## 8. Escrita
 
-- Verbos claros e iguais do começo ao fim: o botão **Dar baixa em 2** gera o
-  aviso **Baixa de 2** e o histórico **Saída de 2**.
+- Verbos claros e iguais do começo ao fim: o botão **Tirar 2** gera o aviso
+  **−2** e o histórico **Tirou 2**. O histórico é um diário com os verbos dos
+  botões (desde a 3.73): **Guardou 2**, **Tirou 1**, **Jogou fora 1**,
+  **Contou 3 (eram 1)**, **Ajustou para 4 (eram 5)**.
 - Botões dizem o que acontece: "Adicionar 3", "Salvar contagem",
   "Aplicar contagem". Nunca "Enviar" ou "OK".
 - Erros dizem o que houve e o que fazer.

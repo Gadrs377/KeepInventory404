@@ -285,6 +285,19 @@ export function findExpiryCandidates(text, today = todayIso(), { dots = false } 
   const byIso = new Map();
   for (const f of found) if (!byIso.has(f.iso)) byIso.set(f.iso, f);
   const unique = [...byIso.values()];
+  // Fabricação e validade sem rótulo com o mesmo dia e mês ("18/02/24" e
+  // "18/02/27", o prazo em anos redondos): a validade é a mais distante e a
+  // outra sai. Na telemetria de 30/09 foram os dois erros de ano (pó para
+  // pudim e pêssego em calda). Só datas completas (dia, mês e ano).
+  const full = (f) => f.raw.split(/\s*[\/.\-]\s*/).length === 3;
+  const md = (f) => f.iso.slice(5);
+  for (const f of [...unique]) {
+    if (f.labeled || !full(f)) continue;
+    const later = unique.find((g) => g !== f && full(g) && md(g) === md(f) && g.iso > f.iso);
+    if (!later) continue;
+    unique.splice(unique.indexOf(f), 1);
+    if (!later.labeled) { later.labeled = true; later.labelBy = 'same-day-pair'; }
+  }
   // Sem rótulo junto da data, mas o bloco diz qual é: uma única data futura
   // que sobrou (a) numa etiqueta com fabricação ("FAB:05/08/24" numa linha,
   // "17/09/26" na outra; a validade vem depois da fabricação) ou (b) com um

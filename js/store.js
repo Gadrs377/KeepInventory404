@@ -134,6 +134,11 @@ export function removeStock(code, n) {
   return move(code, 'saida', -clampInt(n, 1));
 }
 
+// Jogou fora (vencido, estragado): sai do armário, mas não conta como consumo.
+export function discardStock(code, n) {
+  return move(code, 'descarte', -clampInt(n, 1));
+}
+
 export async function setStock(code, n, type = 'ajuste') {
   const p = await getProduct(code);
   if (!p) throw new Error('Esse produto não está mais no armário.');

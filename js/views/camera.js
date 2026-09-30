@@ -32,6 +32,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
       <div class="aim" aria-hidden="true"><span class="aim-line"></span></div>
       <p class="cam-msg" hidden></p>
       <p class="cam-notice" role="status" hidden></p>
+      <p class="cam-paused" aria-hidden="true">Câmera pausada</p>
       <p class="cam-loading" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Abrindo a câmera</p>
       <button type="button" class="cam-hint" data-byname hidden>Não lê ou não tem código? <strong>Ver outras formas</strong></button>
       ${onNota ? '<p class="cam-qr-note" hidden>Aponte para o QR Code no fim do cupom</p><button type="button" class="cam-hint cam-paste" data-paste hidden>Não lê? <strong>Colar o link da nota</strong></button>' : ''}
@@ -56,6 +57,15 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
   let handling = false;
   let paused = false;
   let torchOn = false;
+  // Com uma folha aberta, a leitura para: a imagem escurece e diz "Câmera
+  // pausada" (antes, a imagem seguia viva e parecia que ainda lia). Só depois
+  // de 400 ms, para não piscar nas leituras rápidas.
+  let pausedLookTimer = 0;
+  function pausedLook(on) {
+    clearTimeout(pausedLookTimer);
+    if (on) pausedLookTimer = setTimeout(() => viewfinder.classList.add('is-paused'), 400);
+    else viewfinder.classList.remove('is-paused');
+  }
   let hintTimer = 0;
   let qrMode = false;
 
@@ -78,11 +88,12 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
     clearTimeout(hintTimer);
     hintBtn.hidden = true;
     scanner.pause();
+    pausedLook(true);
     try {
       await fn(code);
     } finally {
       handling = false;
-      if (alive && !paused) { scanner.resume(); armHint(); }
+      if (alive && !paused) { scanner.resume(); armHint(); pausedLook(false); }
     }
   }
 
@@ -230,10 +241,11 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
       clearTimeout(hintTimer);
       hintBtn.hidden = true;
       scanner.pause();
+      pausedLook(true);
     },
     resume() {
       paused = false;
-      if (alive && !handling) { scanner.resume(); armHint(); }
+      if (alive && !handling) { scanner.resume(); armHint(); pausedLook(false); }
     },
     stop() {
       alive = false;

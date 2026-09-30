@@ -51,7 +51,9 @@ export const PHOTO_TESSERACT_VARIANTS = ['raw', 'gray', 'sauvola'].map(mode => (
 // difícil e sugere digitar olhando a melhor foto. O tempo importa porque cada
 // foto com o Paddle medium leva ~20 s no computador, mais num celular.
 export const HARD_AFTER_BURSTS = 3;
-export const HARD_AFTER_MS = 35000;
+// 15 s sem achar: oferece digitar (antes 35 s; na telemetria de 30/09, a
+// pessoa desistia entre 30 e 40 s nos refrescos em pó).
+export const HARD_AFTER_MS = 15000;
 
 // Por que a última leitura não confirmou (para o modo de diagnóstico). O
 // texto é curto, para caber numa linha do painel.

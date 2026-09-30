@@ -6,8 +6,9 @@
 
 import { mountCamera } from './camera.js';
 import { expirySheet, datesListHtml } from './expiryLots.js';
-import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, onChange } from '../store.js';
-import { formatDate } from '../dates.js';
+import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, onChange, discardStock } from '../store.js';
+import { formatDate, todayIso, relativeDays } from '../dates.js';
+import { addToShopList } from '../shop.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, thumb, subtitle, vibrate } from '../ui.js';
@@ -180,12 +181,15 @@ export default function mountValidade(root) {
       return;
     }
     if (free <= 0) {
+      // Sem folha: quem está conferindo o armário vê as datas e lê o próximo.
       tel('validade-modo', { ...log, resultado: 'todas com data' });
-      await notice({
-        title: `Todas as ${plural(cur.qty, 'unidade', 'unidades')} já têm data`,
-        html: `${datesListHtml(lots)}<p class="sheet-text">Se alguma está errada, corrija na página do produto.</p>`,
-        product: cur,
-        action: { label: 'Abrir o produto', run: () => { location.hash = `#/produto/${encodeURIComponent(cur.code)}`; } },
+      vibrate(15);
+      const dates = lots.slice(0, 3).map((l) => `${formatDate(l.expiresAt)}${l.qty > 1 ? ` (${l.qty})` : ''}`).join(', ');
+      toast(`${cur.name}: já tem data. ${dates}${lots.length > 3 ? ' e mais' : ''}.`, {
+        mode: 'validade',
+        duration: 5000,
+        action: 'Abrir',
+        onAction: () => { location.hash = `#/produto/${encodeURIComponent(cur.code)}`; },
       });
       return;
     }
@@ -227,6 +231,35 @@ export default function mountValidade(root) {
     vibrate(15);
     const units = picked.reduce((a, l) => a + l.qty, 0);
     tel('validade-modo', { ...log, resultado: 'marcou', datas: picked.map((l) => ({ data: l.expiresAt, qtd: l.qty })) });
+    // Data que já passou: o app diz e oferece jogar fora ali mesmo.
+    const today = todayIso();
+    const expired = picked.map((l, i) => ({ ...l, id: ids[i] })).filter((l) => l.expiresAt < today);
+    if (expired.length) {
+      const n = expired.reduce((a, l) => a + l.qty, 0);
+      const med = cur.area === 'remedios';
+      toast(`${cur.name}: ${relativeDays(expired[0].expiresAt).toLowerCase()}.`, {
+        mode: 'validade',
+        duration: 8000,
+        action: med ? 'Separar para descartar' : 'Jogar fora',
+        onAction: async () => {
+          try {
+            for (const l of expired) await removeLot(l.id);
+            await discardStock(cur.code, n);
+            tel('validade-modo', { ...log, resultado: 'jogou fora', qtd: n });
+            // Remédio vencido não vai no lixo comum: as farmácias recebem.
+            toast(`${cur.name}: ${plural(n, 'saiu', 'saíram')} do armário.${med ? ' Leve a caixa a uma farmácia: elas recebem remédio vencido.' : ''}`, {
+              mode: 'saida',
+              duration: 6000,
+              action: 'Adicionar às Compras',
+              onAction: () => { addToShopList(cur.name); toast('Adicionado às Compras.', { duration: 2000 }); },
+            });
+          } catch (err) {
+            toast(err.message, { duration: 4000 });
+          }
+        },
+      });
+      return;
+    }
     toast(`${cur.name}: ${picked.map((l) => formatDate(l.expiresAt)).join(', ')} em ${plural(units, 'unidade', 'unidades')}.`, {
       mode: 'validade',
       duration: 5000,

@@ -69,8 +69,9 @@ const ISSUE_TEXT = {
   glare: 'Reflexo na data. Incline um pouco',
   blur: 'Segure parado',
 };
-// Texto na mira, nenhuma data, por esse tempo: sugere a foto do celular.
-const PHOTO_HINT_MS = 14000;
+// Texto sem data aos 8 s: sugere a foto do celular; aos 15 s, o "difícil"
+// (HARD_AFTER_MS) oferece digitar. Antes, 14 s e 35 s.
+const PHOTO_HINT_MS = 8000;
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const photoSource = (seq) => `photo-${seq}`;

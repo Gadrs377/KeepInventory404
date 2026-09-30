@@ -12,10 +12,11 @@ import { expirySheet } from './expiryLots.js';
 import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
-  entrada: (m) => `Entrada de ${m.delta}`,
-  saida: (m) => `Saída de ${Math.abs(m.delta)}`,
-  ajuste: (m) => `Ajuste ${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)}`,
-  contagem: (m) => `Contagem ${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)}`,
+  entrada: (m) => `Guardou ${m.delta}`,
+  saida: (m) => `Tirou ${Math.abs(m.delta)}`,
+  descarte: (m) => `Jogou fora ${Math.abs(m.delta)}`,
+  ajuste: (m) => `Ajustou para ${m.qtyAfter} (eram ${m.qtyBefore})`,
+  contagem: (m) => `Contou ${m.qtyAfter} (eram ${m.qtyBefore})`,
 };
 
 export default async function mountProduto(root, { code }) {

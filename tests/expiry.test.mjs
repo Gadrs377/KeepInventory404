@@ -142,3 +142,14 @@ test('dot-printed can (lata): misread month names, labels and separators', () =>
   assert.equal(one('LOTE:1291225'), '');
   assert.equal(one('CAE:331BEZ23'), '');
 });
+
+test('fabricação e validade com o mesmo dia e mês: fica a mais distante', () => {
+  // Pó para pudim (telemetria de 30/09): leu 18/02/2024, era 18/02/2027.
+  assert.deepEqual(findExpiryCandidates('18/02/24 L 2231\n18/02/27', '2026-09-30').map((x) => x.iso), ['2027-02-18']);
+  // Pêssego em calda: 29/12/2025 e 29/12/2028. A que fica conta como rotulada.
+  const c = findExpiryCandidates('29.12.25   29.12.28', '2026-09-30');
+  assert.deepEqual(c.map((x) => x.iso), ['2028-12-29']);
+  assert.equal(c[0].labeled, true);
+  // Dia e mês diferentes: continua perguntando.
+  assert.equal(findExpiryCandidates('10/02/26 18/02/27', '2026-09-30').length, 2);
+});

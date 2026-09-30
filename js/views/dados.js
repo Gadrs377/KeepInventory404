@@ -15,10 +15,11 @@ export default async function mountDados(root) {
   try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false; } catch { /* sem suporte */ }
 
   const label = (m) => ({
-    entrada: `Entrada de ${m.delta}`,
-    saida: `Saída de ${Math.abs(m.delta)}`,
-    ajuste: `Ajuste ${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)}`,
-    contagem: `Contagem ${m.delta > 0 ? '+' : '−'}${Math.abs(m.delta)}`,
+    entrada: `Guardou ${m.delta}`,
+    saida: `Tirou ${Math.abs(m.delta)}`,
+    descarte: `Jogou fora ${Math.abs(m.delta)}`,
+    ajuste: `Ajustou para ${m.qtyAfter} (eram ${m.qtyBefore})`,
+    contagem: `Contou ${m.qtyAfter} (eram ${m.qtyBefore})`,
   }[m.type] || m.type);
 
   root.innerHTML = `
