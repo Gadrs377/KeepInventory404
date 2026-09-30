@@ -20,8 +20,8 @@ conversa de 30/09/2026. O que já pesa na decisão:
 - **Entre ler o código e ler a data a pessoa vira o produto.** A data quase
   nunca está na mesma face do código. Na telemetria de 30/09 (27 produtos em
   17 minutos), a data apareceu de 0,9 s (mesma face) a 6 s depois do código;
-  metade em até 3 s. A tela não pode exigir nada nesse intervalo, e a câmera
-  não pode concluir sozinha com o que vê enquanto o produto ainda gira.
+  metade em até 3 s. A tela não pode exigir nada nesse intervalo. (As datas
+  vencidas lidas naquela noite estavam certas: eram produtos vencidos mesmo.)
 - **Troca de modo sem querer é o erro mais caro** (guardar vira tirar, em
   silêncio). Trocar de modo só com toque, nunca arrastando a imagem.
 
