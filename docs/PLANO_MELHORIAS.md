@@ -54,6 +54,8 @@ A crítica deste plano e o desenho que sai dela estão em
   **"Sem data" sai** (nunca zera, porque sal e açúcar não têm data, e vira
   paisagem); o número vai para o menu do Conferir ("Só marcar validades · 5
   produtos sem data").
+- **Remédios:** chave "Uso contínuo" (sim). As proteções de privacidade dos
+  remédios ficam para antes de abrir o app a outras pessoas (seção 15).
 - **Histórico em forma de diário, com os verbos dos botões:** "Guardou 2",
   "Tirou 1", "Contou 3 (eram 1)", "Marcou a validade 12/03/2027", "Jogou fora
   1". Sai "Entrada de 4". Atualizar os termos fixos do design system (seção 8)
@@ -1229,11 +1231,39 @@ Conferir ganha a escolha do ambiente ("Tudo, Cozinha, Limpeza, Beleza,
 Remédios") e do jeito ("Tudo, Só contar, Só validades") numa folha só,
 com o tempo estimado ("3 remédios. Leva uns 2 minutos.").
 
-### 14.5 Para decidir
+### 14.5 Decidido (30/09/2026)
 
-1. **Chave "Uso contínuo"** no remédio (só ele avisa "acabando" e vai para as
-   Compras)?
-2. **Mostrar o nome dos remédios nos avisos:** desligado por padrão?
-3. **Cifrar o backup** antes de subir (recomendo que sim, por causa dos
-   remédios)?
-4. **Telemetria sem nomes de remédio** (recomendo que sim)?
+1. **Chave "Uso contínuo" no remédio: sim.** Só o remédio de uso contínuo avisa
+   "acabando" e vai para as Compras; o de uso eventual só avisa a validade.
+2. **Nome do remédio nos avisos, backup cifrado e telemetria sem nomes de
+   remédio: não agora.** Hoje só vocês dois usam. Ficam obrigatórios **antes de
+   abrir o app para outras pessoas** (seção 15).
+
+---
+
+## 15. Antes de abrir o app para outras pessoas
+
+Hoje o app é usado só pelo casal, e algumas proteções foram deixadas de lado
+de propósito. **Tudo aqui é obrigatório antes de outra pessoa usar o app.**
+
+1. **Remédio nos avisos:** "Mostrar o nome dos remédios nos avisos" existe e
+   vem **desligado**; na tela bloqueada, "1 remédio", sem o nome (seção 14.3).
+2. **Backup cifrado:** a cópia automática é cifrada no celular antes de subir,
+   com chave que só os aparelhos da pessoa têm. O repassador guarda sem
+   conseguir ler (remédio é dado de saúde, sensível pela LGPD).
+3. **Telemetria:**
+   - sem nome nem código de remédio (só "remédio" e o resultado);
+   - hoje a telemetria é "inteira" porque vocês autorizaram. Para outras
+     pessoas: pedir consentimento, dizer o que é coletado e permitir desligar
+     em Mais;
+   - o identificador do aparelho continua aleatório e sem ligação com a
+     pessoa.
+4. **Fotos:** continuam só no celular de quem tirou (já é regra, seção 1).
+5. **Nomes da comunidade:**
+   - nunca nomes digitados à mão (já é regra);
+   - com os limites por aparelho da seção 6.2;
+   - com um jeito de denunciar nome ofensivo.
+6. **Apagar os dados:** em Mais, "Apagar tudo deste celular" e, com backup,
+   apagar também a cópia no repassador.
+7. **Política de privacidade** curta, em Mais, dizendo o que fica no celular,
+   o que vai para o repassador e por quanto tempo (telemetria: 90 dias).

@@ -333,4 +333,9 @@ A crítica completa está em [PLANO_MELHORIAS.md, seção 14](PLANO_MELHORIAS.md
 - **Histórico como diário:** Guardou 2, Tirou 1, Contou 3 (eram 1), Marcou a
   validade…, Jogou fora 1.
 
-**Em aberto:** as 4 perguntas dos remédios (PLANO_MELHORIAS, seção 14.5).
+- **Remédios:** chave "Uso contínuo", sim. Nome nos avisos, backup cifrado e
+  telemetria sem nomes de remédio ficam para antes de abrir o app a outras
+  pessoas (PLANO_MELHORIAS, seção 15); o desenho da tela bloqueada e da opção
+  em Mais › Avisos já está pronto para essa hora.
+
+**Em aberto:** nada. O design está fechado para aplicar.
