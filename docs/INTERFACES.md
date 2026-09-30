@@ -1648,3 +1648,12 @@ produto na lista.
   as duas.
 - Telemetria: `validade-modo` (produto, datas que já tinha, resultado).
 - Testes: `tests/ui/validade.test.mjs`. `sw.js` v82.
+
+## Versão 3.64: modo Validade mostra as datas ao abrir
+
+A telemetria mostrou o modo aberto por 6 s e fechado sem ler nada: ao entrar,
+a tela não dizia o que já tinha data. Agora, embaixo da câmera, **No armário**
+lista cada produto com as datas já marcadas (15/10/2026 ×2) e, em âmbar,
+quantas unidades estão sem data; esses vêm primeiro. A nota diz quantos faltam
+("1 produto tem unidade sem data") ou "Todos os produtos já têm data". Tocar
+no produto marca sem ler o código. A lista se atualiza ao salvar. `sw.js` v83.

@@ -66,6 +66,29 @@ test('produto com parte das datas: mostra as marcadas, avisa a repetida e guarda
   } finally { await s.ctx.close(); }
 });
 
+test('ao abrir: lista do armário com as datas já marcadas; tocar marca sem ler o código', async () => {
+  const s = await openMode(async () => {
+    const st = await import('/js/store.js');
+    await st.addStock('7891000100103', 3, { name: 'Leite Integral 1L', area: 'cozinha', barcodes: ['7891000100103'] });
+    await st.addLot('7891000100103', 2, '2026-10-15');
+    await st.addStock('7896098900208', 2, { name: 'Detergente Ypê', area: 'limpeza', barcodes: ['7896098900208'] });
+    await st.addLot('7896098900208', 2, '2028-01-31');
+  });
+  try {
+    await s.page.waitForSelector('.val-row');
+    const rows = await s.page.$$eval('.val-row', (els) => els.map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
+    assert.match(rows[0], /Leite Integral 1L 15\/10\/2026 ×2 1 sem data/, 'o que tem unidade sem data vem primeiro');
+    assert.match(rows[1], /Detergente Ypê 31\/01\/2028 ×2$/);
+    await s.page.click('.val-row.is-missing');
+    await s.page.waitForSelector('.exp-existing');
+    await s.typeDate('20/11/26');
+    await s.page.click('.exp-confirm-page:not([hidden]) [data-done]');
+    await s.page.waitForFunction(() => !document.querySelector('.val-row.is-missing'));
+    assert.match(await s.page.textContent('.val-shelf-note'), /Todos os produtos já têm data/);
+    assert.deepEqual(s.errors, []);
+  } finally { await s.ctx.close(); }
+});
+
 test('todas com data: não abre a câmera, mostra as datas', async () => {
   const s = await openMode(async () => {
     const st = await import('/js/store.js');

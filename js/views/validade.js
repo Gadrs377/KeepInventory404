@@ -6,7 +6,7 @@
 
 import { mountCamera } from './camera.js';
 import { expirySheet } from './expiryLots.js';
-import { productsByBarcode, listProducts, getProduct, lotsFor, addLot } from '../store.js';
+import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, onChange } from '../store.js';
 import { formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
@@ -28,6 +28,11 @@ export default function mountValidade(root) {
           <ul class="receipt-lines"></ul>
           <p class="receipt-total"></p>
         </section>
+        <section class="val-shelf" aria-labelledby="val-shelf-title">
+          <h2 class="list-title" id="val-shelf-title">No armário</h2>
+          <p class="val-shelf-note"></p>
+          <ul class="quick-list val-list"></ul>
+        </section>
       </main>
       <footer class="floating-bar glass-regular glass-static">
         <button type="button" class="btn btn-primary btn-lg" data-finish>${icon('check')}Concluir</button>
@@ -36,10 +41,53 @@ export default function mountValidade(root) {
 
   const lines = $('.receipt-lines', root);
   const total = $('.receipt-total', root);
+  const receipt = $('.receipt', root);
+  const shelfList = $('.val-list', root);
+  const shelfNote = $('.val-shelf-note', root);
+  let shelf = [];
+
+  // O que tem no armário e as datas já marcadas: os que têm unidade sem data
+  // vêm primeiro. Tocar marca sem precisar ler o código.
+  async function renderShelf() {
+    const [products, lots] = await Promise.all([listProducts(), listLots()]);
+    const byCode = new Map();
+    for (const l of lots) { if (!byCode.has(l.code)) byCode.set(l.code, []); byCode.get(l.code).push(l); }
+    shelf = products.filter((p) => p.qty > 0).map((p) => {
+      const mine = byCode.get(p.code) || [];
+      return { p, lots: mine, free: Math.max(0, p.qty - mine.reduce((a, l) => a + l.qty, 0)) };
+    }).sort((a, b) => (b.free > 0) - (a.free > 0) || a.p.name.localeCompare(b.p.name, 'pt-BR'));
+    const missing = shelf.filter((x) => x.free > 0);
+    shelfNote.textContent = !shelf.length ? 'O armário está vazio.'
+      : missing.length ? `${plural(missing.length, 'produto tem', 'produtos têm')} unidade sem data. Leia o código ou toque no produto.`
+        : 'Todos os produtos já têm data.';
+    shelfList.innerHTML = shelf.map((x) => `
+      <li>
+        <button type="button" class="quick-row val-row${x.free ? ' is-missing' : ''}" data-code="${esc(x.p.code)}">
+          ${thumb(x.p)}
+          <span class="row-main">
+            <span class="row-name">${esc(x.p.name)}</span>
+            <span class="val-dates">
+              ${x.lots.map((l) => `<span class="val-date">${icon('calendar')}${esc(formatDate(l.expiresAt))}${l.qty > 1 ? ` ×${l.qty}` : ''}</span>`).join('')}
+              ${x.free ? `<span class="val-free">${x.free === x.p.qty ? (x.free === 1 ? 'Sem data' : `${x.free} sem data`) : `${x.free} sem data`}</span>` : ''}
+            </span>
+          </span>
+        </button>
+      </li>`).join('');
+  }
+  shelfList.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-code]');
+    if (!b) return;
+    const x = shelf.find((y) => y.p.code === b.dataset.code);
+    if (!x) return;
+    cam.pause();
+    try { await markProduct(x.p, ''); } finally { cam.resume(); }
+  });
+  const offChange = onChange(() => renderShelf());
 
   function render() {
+    receipt.hidden = !done.size;
     if (!done.size) {
-      lines.innerHTML = '<li class="receipt-empty">Leia o código de um produto do armário para marcar a validade.</li>';
+      lines.innerHTML = '';
       total.hidden = true;
       return;
     }
@@ -198,7 +246,8 @@ export default function mountValidade(root) {
   });
 
   render();
+  renderShelf();
   const cam = mountCamera($('.cam-host', root), { onCode: handleCode, altLabel: 'Procurar pelo nome' });
   cam.notice('Leia o código de barras do produto');
-  return () => cam.stop();
+  return () => { cam.stop(); offChange(); };
 }
