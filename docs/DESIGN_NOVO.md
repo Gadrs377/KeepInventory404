@@ -10,6 +10,9 @@ posição na tela e ciência do comportamento.
 
 ---
 
+A revisão com /better-ui e /better-writing (seção 13 do plano) já está
+aplicada nas pranchas.
+
 ## 1. Crítica do plano
 
 Está em [PLANO_MELHORIAS.md, seção 11](PLANO_MELHORIAS.md#11-crítica-do-plano-30092026).
@@ -32,7 +35,7 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
   - uma ação só no topo, **"Conferir"**, ao lado do título grande (HIG). Saem
     as pílulas Validade e Nota fiscal;
   - **"Pede atenção"** no lugar dos filtros Acabando, Zerados e Vencendo: "2
-    vencem esta semana", "3 acabando", "5 sem validade". Cada um abre a ação
+    vencem esta semana", "3 acabando", "5 sem data". Cada um abre a ação
     certa;
   - o botão **Ler tem cor fixa** (preto, branco no escuro); a cor do modo
     aparece só dentro do leitor;
@@ -64,12 +67,11 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
 - **Cupom vivo** embaixo, com a linha nova destacada e o total sob o traço duplo.
 - **Barra de baixo** (vidro): **Digitar** e **Nota fiscal**, depois **Digitar**
   e **Concluir**. Tudo com nome, ao alcance do polegar.
-- **Tirar que acaba:** "Acabou. Era a última." e **Pôr nas Compras**.
+- **Tirar que acaba:** "Acabou. Era a última." e **Adicionar às Compras**.
 - **Nota fiscal:** no Guardar, a câmera reconhece o QR Code sozinha: "Nota fiscal
-  do Zaffari · 29/09 · 7 itens · R$ 160,59" com **Guardar os 7**. O botão Nota
+  do Zaffari · 29/09 · 7 itens · R$ 160,59" com **Ver os 7 itens**. O botão Nota
   fiscal continua na barra, para quem não sabe que é só apontar.
-- **Vazio:** "Nada lido ainda. Cada leitura guarda 1. Leu duas vezes, guarda
-  2." (No lugar do vazio grande de hoje.)
+- **Vazio:** "Nada lido ainda. Cada leitura guarda 1. Para guardar 2, tire da mira e leia de novo." (No lugar do vazio grande de hoje.)
 
 ### 2.3 Código novo
 
@@ -108,10 +110,10 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
   - a mira vira **faixa de data** (amarela), com **"Vire e mostre a data"**;
   - embaixo, **Digitar a data** e **Pular**.
 - **Já tem data:** sem folha. O cartão mostra as datas (12/03/2027 · 2 un.,
-  08/10/2026 · 1 un.) e "Confere? Leia o próximo. Se o número está errado,
-  ajuste no − e +."
-- **Vencido:** "**Venceu há 2 meses** · 28/07/2026", com **Joguei fora** (cor do
-  Tirar) e **Ainda está bom**. Rodapé: "Joguei fora tira do armário. Você
+  08/10/2026 · 1 un.) e "Se o número estiver errado, ajuste no − e no +.
+  Senão, leia o próximo."
+- **Vencido:** "**Venceu há 2 meses** · 28/07/2026", com **Jogar fora** (cor do
+  Tirar) e **Ainda está bom**. Rodapé: "Jogar fora tira do armário. Depois, você
   escolhe se vai para as Compras."
 - **Revisão:**
   - resumo em números (conferidos, diferenças, datas marcadas);
@@ -139,7 +141,7 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
   leitor**:
   - foto, nome, **−/3/+** e as validades ("12/03/2027 · 2 un.", "Sem data · 1
     un.");
-  - embaixo, um menu curto: **Pôr nas Compras, Marcar validade, Editar, Ver
+  - embaixo, um menu curto: **Adicionar às Compras, Marcar validade, Editar, Ver
     produto**;
   - Tirar 1 e Guardar 1 saem do menu, porque o −/+ do cartão já faz isso;
   - o fundo desfoca, como no iPhone.
@@ -147,7 +149,7 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
   existe).
 - **"Pede atenção" aberto (Vencem esta semana):**
   - a data vira a etiqueta ("01/10 amanhã", em amarelo);
-  - na própria linha, **Pôr nas Compras** e **Joguei fora**;
+  - na própria linha, **Adicionar às Compras** e **Jogar fora**;
   - o que vence depois fica em "Depois", mais apagado.
 - **Editar (pela home ou pelo produto), a mesma folha:**
   - Nome;
@@ -188,7 +190,7 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
 
 **Em aberto:**
 
-1. "Pede atenção": os três blocos (vencem, acabando, sem validade), ou outros?
+1. "Pede atenção": os três blocos (vencem, acabando, sem data), ou outros?
 2. **Conferir e os dois modos de hoje.** Hoje existem duas tarefas separadas:
    **Contar** (em Mais: passar por todos os produtos contando as quantidades e
    revisar no fim) e o **modo Validade** (ler um produto e marcar a data). O

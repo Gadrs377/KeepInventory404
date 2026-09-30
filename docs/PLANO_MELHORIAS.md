@@ -633,8 +633,9 @@ está cozinhando, com a mão ocupada, e o registro é um custo sem recompensa na
 hora. É o padrão clássico de hábito que não pega (sem gatilho, sem recompensa
 imediata).
 
-O plano mede isso (diferenças da Contagem, seção 3.3), mas quase não
-age. No desenho:
+O plano mede isso (diferenças da Contagem, seção 3.3). **Correção de
+30/09:** a resposta principal é o **Conferir**, feito de tempos em tempos,
+que acerta o que ficou sem registro (seção 12.3). Além dele, no desenho:
 
 - **Tirar custa um toque a menos:** o "−" da linha do Armário continua, e o
   leitor abre no último modo usado.
@@ -877,8 +878,12 @@ Comparação tela a tela entre o app de hoje (prints da revisão geral, v87) e o
 
 ### 12.3 O que os dois fazem mal
 
-1. **Nenhum resolve de verdade a Saída esquecida**; os dois dependem de a
-   pessoa lembrar de tirar.
+1. ~~Nenhum resolve de verdade a Saída esquecida.~~ **Corrigido (30/09):** é
+   para isso que serve o **Conferir**: de tempos em tempos a pessoa passa o
+   armário e o app acerta o que ficou sem registro. A saída esquecida não
+   precisa ser evitada a cada uso; ela é corrigida no Conferir. (Proposto:
+   um lembrete leve, por exemplo "Faz 30 dias desde o último Conferir", no
+   "Pede atenção", com o intervalo configurável como o aviso de vencimento.)
 2. **Ler o mesmo código duas vezes sem querer.** O novo diz "leu duas vezes,
    guarda 2". A câmera vê o mesmo código várias vezes por segundo: precisa de
    uma trava (o mesmo código só conta de novo depois de sair da mira), e o
@@ -1005,3 +1010,71 @@ Comparação tela a tela entre o app de hoje (prints da revisão geral, v87) e o
 11. **Escrita:** "Adicionar às Compras", "Jogar fora".
 12. **44 px** no −/+ do cartão.
 13. **Desenhar as telas que faltam** (lista em "Coesão") antes de aplicar.
+
+---
+
+## 13. Revisão com /better-ui e /better-writing (30/09/2026)
+
+Rodadas no protótipo do [design novo](DESIGN_NOVO.md) (não no app). As
+correções já estão nas pranchas de `docs/design-novo/`.
+
+### 13.1 /better-ui
+
+Nada grave (`HIGH`). **Aprovado**, com as correções abaixo já aplicadas.
+
+| Severidade | Onde | Antes | Depois | Por quê |
+|---|---|---|---|---|
+| MEDIUM | Cartão da leitura (Guardar, Tirar, Conferir) e cartão do toque longo | Raio 20 (leitor) e 22 com espaço 14 (toque longo) no mesmo componente; botões de dentro com raio 18 | Um cartão só: raio 26 = 14 + 12; foto do canto e botões de dentro com 14 | Raio concêntrico; o mesmo componente com duas formas parece dois |
+| MEDIUM | Fotos dos produtos (linhas, cartões, página do produto) | Contorno por `box-shadow` interno, que fica **por baixo** da foto e não aparece | `outline` de 1 px em `oklch(0 0 0 / 0.1)` (claro) e `oklch(1 0 0 / 0.1)` (escuro), para dentro | Contorno de imagem: profundidade igual em toda foto |
+| MEDIUM | − e + do cartão da leitura | 36 px de largura | 44 px | Área de toque (HIG) |
+| MEDIUM | Aviso de vencido | Raio 20, espaço 16, botões 18 | Raio 28 = 14 + 14 | Raio concêntrico |
+| LOW | Blocos "Pede atenção" | Raio 16 com ícone de raio 8 a 10–12 px da borda | Raio 20 = 8 + 12, espaço 12 igual | Raio concêntrico |
+| LOW | Botões com ícone na frente (Digitar, Concluir, Conferir, Guardar/Tirar) | Espaço igual dos dois lados | Lado do ícone 2 px menor | Alinhamento óptico |
+| LOW | Voltar (‹) | 40 px, seta no centro geométrico | 44 px, seta 1 px à esquerda | Alinhamento óptico e área de toque |
+| LOW | Barra de abas | Ícone cheio só em Armário e Mais | Cheio em qualquer aba ativa (Compras e Cupons também) | Contorno por padrão, cheio no ativo |
+| LOW | Etiqueta zerada | Sombra declarada duas vezes, borda e contorno misturados | Só o contorno tracejado | Um jeito só de desenhar |
+
+**Para quando for aplicar no app** (o protótipo é estático; movimento **não
+verificado**):
+
+- Todo botão com `scale: 0.96` ao tocar, 150 ms, `cubic-bezier(0.2, 0, 0, 1)`.
+- O cartão da leitura entra com opacidade e 8 px de subida; sai com 4 px e
+  mais suave. Transição só em `opacity` e `translate`, nunca `all`.
+- A linha nova do cupom: destaque só por cor, 150 ms (acontece o tempo todo:
+  nada de animação chamativa).
+- Troca de ícone (Guardar ↔ Tirar no seletor, lanterna ligada): opacidade 0 → 1,
+  escala 0,25 → 1, desfoque 4 px → 0, os dois ícones no DOM.
+- Revisão do Conferir (acontece pouco): números do resumo em cascata de
+  100 ms.
+- Trocar o tema do sistema: desligar as transições por um quadro.
+- Toda mudança animada tem também um sinal parado (cor, ícone ou texto): a
+  moldura muda de cor **e** aparece o cartão; a câmera escurece **e** diz
+  "Câmera pausada".
+
+### 13.2 /better-writing
+
+Havia dois `HIGH` (textos que enganam); corrigidos. **Aprovado** depois das
+correções.
+
+| Severidade | Onde | Antes | Depois | Por quê |
+|---|---|---|---|---|
+| HIGH | Cartão da nota fiscal | Guardar os 7 | Ver os 7 itens | O botão prometia guardar direto; os itens precisam de revisão (a nota do Zaffari veio sem códigos) |
+| HIGH | Leitor vazio | Leu duas vezes, guarda 2. | Para guardar 2, tire da mira e leia de novo. | A câmera lê o mesmo código várias vezes por segundo; o texto convidava a guardar a mais sem querer |
+| MEDIUM | Tirar que acaba, toque longo, Vencem esta semana | Pôr nas Compras | Adicionar às Compras | Termo fixo: a lista de compras usa Adicionar e Remover |
+| MEDIUM | Vencido, Vencem esta semana | Joguei fora (e "Joguei fora tira do armário") | Jogar fora ("Jogar fora tira do armário. Depois, você escolhe se vai para as Compras.") | Botão começa com verbo; sem primeira pessoa |
+| MEDIUM | Revisão do Conferir | Acabou (botão) | Zerar | Botão com verbo que diz o que acontece |
+| MEDIUM | "Pede atenção" | sem validade | sem data | Um termo só ("Sem data" em todo o resto); "sem validade" também lê como "não vence" |
+| MEDIUM | Conferir, data | Sem pressa: a câmera espera você virar o produto. | Sem pressa. Vire o produto até a data aparecer na faixa. | O texto não fala do app; diz o que fazer |
+| MEDIUM | Vencem esta semana | Use primeiro, ou tire do armário se já foi. | Use estes primeiro. Se algum já acabou ou estragou, tire do armário. | "Se já foi" é ambíguo |
+| MEDIUM | Mais › Avisos e Som | Quando algo for vencer · Aviso na véspera · Som da leitura | Avisar quando algo for vencer · Avisar na véspera · Bip ao ler um código | Chave descreve o que acontece ligada (o app de hoje já dizia "Bip ao ler um código") |
+| LOW | Conferir, já tem data | Confere? Leia o próximo. Se o número está errado, ajuste no − e +. | Se o número estiver errado, ajuste no − e no +. Senão, leia o próximo. | Pergunta sem resposta; o mais importante primeiro |
+| LOW | Cupom "Conferidos" | 1 · 27/04/28 | 1 · vence 27/04/28 | Número solto não diz o que é |
+| LOW | Mais | Seus dados | Dados | Possessivo sem necessidade |
+
+**Ficam para decidir:**
+
+- **Histórico:** o desenho diz "Guardou 2 / Tirou 1"; o app de hoje, "Entrada de
+  4". Com Guardar e Tirar no leitor, o histórico deve seguir os mesmos verbos.
+  Atualizar a lista de termos fixos do design system (seção 8) quando aplicar.
+- **"Aplicar e concluir"** no fim do Conferir: claro, mas o app de hoje diz
+  "Aplicar contagem". Escolher um e usar nos dois lugares.
