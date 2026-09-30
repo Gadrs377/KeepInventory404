@@ -791,3 +791,217 @@ O vermelho do design system é só para erro e ação destrutiva. Jogar fora um
 produto vencido é um **Tirar** comum, então fica na cor do Tirar (beterraba).
 O vermelho fica para "Remover do armário" (apagar o produto), que vai para o
 fim do Editar, em texto.
+
+---
+
+## 12. Design antigo × design novo (30/09/2026)
+
+Comparação tela a tela entre o app de hoje (prints da revisão geral, v87) e o
+[desenho novo](DESIGN_NOVO.md), com as mesmas lentes da seção 11. O objetivo
+é não perder o que o antigo fazia bem.
+
+### 12.1 O que o antigo faz melhor (e o novo perdeu)
+
+1. **Marcar a validade na hora de guardar.** A folha do Guardar (Rápido
+   desligado) tem a linha "Validade: Nenhuma ›". É o melhor momento: o produto
+   acabou de chegar e está na mão. O novo tirou a folha e, com ela, esse
+   momento; a data só volta no Conferir, dias depois. **É a maior perda.**
+2. **Revisar a nota fiscal antes de guardar.** A folha da nota mostra cada
+   item com ✓, "Novo", "Banana: vendido por peso, fica de fora" e "Toque num
+   item para corrigir; na próxima nota deste mercado, ele já vem certo". No
+   novo, o cartão diz "Guardar os 7", e parece guardar direto. A nota real do
+   Zaffari veio com **0 códigos de barras nos itens**: sem a revisão, entra
+   errado.
+3. **A lista do que falta contar.** A Contagem de hoje mostra "Faltam contar"
+   com cada produto e a caixa tracejada. Dá para ver o que falta e contar sem
+   ler (produto sem código). O Conferir novo só diz "15 faltam".
+4. **Decidir em bloco no fim da contagem.** "Manter como estão / Zerar os não
+   contados" resolve 7 produtos com um toque. A revisão nova pede "Acabou" um
+   por um.
+5. **Página do produto, validades:**
+   - lixeira em cada data;
+   - "daqui a 3 dias" junto da data;
+   - "Lembrete no calendário";
+   - a regra "Ao tirar, sai primeiro a unidade sem data, depois a que vence
+     antes".
+   
+   O desenho novo não tem nenhum dos quatro.
+6. **"Tirar 1" e "Guardar 1" escritos.** Na página do produto, os botões dizem
+   a ação. No novo, − e + sozinhos. São símbolos universais, mas o texto tira
+   a dúvida do sentido (tira do armário ou só diminui um número?).
+7. **Filtro no lugar.** Os três blocos de hoje (Acabando, Zerados, Vencendo)
+   filtram a própria lista, sem sair dela, e o ativo fica preto. O "Pede
+   atenção" novo abre outra tela: mais um passo e perde o contexto.
+8. **Zerados à vista.** O bloco "Zerados" some no novo (virou "sem validade").
+9. **Retorno redundante na leitura.** A faixa grande "+1 Leite Integral Italac
+   1L" em cima da câmera **e** o aviso "Agora tem 5 · Desfazer". O cartão novo
+   é um canal só; se a leitura seguinte trocar o cartão, some o Desfazer
+   daquela linha (só fica o toque no cupom).
+10. **Escolha de ritmo (Rápido).** Quem guarda uma compra variada lê e segue;
+    quem quer conferir cada item liga a pergunta. O novo tira a escolha. Ganha
+    simplicidade, perde controle.
+11. **O cupom final compartilhável** ("Pronto", com o botão de compartilhar e
+    "Armário atualizado"). O novo não mostra o fim da sessão.
+12. **Restaurar backup e Baixar planilha** em Mais. O Mais novo não tem os dois.
+13. **Honestidade sobre os dados:** "Os dados ficam só neste celular. Baixe um
+    backup de vez em quando." O novo troca por "Cópia automática", que só é
+    verdade depois de construída.
+14. **"Produto sem código de barras" com nome**, embaixo da câmera, para fruta
+    e granel. No novo, fica dentro do "Digitar", menos visível para esse caso.
+
+### 12.2 O que o novo faz melhor
+
+1. **Botão Ler com cor fixa.** O antigo muda de verde para vinho conforme o
+   último modo, e parece outra função.
+2. **Uma linguagem para todos os modos:** faixa na cor do modo, câmera como
+   janela, cartão, cupom. No antigo, Contagem e Revisão têm cabeçalho azul
+   grande, o leitor tem faixa fina, e o modo Validade tem faixa âmbar com
+   título pequeno.
+3. **Menos entradas espalhadas:** Validade e Nota fiscal saem do topo do
+   Armário; "Contar" sai de Mais.
+4. **Retorno no lugar do olhar:** +1 ou −1 na etiqueta do cartão, com −/+ para
+   corrigir sem abrir folha.
+5. **"Acabou → Adicionar às Compras"** no momento certo (o antigo só avisa).
+6. **Nada de folha em cima de câmera que parece viva:** câmera pausada e
+   escura.
+7. **Código novo sem esperar 20 s**, com a foto da frente como caminho
+   principal.
+8. **Vencido com ação** ("Venceu há 2 meses", jogar fora).
+9. **Destrutivo discreto:** "Remover do armário" em texto no fim (no antigo, é
+   um botão vermelho grande logo abaixo do Salvar).
+10. **Menu do toque longo:** o antigo é uma lista solta, sem fundo desfocado,
+    sobrepondo as linhas. O novo é o cartão do leitor mais um menu curto.
+11. **Mais separado:** o que é da pessoa em cima, o técnico em "Avançado".
+12. **Produto:** foto e nome alinhados à esquerda, lidos de uma vez; o antigo
+    centraliza e deixa um ícone grande quando não há foto.
+
+### 12.3 O que os dois fazem mal
+
+1. **Nenhum resolve de verdade a Saída esquecida**; os dois dependem de a
+   pessoa lembrar de tirar.
+2. **Ler o mesmo código duas vezes sem querer.** O novo diz "leu duas vezes,
+   guarda 2". A câmera vê o mesmo código várias vezes por segundo: precisa de
+   uma trava (o mesmo código só conta de novo depois de sair da mira), e o
+   texto tem de dizer isso ("Tire da mira e leia de novo para guardar 2").
+3. **Digitar a quantidade.** Para 12 latas, o −/+ exige 11 toques. O antigo
+   deixa tocar no número e digitar (na folha); o cartão novo precisa do mesmo:
+   tocar na etiqueta abre o teclado.
+4. **Remédios** (ambiente com tarja e dados da Anvisa) não aparecem em nenhum
+   dos desenhos.
+
+### 12.4 Lente por lente
+
+**Obscuridade**
+
+- Novo: "Conferir" é um nome novo que ninguém conhece. Na primeira vez,
+  precisa de uma frase: "Leia cada produto do armário: confere a quantidade e
+  marca a data que faltar."
+- Novo: a nota reconhecida sozinha só é descoberta por acaso (o botão Nota
+  fiscal compensa).
+- Novo: o toque longo continua escondido, como no antigo. O que está nele
+  também tem de estar na página do produto (regra da HIG); está.
+- Antigo: o cupom no leitor não parece tocável (já no ROADMAP); no novo, a
+  linha nova destacada ajuda, mas as antigas continuam sem sinal.
+
+**Fricção**
+
+- Novo perde: validade na hora de guardar (12.1, item 1), revisão da nota,
+  decisão em bloco no fim da contagem, filtro no lugar.
+- Novo ganha: sem folha a cada leitura, sem espera no código novo, sem folha
+  no "todas com data".
+- **Fricção boa** (de propósito) que tem de ficar: remover o produto, zerar
+  vários de uma vez, aplicar a contagem.
+
+**Retorno**
+
+- Novo: bip diferente para Guardar e Tirar (decidido) + cor + sinal +
+  cartão. Falta o segundo canal visual do antigo (a faixa grande sobre a
+  câmera, que se vê de longe) e o Desfazer quando o cartão muda.
+- Os dois: o fim da sessão precisa de um fecho claro (o cupom).
+
+**Posição na tela**
+
+- Novo: o −/+ do cartão fica no meio da tela, onde o polegar alcança; o
+  seletor de modo no alto, longe do esbarrão (de propósito).
+- Novo, problema: os botões − e + do cartão têm **36 px de largura**, abaixo
+  dos 44 da HIG. Corrigir.
+- Antigo: "Concluir" embaixo e o aviso de Desfazer em cima dele (disputam o
+  mesmo lugar). O novo resolve.
+
+**Ciência do comportamento**
+
+- **Momento certo (gatilho):** a data se marca melhor ao guardar; o jogar fora,
+  quando vai para o lixo; as compras, quando acaba. O novo acerta os dois
+  últimos e erra o primeiro.
+- **Padrão e inércia:** sem o Rápido, o padrão é "cada leitura guarda 1". Bom
+  para a maioria das compras. O custo recai em quem compra muitas unidades
+  iguais (12.3, item 3).
+- **Controle e perdão:** o antigo dá controle antes (pergunta a quantidade);
+  o novo dá perdão depois (−/+ e Desfazer). Perdão depois é mais rápido, desde
+  que o Desfazer não suma.
+- **Pico e fim:** o cupom é o pico; o fim da sessão precisa aparecer no novo.
+- **Gradiente de meta:** o anel "9 de 23" ajuda; a lista do que falta ajudaria
+  mais (ver a meta, não só o número).
+- **Viés de automação:** a nota que parece "guardar os 7" direto convida a
+  confiar na máquina. Revisar os itens precisa ser o caminho normal.
+
+**HIG da Apple**
+
+- Toque de 44 px no −/+ do cartão (corrigir).
+- Menu de contexto espelha a interface: ok nos dois.
+- Uma folha por vez: ok no novo (o código novo é uma folha que muda de
+  conteúdo).
+- Filtro não deve virar navegação quando pode ficar na mesma lista (o "Pede
+  atenção" pode filtrar no lugar e mostrar as ações na linha).
+- Tela vazia com o próximo passo: o novo tem no leitor; falta no Conferir e nas
+  telas não desenhadas.
+
+**Design system**
+
+- Novo volta à direção "caixa do mercado" (etiqueta, cupom, linha vermelha).
+- **Escrita:**
+  - "Pôr nas Compras" contraria o termo fixo: a lista de compras usa
+    **Adicionar** e **Remover**. Trocar para "Adicionar às Compras".
+  - "Joguei fora" fala em primeira pessoa; botão é verbo: **"Jogar fora"**.
+- Chips só aparecem quando têm algo (regra de hoje): o "Pede atenção" também
+  deve esconder o bloco com 0.
+
+**Coesão**
+
+- O desenho novo cobre Armário, Produto, Editar, Mais, leitor, código novo e
+  Conferir. **Faltam** Compras, Cupons, o cupom final, a revisão da nota
+  fiscal, a busca, os estados vazios, Remédios, a primeira vez no app, 320 px e
+  letra grande. Sem essas telas, o app fica com duas linguagens misturadas.
+
+**Acessibilidade**
+
+- 44 px no −/+ do cartão.
+- Texto sobre a câmera: a dica em fundo sólido (86%) está ok nos dois.
+- Letra grande: os cartões com foto, nome, etiqueta e −/+ numa linha só
+  quebram com texto a 200%; precisam empilhar (o antigo já empilha blocos lado
+  a lado).
+
+### 12.5 O que fazer no desenho novo (proposta)
+
+1. **Validade no cartão do Guardar:** "Marcar validade" no próprio cartão
+   (abre a faixa de data na mesma câmera). Continua opcional.
+2. **Nota fiscal:** o cartão leva a **"Ver os 7 itens"**, a folha de revisão de
+   hoje no estilo novo. Nunca guarda direto.
+3. **Conferir com a lista do que falta** (abre da barra, "15 faltam ›") e
+   **"Zerar os que não apareceram"** em bloco na revisão, além do "Acabou" por
+   linha.
+4. **Produto:** "Tirar 1" e "Guardar 1" escritos embaixo do −/+; nas validades,
+   lixeira, "daqui a N dias", "Lembrete no calendário" e a regra do que sai
+   primeiro.
+5. **"Pede atenção" filtra no lugar** (o bloco fica preto, como hoje), com as
+   ações na própria linha; bloco com 0 não aparece; **Zerados** volta como
+   bloco quando houver.
+6. **Retorno:** a faixa grande sobre a câmera volta junto do cartão; o
+   Desfazer da leitura anterior fica no cupom (toque na linha).
+7. **Trava de leitura repetida** e texto certo para "guardar 2".
+8. **Tocar na etiqueta do cartão abre o teclado** para digitar a quantidade.
+9. **Fim da sessão:** o cupom impresso, curto e compartilhável, como hoje.
+10. **Mais:** Restaurar e Baixar planilha dentro de "Seus dados".
+11. **Escrita:** "Adicionar às Compras", "Jogar fora".
+12. **44 px** no −/+ do cartão.
+13. **Desenhar as telas que faltam** (lista em "Coesão") antes de aplicar.
