@@ -270,6 +270,8 @@ Food Facts continua sendo consultado pelo celular.
 - **Nome limpo (`cleanName`):** palavras em outro alfabeto saem (o título da
   Voss veio em tailandês), e também ruído de marketplace ("frete grátis",
   "oferta"). Nome todo em outro alfabeto conta como não achado.
+- `?web=0`: a mesma consulta sem a web (cache separado). O app usa primeiro
+  para mostrar as opções em ~3 s e depois consulta com a web por baixo.
 - Tempo de cada etapa vai na telemetria (`r-codigo`, `etapas`).
 - Testes sem rede: `worker/test/rapido.mjs` (tempos) e `worker/test/nomes.mjs`.
 Catálogo devolve nome em maiúsculas de cupom; o Worker passa para letra de

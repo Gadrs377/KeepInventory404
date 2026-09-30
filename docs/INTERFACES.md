@@ -1756,3 +1756,26 @@ seção 11.14). Em Mais › Backup:
 
 Detalhes em SYSTEM_DESIGN, seção 5.8. `sw.js` v89.
 
+## Versão 3.71: nenhuma loja tem o código
+
+Terceiro passo da nova versão (PLANO_MELHORIAS, seções 5.3 a 5.5).
+
+- **As opções aparecem em ~3 s**, não mais em até 17 s. O app consulta primeiro
+  sem a web (`/lookup?web=0`); se nenhuma loja nem catálogo tem, a folha mostra:
+  - o código, "Nenhuma loja tem este código" e "Fotografe a frente da
+    embalagem, onde está o nome. O resto se preenche sozinho.";
+  - **Fotografar a frente** (principal) e **Digitar o nome**;
+  - embaixo, "Ainda procurando na internet". Se a web achar, a linha vira
+    "Na internet: {nome}" com **É este**, no mesmo lugar (nada se mexe em cima).
+    Se não, "A internet também não tem este código."
+- **Foto → sugestões:** só aparecem as da marca que a IA leu, com o tamanho igual
+  primeiro. A mensagem diz o que está na embalagem ("Na embalagem: …").
+  "Usar o que a foto leu" virou **"Usar o que está na embalagem"**.
+- **Nome escolhido numa sugestão e diferente do da embalagem:** ao tocar no
+  campo do nome, aparece **"Usar o que está na embalagem: {nome}"**.
+- **Nomes em outro alfabeto** saem também das sugestões da busca e da web
+  (repassador).
+- **"Confira onde fica"** só aparece depois de ter um nome, e não diz mais
+  "Não tenho certeza" (o texto não fala de si).
+- `sw.js` v90.
+

@@ -2510,3 +2510,18 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .tests-table { width: 100%; border-collapse: collapse; font-size: 0.8235rem; }
 .tests-table th, .tests-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .tests-table small { color: var(--ink-2); }
+
+/* Nenhuma loja tem o código (3.71) */
+.notfound-code { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: var(--text-callout); font-variant-numeric: tabular-nums; }
+.notfound-code svg { width: 16px; height: 16px; }
+.notfound-title { font-size: var(--text-title); text-align: start; }
+.notfound .btn-lg { width: 100%; }
+.web-slot { min-height: 64px; display: flex; align-items: center; justify-content: center; }
+.web-found { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 12px; border-radius: var(--r-control); background: var(--shelf); }
+.web-found .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.suggest-front { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: var(--r-control); background: var(--shelf); color: var(--ink); text-align: start; font: inherit; border: 0; }
+.suggest-front svg { width: 18px; height: 18px; flex: none; }
+.suggest-front > span { display: flex; flex-direction: column; }
+.suggest-front-label { font-size: var(--text-footnote); font-weight: 700; color: var(--ink-2); }
+.suggest-front-name { font-family: var(--font-num); font-weight: 700; }
+.suggest-front:active { scale: 0.96; }

@@ -34,14 +34,14 @@ export function checkDigitOk(code) {
 
 // Resolve com { status: 'local', products } quando o código já está no armário
 // (um ou mais produtos), ou com o resultado de lookupRemote.
-export async function lookup(code) {
+export async function lookup(code, opts = {}) {
   const t0 = performance.now();
   const local = code.startsWith('SEM-') ? [] : await productsByBarcode(code);
   if (local.length) {
     tel('codigo', { codigo: code, status: 'local', nomes: local.slice(0, 3).map((p) => p.name), ms: Math.round(performance.now() - t0) });
     return { status: 'local', products: local };
   }
-  return lookupRemote(code);
+  return lookupRemote(code, opts);
 }
 
 const photoKind = (url) => (!url ? '' : url.startsWith('data:') ? 'do celular' : url.includes('/foto/') ? 'guardada' : /vteximg|vtexassets/.test(url) ? 'loja' : /openfoodfacts/.test(url) ? 'off' : 'outra');
@@ -49,18 +49,20 @@ const photoKind = (url) => (!url ? '' : url.startsWith('data:') ? 'do celular' :
 // Resolve com { status: 'found' | 'notfound' | 'offline', info? }
 // Consulta Open Food Facts e as lojas (pelo repassador) ao mesmo tempo. As lojas
 // têm nomes completos em português e cobrem limpeza e beleza, então têm preferência.
-export async function lookupRemote(code) {
+// `web: false`: sem a busca na web (resposta em ~3 s). O app mostra as
+// opções e continua procurando com `web: true`.
+export async function lookupRemote(code, { web = true } = {}) {
   const t0 = performance.now();
-  const r = await lookupRemoteRaw(code);
+  const r = await lookupRemoteRaw(code, web);
   const info = r.info || {};
   tel('codigo', {
     codigo: code, status: r.status, fonte: info.source || '', nome: info.name || '', marca: info.brand || '',
-    categoria: info.category || '', foto: photoKind(info.image), online: navigator.onLine, ms: Math.round(performance.now() - t0),
+    categoria: info.category || '', foto: photoKind(info.image), online: navigator.onLine, ms: Math.round(performance.now() - t0), web,
   });
   return r;
 }
 
-async function lookupRemoteRaw(code) {
+async function lookupRemoteRaw(code, web = true) {
   if (code.startsWith('SEM-')) return { status: 'notfound' };
   // Remédio: os dados oficiais da Anvisa valem mais que os das lojas (e sem foto).
   // A parte da base já consultada fica guardada no celular e vale sem internet.
@@ -71,7 +73,7 @@ async function lookupRemoteRaw(code) {
   if (!navigator.onLine) return { status: 'offline' };
   // As duas consultas começam juntas; quem achar primeiro com dados de loja ganha.
   const offPromise = lookupOff(code);
-  const store = await lookupStores(code);
+  const store = await lookupStores(code, web);
   if (store.status === 'found') return { status: 'found', info: store.info };
   const off = await offPromise;
   if (off.status === 'found') return off;
@@ -114,11 +116,11 @@ async function lookupOffOne(code, base, source) {
   }
 }
 
-async function lookupStores(code) {
+async function lookupStores(code, web = true) {
   try {
-    // Lojas (até 5 s), catálogos de código de barras e, se ninguém achar, a web.
+    // Lojas e catálogos grátis ao mesmo tempo (~3 s); com `web`, também a web.
     // O repassador termina em até 17 s.
-    const data = await apiGet(`/lookup?ean=${encodeURIComponent(code)}`, 20000);
+    const data = await apiGet(`/lookup?ean=${encodeURIComponent(code)}${web ? '' : '&web=0'}`, web ? 20000 : 9000);
     if (!data.found || !data.product || !data.product.name) return { status: 'notfound' };
     return { status: 'found', info: fromStore(data.product) };
   } catch {

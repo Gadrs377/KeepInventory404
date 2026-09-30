@@ -412,7 +412,7 @@ function fixNameSheet(p) {
           </button></li>`).join('') + (fromPhoto ? photoPickRow(fromPhoto, !items.length) : '');
         list.hidden = !items.length && !fromPhoto;
         done(items.length ? `${plural(items.length, 'sugestão', 'sugestões')} ${from}.`
-          : fromPhoto ? 'As lojas não têm esse produto. Dá para usar o que a foto leu.'
+          : fromPhoto ? 'As lojas não têm esse produto. Dá para usar o que está na embalagem.'
             : `Nada encontrado ${from}. Leia o código ou fotografe a embalagem.`);
       };
       async function byCode(code) {

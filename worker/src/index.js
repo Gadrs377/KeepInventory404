@@ -114,10 +114,13 @@ export default {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
           // v6: nomes limpos (outro alfabeto, ruído de marketplace) e foto depois do nome.
-          return withCors(await cached(ctx, `lookup:v6:${ean}`, 7 * DAY, async () => {
+          // web=0: sem a busca na web, para o app mostrar as opções cedo e
+          // continuar procurando na web em outra consulta.
+          const web = url.searchParams.get('web') !== '0';
+          return withCors(await cached(ctx, `lookup:v6:${ean}${web ? '' : ':sw'}`, 7 * DAY, async () => {
             const t0 = Date.now();
-            const etapas = {};
-            const r = await lookup(ean, env, ctx, etapas);
+            const etapas = { web };
+            const r = await lookup(ean, env, ctx, etapas, { web });
             const p = r.found ? r.product : {};
             tel(env, ctx, 'r-codigo', { codigo: ean, achou: !!r.found, nome: p.name || '', fonte: p.store || '', pagina: p.page || '', foto: photoKind(p.image), ms: Date.now() - t0, etapas });
             return r;
@@ -240,7 +243,7 @@ async function telemetry(request, url, env) {
 // Antes de tudo, o catálogo próprio; o que vem de fora entra nele.
 // `etapas` (opcional) recebe quanto cada etapa levou, em ms, para a telemetria:
 // catalogo, lojas, catalogos, web, foto e de onde veio o nome (achou).
-export async function lookup(ean, env = {}, ctx = null, etapas = {}) {
+export async function lookup(ean, env = {}, ctx = null, etapas = {}, { web = true } = {}) {
   const t0 = Date.now();
   const db = env.CATALOG;
   let result = null;
@@ -254,7 +257,7 @@ export async function lookup(ean, env = {}, ctx = null, etapas = {}) {
     }
   }
   if (!result) {
-    result = await lookupLive(ean, env, t0, etapas);
+    result = await lookupLive(ean, env, t0, etapas, web);
     // Nome limpo antes de entrar no catálogo; só em outro alfabeto, não achou.
     if (result.found) {
       const name = cleanName(result.product.name);
@@ -290,13 +293,13 @@ export async function lookup(ean, env = {}, ctx = null, etapas = {}) {
 // (Cosmos, Kodebar, web) só entra quando os grátis falham; a web começa aos
 // 2,5 s se ainda não há nada, para não esperar a fila inteira.
 const EARLY_MS = 2500;
-async function lookupLive(ean, env, t0 = Date.now(), etapas = {}) {
+async function lookupLive(ean, env, t0 = Date.now(), etapas = {}, web = true) {
   const t = Date.now();
   const stores = lookupStores(ean).then((r) => { etapas.lojas = Date.now() - t; return r; });
   const free = Promise.any([lookupCadastroProduto(ean), lookupSystax(ean)])
     .then((p) => { etapas.catalogos = Date.now() - t; return p; })
     .catch(() => { etapas.catalogos = Date.now() - t; return null; });
-  const canWeb = gtinOk(ean);
+  const canWeb = web && gtinOk(ean);
   let webP = null;
   const startWeb = () => {
     if (!webP && canWeb) {
@@ -573,7 +576,7 @@ function cleanWebTitle(title, digits) {
   let t = parts.join(' ').replace(/\b(GTIN|EAN|UPC)\b\s*[:/-]?/gi, ' ');
   t = t.replace(/^[\s\-–—:|,.]+|[\s\-–—:|,.]+$/g, '').replace(/\s+/g, ' ').trim();
   if (t && t === t.toLowerCase()) t = t.charAt(0).toLocaleUpperCase('pt-BR') + t.slice(1);
-  return t.slice(0, 120);
+  return cleanName(t.slice(0, 120));
 }
 
 async function lookupStores(ean) {
@@ -619,7 +622,9 @@ export async function search(q, env = {}, ctx = null) {
   }
   // Tudo que as lojas devolveram (com código de barras) também entra no catálogo.
   if (env.CATALOG && ctx) ctx.waitUntil(catalogLearn(env.CATALOG, perStore.flat()).catch(() => {}));
-  return { results: out.slice(0, 12) };
+  // Nome limpo também nas sugestões; o que era só outro alfabeto sai.
+  const clean = out.map((p) => ({ ...p, name: cleanName(p.name) })).filter((p) => p.name);
+  return { results: clean.slice(0, 12) };
 }
 
 export async function diag(env = {}) {

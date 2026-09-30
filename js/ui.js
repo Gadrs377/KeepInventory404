@@ -72,7 +72,7 @@ export function photoPickRow(p, alone = false) {
       <button type="button" class="pick-row suggest-row suggest-photo" data-photo-use>
         ${thumb(p)}
         <span class="row-main">
-          <span class="row-name">Usar o que a foto leu</span>
+          <span class="row-name">Usar o que está na embalagem</span>
           <span class="row-sub">${esc(p.name)}</span>
         </span>
         ${icon('chevron', 'row-chevron')}

@@ -74,7 +74,9 @@ async function start(ctx, productId) {
     if (!local.length) return notInCupboard(ctx);
     return local.length === 1 ? productForm(ctx, local[0], {}) : chooser(ctx, local);
   }
-  const result = await lookup(ctx.barcode);
+  // Primeiro sem a web (~3 s). Nenhuma loja nem catálogo tem: as opções
+  // aparecem já, e a web continua procurando por baixo.
+  const result = await lookup(ctx.barcode, { web: false });
   if (!ctx.body.isConnected) return;
 
   if (result.status === 'local') {
@@ -82,7 +84,52 @@ async function start(ctx, productId) {
     return chooser(ctx, result.products);
   }
   if (ctx.mode === 'saida') return notInCupboard(ctx);
+  if (result.status === 'notfound' && !ctx.barcode.startsWith('SEM-')) return notFoundChoice(ctx);
   return newForm(ctx, ctx.barcode.startsWith('SEM-') ? { status: 'nocode' } : result);
+}
+
+// ---------- Nenhuma loja tem o código ----------
+// Duas saídas: fotografar a frente da embalagem (a IA lê o nome e procura nas
+// lojas) ou digitar o nome. Enquanto a pessoa decide, a web procura o código;
+// se achar, aparece no lugar da linha "Ainda procurando", sem empurrar nada.
+function notFoundChoice(ctx) {
+  const { body } = ctx;
+  const token = {};
+  ctx.screen = token;
+  body.innerHTML = `
+    <div class="stack notfound">
+      <p class="notfound-code">${icon('barcode')}<span>${esc(ctx.barcode)}</span></p>
+      <h2 class="sheet-title notfound-title">Nenhuma loja tem este código</h2>
+      <p class="sheet-text">Fotografe a frente da embalagem, onde está o nome. O resto se preenche sozinho.</p>
+      <label class="btn btn-mode btn-lg file-btn">${icon('camera')}<span>Fotografar a frente</span>
+        <input type="file" accept="image/*" capture="environment" class="sr-only" data-front>
+      </label>
+      <button type="button" class="btn btn-quiet btn-lg" data-type-name>${icon('keyboard')}Digitar o nome</button>
+      <div class="web-slot" aria-live="polite" data-web><p class="loading-note"><span class="spinner" aria-hidden="true"></span><span>Ainda procurando na internet</span></p></div>
+    </div>`;
+  $('[data-front]', body).addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) newForm(ctx, { status: 'photo' }, { photo: file });
+  });
+  $('[data-type-name]', body).addEventListener('click', () => newForm(ctx, { status: 'notfound' }));
+  lookupRemote(ctx.barcode).then((web) => {
+    if (!body.isConnected || ctx.screen !== token) return;
+    const slot = $('[data-web]', body);
+    if (web.status !== 'found') {
+      slot.innerHTML = '<p class="loading-note">A internet também não tem este código.</p>';
+      return;
+    }
+    const p = web.info;
+    slot.innerHTML = `
+      <div class="web-found">
+        ${thumb(p)}
+        <span class="row-main"><span class="row-sub">Na internet</span><span class="row-name">${esc(p.name)}</span></span>
+        <button type="button" class="btn btn-quiet btn-sm" data-web-use>É este</button>
+      </div>`;
+    $('[data-web-use]', slot).addEventListener('click', () => newForm(ctx, web));
+  }).catch(() => {
+    if (body.isConnected && ctx.screen === token) $('[data-web]', body).innerHTML = '';
+  });
 }
 
 // ---------- Produto sem código de barras (entrada e contagem) ----------
@@ -367,6 +414,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
 
 async function newForm(ctx, result, { photo = null } = {}) {
   const { body, mode } = ctx;
+  ctx.screen = null;
   let barcode = ctx.barcode;
   let info = result.info || {};
   const noCode = barcode.startsWith('SEM-');
@@ -393,6 +441,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
           value="${esc(info.name || '')}" placeholder="Ex.: feijão camil" aria-describedby="new-name-error new-name-status">
         <p class="field-error" id="new-name-error" hidden></p>
         <p class="suggest-status" id="new-name-status" aria-live="polite"></p>
+        <button type="button" class="suggest-front" data-front-name hidden>${icon('camera')}<span><span class="suggest-front-label">Usar o que está na embalagem</span><span class="suggest-front-name"></span></span></button>
         <ul class="pick suggest" hidden></ul>
         ${result.status === 'found' ? '' : `
         <label class="btn btn-quiet file-btn" data-photo-btn>${icon('camera')}<span>Fotografar a embalagem</span>
@@ -405,7 +454,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
           ${AREAS.map((a) => `
             <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === area ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
         </div>
-        <p class="area-hint" data-area-hint hidden>Não tenho certeza. Confira onde fica.</p>
+        <p class="area-hint" data-area-hint hidden>Confira onde fica.</p>
       </fieldset>
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
@@ -439,7 +488,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
     if (radio) { radio.checked = true; revealSegment(radio.closest('label')); }
   }
   function showUnsure(unsure) {
-    const on = unsure && !areaTouched;
+    // Sem nome ainda, não há o que conferir.
+    const on = unsure && !areaTouched && !!(nameInput.value.trim() || info.name);
     areaHint.hidden = !on;
     areaBox.classList.toggle('is-unsure', on);
   }
@@ -504,7 +554,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     const n = items.length + mine.length;
     status.textContent = n
       ? `${plural(n, 'sugestão', 'sugestões')}${mine.length ? ', primeiro o que já está no armário' : ` ${from === 'foto' ? 'pela foto' : 'das lojas'}`}.`
-      : `Nada encontrado para “${query}”. ${fromPhoto ? 'Dá para usar o que a foto leu.' : 'Dá para salvar só com o nome.'}`;
+      : `Nada encontrado para “${query}”. ${fromPhoto ? 'Dá para usar o que está na embalagem.' : 'Dá para salvar só com o nome.'}`;
   }
 
   // Usa o que a foto leu: nome, marca, tamanho e a própria foto como miniatura.
@@ -541,8 +591,26 @@ async function newForm(ctx, result, { photo = null } = {}) {
     }
   }
 
+  // Nome escolhido numa sugestão da busca, diferente do que a foto leu: ao
+  // tocar no campo, oferece o nome da embalagem (evita ficar com um nome
+  // estranho que a busca trouxe).
+  const frontBtn = $('[data-front-name]', body);
+  const showFront = () => {
+    const on = !!fromPhoto && result.status === 'found' && nameInput.value.trim() !== fromPhoto.name;
+    frontBtn.hidden = !on;
+    if (on) $('.suggest-front-name', frontBtn).textContent = fromPhoto.name;
+  };
+  nameInput.addEventListener('focus', showFront);
+  frontBtn.addEventListener('click', () => {
+    nameInput.value = fromPhoto.name;
+    frontBtn.hidden = true;
+    applyGuess({ ...info, name: fromPhoto.name });
+    nameInput.focus();
+  });
+
   nameInput.addEventListener('input', () => {
     const q = nameInput.value.trim();
+    if (frontBtn && !frontBtn.hidden && q === fromPhoto?.name) frontBtn.hidden = true;
     if (q) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
     applyGuess({ ...info, name: q });
     clearTimeout(timer);
@@ -610,9 +678,10 @@ async function newForm(ctx, result, { photo = null } = {}) {
         if (fromPhoto) applyGuess(fromPhoto);
         // Lojas acharam: a lista mostra, e no fim dá para usar o que a foto leu.
         // Não acharam: o que a foto leu é a única opção e já entra no formulário.
-        if (read.results.length) {
-          showSuggestions(read.results, fromPhoto ? fromPhoto.name : '', 'foto');
-          if (fromPhoto) $('[data-msg]', body).textContent = 'Toque no produto certo ou, no fim da lista, use o que a foto leu.';
+        const results = fromPhoto ? sameBrand(read.results, fromPhoto) : read.results;
+        if (results.length) {
+          showSuggestions(results, fromPhoto ? fromPhoto.name : '', 'foto');
+          if (fromPhoto) $('[data-msg]', body).textContent = `Na embalagem: ${fromPhoto.name}. Toque no produto certo ou, no fim da lista, use o que está na embalagem.`;
         }
         else if (fromPhoto) usePhoto(true);
         else status.textContent = 'Não deu para ler a embalagem. Tente outra foto, mais de perto e com luz, ou digite o nome.';
@@ -726,3 +795,17 @@ function head(p, local) {
       ${local ? `<div class="product-stock"><span class="product-stock-label">No armário</span>${tag(local.qty, tagState(local), '')}</div>` : ''}
     </div>`;
 }
+
+// Resultados da busca pela foto: só os da marca que a IA leu (a busca às vezes
+// traz outra marca, ou um título em outro idioma), com o tamanho igual primeiro.
+const fold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const sizeKey = (x) => fold(x).replace(/\s+/g, '').replace(/,/g, '.');
+export function sameBrand(items, read) {
+  const brand = fold(read.brand).trim();
+  const kept = brand ? items.filter((p) => fold(`${p.brand} ${p.name}`).includes(brand)) : items.slice();
+  const size = sizeKey(read.size);
+  if (!size) return kept;
+  const hasSize = (p) => sizeKey(`${p.size} ${p.name}`).includes(size);
+  return kept.filter(hasSize).concat(kept.filter((p) => !hasSize(p)));
+}
+
