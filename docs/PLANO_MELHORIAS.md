@@ -986,7 +986,7 @@ Comparação tela a tela entre o app de hoje (prints da revisão geral, v87) e o
   quebram com texto a 200%; precisam empilhar (o antigo já empilha blocos lado
   a lado).
 
-### 12.5 O que fazer no desenho novo (proposta)
+### 12.5 O que fazer no desenho novo (**feito em 30/09**, ver DESIGN_NOVO 2.7 e 2.8)
 
 1. **Validade no cartão do Guardar:** "Marcar validade" no próprio cartão
    (abre a faixa de data na mesma câmera). Continua opcional.
@@ -1076,5 +1076,5 @@ correções.
 - **Histórico:** o desenho diz "Guardou 2 / Tirou 1"; o app de hoje, "Entrada de
   4". Com Guardar e Tirar no leitor, o histórico deve seguir os mesmos verbos.
   Atualizar a lista de termos fixos do design system (seção 8) quando aplicar.
-- **"Aplicar e concluir"** no fim do Conferir: claro, mas o app de hoje diz
-  "Aplicar contagem". Escolher um e usar nos dois lugares.
+- ~~"Aplicar e concluir" ou "Aplicar contagem"~~ **Decidido: "Aplicar e
+  concluir".**

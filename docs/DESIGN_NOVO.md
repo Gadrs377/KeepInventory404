@@ -147,10 +147,10 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
   - o fundo desfoca, como no iPhone.
 - **Arrastar para a esquerda:** **Tirar 1** na cor do Tirar (o gesto que já
   existe).
-- **"Pede atenção" aberto (Vencem esta semana):**
-  - a data vira a etiqueta ("01/10 amanhã", em amarelo);
-  - na própria linha, **Adicionar às Compras** e **Jogar fora**;
-  - o que vence depois fica em "Depois", mais apagado.
+- **"Pede atenção" filtra no lugar:** tocar em "vencem esta semana" deixa o
+  bloco preto e a lista mostra só esses, com a data como etiqueta ("01/10
+  amanhã") e, na linha, **Adicionar às Compras** e **Jogar fora**. "Mostrar
+  tudo" volta. (Substitui a tela separada do primeiro desenho.)
 - **Editar (pela home ou pelo produto), a mesma folha:**
   - Nome;
   - Marca e Tamanho lado a lado;
@@ -163,6 +163,80 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
   Sai a quantidade grande do topo (ela está no −/+ do cartão e do produto).
 - **Mais › Avisos:** "Quando algo for vencer", **Resumo da semana (Sábado,
   9:00 ›)**, que a pessoa escolhe, e **Aviso na véspera**.
+
+---
+
+### 2.7 Correções da comparação com o design antigo
+
+Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
+
+![Armário, filtro, produto, Mais](design-novo/7-correcoes-app.webp)
+![Guardar com Marcar validade, a data, a quantidade digitada, Tirar](design-novo/8-correcoes-leitor.webp)
+![Revisão da nota, fim da sessão, Conferir, o que falta, revisão](design-novo/9-correcoes-nota-conferir.webp)
+
+1. **Validade ao guardar:** "Marcar validade" no cartão; a mesma câmera vira a
+   faixa de data, na cor do Guardar, com "Digitar a data" e "Agora não".
+2. **Nota fiscal:** "Ver os 7 itens" abre a revisão (✓, "Novo", "Banana:
+   vendida por peso, fica de fora", "Toque num item para corrigir") e só então
+   **Guardar 6 itens**.
+3. **Conferir:** "Ver os 15 que faltam" no cupom abre a lista por ambiente,
+   com a caixa tracejada e "Sem código? Toque no produto e conte sem ler". Na
+   revisão, **Zerar os 4** em bloco, além do Zerar por linha.
+4. **Produto:** Tirar 1 e Guardar 1 escritos; nas validades, "2 un. · daqui a 5
+   meses", lixeira, "Lembrete no calendário" e "Ao tirar, sai primeiro a
+   unidade sem data, depois a que vence antes".
+5. **"Pede atenção"** desliza para o lado (como o "Onde fica"), filtra no
+   lugar e mostra **zerado** quando há.
+6. **Retorno em dobro:** a faixa "+1 Lava-Louças…" volta em cima da câmera, na
+   cor do modo, junto do cartão. O cupom mostra que as linhas se tocam (›) e
+   "Toque numa linha para corrigir".
+7. **Quantidade digitada:** tocar na etiqueta do cartão abre o teclado
+   numérico ("Quantas unidades entraram?", "Fica com 16 no armário", **Guardar
+   12**).
+8. **Fim da sessão:** o cupom impresso "GUARDADO", com compartilhar, e "Toque
+   fora do cupom para fechar".
+9. **Mais › Dados:** Restaurar uma cópia e Baixar planilha.
+10. Textos e 44 px (seção 13 do plano).
+
+### 2.8 As telas que faltavam
+
+![Compras, Cupons, busca, busca sem resultado](design-novo/10-compras-cupons-busca.webp)
+![Armário vazio, Conferir na primeira vez, remédio, lembrete do Conferir](design-novo/11-vazio-remedio-lembrete.webp)
+![320 px e letra grande](design-novo/12-320-letra-grande.webp)
+
+- **Compras:**
+  - mesmas linhas e fios, caixa de marcar de 28 px;
+  - o marcado fica riscado, "No carrinho";
+  - "Adicionar à lista" no alto;
+  - no fim, **"Voltou do mercado? Ler a nota fiscal"**, que liga a lista ao
+    Guardar.
+- **Cupons:**
+  - agrupados por dia;
+  - ícone na cor do modo (Guardou, Tirou, Conferiu, Nota fiscal);
+  - total e a seta › (a pendência antiga "Cupons sem seta").
+- **Busca:** filtra no lugar e diz "3 no armário". Sem resultado: "Nada no
+  armário com “nutella”", com **Ler o código** e **Adicionar às Compras**.
+- **Armário vazio (primeira vez):**
+  - sem Conferir e sem "Pede atenção" (não há o que conferir);
+  - "Guarde o primeiro produto lendo o código de barras, ou a nota fiscal da
+    última compra", com **Ler um código** e **Ler a nota fiscal**.
+- **Conferir na primeira vez:**
+  - três passos numerados;
+  - "Leva uns 15 minutos para 25 produtos. Dá para parar e continuar depois."
+    (Da telemetria: ~37 s por produto.)
+  - **Começar**, em azul.
+- **Remédio:**
+  - a mesma página do produto;
+  - "Sobre o remédio" em lista (princípio ativo, venda com a tarja sempre
+    escrita, laboratório).
+- **Lembrete do Conferir:** "32 dias sem conferir" entra primeiro no "Pede
+  atenção" depois do intervalo (30 dias por padrão, configurável).
+- **320 px:** o cartão da leitura empilha (−/+ embaixo do nome); os botões da
+  barra ficam numa linha só.
+- **Letra grande (~140%):**
+  - o cartão empilha;
+  - o nome do produto vai para baixo da foto;
+  - o cupom e as validades crescem sem cortar.
 
 ---
 
@@ -183,6 +257,7 @@ A mesma ideia do leitor (cartão com −/+, etiqueta, fios) levada para a home:
 
 **Decidido (30/09):**
 
+- **Fim do Conferir: "Aplicar e concluir".**
 - **Bips diferentes:** sobe para Guardar, desce para Tirar.
 - **O leitor sempre abre em Guardar.**
 - **Aviso de vencimento configurável:** dia e hora do resumo, e véspera liga
