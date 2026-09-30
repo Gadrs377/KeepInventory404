@@ -25,6 +25,36 @@ conversa de 30/09/2026. O que já pesa na decisão:
 - **Troca de modo sem querer é o erro mais caro** (guardar vira tirar, em
   silêncio). Trocar de modo só com toque, nunca arrastando a imagem.
 
+## Fluxo do código de barras (em discussão, 30/09/2026)
+
+**Problema.** Com as fontes novas, um código novo leva uns 4–5 s, e quando
+ninguém acha leva até 17 s. O repassador busca em fila: lojas (espera a mais
+lenta desistir, até 5 s), depois catálogos, depois web; e procura a foto antes
+de responder.
+
+**Decidido até aqui:**
+
+- **Mais rápido:** tudo o que é grátis começa junto (catálogo próprio, lojas,
+  catálogos de código); a web entra quando esses falharem ou aos ~2,5 s; prazo
+  menor para loja lenta (medir o tempo de cada uma na telemetria); o nome
+  responde na hora e a foto chega depois.
+- **Não achou:** as opções aparecem assim que lojas e catálogos falham (~2,5 s),
+  sem esperar a web: **"Fotografar a frente da embalagem"** (principal) e
+  "Digitar o nome". Se a web achar enquanto isso, aparece "Achei na internet:
+  X · É esse?".
+- **A imagem da leitura do código não serve:** a embalagem está de costas.
+  A foto tem de ser da frente, tirada de propósito.
+- **Foto → IA → lojas:** a IA lê nome, marca e tamanho e procura nas lojas;
+  "Usar o que a IA leu" fica por último na lista. Ao editar o nome de algo que
+  veio dessa busca, aparece "Usar o que a IA leu na embalagem".
+- **A foto da frente vira a foto do produto só no celular de quem tirou.**
+  Nunca vai para o catálogo compartilhado (LGPD).
+- **Nomes da comunidade.** O nome resolvido pela foto vai para o catálogo com a
+  marca "comunidade" (não veio de base confiável). Quem ler o mesmo código
+  depois vê o nome com essa marca e confirma ou nega, como no Waze; os votos
+  decidem se o nome fica. Fonte confiável que aparecer depois (loja, catálogo)
+  passa na frente.
+
 ## Produtos com várias unidades na embalagem
 
 Exemplos: cápsulas de café (caixas de 10, 12 ou 15), sachês, iogurte em
