@@ -1,0 +1,607 @@
+# Plano de melhorias (conversa de 30/09/2026)
+
+Tudo o que foi conversado e decidido na revisão geral do app, na telemetria da
+primeira noite de uso do modo Validade e no redesenho da câmera e do fluxo do
+código de barras. **Nada daqui está feito.** Cada item diz o estado:
+
+- **Decidido**: vocês aprovaram; é para fazer assim.
+- **Proposto**: sugestão minha, sem resposta ainda. Confirmar antes de fazer.
+- **Descartado**: foi discutido e não vai ser feito; o motivo fica anotado
+  para a ideia não voltar sem querer.
+
+O [ROADMAP](ROADMAP.md) tem o resumo; este documento tem os detalhes.
+
+---
+
+## 1. Como decidimos
+
+1. **Discutir antes de fazer.** Toda sugestão é apresentada e aprovada antes de
+   virar código.
+2. **O app está sendo feito agora.** Reaprender a usar não é custo: se uma ideia
+   melhor pedir para mudar uma tela inteira, ou o app inteiro, muda. Uma
+   proposta não perde pontos por ser diferente do que existe.
+3. **O botão "Validade" no topo do Armário não é requisito.** Foi uma ideia do
+   momento; pode sair de lá ou mudar de lugar.
+4. **Foto tirada pela pessoa nunca vai para o catálogo compartilhado** (LGPD).
+   Fica só no celular de quem tirou.
+5. **Nome digitado à mão nunca vai para o catálogo compartilhado.** Pode ser
+   pessoal ("pote da vó", "remédio da Ana") ou abreviado.
+6. **Mexer na leitura da câmera só com telemetria.** O desenho da tela pode
+   ser discutido; o que muda como a câmera lê (recorte, resolução, tempos)
+   espera os dados.
+7. **Diretrizes:** o nosso [design system](DESIGN_SYSTEM.md) e a
+   [HIG da Apple](APPLE_HIG.md) como referência.
+
+---
+
+## 2. Ordem de execução (proposta)
+
+1. **Telemetria nova** (seção 3.3). Pequena, invisível, e mede o que falta
+   para decidir o resto.
+2. **Repassador mais rápido** (seção 5.2).
+3. **O novo "não achou" com a foto da frente** (seção 5.3 e 5.4).
+4. **Nomes da comunidade** (seção 6).
+5. **Melhorias do modo Validade** (seção 4).
+6. **Pequenos da revisão geral** (seção 8.1).
+7. **Câmera nova** (seção 7), com os dados da telemetria em mãos.
+
+Depois: aviso de vencimento, backup automático e os dois celulares com o mesmo
+armário (seção 9).
+
+---
+
+## 3. Telemetria
+
+### 3.1 O que a noite de 29 para 30/09 mostrou
+
+Uso real do modo Validade, de 01:31 a 01:49, num iPhone (393×852, iOS 18.7,
+app instalado na tela de início, versão v87):
+
+- **27 produtos com data marcada em 17 minutos**, uns 37 s por produto.
+- **Nenhum erro registrado** na sessão; a GPU funcionou o tempo todo.
+- A câmera da data lê o texto da imagem **2,2 vezes por segundo** (é a régua
+  para comparar mudanças futuras; uma data precisa, em média, de ~15 leituras).
+- A câmera pede imagem **2160×3840 (4K) a 30 q/s**.
+
+Como terminou cada câmera da data (39 no total):
+
+| Como terminou | Vezes | Salvou | Tempo típico |
+|---|---|---|---|
+| Achou a data sozinha | 15 | 13 | data na tela em ~3 s; confirma ~1 s depois |
+| Achou; vocês tocaram na data | 9 | 7 | data na tela em ~6,5 s; ~3 s até o toque |
+| Perguntou "É esta data?" | 3 | 2 | ~7 s |
+| Vocês digitaram | 7 | 7 | 3 delas depois de 30–40 s de tentativa |
+| Saíram da câmera | 4 | 0 | 1–3 s |
+| Painel da foto | 1 | 0 | 20 s |
+
+Resultados do modo Validade (40): marcou 29, "todas já têm data" 7, fechou 3,
+"não está no armário" 1.
+
+Onde vai o tempo de cada produto (medianas):
+
+| Etapa | Tempo |
+|---|---|
+| Do fim do produto anterior até a câmera da data abrir (pegar o próximo e ler o código) | **~12 s** |
+| Câmera da data | ~7 s |
+| Confirmar | ~2,3 s |
+
+**Tempo de virar o produto.** Entre ler o código e ler a data, a pessoa vira o
+produto: a data quase nunca está na mesma face do código. Quando está, a data
+aparece em 0,9–1 s; quando precisa virar, em 3–6 s. Metade apareceu em até
+3 s. **A tela não pode exigir nada nesse intervalo.**
+
+**Digitar a data leva 9 a 20 s** (refrescos em pó, café solúvel, pêssego em
+calda, chocolate em pó).
+
+**Os pontos fracos da câmera:** refresco em pó (Tang) e café solúvel. Três
+tentativas de 30–40 s com 5 fotos cada, e depois digitaram. No terceiro Tang,
+foram direto digitar em 2,5 s: aprenderam que não funciona.
+
+**Datas vencidas:** 8 datas lidas já tinham passado. 4 foram salvas e estavam
+**certas**, eram produtos vencidos mesmo (Salgadinho Pastelina, Erdbeemarmelade,
+Café Baggio, Aveia Tutti Giorni); 2 eram os potes velhos do teste (Ervas Finas
+e Pimenta Mercatto, seção 3.2); 2 eram erro de ano (abaixo). Em uma noite, 6
+produtos vencidos no armário.
+
+**Erro de ano:** a câmera leu 18/02/2024 onde era 18/02/2027 (pó para pudim)
+e 29/12/2025 onde era 29/12/2028 (pêssego em calda). Vocês perceberam e
+digitaram. É o padrão "FAB 18/02/24 · VAL 18/02/27": a validade cai no mesmo
+dia e mês da fabricação, anos depois, e nessas embalagens não havia o rótulo
+"FAB" que o app já sabe descartar.
+
+### 3.2 O que desconsiderar (contado por vocês)
+
+- **Ervas Finas e Pimenta Mercatto:** teste de leitura em potes redondos, com
+  potes velhos. As datas vencidas lidas ali não são erro.
+- **Água Voss:** teste. Mas o defeito que apareceu é real: o nome veio em
+  tailandês (seção 5.5).
+- **Vaivém Compras → Cupons → Mais às 21:49 e 22:56:** conferência das
+  animações, não alguém perdido.
+- **O app reabrindo às 01:31:** vocês fecharam e abriram para o iPhone pedir a
+  permissão da câmera de novo (tinha sido negada sem querer). Não foi queda.
+- **O último produto, às 01:49 (duas leituras sem salvar):** foram dormir.
+
+### 3.3 O que acrescentar (Proposto)
+
+Nada disso aparece na tela.
+
+1. **Identificador aleatório por aparelho**, para separar o uso dos dois
+   celulares (hoje aparecem iguais). Não identifica a pessoa. Também serve
+   para os votos da comunidade (seção 6).
+2. **Tempo de leitura do código** no modo Validade (hoje não dá para separar
+   "pegar o produto" de "a câmera demorar").
+3. **Tempo de cada etapa do repassador** no `/lookup`: catálogo próprio, cada
+   loja, catálogos de código, web, foto (seção 5.1).
+4. **Resumo de cada Entrada e Saída:** produtos, unidades, correções de
+   quantidade, Desfazer, códigos não achados, duração.
+5. **Troca de modo seguida de Desfazer** (guardou em vez de tirar e corrigiu):
+   mede se a troca sem querer acontece.
+6. **Diferenças da Contagem:** quanto o armário do app difere do real, e em
+   quais produtos (sinal de Saída esquecida).
+7. **Busca sem resultado**, no Armário e no "buscar pelo nome".
+8. **Tempo para o app abrir** até a lista aparecer.
+9. **Câmera negada ou que não abriu** (`NotAllowedError` e afins).
+10. **Reabertura do app sem ter sido fechado** (para diferenciar queda de
+    fechamento).
+
+---
+
+## 4. Modo Validade
+
+### 4.1 Aviso em cima de uma câmera que parece viva (Decidido o problema; forma Proposta)
+
+**Problema.** Quando o produto já tem todas as datas, abre uma folha "Todas as
+N unidades já têm data". Vocês usavam isso **de propósito, para conferir** o
+armário. Mas às vezes ele não percebia que a folha abriu: a imagem da câmera
+continua ao vivo em cima, com a leitura **pausada** (o código confirma:
+`handling` pausa o leitor, o vídeo segue). Parece que está funcionando, então
+ele continuava apontando.
+
+**Proposta.** Nenhum aviso abre em cima de uma câmera que parece viva, em
+nenhum lugar do app:
+
+- ou a imagem **congela e escurece** enquanto o aviso está aberto;
+- ou o aviso aparece **em cima da própria câmera**, como o cartão do desenho
+  novo (seção 7), com as datas que o produto já tem, e a câmera segue lendo.
+
+Para "todas já têm data", a segunda forma serve à conferência: mostra as datas
+e deixa ler o próximo.
+
+### 4.2 Data vencida: o app age (Proposto)
+
+Quando a data lida já passou, dizer com destaque "Venceu há 6 meses" e
+oferecer **"Joguei fora"**: tira do armário e, se quiserem, põe nas Compras.
+É o momento em que a pessoa está com o produto vencido na mão.
+
+(A ideia anterior, "data vencida nunca é salva sozinha", foi **descartada**:
+as datas vencidas lidas estavam certas.)
+
+### 4.3 Fabricação e validade com o mesmo dia e mês (Proposto)
+
+Regra: se o mesmo produto mostra duas datas com o **mesmo dia e mês** e anos
+diferentes, fica a **mais distante**. Resolve os dois erros de ano da noite.
+Hoje `js/dates.js` só descarta a fabricação quando há o rótulo FAB/PROD/EMB.
+
+### 4.4 "Está difícil" chega tarde (Proposto)
+
+Hoje aparece aos **35 s** (`HARD_AFTER_MS`); vocês desistiram entre 30 e 40 s.
+Oferecer "Digitar" com destaque por volta de **12–15 s** sem achar nada.
+
+### 4.5 Digitar a data (Decidido)
+
+**Digitar continua sendo o jeito.** O campo "DD/MM/AA" no teclado numérico
+fica como está.
+
+**Descartado:** rodinhas do iPhone e grade de meses/anos. "Normalmente só
+servem para atrapalhar."
+
+### 4.6 Quando a data vira botão (Proposto, investigar)
+
+Quando a câmera confirma sozinha, é ~1 s depois de mostrar. Quando vira
+botão, vocês esperam ~3 s antes de tocar: parece que ficam esperando para ver
+se ela confirma sozinha. O botão tem de deixar claro que é para tocar.
+
+### 4.7 Uma câmera só para o código e a data (Proposto, medir antes)
+
+Ler o código leva ~12 s por produto, mais que a data. Parte é pegar o
+produto; a suspeita é que outra parte seja a troca de câmera (a do código
+para, a da data abre; no iPhone isso reinicia a imagem). Medir (seção 3.3,
+item 2) antes de mudar.
+
+### 4.8 Produto fora do armário no meio da conferência (Proposto)
+
+Hoje o app manda para a Entrada, e é preciso voltar ao modo Validade e ler de
+novo. Proposta: "Guardar 1 e marcar a data" ali mesmo. (O caso da noite foi a
+Voss, um teste, mas numa conferência do armário vai acontecer de verdade.)
+
+### 4.9 "Conferir o armário": Contar e Validade juntos (Proposto, sem resposta)
+
+Vocês usaram a Validade para conferir o armário, que é o que a Contagem faz.
+Numa passada só: cada leitura confirma que o produto existe, pede a data se
+faltar e mostra a que tem se não faltar; no fim, a revisão do que não
+apareceu.
+
+### 4.10 Câmera negada (Decidido)
+
+A mensagem de hoje diz "libere nos ajustes do navegador", que não ajuda no
+app instalado no iPhone. Trocar por: **"Feche e abra o app de novo para o
+iPhone perguntar outra vez."** (É uma aba do Safari se passando por app;
+fechar e abrir funciona. Num app de loja seria nos Ajustes.) Registrar na
+telemetria (seção 3.3, item 9).
+
+---
+
+## 5. Fluxo do código de barras
+
+### 5.1 Como é hoje (diagnóstico)
+
+Quando o código **já está no armário**, é instantâneo. Quando é **novo**:
+
+1. A câmera lê e **abre uma folha que prende a pessoa**: "Procurando no armário
+   e nas lojas". Aos 3,5 s: "A loja está demorando"; aos 7 s: "Se preferir,
+   digite o nome". O app espera o `/lookup` **até 20 s** e, em paralelo, o Open
+   Food Facts e irmãos (até 8 s).
+2. O repassador (`worker/src/index.js`, `lookup` e `lookupLive`) busca **em
+   fila**:
+   1. catálogo próprio (D1);
+   2. **24 lojas** ao mesmo tempo (`lookupStores`). Vale a primeira que achar;
+      se não foi a Zaffari, **espera a Zaffari até 0,8 s**. Se **nenhuma** tem,
+      espera a mais lenta desistir (`STORE_TIMEOUT` = **5 s**);
+   3. **só depois**, os catálogos de código (CadastroProduto, Systax, e Cosmos
+      e Kodebar quando há chave);
+   4. **só depois**, a web (Tavily; básica e, se couber no prazo de 17 s, a
+      avançada);
+   5. se o nome veio sem foto, **procura a foto antes de responder**
+      (`findPhoto`: Cosmos e imagens da web, com redução na Cloudflare).
+3. Volta **um nome só**, o primeiro que alguém achou, sem avaliar a qualidade
+   (por isso o título tailandês da Voss passou).
+4. A foto para a IA (`/identify`) só aparece quando **ninguém achou nada**.
+5. Com o **Rápido** ligado, o código novo vai para "Para resolver" e nada é
+   procurado até a pessoa tocar.
+
+**Sintoma relatado:** um código novo leva uns **4–5 s**; antes das fontes novas
+era menos. Principal suspeito: a foto procurada antes de responder (item 2.5),
+seguido da fila (2.2 → 2.3 → 2.4). Confirmar com o tempo de cada etapa
+(seção 3.3, item 3): até agora a telemetria só pegou duas consultas (Bombom
+Stikadinho em 1,5 s numa loja; Voss em 9–10 s pela web).
+
+### 5.2 Repassador mais rápido (Decidido)
+
+- **Tudo o que é grátis começa junto:** catálogo próprio, lojas e catálogos de
+  código (CadastroProduto, Systax). Vale o melhor que chegar primeiro, com uma
+  folga curta para a loja preferida.
+- **O que tem cota** (Cosmos, Kodebar, web/Tavily) entra quando os grátis
+  falharem, ou a web aos **~2,5 s** sem nada.
+- **Prazo menor para loja lenta:** com o tempo de cada loja medido, cortar de
+  5 s para ~2,5 s, ou tirar a loja que nunca acha nada.
+- **O nome primeiro, a foto depois:** o repassador responde o nome na hora; a
+  foto chega depois, sozinha (por exemplo, `/foto/{código}` gerada quando for
+  pedida).
+
+**Meta:** achado numa loja em ~1–1,5 s; não achado, as opções aparecem em
+~2,5–3 s (hoje, 8 a 17 s).
+
+### 5.3 Quando não acha (Decidido)
+
+As opções aparecem **assim que lojas e catálogos falham**, sem esperar a web:
+
+1. **Leu o código.** "Procurando…" (0 a ~2,5 s).
+2. **Lojas e catálogos sem nada.** A folha muda na hora:
+   - título: **"Não achei este código nas lojas"**;
+   - botão principal: **"Fotografar a frente da embalagem"**. O texto diz "a
+     frente" de propósito: a pessoa está com o produto virado, mostrando o
+     código;
+   - botão secundário: **"Digitar o nome"**;
+   - embaixo, discreto: "Ainda procurando na internet…".
+   - Se a web achar enquanto a pessoa decide, aparece em cima: **"Achei na
+     internet: X · É esse?"**, com Sim e Não.
+3. **Digitar o nome:** como hoje, com as sugestões das lojas enquanto digita.
+   Salvou, pronto. O nome digitado fica só no celular (seção 1, item 5).
+
+### 5.4 Foto da frente → IA → busca (Decidido)
+
+1. Abre a câmera normal do iPhone (a que o app já usa, `input capture`).
+2. "Lendo a embalagem…" (~5 s). A IA lê **nome, marca e tamanho**.
+3. Com isso, **procura nas lojas** (e na web, se as lojas não tiverem).
+4. Mostra **"É um destes?"**, com foto de cada resultado. O último item da lista
+   é sempre **"Usar o que a IA leu: 'Nome lido'"**.
+5. A pessoa escolhe; o formulário vem preenchido.
+6. **Ao tocar para editar o nome**, se o nome escolhido veio da busca (e não
+   da própria IA), aparece logo abaixo do campo: **"Usar o que a IA leu na
+   embalagem: 'Nome lido'"**. Um toque troca. Isso evita ficar com um nome
+   "em aramaico" que a busca trouxe.
+   - Só nesse caso. **Descartado:** oferecer "Ler o nome na embalagem" em toda
+     edição de nome (seria um segundo caminho).
+7. **A foto da frente vira a foto do produto no celular de quem tirou.** Não
+   vai para o catálogo compartilhado.
+8. **O nome** resolvido assim vai para o catálogo como **nome da comunidade**
+   (seção 6).
+
+**Descartado:** usar a imagem do momento da leitura do código para a IA ler o
+nome. Na leitura, a embalagem está **de costas**, só com o código de barras; a
+IA não teria o que ler.
+
+**Descartado junto (não seguiu):** a proposta de três etapas sem folha
+("ler / descobrir em segundo plano / confirmar depois", com linhas "Procurando…"
+na sessão e o fim do Rápido). Se voltar, rediscutir do zero.
+
+### 5.5 Nome estranho vindo de fonte (Decidido)
+
+- **O repassador limpa o nome sozinho** quando dá: tira trechos em outro
+  alfabeto (o título da Voss era "วอสส์น้ำแร่ธรรมชาติ 375มล. Voss Mineral
+  Water 375ml"; o nome certo estava ali dentro), palavras de marketplace ("kit",
+  "frete grátis", "promoção"), e ajusta nomes todos em maiúsculas.
+- **Recusa** o nome que não dá para limpar (só outro alfabeto).
+- Quando o nome ainda parece estranho, ou a pessoa diz que não é aquele, entra
+  o caminho da foto (5.4).
+
+"Nome estranho", para o app: outro alfabeto; mais de ~70 letras; palavras de
+marketplace; tudo em maiúsculas com abreviações ("BISC RECH FRUTAS VERMELHAS
+80G ISABELA"); sem o tamanho que as outras fontes têm.
+
+---
+
+## 6. Nomes da comunidade
+
+### 6.1 Decidido
+
+- O **nome resolvido pela foto + IA** (seção 5.4) vai para o catálogo
+  compartilhado com a marca **"comunidade"**: não veio de uma base confiável.
+- Só texto: nome, marca, tamanho. **Nunca a foto.**
+- **Nome digitado à mão não vai.**
+- Quem ler o mesmo código depois vê o nome **com essa marca** e confirma ou
+  nega, **como no Waze** ("ainda tem buraco ali?"). Os votos decidem se o nome
+  fica.
+- **Fonte confiável ganha sempre:** se uma loja ou catálogo passar a ter o
+  código, o nome dela passa na frente. O da comunidade fica guardado, mas não
+  aparece.
+
+### 6.2 Proposto (confirmar)
+
+**Como aparece:**
+
+> Pó para Pudim Baunilha Royal 50g
+> 👥 *Nome sugerido por outra pessoa*
+
+**Como vota, sem pergunta a mais** (recomendado):
+
+- salvou **sem mexer** no nome → conta "é isso";
+- **trocou** o nome → conta "não é". Se o nome novo veio da foto + IA, vira
+  uma sugestão concorrente; se foi digitado, não vai (seção 1, item 5).
+
+Alternativa: botões explícitos "É isso · Não é". Custa um toque a mais em todo
+cadastro desses.
+
+**Regras:**
+
+- **Um voto por celular por código**, pelo identificador aleatório do aparelho
+  (seção 3.3, item 1).
+- **Confirmado** com 2 celulares diferentes dizendo que é, e mais "é" que
+  "não é". Hoje, 2 celulares são vocês dois; a regra já serve se tiver mais
+  gente.
+- **Sai da frente** quando os "não é" passam dos "é". Entra a sugestão
+  concorrente mais votada, ou nada (e a pessoa cai no caminho da foto).
+- **Proteções:** nome curto, sem links, sem números de telefone; limite de
+  sugestões por celular por dia.
+
+**No banco (D1), um esboço:** uma tabela de sugestões (código, nome, marca,
+tamanho, criado em, votos "é", votos "não é") e uma de votos (código,
+identificador do aparelho em hash, voto), com um voto por par código e
+aparelho.
+
+---
+
+## 7. Câmera nova (em discussão)
+
+### 7.1 A ideia
+
+Um lugar só para tudo o que se lê, com a câmera ocupando a tela inteira, como
+a Câmera do iPhone. Primeiro desenho (só imagem, nada no app):
+
+![Armário, esperando, acabou de ler, bandeja aberta](camera-nova-1.webp)
+![Nota fiscal, validade, contar, saída](camera-nova-2.webp)
+
+O que o desenho mostra:
+
+1. **Armário** com um botão "Ler" de cor fixa; Validade e Nota fiscal saem do
+   topo; um bloco "Pede atenção" (vencem esta semana, acabando).
+2. **Esperando:** câmera cheia; seletor de modos embaixo (Validade · Entrada ·
+   Saída · Contar); bandeja embaixo ("Cada leitura guarda 1").
+3. **Acabou de ler:** moldura na cor do modo com ✓; cartão com foto, nome,
+   "Agora 5 no armário" e −/+ (o − faz o papel do Desfazer); bandeja com
+   "2 produtos · +3" e Concluir.
+4. **Bandeja aberta:** a lista da sessão com −/+ em cada linha e "Falta
+   resolver" para códigos não achados.
+5. **Nota fiscal reconhecida sozinha** na Entrada: "Nota fiscal do Zaffari ·
+   14 itens → Guardar os 14".
+6. **Validade em dois passos na mesma tela:** o produto sobe para o topo, a
+   moldura vira uma faixa estreita para a data, aparecem as datas já
+   cadastradas com a igual em destaque.
+7. **Contar:** progresso no topo ("8 de 23"), a diferença no cartão ("O
+   armário dizia 1"), o que falta na bandeja.
+8. **Saída:** "Acabou. Era a última." e "Pôr nas Compras" no cartão.
+
+### 7.2 A crítica do próprio desenho
+
+O que ele faz **pior** que o de hoje:
+
+1. **Troca de modo sem querer.** Arrastar a imagem para o lado muda o modo;
+   com o produto numa mão e o celular na outra, vai acontecer. Guardar como
+   Saída é um erro silencioso no estoque. Conflita com o gesto de voltar
+   arrastando da borda.
+2. ~~Contradiz o botão de Validade pedido na tela inicial.~~ (Não vale mais:
+   seção 1, item 3.)
+3. **Some a visão do que foi lido:** só o último item e um resumo; numa compra
+   de 15 itens, perde a noção.
+4. **A nota fiscal fica escondida:** "é só apontar" só funciona para quem já
+   sabe.
+5. **Contar não é um modo como os outros:** é uma sessão com revisão no fim, e
+   não está definido o que acontece com a bandeja ao trocar para ele no meio.
+6. **Validade com camadas demais:** produto, faixa da data, datas cadastradas,
+   bandeja e seletor. Não cabe num iPhone pequeno. O desenho ainda mostra dois
+   estados ao mesmo tempo ("Segure mais um pouco" e "Igual a uma que já tem").
+7. **Duas aparências para a mesma lista:** bandeja escura, listas claras.
+8. **Risco técnico:** câmera em tela cheia muda o recorte que a leitura usa,
+   principalmente o da data (seção 1, item 6).
+9. ~~Reaprender tudo.~~ (Não vale mais: seção 1, item 2.)
+
+### 7.3 O que fica e o que muda (Proposto)
+
+**Fica:**
+
+- o cartão "acabei de ler" com −/+;
+- "Acabou → Pôr nas Compras" na Saída;
+- as datas cadastradas aparecendo na Validade;
+- a nota fiscal reconhecida sozinha, **com um botão "Nota fiscal" visível**
+  também.
+
+**Muda:**
+
+- troca de modo **só por toque**, nunca arrastando; sinal grande no cartão
+  (+1 verde, −1 vinho);
+- **Contar** como sessão à parte (fora do seletor);
+- a bandeja fechada mostra as **últimas 2 ou 3 linhas**, não só o resumo;
+- Validade com **um estado por vez**: lendo → achou → confirma;
+- respeitar o **tempo de virar o produto** (seção 3.1): depois do código, a tela
+  diz "Vire e mostre a data" e não exige nada;
+- a câmera pode ser escura; a bandeja segue o tema do app.
+
+### 7.4 "Sem código? Buscar pelo nome" (Proposto)
+
+O botão do desenho estava ruim:
+
+- **cobre só um caso.** Quem aperta está numa de três situações: o produto não
+  tem código (fruta, granel), o código não lê (amassado, reflexo, curvo), ou
+  quer digitar os números;
+- **no lugar errado:** no meio da tela, em cima da imagem, longe do polegar;
+- **aparece desde o primeiro segundo**, disputando atenção com a moldura; a
+  pergunta tem cara de propaganda.
+
+**Proposta:** um botão **"Digitar"** embaixo, perto do polegar, que abre um
+campo só, **"Código ou nome do produto"** (números buscam o código, letras
+buscam o nome). A ajuda "Não está lendo? Digite o código ou o nome" só aparece
+depois de ~6 s sem ler (o modo Validade já foi aberto e ficou 6 s sem leitura).
+
+### 7.5 Em aberto
+
+- Câmera sempre escura, mesmo com o app no claro?
+- Ordem e conteúdo do seletor (com Contar à parte: Entrada · Saída · Validade?).
+- O fim do "Rápido" (toda leitura +1, corrige no −/+): serve para guardar as
+  compras?
+- Validade de produto novo: pedir ao tocar na linha, ou no Concluir ("3
+  produtos novos sem data: marcar agora?")?
+- Ambiente de produto novo: o palpite entra sozinho e se corrige depois, ou
+  sempre pergunta?
+
+---
+
+## 8. Revisão geral do app (30/09/2026)
+
+Olhadas 20 telas e folhas em 393×852, claro e escuro: Armário, menu da linha,
+busca, filtro, Produto, Editar, Leitor, Digitar código, Guardar, produto novo,
+cupom, Saída, Compras, Cupons, Mais, Contagem, Revisão, Nota fiscal.
+
+**O que está bom:** os modos têm cor e sentido claros; o retorno ao guardar é
+forte (bip, destaque na câmera, aviso com Desfazer, linha no cupom); a nota
+fiscal ficou boa ("Banana: vendido por peso, fica de fora"); Compras está
+clara.
+
+### 8.1 Problemas concretos (Proposto)
+
+1. **Produto novo reclama antes da hora:** o aviso âmbar "Não tenho certeza.
+   Confira onde fica." aparece com o nome ainda vazio. Só depois de digitar.
+2. **Revisão da Contagem com 0 contados diz "Tudo o que foi contado
+   confere".** Soa conferido; ninguém contou nada.
+3. **"Acabando" e "Vence amanhã" com quase o mesmo amarelo**, na mesma linha
+   (Requeijão tem as duas).
+4. **Ícones sem nome** contra a nossa regra ("Nota fiscal em texto"): na
+   câmera, QR Code e teclado são só ícones; no iPhone de vocês, "Nota fiscal"
+   do topo virou só ícone.
+5. **O voltar tem três desenhos:** ‹ num círculo (Produto), ← solto (Revisão),
+   "← Voltar ao armário" (cupom).
+6. **"Remover do armário" em vermelho cheio, grande, logo abaixo de Salvar.**
+   Pela Apple, ação destrutiva é discreta (texto vermelho) e afastada da
+   principal.
+
+### 8.2 Obscuridade (Proposto)
+
+7. **A cor do botão de ler muda sozinha** (verde ou vinho, conforme o último
+   modo); parece outra função.
+8. **Mais mistura o dia a dia com o técnico:** "Contar o armário" é tarefa do
+   dia a dia; "Diagnóstico da leitura" e "Testes" são técnicos e aparecem para
+   todos. A linha "Testes" fica atrás da barra de abas no fim.
+9. **Linhas tocáveis sem sinal** (já no ROADMAP): linhas do cupom no leitor e
+   lista de Cupons.
+10. **"Nome estranho? Buscar o nome certo" aparece em todo produto**, até nos
+    de nome bom. Com a seção 5, pode sair.
+
+### 8.3 Fricção e fluxo (Proposto)
+
+11. **Entradas para a câmera espalhadas:** botão redondo (Entrada/Saída),
+    Validade e Nota fiscal no topo, Contar em Mais. A câmera nova (seção 7)
+    resolve.
+12. **O cupom depois de Concluir** é um passo a mais em toda sessão; poderia
+    ser um aviso ("3 produtos guardados · Ver cupom").
+13. **Página do Produto repete coisas:** quantidade no −/+ e no Editar; "Onde
+    fica" nos Detalhes e no Editar; o quadro "Consumo" ocupa espaço para dizer
+    "Aparece depois de algumas saídas". Proposta: foto, nome, −/quantidade/+,
+    Validade e Histórico; Editar concentra o resto; Consumo só com dados.
+14. **Leitor da Entrada:** grande vazio "O que você guardar ou tirar aparece
+    aqui"; o aviso de Desfazer fica em cima da barra do Concluir.
+
+### 8.4 Coesão visual (Proposto)
+
+- Cabeçalhos diferentes: Contagem e Revisão com faixa azul grande e título
+  grande; leitor com faixa fina e pílulas; modo Validade com faixa âmbar e
+  título pequeno; abas com título grande sobre o papel.
+- Escuro: o cupom continua branco; o botão flutuante fica pastel.
+- Home com muitos controles: três botões no cabeçalho, filtros e abas (a HIG
+  pede poucos).
+
+### 8.5 Ideias maiores da revisão
+
+- **A. Um leitor só, com modos.** Virou a câmera nova (seção 7).
+- **B. Armário com "o que pede atenção" em cima:** "2 vencem esta semana · 3
+  acabando · 5 sem validade"; tocar abre a ação certa. Substitui os três
+  blocos de hoje (Acabando, Zerados, Vencendo).
+- **C. Produto mais enxuto** (item 13).
+- **D. Mais só com o que é da pessoa:** Backup, Som e, quando existir,
+  Avisos; o técnico vai para "Avançado", no fim.
+
+As pendências de layout já registradas (cupom sem cara de tocável, Cupons sem
+seta, Salvar a 2 px em 320 px, espaços fora da grade de 4 px, 2 propriedades
+físicas) continuam no [ROADMAP](ROADMAP.md).
+
+---
+
+## 9. Depois (Proposto)
+
+- **Aviso de vencimento.** O app já sabe a data de uns 30 produtos, e 6
+  estavam vencidos. Um bloco "Pede atenção" no Armário e, depois, notificação
+  no celular (o app instalado no iPhone pode receber; o repassador já roda de
+  hora em hora).
+- **Backup automático.** As datas de uma noite inteira estão só no celular de
+  quem leu; se o app sair da tela de início ou o Safari limpar os dados, perde
+  tudo. Uma cópia automática no repassador; é o primeiro passo para o item
+  seguinte.
+- **Os dois celulares com o mesmo armário** (já no ROADMAP). Com os dois
+  passando o armário, cada celular guarda só metade.
+- **Consulta lenta não segura a pessoa** na Entrada (o nome se completa
+  depois). Parte disso foi descartada junto com as três etapas (seção 5.4);
+  rediscutir se o repassador rápido não bastar.
+
+---
+
+## 10. Descartados (e por quê)
+
+| Ideia | Por quê |
+|---|---|
+| Botão de Validade na tela inicial como requisito | Foi uma ideia do momento (seção 1) |
+| Data vencida nunca é salva sozinha | As datas vencidas lidas estavam certas |
+| Seletor de data do iPhone ou grade de meses/anos | Atrapalha; digitar ganha |
+| Usar a imagem da leitura do código para a IA ler o nome | A embalagem está de costas, só com o código |
+| "Ler o nome na embalagem" em toda edição de nome | Seria um segundo caminho; só no caso da seção 5.4 |
+| Fluxo em três etapas sem folha para códigos novos | Não seguiu; rediscutir do zero se voltar |
+| Nome digitado à mão no catálogo compartilhado | Pode ser pessoal ou abreviado |
+| Foto tirada pela pessoa no catálogo compartilhado | LGPD |
+| Trocar de modo arrastando a imagem da câmera | Troca sem querer é o erro mais caro |

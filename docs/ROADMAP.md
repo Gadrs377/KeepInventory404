@@ -3,6 +3,11 @@
 Ideias combinadas para depois. Nada aqui está feito; cada item diz o problema,
 o que já foi decidido e as opções a avaliar antes de construir.
 
+Os detalhes da revisão geral, da telemetria de 30/09, da câmera nova, do fluxo
+do código de barras e dos nomes da comunidade estão em
+[PLANO_MELHORIAS.md](PLANO_MELHORIAS.md), com o que foi decidido, proposto e
+descartado.
+
 ## Como decidimos (30/09/2026)
 
 - **O app está sendo feito agora.** Reaprender a usar não é custo: se uma ideia
@@ -53,7 +58,7 @@ de responder.
   marca "comunidade" (não veio de base confiável). Quem ler o mesmo código
   depois vê o nome com essa marca e confirma ou nega, como no Waze; os votos
   decidem se o nome fica. Fonte confiável que aparecer depois (loja, catálogo)
-  passa na frente.
+  passa na frente. Nome digitado à mão não vai para o catálogo.
 
 ## Produtos com várias unidades na embalagem
 
