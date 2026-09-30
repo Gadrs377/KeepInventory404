@@ -5,7 +5,7 @@
 // que já tinha data.
 
 import { mountCamera } from './camera.js';
-import { expirySheet } from './expiryLots.js';
+import { expirySheet, datesListHtml } from './expiryLots.js';
 import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, onChange } from '../store.js';
 import { formatDate } from '../dates.js';
 import { beep } from '../sound.js';
@@ -106,7 +106,7 @@ export default function mountValidade(root) {
   }
 
   // Aviso com uma ação (ir para a Entrada, abrir o produto) ou só Continuar.
-  function notice({ title, text, product = null, action = null }) {
+  function notice({ title, text, html = '', product = null, action = null }) {
     return openSheet({
       mode: 'validade',
       label: title,
@@ -115,6 +115,7 @@ export default function mountValidade(root) {
           ${product ? `<div class="product-head">${thumb(product, 'md')}<div class="product-meta"><p class="product-name">${esc(product.name)}</p>${subtitle(product) ? `<p class="product-sub">${subtitle(product)}</p>` : ''}</div></div>` : ''}
           <h2 class="sheet-title">${esc(title)}</h2>
           ${text ? `<p class="sheet-text">${text}</p>` : ''}
+          ${html}
           <div class="sheet-actions">
             ${action ? `<button type="button" class="btn btn-mode" data-act>${esc(action.label)}</button>` : ''}
             <button type="button" class="btn ${action ? 'btn-quiet' : 'btn-mode'}" data-go>Ler o próximo</button>
@@ -181,7 +182,7 @@ export default function mountValidade(root) {
       tel('validade-modo', { ...log, resultado: 'todas com data' });
       await notice({
         title: `Todas as ${plural(cur.qty, 'unidade', 'unidades')} já têm data`,
-        text: esc(lots.map((l) => `${formatDate(l.expiresAt)} (${plural(l.qty, 'unidade', 'unidades')})`).join(', ')) + '. Se alguma está errada, corrija na página do produto.',
+        html: `${datesListHtml(lots)}<p class="sheet-text">Se alguma está errada, corrija na página do produto.</p>`,
         product: cur,
         action: { label: 'Abrir o produto', run: () => { location.hash = `#/produto/${encodeURIComponent(cur.code)}`; } },
       });

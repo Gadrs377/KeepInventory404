@@ -67,6 +67,23 @@ function sheetNav(body, root) {
   return { push, pop, get depth() { return stack.length; } };
 }
 
+// Lista das validades que o produto já tem: uma linha por data, com quantas
+// unidades e quanto falta. `mark`: a data lida agora (a linha igual destaca).
+export function datesListHtml(existing, mark = '') {
+  return `
+    <ul class="exp-dates">
+      ${existing.map((l) => `
+        <li class="exp-dates-row${l.expiresAt === mark ? ' is-match' : ''}">
+          ${icon('calendar')}
+          <span class="exp-dates-text">
+            <span class="exp-dates-date">${esc(formatDate(l.expiresAt))}</span>
+            <span class="exp-dates-sub">${plural(l.qty, 'unidade', 'unidades')} · ${esc(relativeDays(l.expiresAt).toLowerCase())}</span>
+          </span>
+          ${l.expiresAt === mark ? '<span class="exp-dates-tag">Igual</span>' : ''}
+        </li>`).join('')}
+    </ul>`;
+}
+
 function page(html, cls = '') {
   const el = document.createElement('div');
   el.className = `sheet-page ${cls}`;
@@ -104,7 +121,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       ${head}
       ${existing.length ? `
       <div class="exp-existing">
-        <p class="exp-existing-line"><span class="exp-existing-label">Já têm data:</span>${existing.map((l) => `<span class="val-date">${icon('calendar')}${esc(formatDate(l.expiresAt))}${l.qty > 1 ? ` ×${l.qty}` : ''}</span>`).join('')}</p>
+        <p class="exp-existing-label">Validades já cadastradas</p>
+        ${datesListHtml(existing)}
         <p class="exp-existing-line" data-left></p>
       </div>` : ''}
       <div class="exp-cam"></div>
@@ -240,7 +258,12 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         <p class="exp-confirm-date">${esc(formatDateLong(iso))}</p>
         <p class="exp-confirm-rel${past ? ' is-past' : ''}">${esc(relativeDays(iso))}${past ? '. Confira na embalagem.' : ''}</p>
       </div>
-      ${dup ? `<p class="exp-dup" role="note">${icon('warning')}<span>Essa data já está marcada em ${plural(dup.qty, 'unidade', 'unidades')}. Esta embalagem é uma nova com a mesma data, ou uma das que já tinham?</span></p>` : ''}
+      ${dup ? `
+      <div class="exp-existing exp-dup-box" role="note">
+        <p class="exp-existing-label">Validades já cadastradas</p>
+        ${datesListHtml(existing, iso)}
+        <p class="exp-existing-line"><strong>Essa data já está cadastrada.</strong> Esta embalagem é nova, ou uma das que já tinham data?</p>
+      </div>` : ''}
       ${max > 1 ? `
       <div class="exp-howmany" role="group" aria-labelledby="exp-how-label">
         <p class="exp-howmany-label" id="exp-how-label">Quantas vencem nesse dia?</p>

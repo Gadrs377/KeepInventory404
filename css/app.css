@@ -1344,9 +1344,26 @@ html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-tr
 }
 .exp-existing .icon, .exp-dup .icon { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--val-ink); }
 .exp-existing { flex-direction: column; gap: 6px; }
-.exp-existing-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; }
-.exp-existing-label { font-weight: 600; }
-.exp-existing .val-date .icon { width: 14px; height: 14px; margin: 0; color: currentColor; }
+.exp-existing-line { margin: 0; text-wrap: pretty; }
+.exp-existing-label { margin: 0; font-weight: 700; }
+.exp-dup-box { margin: 12px 0 0; }
+/* Validades já cadastradas: uma linha por data (data, quantas, quanto falta);
+   a igual à data lida fica destacada. */
+.exp-dates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.exp-dates-row {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  min-height: 44px; padding: 6px 12px; border-radius: 10px;
+  background: color-mix(in oklab, var(--ink) 5%, transparent); font-variant-numeric: tabular-nums;
+}
+.exp-existing .exp-dates-row { background: color-mix(in oklab, var(--paper) 70%, transparent); }
+.exp-existing .exp-dates-row .icon, .exp-dates-row .icon { width: 18px; height: 18px; margin: 0; color: var(--val-ink); }
+.exp-dates-text { display: flex; flex-direction: column; min-width: 0; }
+.exp-dates-date { font-weight: 700; line-height: 1.25; }
+.exp-dates-sub { color: var(--ink-2); font-size: 0.8824rem; line-height: 1.3; }
+.exp-dates-row.is-match { background: var(--paper); box-shadow: inset 0 0 0 2px var(--val-ink); }
+.exp-dates-tag { padding: 2px 8px; border-radius: 999px; background: var(--val); color: #161817; font-size: 0.7647rem; font-weight: 700; }
+.sheet .exp-dates { margin: 4px 0 8px; }
+.exp-existing .exp-dates { margin: 0; align-self: stretch; }
 .exp-product { margin-bottom: 12px; }
 .pick-row .val-free { margin-top: 2px; }
 .exp-dup { margin: 12px 0 0; font-weight: 600; }

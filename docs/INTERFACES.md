@@ -1672,3 +1672,14 @@ no produto marca sem ler o código. A lista se atualiza ao salvar. `sw.js` v83.
 - **Procurar pelo nome** mostra primeiro os que têm unidade sem data, com a
   contagem; os outros dizem "Todas com data".
 - `sw.js` v84.
+
+## Versão 3.66: validades já cadastradas em lista
+
+Com datas diferentes nas unidades (1 leite para 01/12, 2 para 03/12), as
+etiquetas quebravam torto e a data repetida só dizia "já está marcada em 2
+unidades". Agora é a mesma lista nos três lugares (em cima da câmera, na data
+repetida e em "Todas as unidades já têm data"): **Validades já cadastradas**,
+uma linha por data com quantas unidades e quanto falta ("2 unidades · daqui a
+64 dias"). Na data repetida, a linha igual fica contornada com a etiqueta
+**Igual**, e embaixo: "Essa data já está cadastrada. Esta embalagem é nova, ou
+uma das que já tinham data?" (`datesListHtml` em `expiryLots.js`). `sw.js` v85.

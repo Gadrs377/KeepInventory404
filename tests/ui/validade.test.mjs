@@ -52,13 +52,14 @@ test('produto com parte das datas: mostra as marcadas, avisa a repetida e guarda
   try {
     await s.readCode(LEITE);
     await s.page.waitForSelector('.exp-existing');
-    assert.match((await s.page.textContent('.exp-existing')).replace(/\s+/g, ' '), /Já têm data: ?15\/10\/2026 ×2 Falta 1 unidade\./);
+    assert.match((await s.page.textContent('.exp-existing')).replace(/\s+/g, ' '), /Validades já cadastradas 15\/10\/2026 2 unidades · .* Falta 1 unidade\./);
     assert.match(await s.page.textContent('.sheet .exp-product'), /Leite Integral 1L/, 'o produto reconhecido aparece no topo');
     await s.typeDate('15/10/26');
-    assert.match(await s.page.textContent('.exp-dup'), /já está marcada em 2 unidades/);
+    assert.match(await s.page.textContent('.exp-dup-box'), /Essa data já está cadastrada/);
+    assert.match(await s.page.textContent('.exp-dup-box .exp-dates-row.is-match'), /15\/10\/2026.*2 unidades/s);
     await s.page.click('[data-other]');
     await s.typeDate('20/11/26');
-    assert.equal(await s.page.isVisible('.exp-confirm-page:not([hidden]) .exp-dup'), false);
+    assert.equal(await s.page.isVisible('.exp-confirm-page:not([hidden]) .exp-dup-box'), false);
     await s.page.click('.exp-confirm-page:not([hidden]) [data-done]');
     await s.page.waitForSelector('.screen-validade .receipt-line');
     assert.deepEqual(await s.lots(LEITE), [['2026-10-15', 2], ['2026-11-20', 1]]);
@@ -103,7 +104,7 @@ test('todas com data: não abre a câmera, mostra as datas', async () => {
   try {
     await s.readCode(LEITE);
     await s.page.waitForSelector('.sheet [data-act]');
-    assert.match(await s.page.textContent('.sheet'), /Todas as 2 unidades já têm data.*15\/10\/2026/s);
+    assert.match(await s.page.textContent('.sheet'), /Todas as 2 unidades já têm data.*15\/10\/2026.*2 unidades/s);
     assert.equal(await s.page.isVisible('.exp-cam'), false);
   } finally { await s.ctx.close(); }
 });
