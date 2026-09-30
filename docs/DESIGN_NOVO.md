@@ -302,6 +302,40 @@ A crítica completa está em [PLANO_MELHORIAS.md, seção 14](PLANO_MELHORIAS.md
 - **Conferir um ambiente:** escolher "Remédios" e o jeito, com o tempo
   estimado.
 
+#### 2.10.1 Página e folha do remédio no visual antigo (proposta)
+
+A página e a folha acima ficaram sem graça perto das antigas. Esta proposta
+**substitui a folha da Anvisa e a página do remédio** desenhadas acima. Volta
+o visual antigo e ficam só as melhorias já decididas.
+
+![Página vencida, rolada e descarte](design-novo/17-remedio-rico-a.webp)
+![Uso contínuo, rolada e folha da Anvisa](design-novo/17-remedio-rico-b.webp)
+
+- **Fica do antigo:**
+  - ícone, nome e descrição no centro, com o selo embaixo;
+  - três botões grandes: Tirar 1, o número e Guardar 1;
+  - "Sobre o remédio" com a lista completa (princípio ativo, apresentação,
+    venda com a faixa da tarja e a nota, tipo, laboratório, classe
+    terapêutica, preço máximo, registro) e "Ver a bula na Anvisa" dentro do
+    cartão;
+  - a Validade com a lixeira, "venceu há N dias" em vermelho e "Lembrete no
+    calendário".
+- **Entra do novo:**
+  - a unidade é **caixa** ("1 caixa · venceu há 51 dias");
+  - **vencido:** a Validade sobe para logo abaixo da quantidade, com
+    **Separar para descartar** e "Vencido não vai no lixo comum. As farmácias
+    recebem."; o Lembrete some, porque não serve para remédio vencido;
+  - sem nada vencido, a ordem é a antiga: quantidade, Sobre o remédio,
+    Validade;
+  - seção **Uso** com a chave "Uso contínuo". Quando está ligada, mostra o
+    ritmo e o aviso ("1 por dia. Avisa 7 dias antes de acabar e põe nas
+    Compras."), e o selo do topo diz "Acaba em ~6 dias";
+  - o histórico como diário (Guardou 1, Tirou 1);
+  - tarja preta com a receita dita ("Receita azul (B1). A farmácia retém a
+    receita").
+- **Folha da Anvisa:** a lista completa como antes. **Bula** e **Guardar no
+  armário** ficam presos embaixo, sempre à vista, sem rolar até o fim.
+
 ---
 
 ## 3. O que isto muda no plano
