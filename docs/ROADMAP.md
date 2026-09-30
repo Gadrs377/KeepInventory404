@@ -3,6 +3,28 @@
 Ideias combinadas para depois. Nada aqui está feito; cada item diz o problema,
 o que já foi decidido e as opções a avaliar antes de construir.
 
+## Como decidimos (30/09/2026)
+
+- **O app está sendo feito agora.** Reaprender a usar não é custo: se uma ideia
+  melhor pedir para mudar uma tela inteira, ou o app inteiro, muda. Uma
+  proposta não perde pontos por ser diferente do que existe.
+- **O botão "Validade" no topo do Armário não é requisito.** Foi uma ideia do
+  momento; pode sair de lá ou mudar de lugar se o desenho novo pedir.
+
+## Câmera nova (em discussão)
+
+Um lugar só para tudo o que se lê (Entrada, Saída, Validade, Contar, nota
+fiscal), com a câmera na tela inteira. Primeiro desenho e a crítica dele na
+conversa de 30/09/2026. O que já pesa na decisão:
+
+- **Entre ler o código e ler a data a pessoa vira o produto.** A data quase
+  nunca está na mesma face do código. Na telemetria de 30/09 (27 produtos em
+  17 minutos), a data apareceu de 0,9 s (mesma face) a 6 s depois do código;
+  metade em até 3 s. A tela não pode exigir nada nesse intervalo, e a câmera
+  não pode concluir sozinha com o que vê enquanto o produto ainda gira.
+- **Troca de modo sem querer é o erro mais caro** (guardar vira tirar, em
+  silêncio). Trocar de modo só com toque, nunca arrastando a imagem.
+
 ## Produtos com várias unidades na embalagem
 
 Exemplos: cápsulas de café (caixas de 10, 12 ou 15), sachês, iogurte em
