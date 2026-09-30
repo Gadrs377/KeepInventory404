@@ -1657,3 +1657,18 @@ lista cada produto com as datas já marcadas (15/10/2026 ×2) e, em âmbar,
 quantas unidades estão sem data; esses vêm primeiro. A nota diz quantos faltam
 ("1 produto tem unidade sem data") ou "Todos os produtos já têm data". Tocar
 no produto marca sem ler o código. A lista se atualiza ao salvar. `sw.js` v83.
+
+## Versão 3.65: modo Validade, retorno e menos dúvida
+
+- **O produto reconhecido no topo** da leitura e da confirmação (foto, nome e
+  "1 de 3 sem data"): quem leu o código errado vê na hora.
+- **Datas já marcadas em etiquetas**: "Já têm data: 15/10/2026 ×2" e "Falta 1
+  unidade. Pegue uma embalagem sem data." (a conta acompanha quando se marca
+  uma data e volta para a próxima).
+- **Data repetida, pergunta direta**: "Esta embalagem é uma nova com a mesma
+  data, ou uma das que já tinham?" com **Era uma das que já tinham** (volta à
+  câmera sem guardar) e **É nova, salvar**.
+- **Desfazer** no aviso depois de salvar (5 s); `addLot` devolve o id do lote.
+- **Procurar pelo nome** mostra primeiro os que têm unidade sem data, com a
+  contagem; os outros dizem "Todas com data".
+- `sw.js` v84.

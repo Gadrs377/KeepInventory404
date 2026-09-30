@@ -80,7 +80,8 @@ function page(html, cls = '') {
 // `existing`: datas que o produto já tem no armário ([{ expiresAt, qty }]):
 // aparecem em cima da câmera e, se a data lida for uma delas, a confirmação
 // avisa (pode ser a embalagem que já tinha data, e não a nova).
-function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-primary', finish, existing = [] }) {
+// `head`: HTML do produto (foto e nome) no topo da leitura e da confirmação.
+function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-primary', finish, existing = [], head = '' }) {
   let nav = navIn;
   let scanIndex = 0; // posição da página de leitura na pilha
   // Datas que já apareceram na confirmação: ao voltar para a leitura, não entram
@@ -100,13 +101,21 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   // Página 1: ler com a câmera (ou ir para digitar).
   function scanPage({ asRoot = false } = {}) {
     const el = page(`
-      ${existing.length ? `<p class="exp-existing">${icon('calendar')}<span>Já marcadas: ${existing.map((l) => `${esc(formatDate(l.expiresAt))} (${plural(l.qty, 'unidade', 'unidades')})`).join(', ')}. Leia uma das outras.</span></p>` : ''}
+      ${head}
+      ${existing.length ? `
+      <div class="exp-existing">
+        <p class="exp-existing-line"><span class="exp-existing-label">Já têm data:</span>${existing.map((l) => `<span class="val-date">${icon('calendar')}${esc(formatDate(l.expiresAt))}${l.qty > 1 ? ` ×${l.qty}` : ''}</span>`).join('')}</p>
+        <p class="exp-existing-line" data-left></p>
+      </div>` : ''}
       <div class="exp-cam"></div>
       <div class="exp-bar"><button type="button" class="btn exp-alt" data-type>${icon('keyboard')}<span>Digitar a data</span></button></div>`, 'exp-scan');
     let reading = null;
     let evidence = null;
     const typeBtn = $('[data-type]', el);
+    const leftLine = $('[data-left]', el);
     const onShow = () => {
+      const n = left();
+      if (leftLine) leftLine.innerHTML = `<strong>${n === 1 ? 'Falta 1 unidade.' : `Faltam ${n} unidades.`}</strong> Pegue uma embalagem sem data.`;
       if (reading) return;
       evidence = null;
       typeBtn.classList.remove('is-suggested');
@@ -225,12 +234,13 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     const past = daysUntil(iso) < 0;
     const dup = existing.find((l) => l.expiresAt === iso);
     const el = page(`
+      ${head}
       <div class="exp-confirm">
         <span class="exp-confirm-icon${past ? ' is-past' : ''}" aria-hidden="true">${icon(past ? 'warning' : 'calendar')}</span>
         <p class="exp-confirm-date">${esc(formatDateLong(iso))}</p>
         <p class="exp-confirm-rel${past ? ' is-past' : ''}">${esc(relativeDays(iso))}${past ? '. Confira na embalagem.' : ''}</p>
       </div>
-      ${dup ? `<p class="exp-dup" role="note">${icon('warning')}<span>Essa data já está marcada em ${plural(dup.qty, 'unidade', 'unidades')}. Se esta embalagem é uma das que já tinham data, leia outra.</span></p>` : ''}
+      ${dup ? `<p class="exp-dup" role="note">${icon('warning')}<span>Essa data já está marcada em ${plural(dup.qty, 'unidade', 'unidades')}. Esta embalagem é uma nova com a mesma data, ou uma das que já tinham?</span></p>` : ''}
       ${max > 1 ? `
       <div class="exp-howmany" role="group" aria-labelledby="exp-how-label">
         <p class="exp-howmany-label" id="exp-how-label">Quantas vencem nesse dia?</p>
@@ -238,9 +248,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         <p class="exp-howmany-of">de ${max} ${max === 1 ? 'unidade' : 'unidades'}</p>
       </div>` : ''}
       <div class="exp-actions">
-        <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(doneLabel)}</button>
+        ${dup ? `<button type="button" class="btn btn-quiet btn-lg" data-other>${icon('camera')}<span>Era uma das que já tinham</span></button>` : ''}
+        <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(dup ? 'É nova, salvar' : doneLabel)}</button>
         <button type="button" class="btn exp-alt" data-more hidden></button>
-        ${dup ? `<button type="button" class="btn exp-alt" data-other>${icon('camera')}<span>Ler outra embalagem</span></button>` : ''}
       </div>`, 'exp-confirm-page');
     if (evidence?.image) {
       const figure=document.createElement('figure'); figure.className='exp-evidence';
@@ -378,14 +388,14 @@ export function bindExpiryRow(body, { total, form }) {
  * as datas que o produto já tem (aparecem em cima da câmera). `mode`: a cor
  * da folha (o modo Validade usa a sua).
  */
-export function expirySheet({ free, existing = [], mode, label = 'Marcar validade', doneClass = 'btn-primary' }) {
+export function expirySheet({ free, existing = [], mode, label = 'Marcar validade', doneClass = 'btn-primary', head = '' }) {
   return openSheet({
     mode,
     label,
     title: 'Validade',
     render(body, close) {
       const lots = [];
-      const f = flow({ body, nav: null, total: () => free, lots, doneLabel: 'Salvar', doneClass, existing, finish: () => close(lots.slice()) });
+      const f = flow({ body, nav: null, total: () => free, lots, doneLabel: 'Salvar', doneClass, existing, head, finish: () => close(lots.slice()) });
       f.scan({ asRoot: true });
     },
   });

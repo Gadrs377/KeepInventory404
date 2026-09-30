@@ -6,7 +6,7 @@
 
 import { mountCamera } from './camera.js';
 import { expirySheet } from './expiryLots.js';
-import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, onChange } from '../store.js';
+import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, onChange } from '../store.js';
 import { formatDate } from '../dates.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
@@ -126,7 +126,8 @@ export default function mountValidade(root) {
   }
 
   // Vários produtos com o mesmo código, ou busca pelo nome (sem código).
-  function pickProduct(list, { search = false } = {}) {
+  // `missing`: code -> unidades sem data (os que faltam vêm primeiro).
+  function pickProduct(list, { search = false, missing = new Map() } = {}) {
     return openSheet({
       mode: 'validade',
       label: 'Qual produto?',
@@ -139,9 +140,13 @@ export default function mountValidade(root) {
         const draw = (q = '') => {
           const words = q.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[̀-ͯ]/g, '').split(/\s+/).filter(Boolean);
           const hay = (p) => `${p.name} ${p.brand || ''}`.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[̀-ͯ]/g, '');
-          const shown = list.filter((p) => words.every((w) => hay(p).includes(w))).slice(0, 30);
-          ul.innerHTML = shown.length ? shown.map((p) => `
-            <li><button type="button" class="pick-row" data-code="${esc(p.code)}">${thumb(p)}<span class="row-main"><span class="row-name">${esc(p.name)}</span><span class="row-sub">Tem ${p.qty}</span></span></button></li>`).join('')
+          const shown = list.filter((p) => words.every((w) => hay(p).includes(w)))
+            .sort((a, b) => ((missing.get(b.code) || 0) > 0) - ((missing.get(a.code) || 0) > 0)).slice(0, 30);
+          ul.innerHTML = shown.length ? shown.map((p) => {
+            const free = missing.get(p.code) || 0;
+            return `
+            <li><button type="button" class="pick-row" data-code="${esc(p.code)}">${thumb(p)}<span class="row-main"><span class="row-name">${esc(p.name)}</span><span class="row-sub">${free ? `<span class="val-free">${free === p.qty && free === 1 ? 'Sem data' : `${free} sem data`}</span>` : 'Todas com data'}</span></span></button></li>`;
+          }).join('')
             : '<li class="sheet-text">Nada com esse nome no armário.</li>';
         };
         draw();
@@ -182,19 +187,30 @@ export default function mountValidade(root) {
       });
       return;
     }
+    // O produto reconhecido fica no topo: quem leu o código errado vê na hora.
+    const head = `
+      <div class="product-head exp-product">
+        ${thumb(cur, 'md')}
+        <div class="product-meta">
+          <p class="product-name">${esc(cur.name)}</p>
+          <p class="product-sub">${free === cur.qty ? (cur.qty === 1 ? '1 unidade, sem data' : `${cur.qty} unidades, nenhuma com data`) : `${free} de ${cur.qty} sem data`}</p>
+        </div>
+      </div>`;
     const picked = await expirySheet({
       free,
       existing: lots.map((l) => ({ expiresAt: l.expiresAt, qty: l.qty })),
       mode: 'validade',
       label: `Validade de ${cur.name}`,
       doneClass: 'btn-mode',
+      head,
     });
     if (!picked || !picked.length) {
       tel('validade-modo', { ...log, resultado: 'fechou' });
       return;
     }
+    const ids = [];
     try {
-      for (const l of picked) await addLot(cur.code, l.qty, l.expiresAt);
+      for (const l of picked) ids.push(await addLot(cur.code, l.qty, l.expiresAt));
     } catch (err) {
       toast(err.message, { duration: 4000 });
       tel('validade-modo', { ...log, resultado: 'erro', erro: err.message });
@@ -209,14 +225,30 @@ export default function mountValidade(root) {
     vibrate(15);
     const units = picked.reduce((a, l) => a + l.qty, 0);
     tel('validade-modo', { ...log, resultado: 'marcou', datas: picked.map((l) => ({ data: l.expiresAt, qtd: l.qty })) });
-    toast(`${cur.name}: ${picked.map((l) => formatDate(l.expiresAt)).join(', ')} em ${plural(units, 'unidade', 'unidades')}.`, { mode: 'validade', duration: 3000 });
+    toast(`${cur.name}: ${picked.map((l) => formatDate(l.expiresAt)).join(', ')} em ${plural(units, 'unidade', 'unidades')}.`, {
+      mode: 'validade',
+      duration: 5000,
+      action: 'Desfazer',
+      onAction: async () => {
+        try {
+          for (const id of ids) await removeLot(id);
+          entry.dates.splice(entry.dates.length - picked.length, picked.length);
+          if (!entry.dates.length) done.delete(cur.code);
+          render();
+          tel('validade-modo', { ...log, resultado: 'desfez', datas: picked.map((l) => ({ data: l.expiresAt, qtd: l.qty })) });
+          toast('Desfeito.', { duration: 2500 });
+        } catch (err) {
+          toast(err.message, { duration: 4000 });
+        }
+      },
+    });
   }
 
   async function handleCode(barcode) {
     // "Buscar pelo nome" do leitor: procura entre o que tem no armário.
     if (barcode.startsWith('SEM-')) {
       const list = (await listProducts()).filter((p) => p.qty > 0).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-      const p = await pickProduct(list, { search: true });
+      const p = await pickProduct(list, { search: true, missing: new Map(shelf.map((x) => [x.p.code, x.free])) });
       if (p) await markProduct(p, '');
       return;
     }

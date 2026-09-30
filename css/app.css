@@ -1343,6 +1343,12 @@ html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-tr
   background: var(--val-soft); color: var(--ink); font-size: 0.9412rem; text-wrap: pretty;
 }
 .exp-existing .icon, .exp-dup .icon { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--val-ink); }
+.exp-existing { flex-direction: column; gap: 6px; }
+.exp-existing-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; }
+.exp-existing-label { font-weight: 600; }
+.exp-existing .val-date .icon { width: 14px; height: 14px; margin: 0; color: currentColor; }
+.exp-product { margin-bottom: 12px; }
+.pick-row .val-free { margin-top: 2px; }
 .exp-dup { margin: 12px 0 0; font-weight: 600; }
 /* Texto na cor do modo: no âmbar, o tom escuro (o amarelo no branco não se lê). */
 .mode-validade .cam-alt, .mode-validade .exp-alt { color: var(--val-ink); }

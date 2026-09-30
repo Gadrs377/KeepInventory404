@@ -154,15 +154,17 @@ export async function listLots() {
 export async function addLot(code, n, expiresAt) {
   if (!isIsoDate(expiresAt)) throw new Error('Digite a data de validade.');
   const qty = clampInt(n, 1);
-  await tx(['products', 'lots'], 'readwrite', async (s) => {
+  // Devolve o id do lote (para Desfazer).
+  const id = await tx(['products', 'lots'], 'readwrite', async (s) => {
     const p = await promisify(s.products.get(code));
     if (!p) throw new Error('Esse produto não está mais no armário.');
     const lots = await lotsOf(s, code);
     const free = p.qty - lots.reduce((a, l) => a + l.qty, 0);
     if (qty > free) throw new Error(free ? `Só ${free === 1 ? 'uma unidade está' : `${free} unidades estão`} sem validade.` : 'Todas as unidades já têm validade.');
-    await promisify(s.lots.add({ code, qty, expiresAt, addedAt: Date.now() }));
+    return promisify(s.lots.add({ code, qty, expiresAt, addedAt: Date.now() }));
   });
   emit();
+  return id;
 }
 
 export async function removeLot(id) {

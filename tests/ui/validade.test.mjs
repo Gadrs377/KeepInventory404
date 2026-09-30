@@ -52,7 +52,8 @@ test('produto com parte das datas: mostra as marcadas, avisa a repetida e guarda
   try {
     await s.readCode(LEITE);
     await s.page.waitForSelector('.exp-existing');
-    assert.match(await s.page.textContent('.exp-existing'), /15\/10\/2026 \(2 unidades\)/);
+    assert.match((await s.page.textContent('.exp-existing')).replace(/\s+/g, ' '), /Já têm data: ?15\/10\/2026 ×2 Falta 1 unidade\./);
+    assert.match(await s.page.textContent('.sheet .exp-product'), /Leite Integral 1L/, 'o produto reconhecido aparece no topo');
     await s.typeDate('15/10/26');
     assert.match(await s.page.textContent('.exp-dup'), /já está marcada em 2 unidades/);
     await s.page.click('[data-other]');
@@ -62,6 +63,10 @@ test('produto com parte das datas: mostra as marcadas, avisa a repetida e guarda
     await s.page.waitForSelector('.screen-validade .receipt-line');
     assert.deepEqual(await s.lots(LEITE), [['2026-10-15', 2], ['2026-11-20', 1]]);
     assert.match(await s.page.textContent('.screen-validade .receipt-lines'), /Leite Integral 1L.*20\/11/s);
+    // Desfazer tira a data que acabou de entrar.
+    await s.page.click('.toast button:has-text("Desfazer")');
+    await s.page.waitForFunction(async () => (await (await import('/js/store.js')).lotsFor('7891000100103')).length === 1);
+    assert.deepEqual(await s.lots(LEITE), [['2026-10-15', 2]]);
     assert.deepEqual(s.errors, []);
   } finally { await s.ctx.close(); }
 });
