@@ -822,15 +822,31 @@ mark.hit { background: none; color: var(--ink); }
 
 .segmented { border: 0; margin: 0; padding: 0; min-width: 0; }
 .segmented legend { padding: 0; margin-bottom: 6px; }
+/* Cabendo, as opções dividem a faixa igual; não cabendo (tela estreita, letra
+   grande), cada uma fica com o nome inteiro e a faixa desliza para o lado. */
 .segmented-track {
-  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(max-content, 1fr); gap: 4px;
   padding: 4px; border-radius: var(--r-control);
   background: color-mix(in oklab, var(--ink) 7%, transparent);
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-padding-inline: 4px;
 }
+.segmented-track::-webkit-scrollbar { display: none; }
 .segment { display: block; cursor: pointer; }
+/* Faixa que continua para o lado: degradê na borda e uma setinha. */
+.seg-scroll { position: relative; }
+.seg-scroll.is-more-end .segmented-track { mask-image: linear-gradient(to left, transparent, #000 44px); }
+.seg-scroll.is-more-start .segmented-track { mask-image: linear-gradient(to right, transparent, #000 44px); }
+.seg-scroll.is-more-start.is-more-end .segmented-track { mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+.seg-more {
+  position: absolute; inset-block: 0; inset-inline-end: 2px; display: grid; place-items: center;
+  width: 20px; color: var(--ink-2); pointer-events: none; opacity: 0;
+  transition: opacity 200ms var(--ease);
+}
+.seg-more .icon { width: 16px; height: 16px; }
+.seg-scroll.is-more-end .seg-more { opacity: 1; }
 .segment input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .segment span {
-  display: grid; place-items: center; min-height: 44px; padding-inline: 6px;
+  display: grid; place-items: center; min-height: 44px; padding-inline: 8px; white-space: nowrap;
   border-radius: calc(var(--r-control) - 4px);
   font-size: 0.9412rem;
 }
@@ -2434,6 +2450,21 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   background: linear-gradient(to top, var(--paper), color-mix(in oklab, var(--paper) 0%, transparent));
 }
 .exp-confirm-page .exp-actions { gap: 8px; }
+/* Formulários nas folhas (guardar, cadastrar, editar): o botão principal fica
+   preso no fim da folha. Em 320 e 375 px e com letra grande, "Guardar" e
+   "Salvar" ficavam abaixo da tela. */
+.sheet .sheet-sticky {
+  position: sticky; bottom: calc(-20px - var(--safe-bottom)); z-index: 2;
+  margin: 0 calc(var(--gutter) * -1) calc(-20px - var(--safe-bottom));
+  padding: 12px var(--gutter) calc(16px + var(--safe-bottom));
+  background: var(--paper);
+}
+.sheet .sheet-sticky::before {
+  content: ''; position: absolute; inset-inline: 0; bottom: 100%; height: 24px; pointer-events: none;
+  background: linear-gradient(to top, var(--paper), color-mix(in oklab, var(--paper) 0%, transparent));
+}
+.sheet .sheet-sticky:not(:last-child) { margin-bottom: 0; padding-bottom: 12px; }
+.sheet-sticky .btn { width: 100%; }
 /* Tela baixa (iPhone SE): o ícone do calendário é enfeite; sai para caber a lista. */
 @media (max-height: 700px) { .exp-confirm-page .exp-confirm-icon { display: none; } }
 /* Pergunta da data repetida junto das respostas, no rodapé preso. */

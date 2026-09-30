@@ -341,6 +341,51 @@ document.addEventListener('change', (e) => {
   if (track && e.target.type === 'radio') glideTo(track, e.target.closest('label'));
 });
 
+// Seletor que não cabe na largura: desliza para o lado, com degradê e setinha
+// na borda que continua. A opção escolhida sempre fica à vista.
+export function revealSegment(label) {
+  const track = label && label.closest('.segmented-track');
+  if (!track || track.scrollWidth <= track.clientWidth) return;
+  const left = label.offsetLeft - 4;
+  const right = label.offsetLeft + label.offsetWidth + 4 - track.clientWidth;
+  if (track.scrollLeft > left) track.scrollLeft = left;
+  else if (track.scrollLeft < right) track.scrollLeft = right;
+}
+function armScrollHint(track) {
+  if (track._hint) return;
+  track._hint = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'seg-scroll';
+  track.before(wrap);
+  wrap.append(track);
+  const more = document.createElement('span');
+  more.className = 'seg-more';
+  more.setAttribute('aria-hidden', 'true');
+  more.innerHTML = icon('chevron');
+  wrap.append(more);
+  const paint = () => {
+    const max = track.scrollWidth - track.clientWidth;
+    wrap.classList.toggle('is-more-start', max > 1 && track.scrollLeft > 1);
+    wrap.classList.toggle('is-more-end', max > 1 && track.scrollLeft < max - 1);
+  };
+  track.addEventListener('scroll', paint, { passive: true });
+  // A faixa e cada opção: mudar o tamanho da letra muda as opções, não a faixa.
+  if ('ResizeObserver' in window) { const ro = new ResizeObserver(paint); ro.observe(track); track.querySelectorAll('.segment').forEach((l) => ro.observe(l)); }
+  requestAnimationFrame(() => { revealSegment(checkedLabel(track)); paint(); });
+}
+if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+  new MutationObserver((list) => {
+    for (const m of list) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.matches('.segmented-track')) armScrollHint(n);
+      n.querySelectorAll('.segmented-track').forEach(armScrollHint);
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+}
+document.addEventListener('change', (e) => {
+  if (e.target.type === 'radio' && e.target.closest('.segmented-track')) revealSegment(e.target.closest('label'));
+});
+
 // ---------- Título grande que encolhe (como no iPhone) ----------
 // Quando o título grande sai de baixo da barra, aparece o título pequeno no
 // topo, numa barra de vidro. Tocar nela volta ao começo da tela.

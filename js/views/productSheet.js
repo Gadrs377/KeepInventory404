@@ -14,7 +14,7 @@ import { tel } from '../telemetry.js';
 import { expiryRowHtml, bindExpiryRow } from './expiryLots.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { beep } from '../sound.js';
-import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows, photoPickRow } from '../ui.js';
+import { $, $$, esc, icon, openSheet, stepper, subtitle, thumb, tag, tagState, plural, stockPill, skeletonRows, photoPickRow, revealSegment } from '../ui.js';
 
 const ACTION = {
   entrada: (n) => `Guardar ${n}`,
@@ -333,7 +333,7 @@ async function productForm(ctx, local, { fromList = false, fromChooser = false }
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
       ${mode === 'entrada' ? expiryRowHtml() : ''}
-      <button type="submit" class="btn btn-mode btn-lg"></button>
+      <div class="sheet-sticky"><button type="submit" class="btn btn-mode btn-lg"></button></div>
       ${canAddOther ? '<button type="button" class="btn btn-link btn-other" data-other>Não é este? Cadastrar outro</button>' : ''}
     </form>`;
 
@@ -410,7 +410,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       ${mode === 'contagem' ? '<p class="stepper-label">Quantos tem?</p>' : ''}
       <div class="stepper-host"></div>
       ${mode === 'entrada' ? expiryRowHtml() : ''}
-      <button type="submit" class="btn btn-mode btn-lg"></button>
+      <div class="sheet-sticky"><button type="submit" class="btn btn-mode btn-lg"></button></div>
     </form>`;
 
   const submit = $('[type=submit]', body);
@@ -436,7 +436,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     else if (areaTouched) return;
     area = id;
     const radio = $(`input[name=area][value="${id}"]`, body);
-    if (radio) radio.checked = true;
+    if (radio) { radio.checked = true; revealSegment(radio.closest('label')); }
   }
   function showUnsure(unsure) {
     const on = unsure && !areaTouched;

@@ -1702,3 +1702,21 @@ também. Agora:
 - **Linhas do "No armário" com a seta ›**: são tocáveis, como nos Ajustes.
 - Tela baixa (até 700 px de altura): o ícone decorativo da confirmação sai.
 - `sw.js` v86.
+
+## Versão 3.68: "Onde fica" desliza e botão preso nos formulários
+
+Revisão de layout no resto do app (medido em 320, 375 e 393 px, e com letra
+grande):
+
+- **Seletor "Onde fica" desliza para o lado.** Cabendo, as opções dividem a
+  faixa igual, como antes. Não cabendo (tela estreita, letra grande), cada
+  opção fica com o nome inteiro e a faixa rola para o lado; tocar seleciona.
+  Na borda que continua aparecem um degradê e uma setinha (só quando há mais);
+  a opção escolhida (inclusive a que o app escolheu sozinho) fica à vista
+  (`revealSegment` em `ui.js`). Antes, "Remédios" aparecia cortado
+  ("Remédi…") em 320 px e com letra grande.
+- **Botão principal preso no fim da folha** (`.sheet-sticky`) no cadastro de
+  produto novo, na folha de guardar e em Editar detalhes: em 320 e 375 px e
+  com letra grande, "Guardar" e "Salvar" ficavam abaixo da tela. Em Editar
+  detalhes, "Remover do armário" continua no fim do conteúdo.
+- `sw.js` v87.

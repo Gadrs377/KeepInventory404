@@ -48,3 +48,22 @@ Referências: [Grocy, unidades de compra e de estoque](https://github.com/grocy/
 - **Notas de outros estados.** Hoje só notas do RS (portal da SVRS).
 - **Quantidade padrão por produto** (ex.: sempre entram 2) e **mínimo sugerido
   pelo consumo** (o app propõe o "avisar com" pelo ritmo de uso).
+
+## Pendências de layout (revisão de 30/09/2026)
+
+Achadas na revisão de layout do app inteiro, a decidir. Medido em 320, 375 e
+393 px e com letra grande.
+
+- **Linhas do cupom no leitor não parecem tocáveis.** Tocar numa linha (Entrada
+  e Saída) abre a edição, mas ela parece só a linha impressa de um cupom.
+  Opções: um lápis discreto no fim da linha, ou "Toque para corrigir" na
+  primeira vez.
+- **Lista de Cupons (em Mais) sem seta.** Tocar abre o cupom, mas a linha não
+  tem a seta › das linhas que abrem algo.
+- **Leitor › editar linha, em 320 px:** "Salvar" passa 2 px da borda de baixo.
+  Resolve com o mesmo `.sheet-sticky` dos outros formulários.
+- **Espaços fora da grade de 4 px.** 112 de 427 valores de espaço em
+  `css/app.css` (10 px 45 vezes, 6 px 36, 14 px 18). Não quebra nada; arrumar
+  aos poucos, nas telas que forem mexidas.
+- **2 propriedades físicas** (esquerda/direita) no CSS, em vez das lógicas.
+  Sem efeito hoje (o app é só em português).

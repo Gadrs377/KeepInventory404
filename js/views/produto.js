@@ -340,8 +340,8 @@ function editSheet(p, focusQty = false) {
             <div class="stepper-host stepper-sm" data-min></div>
           </div>
           <p class="field-error" role="alert" hidden></p>
+          <div class="sheet-sticky"><button type="submit" class="btn btn-primary">${icon('check')}Salvar</button></div>
           <div class="sheet-actions">
-            <button type="submit" class="btn btn-primary">${icon('check')}Salvar</button>
             <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
           </div>
         </form>`;
