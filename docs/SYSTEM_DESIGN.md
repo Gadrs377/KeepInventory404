@@ -254,11 +254,24 @@ produto; 39 deles são marca própria da rede, que só a própria loja conhece.
 O que ficou de fora: polpas de fruta, kombucha e massas frescas de marcas
 regionais. O que o app já conhece não é consultado de novo.
 
-Cascata no Worker (`lookup`): lojas → se nenhuma achou, em paralelo,
-**CadastroProduto** (página pública com JSON-LD, 945 mil produtos, sem chave),
-**Systax** (página pública de classificação fiscal, nome e NCM, sem chave)
-e, se o Worker tiver a chave, **Cosmos** (`COSMOS_TOKEN`) e **Kodebar**
-(`KODEBAR_KEY`). O Open Food Facts continua sendo consultado pelo celular.
+Ordem no Worker (`lookup`, desde 30/09/2026 **em paralelo**): o catálogo
+próprio; depois, **ao mesmo tempo**, as lojas e os catálogos públicos
+**CadastroProduto** (página com JSON-LD, 945 mil produtos, sem chave) e
+**Systax** (classificação fiscal, nome e NCM, sem chave). Loja tem preferência;
+se as lojas passam de 2,5 s e um catálogo público já achou, vale o catálogo.
+Loja que não responde em 3,5 s (antes 5 s) fica de fora. O que tem cota só
+entra quando os grátis falham: **Cosmos** (`COSMOS_TOKEN`), **Kodebar**
+(`KODEBAR_KEY`) e a web, que começa aos 2,5 s se ainda não há nada. O Open
+Food Facts continua sendo consultado pelo celular.
+
+- **Nome primeiro, foto depois:** a resposta sai com `/foto/{código}` e a foto
+  é procurada em segundo plano (`ctx.waitUntil`). Sem foto, o endereço dá 404
+  e o app mostra o ícone. Antes, a busca da foto segurava a resposta.
+- **Nome limpo (`cleanName`):** palavras em outro alfabeto saem (o título da
+  Voss veio em tailandês), e também ruído de marketplace ("frete grátis",
+  "oferta"). Nome todo em outro alfabeto conta como não achado.
+- Tempo de cada etapa vai na telemetria (`r-codigo`, `etapas`).
+- Testes sem rede: `worker/test/rapido.mjs` (tempos) e `worker/test/nomes.mjs`.
 Catálogo devolve nome em maiúsculas de cupom; o Worker passa para letra de
 frase e devolve sem foto nem categoria.
 

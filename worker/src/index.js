@@ -86,7 +86,9 @@ export const VISION_MODELS = [
 const MAX_IMAGE_CHARS = 1_500_000; // ~1,1 MB de JPEG em base64
 
 const UA = 'Mozilla/5.0 (compatible; KeepInventory404/1.0; inventario domestico pessoal)';
-const STORE_TIMEOUT = 5000;
+// Loja que não responde em 3,5 s não segura a resposta (antes, 5 s: quando
+// nenhuma loja tinha o código, esperava a mais lenta desistir).
+const STORE_TIMEOUT = 3500;
 const DAY = 86400;
 
 export default {
@@ -111,8 +113,8 @@ export default {
         case '/lookup': {
           const ean = (url.searchParams.get('ean') || '').trim();
           if (!/^\d{8,14}$/.test(ean)) return withCors(json({ error: 'Código inválido' }, 400), allowed);
-          // v5: respostas guardadas antes da foto guardada no catálogo ficam para trás.
-          return withCors(await cached(ctx, `lookup:v5:${ean}`, 7 * DAY, async () => {
+          // v6: nomes limpos (outro alfabeto, ruído de marketplace) e foto depois do nome.
+          return withCors(await cached(ctx, `lookup:v6:${ean}`, 7 * DAY, async () => {
             const t0 = Date.now();
             const etapas = {};
             const r = await lookup(ean, env, ctx, etapas);
@@ -253,42 +255,87 @@ export async function lookup(ean, env = {}, ctx = null, etapas = {}) {
   }
   if (!result) {
     result = await lookupLive(ean, env, t0, etapas);
+    // Nome limpo antes de entrar no catálogo; só em outro alfabeto, não achou.
+    if (result.found) {
+      const name = cleanName(result.product.name);
+      if (name) result.product.name = name;
+      else result = { found: false };
+    }
     if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
   }
   // Sem foto (catálogo de código, ou guardado antes): Cosmos e, se não tiver,
   // as imagens da busca na web. O que veio da web já tentou as duas.
   const product = result.found && result.product;
+  if (product) {
+    const name = cleanName(product.name);
+    // Nome só em outro alfabeto (sobrou nada): como se ninguém tivesse achado.
+    if (!name) return { found: false };
+    product.name = name;
+  }
+  // Foto depois do nome: a resposta sai já com o endereço /foto/{código}, e a
+  // foto é procurada em segundo plano (Cosmos, depois imagens da web). Se não
+  // achar, o endereço dá 404 e o app mostra o ícone.
   if (product && !product.image && !product.page && db) {
+    product.image = photoPath(ean);
     const tf = Date.now();
-    product.image = await findPhoto(ean, product.name, env, t0);
-    etapas.foto = Date.now() - tf;
+    const job = findPhoto(ean, product.name, env, Date.now()).then(() => { etapas.foto = Date.now() - tf; }).catch(() => {});
+    if (ctx && ctx.waitUntil) ctx.waitUntil(job);
   }
   return result;
 }
 
+// Tudo o que é grátis começa junto: lojas e catálogos públicos (CadastroProduto,
+// Systax). Loja tem preferência (nome completo, foto, categoria); se o catálogo
+// já respondeu e as lojas passam de 2,5 s, vale o catálogo. O que tem cota
+// (Cosmos, Kodebar, web) só entra quando os grátis falham; a web começa aos
+// 2,5 s se ainda não há nada, para não esperar a fila inteira.
+const EARLY_MS = 2500;
 async function lookupLive(ean, env, t0 = Date.now(), etapas = {}) {
-  let t = Date.now();
-  const found = await lookupStores(ean);
-  etapas.lojas = Date.now() - t;
-  if (found.found) { etapas.achou = 'lojas'; return found; }
-  t = Date.now();
-  const catalogs = [lookupCadastroProduto(ean), lookupSystax(ean)];
-  if (env.COSMOS_TOKEN) catalogs.push(lookupCosmos(ean, env.COSMOS_TOKEN));
-  if (env.KODEBAR_KEY) catalogs.push(lookupKodebar(ean, env.KODEBAR_KEY));
+  const t = Date.now();
+  const stores = lookupStores(ean).then((r) => { etapas.lojas = Date.now() - t; return r; });
+  const free = Promise.any([lookupCadastroProduto(ean), lookupSystax(ean)])
+    .then((p) => { etapas.catalogos = Date.now() - t; return p; })
+    .catch(() => { etapas.catalogos = Date.now() - t; return null; });
+  const canWeb = gtinOk(ean);
+  let webP = null;
+  const startWeb = () => {
+    if (!webP && canWeb) {
+      const tw = Date.now();
+      webP = lookupWeb(ean, env, t0).catch(() => null).then((w) => { etapas.web = Date.now() - tw; return w; });
+    }
+    return webP;
+  };
+  const webTimer = setTimeout(startWeb, EARLY_MS);
   try {
-    const product = await Promise.any(catalogs);
-    etapas.catalogos = Date.now() - t;
-    etapas.achou = 'catalogos';
+    const early = new Promise((r) => setTimeout(r, EARLY_MS, 'cedo'));
+    const first = await Promise.race([stores, early]);
+    if (first !== 'cedo' && first.found) { etapas.achou = 'lojas'; return first; }
+    if (first === 'cedo') {
+      // Lojas demorando: se um catálogo grátis já achou, vale ele.
+      const quick = await Promise.race([free, Promise.resolve(undefined)]);
+      if (quick) { etapas.achou = 'catalogos'; return { found: true, product: quick }; }
+      const later = await stores;
+      if (later.found) { etapas.achou = 'lojas'; return later; }
+    }
+    const p = await free;
+    if (p) { etapas.achou = 'catalogos'; return { found: true, product: p }; }
+  } finally {
+    clearTimeout(webTimer);
+  }
+  const quota = [];
+  if (env.COSMOS_TOKEN) quota.push(lookupCosmos(ean, env.COSMOS_TOKEN));
+  if (env.KODEBAR_KEY) quota.push(lookupKodebar(ean, env.KODEBAR_KEY));
+  try {
+    if (!quota.length) throw new Error('sem cota');
+    const product = await Promise.any(quota);
+    etapas.achou = 'cota';
     return { found: true, product };
   } catch {
-    etapas.catalogos = Date.now() - t;
     // Último recurso: o código na web (atacadistas, lojas pequenas, catálogos).
     // Só depois dos catálogos, para gastar a cota só com o que ninguém tem.
     // Código com dígito verificador errado é leitura errada: não gasta.
     if (!gtinOk(ean)) return { found: false };
-    t = Date.now();
-    const web = await lookupWeb(ean, env, t0).catch(() => null);
-    etapas.web = Date.now() - t;
+    const web = await startWeb();
     if (web) etapas.achou = 'web';
     return web ? { found: true, product: web } : { found: false };
   }
@@ -506,6 +553,19 @@ export function pickWebProduct(data, ean) {
 
 // Partes do título que são do site, não do produto.
 const WEB_TITLE_JUNK = /^(cosmos|bluesoft|mercado ?livre|amazon(\.com\.br)?|shopee|magalu|americanas|cadastro de produto.*|.*tributa[cç][aã]o.*|.*\bncm\b.*|(gtin|ean|upc)(\/(gtin|ean|upc))*\s*:?\s*)$/i;
+
+// Limpa o nome vindo de qualquer fonte: tira palavras em outro alfabeto
+// (tailandês, árabe, cirílico, chinês…: o título da Voss veio
+// "วอสส์น้ำแร่ธรรมชาติ 375มล. Voss Mineral Water 375ml") e ruído de marketplace.
+// Sobra vazio quando o nome era todo em outro alfabeto.
+const OTHER_SCRIPT = /[\u0370-\u03FF\u0400-\u04FF\u0590-\u05FF\u0600-\u06FF\u0900-\u097F\u0E00-\u0E7F\u3040-\u30FF\u3400-\u9FFF\uAC00-\uD7AF]/;
+const MARKET_NOISE = /\b(frete gr[aá]tis|envio (imediato|r[aá]pido)|pronta entrega|promo[cç][aã]o|oferta|lan[cç]amento|original lacrado|super oferta)\b/gi;
+export function cleanName(name) {
+  let t = String(name || '').split(/\s+/).filter((w) => w && !OTHER_SCRIPT.test(w)).join(' ');
+  t = t.replace(MARKET_NOISE, ' ').replace(/\(\s*\)|\[\s*\]/g, ' ');
+  t = t.replace(/^[\s\-–—:|,.!*]+|[\s\-–—:|,!*]+$/g, '').replace(/\s+/g, ' ').trim();
+  return /[a-zà-ú]/i.test(t) ? t.slice(0, 120) : '';
+}
 
 function cleanWebTitle(title, digits) {
   const first = decodeEntities(title).split(/\s+[|•]\s+/)[0].replace(new RegExp(`0*${digits}`, 'g'), ' ');
