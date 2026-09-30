@@ -238,6 +238,30 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
   - o nome do produto vai para baixo da foto;
   - o cupom e as validades crescem sem cortar.
 
+
+### 2.9 Os três jeitos de conferir (decisão B)
+
+![Menu do Conferir, só validades, só contar, conferir tudo](design-novo/13-tres-jeitos.webp)
+
+- O botão **Conferir** do Armário abre um menu:
+  - **Conferir tudo** ("Quantidade e datas, numa passada");
+  - **Só contar** ("Só a quantidade");
+  - **Só marcar validades** ("Só as datas que faltam").
+  
+  Mais › Armário tem as mesmas três linhas. Um lugar só para os três, sem voltar
+  a espalhar as entradas.
+- **Só marcar validades:**
+  - é o modo Validade de hoje no desenho novo, com a faixa âmbar e "12
+    marcadas";
+  - o produto fica em cima e a faixa da data embaixo;
+  - "Digitar a data" e "Pular".
+- **Só contar:**
+  - faixa azul "Contar o armário · 8 de 23";
+  - o cartão com a quantidade contada e "O armário dizia 1";
+  - o cupom "Contados", com "Ver os 15 que faltam";
+  - nunca pede data.
+- **Conferir tudo:** como na seção 2.4.
+
 ---
 
 ## 3. O que isto muda no plano
@@ -257,6 +281,7 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 
 **Decidido (30/09):**
 
+- **Conferir, Só contar e Só marcar validades continuam os três** (seção 2.9).
 - **Fim do Conferir: "Aplicar e concluir".**
 - **Bips diferentes:** sobe para Guardar, desce para Tirar.
 - **O leitor sempre abre em Guardar.**
@@ -266,12 +291,5 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 **Em aberto:**
 
 1. "Pede atenção": os três blocos (vencem, acabando, sem data), ou outros?
-2. **Conferir e os dois modos de hoje.** Hoje existem duas tarefas separadas:
-   **Contar** (em Mais: passar por todos os produtos contando as quantidades e
-   revisar no fim) e o **modo Validade** (ler um produto e marcar a data). O
-   Conferir junta as duas numa passada. A pergunta é se o Contar e o modo
-   Validade **somem** (só existe o Conferir, com a data sempre opcional pelo
-   "Pular"), ou se **continuam também**, para quando você quer só contar, ou
-   só marcar a data de um produto. Minha recomendação: só o Conferir. Marcar
-   a data de um produto solto já dá pelo cartão (toque longo › Marcar
-   validade) e pela página do produto.
+2. ~~Conferir substitui o Contar e o modo Validade?~~ Decidido: os três
+   continuam (seção 2.9).

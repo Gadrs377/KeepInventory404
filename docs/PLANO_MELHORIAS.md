@@ -44,6 +44,11 @@ A crítica deste plano e o desenho que sai dela estão em
 - **O aviso de vencimento é configurável:** a pessoa escolhe o dia e a hora do
   resumo da semana e liga ou desliga o aviso na véspera (Mais › Avisos).
 - **A crítica do plano** fica neste documento (seção 11).
+- **Conferir, Contar e Validade: os três continuam** (opção B). O Conferir faz
+  quantidade e datas numa passada; "Só contar" e "Só marcar validades" seguem
+  existindo. Os três saem do mesmo botão "Conferir" do Armário (um menu) e de
+  Mais, para não voltar a espalhar as entradas.
+- **Fim do Conferir: "Aplicar e concluir".**
 
 ## 2. Ordem de execução (proposta)
 
