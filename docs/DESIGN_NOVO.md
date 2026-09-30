@@ -287,7 +287,6 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 - **O leitor sempre abre em Guardar.**
 - **Aviso de vencimento configurável:** dia e hora do resumo, e véspera liga
   ou desliga.
-
 - **"Pede atenção":** vencidos, vencem esta semana, acabando, zerados e dias
   sem conferir, nessa ordem, cada um só quando houver. "Sem data" vai para o
   menu do Conferir.
