@@ -6,7 +6,7 @@
 // próprio etiquetada com o mesmo número). Nesse caso a folha primeiro pergunta
 // qual deles está na mão, e sempre deixa cadastrar mais um com o mesmo código.
 
-import { lookup, lookupRemote, searchStores, identifyPhoto, areaFromWeb } from '../lookup.js';
+import { lookup, lookupRemote, searchStores, identifyPhoto, areaFromWeb, suggestCommunityName, voteCommunityName } from '../lookup.js';
 import { searchProducts, highlight } from '../search.js';
 import { addStock, removeStock, ensureProduct, setCounted, getCountDraft, getProduct, newProductId, productsByBarcode, listProducts, addBarcode } from '../store.js';
 import { AREAS, guessAreaInfo } from '../areas.js';
@@ -433,7 +433,12 @@ async function newForm(ctx, result, { photo = null } = {}) {
   body.innerHTML = `
     <form class="stack" novalidate>
       <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
-      <p class="sheet-text" data-msg>${esc(info.med ? NEW_MSG.med : NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
+      ${info.comunidade ? `
+      <div class="comm" data-comm>
+        <p class="comm-badge">${icon('users')}<span>Nome sugerido por outra pessoa${info.comunidade.confirmado ? ` · ${info.comunidade.sim} confirmaram` : ''}</span></p>
+        <div class="comm-vote"><button type="button" class="btn btn-quiet btn-sm" data-vote="1">É este</button><button type="button" class="btn btn-quiet btn-sm" data-vote="-1">Não é este</button></div>
+      </div>` : ''}
+      <p class="sheet-text" data-msg>${info.comunidade ? '' : esc(info.med ? NEW_MSG.med : NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
       <div class="field">
         <label class="field-label" for="new-name">Nome do produto</label>
@@ -533,12 +538,31 @@ async function newForm(ctx, result, { photo = null } = {}) {
   let suggestions = [];
   let timer = 0;
   let ctrl = null;
+  // A lista mostrada veio da foto? Escolher nela conta como nome resolvido pela foto.
+  let listFrom = 'lojas';
+  let photoPick = false;
+
+  // Nome da comunidade: votar é explícito. "Não é este" volta ao começo
+  // (fotografar ou digitar), sem esse nome.
+  const comm = $('[data-comm]', body);
+  if (comm) {
+    comm.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-vote]');
+      if (!btn) return;
+      const voto = Number(btn.dataset.vote);
+      comm.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+      voteCommunityName({ ean: barcode, name: info.name, voto });
+      if (voto < 0) { newForm(ctx, { status: 'notfound' }); return; }
+      $('.comm-vote', comm).outerHTML = '<p class="comm-done">Você confirmou este nome.</p>';
+    });
+  }
   // O que a foto leu (nome, marca, tamanho, miniatura), se houve foto.
   let fromPhoto = null;
   const photoRow = (alone) => (fromPhoto && result.status !== 'from-photo' ? photoPickRow(fromPhoto, alone) : '');
 
   function showSuggestions(items, query, from = 'lojas') {
     suggestions = items;
+    listFrom = from;
     const mine = noCode && query ? matchLocal(locals, query).slice(0, 3) : [];
     list.hidden = !items.length && !mine.length && !photoRow();
     list.innerHTML = mine.map((p) => localRow(p, query)).join('') + items.map((p, i) => `
@@ -649,6 +673,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
     }
     info = { ...p };
     result = { status: 'found', info };
+    photoPick = listFrom === 'foto';
     nameInput.value = p.name;
     list.hidden = true;
     status.textContent = '';
@@ -752,6 +777,12 @@ async function newForm(ctx, result, { photo = null } = {}) {
       ambiente: area, palpite: lastGuess, palpiteWeb: webArea, escolhidoAMao: areaTouched,
       acertou: area === (webArea || lastGuess.area), validade: !!expiresAt, segundos: Math.round((performance.now() - openedAt) / 1000),
     });
+    // Nome resolvido pela foto (o que a IA leu, ou a sugestão escolhida na busca
+    // pela foto), sem mexer: vai para a comunidade. Nome digitado, não.
+    const byPhoto = result.status === 'from-photo' || (result.status === 'found' && photoPick);
+    if (byPhoto && !noCode && area !== 'remedios' && newInfo.name === String(info.name || '').trim()) {
+      suggestCommunityName({ ean: barcode, name: newInfo.name, brand: newInfo.brand || '', size: newInfo.size || '' });
+    }
     if (mode === 'entrada') return { kind: 'entrada', ...(await addStock(id, n, newInfo, expiresAt)), n };
     const product = await ensureProduct(id, newInfo);
     await setCounted(id, n);

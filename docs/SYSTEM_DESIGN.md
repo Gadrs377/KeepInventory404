@@ -475,6 +475,27 @@ repassador.
 - **Ainda sem cifrar.** Quem tem o código lê a cópia. Obrigatório cifrar no
   celular antes de abrir o app a outras pessoas (PLANO_MELHORIAS, seção 15).
 
+### 5.9 Nomes da comunidade (`worker/src/community.js`)
+
+Quando nenhuma fonte confiável conhece um código, o nome resolvido pela foto da
+embalagem fica guardado para a próxima pessoa que ler o mesmo código.
+
+- **O que vai:** só o nome (com marca e tamanho) que veio da foto: o que a IA
+  leu, ou a sugestão escolhida na busca pela foto, sem a pessoa mexer. Nome
+  digitado à mão nunca vai; foto nunca vai; remédio nunca vai.
+- **Tabelas (D1 do catálogo):** `nm (e, n, b, s, t, a)` com os nomes sugeridos
+  e `nv (e, a, n, v, t)` com os votos, um por aparelho por código (votar de
+  novo troca). O aparelho é guardado como resumo SHA-256 de 16 letras.
+- **Rotas:** `POST /comunidade` (sugerir; conta como "é este" de quem sugeriu) e
+  `POST /comunidade/voto` (1 ou −1). Até 20 sugestões por aparelho por dia;
+  nome de 3 a 80 letras, sem link nem número de telefone.
+- **No `/lookup`:** só quando ninguém achou, e fora do cache (os votos mudam):
+  o nome com mais "é este" que "não é este"; confirmado com 2 aparelhos. A
+  resposta traz `comunidade: { sim, nao, confirmado }`.
+- **No app:** selo "Nome sugerido por outra pessoa" e o voto explícito "É
+  este" / "Não é este". Não votar não conta nada (salvar sem mexer não é
+  confirmar). "Não é este" volta para fotografar ou digitar.
+
 ### 5.1 Um código, vários produtos
 
 Acontece de verdade: fabricante que reusa o mesmo código em sabores diferentes,

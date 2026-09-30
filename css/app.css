@@ -2525,3 +2525,12 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .suggest-front-label { font-size: var(--text-footnote); font-weight: 700; color: var(--ink-2); }
 .suggest-front-name { font-family: var(--font-num); font-weight: 700; }
 .suggest-front:active { scale: 0.96; }
+
+/* Nome da comunidade (3.72) */
+.comm { display: flex; flex-direction: column; gap: 8px; }
+.comm-badge { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 4px 10px; border-radius: var(--r-tag); background: var(--shelf); font-size: var(--text-footnote); font-weight: 700; }
+.comm-badge svg { width: 16px; height: 16px; flex: none; }
+.comm-vote { display: flex; gap: 8px; }
+.comm-vote .btn { flex: 1; min-height: 44px; }
+.comm-done { font-size: var(--text-callout); color: var(--ink-2); }
+.sheet-text:empty { display: none; }

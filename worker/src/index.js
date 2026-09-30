@@ -22,6 +22,7 @@
 import { catalogGet, catalogLearn, catalogStep, catalogStats, photoSave, photoGet } from './catalog.js';
 import { telSave, telRead, telCount, telPrune, telKey } from './telemetry.js';
 import { backupRoute } from './backup.js';
+import { communityRoute, bestName } from './community.js';
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
 // antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
@@ -98,7 +99,7 @@ export default {
     const allowed = allowedOrigin(origin, env);
 
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), allowed);
-    const methods = { '/identify': ['POST'], '/telemetria': ['GET', 'POST'], '/backup': ['GET', 'POST'] }[url.pathname] || ['GET'];
+    const methods = { '/identify': ['POST'], '/telemetria': ['GET', 'POST'], '/backup': ['GET', 'POST'], '/comunidade': ['POST'], '/comunidade/voto': ['POST'] }[url.pathname] || ['GET'];
     if (!methods.includes(request.method)) return withCors(json({ error: 'Método não permitido' }, 405), allowed);
     // Chamadas de navegador vindas de outro site são recusadas.
     if (origin && !allowed) return json({ error: 'Origem não autorizada' }, 403);
@@ -117,14 +118,24 @@ export default {
           // web=0: sem a busca na web, para o app mostrar as opções cedo e
           // continuar procurando na web em outra consulta.
           const web = url.searchParams.get('web') !== '0';
-          return withCors(await cached(ctx, `lookup:v6:${ean}${web ? '' : ':sw'}`, 7 * DAY, async () => {
+          const res = await cached(ctx, `lookup:v6:${ean}${web ? '' : ':sw'}`, 7 * DAY, async () => {
             const t0 = Date.now();
             const etapas = { web };
             const r = await lookup(ean, env, ctx, etapas, { web });
             const p = r.found ? r.product : {};
             tel(env, ctx, 'r-codigo', { codigo: ean, achou: !!r.found, nome: p.name || '', fonte: p.store || '', pagina: p.page || '', foto: photoKind(p.image), ms: Date.now() - t0, etapas });
             return r;
-          }), allowed);
+          });
+          // Ninguém confiável achou: o nome da comunidade, se houver (fora do
+          // cache, porque os votos mudam).
+          if (env.CATALOG) {
+            const body = await res.clone().json().catch(() => null);
+            if (body && body.found === false) {
+              const c = await bestName(env.CATALOG, ean).catch(() => null);
+              if (c) return withCors(json({ found: true, product: c }, 200, { 'Cache-Control': 'no-store' }), allowed);
+            }
+          }
+          return withCors(res, allowed);
         }
         case '/search': {
           const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
@@ -160,6 +171,9 @@ export default {
           return withCors(await telemetry(request, url, env), allowed);
         case '/backup':
           return withCors(await backupRoute(request, url, env), allowed);
+        case '/comunidade':
+        case '/comunidade/voto':
+          return withCors(await communityRoute(request, url, env), allowed);
         case '/identify': {
           if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
           const body = await request.json().catch(() => null);

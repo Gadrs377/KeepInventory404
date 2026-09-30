@@ -1779,3 +1779,16 @@ Terceiro passo da nova versão (PLANO_MELHORIAS, seções 5.3 a 5.5).
   "Não tenho certeza" (o texto não fala de si).
 - `sw.js` v90.
 
+## Versão 3.72: nomes da comunidade
+
+Quinto passo da nova versão (PLANO_MELHORIAS, seção 6; SYSTEM_DESIGN, 5.9).
+
+- Produto novo cujo nome veio de outra pessoa: selo **"Nome sugerido por outra
+  pessoa"** (com "· 2 confirmaram" quando confirmado) e **É este** / **Não é
+  este**. "É este" deixa "Você confirmou este nome."; "Não é este" volta ao
+  formulário sem o nome, para fotografar ou digitar.
+- Ao guardar um produto cujo nome veio da foto da embalagem, sem mexer no nome,
+  ele vai para a comunidade. Digitado à mão, não vai.
+- Ícone novo: `users` (Phosphor bold).
+- `sw.js` v91.
+

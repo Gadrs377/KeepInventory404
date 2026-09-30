@@ -4,7 +4,7 @@
 
 import { productsByBarcode } from './store.js';
 import { API_URL } from './config.js';
-import { tel } from './telemetry.js';
+import { tel, deviceId } from './telemetry.js';
 import { medByEan, medInfo } from './remedios.js';
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
@@ -167,9 +167,25 @@ function fromStore(p) {
     image: safeImage(photoUrl(p.image)),
     category: String(p.category || ''),
     ean: /^\d{8,14}$/.test(p.ean || '') ? p.ean : '',
-    source: 'loja',
+    source: p.comunidade ? 'comunidade' : 'loja',
+    // Nome sugerido por outra pessoa (sem fonte confiável): { sim, nao, confirmado }.
+    comunidade: p.comunidade || null,
   };
 }
+
+// Nomes da comunidade (PLANO_MELHORIAS, seção 6). Só o nome resolvido pela foto
+// da embalagem vai; nunca foto, nunca nome digitado à mão.
+async function postCommunity(path, body) {
+  try {
+    const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ ...body, aparelho: deviceId() }) });
+    tel('comunidade', { acao: path.endsWith('voto') ? 'voto' : 'sugeriu', codigo: body.ean, nome: body.name, voto: body.voto, ok: res.ok });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+export const suggestCommunityName = ({ ean, name, brand = '', size = '' }) => postCommunity('/comunidade', { ean, name, brand, size });
+export const voteCommunityName = ({ ean, name, voto }) => postCommunity('/comunidade/voto', { ean, name, voto });
 
 async function apiGet(path, timeout, outerSignal) {
   const ctrl = new AbortController();
