@@ -55,7 +55,7 @@ test('produto com parte das datas: mostra as marcadas, avisa a repetida e guarda
     assert.match((await s.page.textContent('.exp-existing')).replace(/\s+/g, ' '), /Validades já cadastradas 15\/10\/2026 2 unidades · .* Falta 1 unidade\./);
     assert.match(await s.page.textContent('.sheet .exp-product'), /Leite Integral 1L/, 'o produto reconhecido aparece no topo');
     await s.typeDate('15/10/26');
-    assert.match(await s.page.textContent('.exp-dup-box'), /Essa data já está cadastrada/);
+    assert.match(await s.page.textContent('.exp-dup-ask'), /Essa data já está cadastrada/);
     assert.match(await s.page.textContent('.exp-dup-box .exp-dates-row.is-match'), /15\/10\/2026.*2 unidades/s);
     await s.page.click('[data-other]');
     await s.typeDate('20/11/26');

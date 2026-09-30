@@ -71,6 +71,7 @@ export default function mountValidade(root) {
               ${x.free ? `<span class="val-free">${x.free === x.p.qty ? (x.free === 1 ? 'Sem data' : `${x.free} sem data`) : `${x.free} sem data`}</span>` : ''}
             </span>
           </span>
+          ${icon('chevron', 'val-chev')}
         </button>
       </li>`).join('');
   }

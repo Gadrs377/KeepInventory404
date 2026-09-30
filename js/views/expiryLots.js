@@ -68,11 +68,19 @@ function sheetNav(body, root) {
 }
 
 // Lista das validades que o produto já tem: uma linha por data, com quantas
-// unidades e quanto falta. `mark`: a data lida agora (a linha igual destaca).
-export function datesListHtml(existing, mark = '') {
+// unidades e quanto falta. `mark`: a data lida agora (a linha igual destaca e
+// sempre aparece). `max`: acima disso, as que vencem antes e "Mais N datas".
+export function datesListHtml(existing, mark = '', max = Infinity) {
+  let shown = existing;
+  if (existing.length > max) {
+    shown = existing.slice(0, max);
+    const hit = existing.find((l) => l.expiresAt === mark);
+    if (hit && !shown.includes(hit)) shown = [...shown.slice(0, max - 1), hit];
+  }
+  const rest = existing.filter((l) => !shown.includes(l));
   return `
     <ul class="exp-dates">
-      ${existing.map((l) => `
+      ${shown.map((l) => `
         <li class="exp-dates-row${l.expiresAt === mark ? ' is-match' : ''}">
           ${icon('calendar')}
           <span class="exp-dates-text">
@@ -81,6 +89,7 @@ export function datesListHtml(existing, mark = '') {
           </span>
           ${l.expiresAt === mark ? '<span class="exp-dates-tag">Igual</span>' : ''}
         </li>`).join('')}
+      ${rest.length ? `<li class="exp-dates-more">Mais ${plural(rest.length, 'data', 'datas')}, ${plural(rest.reduce((a, l) => a + l.qty, 0), 'unidade', 'unidades')}</li>` : ''}
     </ul>`;
 }
 
@@ -122,8 +131,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       ${existing.length ? `
       <div class="exp-existing">
         <p class="exp-existing-label">Validades já cadastradas</p>
-        ${datesListHtml(existing)}
-        <p class="exp-existing-line" data-left></p>
+        ${datesListHtml(existing, '', 3)}
+        <p class="exp-existing-line exp-existing-left" data-left></p>
       </div>` : ''}
       <div class="exp-cam"></div>
       <div class="exp-bar"><button type="button" class="btn exp-alt" data-type>${icon('keyboard')}<span>Digitar a data</span></button></div>`, 'exp-scan');
@@ -261,9 +270,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       ${dup ? `
       <div class="exp-existing exp-dup-box" role="note">
         <p class="exp-existing-label">Validades já cadastradas</p>
-        ${datesListHtml(existing, iso)}
-        <p class="exp-existing-line"><strong>Essa data já está cadastrada.</strong> Esta embalagem é nova, ou uma das que já tinham data?</p>
+        ${datesListHtml(existing, iso, 3)}
       </div>` : ''}
+
       ${max > 1 ? `
       <div class="exp-howmany" role="group" aria-labelledby="exp-how-label">
         <p class="exp-howmany-label" id="exp-how-label">Quantas vencem nesse dia?</p>
@@ -271,6 +280,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
         <p class="exp-howmany-of">de ${max} ${max === 1 ? 'unidade' : 'unidades'}</p>
       </div>` : ''}
       <div class="exp-actions">
+        ${dup ? '<p class="exp-dup-ask"><strong>Essa data já está cadastrada.</strong> Esta embalagem é nova, ou uma das que já tinham data?</p>' : ''}
         ${dup ? `<button type="button" class="btn btn-quiet btn-lg" data-other>${icon('camera')}<span>Era uma das que já tinham</span></button>` : ''}
         <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(dup ? 'É nova, salvar' : doneLabel)}</button>
         <button type="button" class="btn exp-alt" data-more hidden></button>

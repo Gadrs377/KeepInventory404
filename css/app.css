@@ -1327,10 +1327,12 @@ html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-tr
 /* Lista do armário no modo Validade: as datas já marcadas de cada produto e
    quantas unidades estão sem data (em âmbar, primeiro na lista). */
 .val-shelf { margin-top: 16px; padding-inline: var(--gutter); }
-.val-shelf-note { color: var(--ink-2); font-size: 0.9412rem; margin: 2px 0 10px; text-wrap: pretty; }
+.val-shelf-note { color: var(--ink-2); font-size: 0.9412rem; margin: 4px 0 12px; text-wrap: pretty; }
 .val-row { width: 100%; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 .val-row:active { background: color-mix(in oklab, var(--ink) 6%, transparent); }
-.val-dates { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 4px; }
+.val-dates { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
+/* Linha tocável: a seta diz que abre (como nos Ajustes). */
+.val-chev { flex: none; width: 16px; height: 16px; color: var(--ink-2); }
 .val-date, .val-free { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 8px; border-radius: 999px; font-size: 0.8235rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .val-date { background: color-mix(in oklab, var(--ink) 7%, transparent); color: var(--ink); }
 .val-date .icon { width: 14px; height: 14px; }
@@ -1343,16 +1345,19 @@ html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-tr
   background: var(--val-soft); color: var(--ink); font-size: 0.9412rem; text-wrap: pretty;
 }
 .exp-existing .icon, .exp-dup .icon { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--val-ink); }
-.exp-existing { flex-direction: column; gap: 6px; }
+.exp-existing { flex-direction: column; gap: 8px; }
+/* "Faltam N" e a pergunta são outro grupo: o dobro do espaço da lista. */
+.exp-existing-left { margin-top: 4px; }
 .exp-existing-line { margin: 0; text-wrap: pretty; }
 .exp-existing-label { margin: 0; font-weight: 700; }
-.exp-dup-box { margin: 12px 0 0; }
+.exp-dup-box { margin: 0; }
 /* Validades já cadastradas: uma linha por data (data, quantas, quanto falta);
    a igual à data lida fica destacada. */
-.exp-dates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.exp-dates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.exp-dates-more { padding-inline: 12px; font-size: 0.8824rem; color: var(--ink-2); }
 .exp-dates-row {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
-  min-height: 44px; padding: 6px 12px; border-radius: 10px;
+  min-height: 44px; padding: 8px 12px; border-radius: 12px;
   background: color-mix(in oklab, var(--ink) 5%, transparent); font-variant-numeric: tabular-nums;
 }
 .exp-existing .exp-dates-row { background: color-mix(in oklab, var(--paper) 70%, transparent); }
@@ -2414,6 +2419,27 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .exp-howmany .stepper-host { width: 220px; }
 .exp-howmany-of { margin: -4px 0 0; font-size: 0.8235rem; color: var(--ink-2); }
 .exp-actions { display: flex; flex-direction: column; gap: 4px; }
+/* Confirmar a validade: os botões ficam presos no fim da folha (como o rodapé
+   da nota fiscal). Com várias datas cadastradas, "Salvar" saía da tela. */
+.exp-confirm-page .exp-actions, .sheet .exp-scan .exp-bar {
+  position: sticky; bottom: calc(-20px - var(--safe-bottom)); z-index: 2;
+  margin: 0 calc(var(--gutter) * -1) calc(-20px - var(--safe-bottom));
+  padding: 12px var(--gutter) calc(16px + var(--safe-bottom));
+  background: var(--paper);
+}
+/* Degradê curto acima do rodapé: o conteúdo some ao passar por baixo, sem
+   texto por cima de texto. */
+.exp-confirm-page .exp-actions::before, .sheet .exp-scan .exp-bar::before {
+  content: ''; position: absolute; inset-inline: 0; bottom: 100%; height: 24px; pointer-events: none;
+  background: linear-gradient(to top, var(--paper), color-mix(in oklab, var(--paper) 0%, transparent));
+}
+.exp-confirm-page .exp-actions { gap: 8px; }
+/* Tela baixa (iPhone SE): o ícone do calendário é enfeite; sai para caber a lista. */
+@media (max-height: 700px) { .exp-confirm-page .exp-confirm-icon { display: none; } }
+/* Pergunta da data repetida junto das respostas, no rodapé preso. */
+.exp-dup-ask { margin: 0 0 4px; font-size: 0.9412rem; text-wrap: pretty; }
+/* No rodapé preso, o botão cinza é sólido (o conteúdo passa por baixo). */
+.exp-confirm-page .exp-actions .btn-quiet { background: color-mix(in oklab, var(--ink) 8%, var(--paper)); }
 
 /* ---------- Versão 3.32: voltar para onde estava ---------- */
 /* A linha do produto de onde se voltou fica marcada e apaga devagar (a lista

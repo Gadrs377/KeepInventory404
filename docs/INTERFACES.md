@@ -1683,3 +1683,22 @@ uma linha por data com quantas unidades e quanto falta ("2 unidades · daqui a
 64 dias"). Na data repetida, a linha igual fica contornada com a etiqueta
 **Igual**, e embaixo: "Essa data já está cadastrada. Esta embalagem é nova, ou
 uma das que já tinham data?" (`datesListHtml` em `expiryLots.js`). `sw.js` v85.
+
+## Versão 3.67: layout do modo Validade (revisão better-layout)
+
+Medido em 320, 393 (com e sem letra grande) e 430 px, com 3 datas cadastradas:
+"É nova, salvar" ficava abaixo da tela em 320 e 393 px, e "Digitar a data"
+também. Agora:
+
+- **Ações presas no fim da folha**, como o rodapé da nota fiscal: os botões da
+  confirmação e "Tirar foto / Digitar a data". Fundo sólido e um degradê curto
+  acima (nada de texto por cima de texto); o botão cinza é sólido.
+- **A pergunta da data repetida vai junto das respostas**, no rodapé; a lista
+  de datas, com a **Igual**, fica logo abaixo da data lida.
+- **No máximo 3 datas na lista** e "Mais N datas, N unidades"; a igual sempre
+  aparece.
+- **Grupos pelo espaço, na grade de 4 px**: dentro da lista 4 e 8 px; "Faltam
+  N" 12 px depois dela; notas 4/12 px.
+- **Linhas do "No armário" com a seta ›**: são tocáveis, como nos Ajustes.
+- Tela baixa (até 700 px de altura): o ícone decorativo da confirmação sai.
+- `sw.js` v86.
