@@ -1740,3 +1740,19 @@ leitura do código no modo Validade e o tempo de cada etapa do repassador.
 
 - `sw.js` v88.
 
+## Versão 3.70: cópia automática
+
+Segundo passo da nova versão (PLANO_MELHORIAS, seção 9, adiantado pela
+seção 11.14). Em Mais › Backup:
+
+- **Cópia automática** mostra a hora da última ("Hoje, 22:43", "Ontem, 18:10",
+  "29/09" ou "Ainda não fez"). Tocar faz uma agora.
+- **Restaurar de uma cópia:** mostra o **código desta casa** (com "Copiar o
+  código") e um campo para digitar o código de outro celular. Busca a cópia,
+  diz quantos produtos e de quando ("Restaurar 24 produtos? Cópia de
+  30/09/2026 22:43…") e só então substitui.
+- A nota embaixo passou a dizer que a cópia vai sozinha e como levar a outro
+  celular.
+
+Detalhes em SYSTEM_DESIGN, seção 5.8. `sw.js` v89.
+

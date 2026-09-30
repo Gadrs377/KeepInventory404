@@ -3,4 +3,4 @@
 export const API_URL = 'https://keepinventory-api.gabriel-gadrs377.workers.dev';
 
 // Versão do app (a mesma de VERSION no sw.js; tests/telemetry.test.mjs confere).
-export const APP_VERSION = 'v88';
+export const APP_VERSION = 'v89';

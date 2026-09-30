@@ -438,6 +438,28 @@ a casa usa o app, então vai tudo: nome do produto, código, o que a IA leu.
   fica no código: é derivada da chave da Tavily (só o repassador e quem a tem
   conseguem calcular).
 
+### 5.8 Cópia automática (`js/backup.js`, `worker/src/backup.js`)
+
+O armário vive no IndexedDB do celular. Para não perder tudo se o app sair da
+tela de início ou o Safari limpar os dados, uma cópia vai sozinha para o
+repassador.
+
+- **Quando:** a cada mudança no armário, depois de 20 s parado, no máximo uma
+  a cada 5 min; ao abrir, se a última tem mais de um dia. Armário vazio (app
+  recém-instalado) nunca manda, para não sobrescrever uma cópia boa.
+- **O quê:** o mesmo conteúdo de "Baixar backup" (`exportData`), em gzip
+  (`CompressionStream`; sem ele, o texto). `POST /backup?chave=…` com corpo
+  `text/plain` (sem pedido de licença do CORS).
+- **Chave da casa:** 24 letras e números aleatórios (sem 0/o, 1/i/l), em
+  `localStorage` (`ki.backup.chave`). Mostrada em Mais › Restaurar de uma
+  cópia, em grupos de 4, para levar a outro celular. Restaurar com um código
+  faz o celular passar a usar esse código.
+- **Guarda:** tabela `bk (k, t, b)` no D1 do catálogo, as 3 cópias mais
+  recentes por chave, até 1,5 MB cada. `GET /backup?chave=…` devolve a última
+  em base64; código desconhecido, 404.
+- **Ainda sem cifrar.** Quem tem o código lê a cópia. Obrigatório cifrar no
+  celular antes de abrir o app a outras pessoas (PLANO_MELHORIAS, seção 15).
+
 ### 5.1 Um código, vários produtos
 
 Acontece de verdade: fabricante que reusa o mesmo código em sabores diferentes,

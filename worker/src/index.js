@@ -21,6 +21,7 @@
 
 import { catalogGet, catalogLearn, catalogStep, catalogStats, photoSave, photoGet } from './catalog.js';
 import { telSave, telRead, telCount, telPrune, telKey } from './telemetry.js';
+import { backupRoute } from './backup.js';
 
 // Ordem medida em 100 produtos reais: as primeiras cobrem mais. O Zaffari vem
 // antes porque é onde a casa compra (12 de 22 produtos da amostra de fotos).
@@ -95,7 +96,7 @@ export default {
     const allowed = allowedOrigin(origin, env);
 
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), allowed);
-    const methods = { '/identify': ['POST'], '/telemetria': ['GET', 'POST'] }[url.pathname] || ['GET'];
+    const methods = { '/identify': ['POST'], '/telemetria': ['GET', 'POST'], '/backup': ['GET', 'POST'] }[url.pathname] || ['GET'];
     if (!methods.includes(request.method)) return withCors(json({ error: 'Método não permitido' }, 405), allowed);
     // Chamadas de navegador vindas de outro site são recusadas.
     if (origin && !allowed) return json({ error: 'Origem não autorizada' }, 403);
@@ -152,6 +153,8 @@ export default {
           return withCors(json(await diag(env)), allowed);
         case '/telemetria':
           return withCors(await telemetry(request, url, env), allowed);
+        case '/backup':
+          return withCors(await backupRoute(request, url, env), allowed);
         case '/identify': {
           if (!env || !env.AI) return withCors(json({ error: 'IA não configurada' }, 503), allowed);
           const body = await request.json().catch(() => null);
