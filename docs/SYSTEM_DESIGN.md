@@ -408,7 +408,13 @@ a casa usa o app, então vai tudo: nome do produto, código, o que a IA leu.
 
 | Tipo | Onde | O que guarda |
 | --- | --- | --- |
-| `abriu` | app | navegador, instalado ou não, tamanho da tela, GPU |
+| `abriu` | app | navegador, instalado ou não, tamanho da tela, GPU, identificador aleatório do aparelho (`ki.aparelho`, separa os dois celulares sem dizer quem é) e, quando a primeira tela aparece, o tempo que levou (`prontoMs`) |
+| `reabriu` | app | o app abriu de novo sem ter ido para segundo plano (último registro "visível" de menos de 10 min): provável queda |
+| `camera` | app | câmera negada ou que não abriu (tipo e nome do erro, tela) |
+| `sessao` | app | cada ida ao leitor: modo, produtos, unidades, correções, Desfazer, trocas de modo, pendentes, Rápido, se concluiu, duração |
+| `troca-desfeita` | app | Desfazer até 60 s depois de trocar Entrada/Saída: provável troca sem querer |
+| `contagem` | app | ao aplicar: quantos contados, as diferenças (nome, antes, depois), não contados e se zerou |
+| `busca-armario` | app | o que foi buscado no Armário e não estava lá (depois de 1,8 s sem digitar) |
 | `tela` | app | cada troca de tela |
 | `erro` | app | mensagem, arquivo:linha, pilha, tela (erros e promessas sem tratamento) |
 | `codigo` | app | código, resultado (local, achou, não achou, sem internet), fonte, nome, tipo de foto, tempo |
@@ -418,7 +424,9 @@ a casa usa o app, então vai tudo: nome do produto, código, o que a IA leu.
 | `ambiente-web` | app | nome e o ambiente que o Mercado Livre deu |
 | `cadastro` | app | produto salvo: fonte, nome achado e o final, palpite de ambiente, se a pessoa trocou, tempo na folha |
 | `validade` | app | cada abertura da câmera da validade (o mesmo resumo de `expiryUsage.js`), atualizada ao digitar e ao salvar |
+| `validade-modo` | app | cada produto no modo Validade: resultado, datas já marcadas e `msCodigo` (quanto a câmera do código levou para ler desde que ficou pronta) |
 | `r-codigo`, `r-busca`, `r-ambiente`, `r-foto-ia`, `r-erro` | repassador | as mesmas consultas vistas do servidor (só quando não vieram do cache): fonte, página da web, foto, tempo |
+| `r-codigo` (etapas) | repassador | tempo de cada etapa em ms: `catalogo`, `lojas`, `catalogos`, `web`, `foto`, e onde achou (`achou`) |
 
 - **Envio:** fila no `localStorage` (até 300 eventos), em lotes de 40 pelo
   `sendBeacon` (texto puro, sem pedido de licença do CORS) a cada 10 s, ao

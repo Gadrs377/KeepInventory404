@@ -1720,3 +1720,23 @@ grande):
   com letra grande, "Guardar" e "Salvar" ficavam abaixo da tela. Em Editar
   detalhes, "Remover do armário" continua no fim do conteúdo.
 - `sw.js` v87.
+
+## Versão 3.69: telemetria nova (primeiro passo da nova versão)
+
+Primeiro item do [plano de melhorias](PLANO_MELHORIAS.md) (seção 3.3). Nada
+muda na tela, a não ser dois textos:
+
+- **Câmera negada:** no app instalado, "Feche e abra o app de novo para o
+  iPhone perguntar outra vez, ou digite o código" (fechar e abrir funciona; é
+  o que vocês fizeram). No navegador, continua apontando os ajustes do site.
+- **Revisão da contagem sem nada contado** dizia "Tudo o que foi contado
+  confere". Agora: "Nenhum produto foi contado · Volte e leia os produtos para
+  contar."
+
+Telemetria nova (detalhes em SYSTEM_DESIGN, 5.7): aparelho e tempo para abrir,
+provável queda, câmera negada, resumo de cada ida ao leitor, Desfazer logo
+depois de trocar de modo, diferenças da contagem, busca sem resultado, tempo da
+leitura do código no modo Validade e o tempo de cada etapa do repassador.
+
+- `sw.js` v88.
+

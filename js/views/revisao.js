@@ -3,6 +3,7 @@
 import { listProducts, getCountDraft, diffCount, applyCount } from '../store.js';
 import { $, esc, icon, plural, toast } from '../ui.js';
 import { showReceipt } from './receipt.js';
+import { tel } from '../telemetry.js';
 
 export default async function mountRevisao(root) {
   const [products, draft] = await Promise.all([listProducts(), getCountDraft()]);
@@ -15,6 +16,7 @@ export default async function mountRevisao(root) {
   changes.sort((a, b) => a.product.name.localeCompare(b.product.name, 'pt-BR'));
 
   const signed = (d) => (d > 0 ? `+${d}` : `−${Math.abs(d)}`);
+  const counted = Object.keys(draft.counts).length;
 
   root.innerHTML = `
     <div class="screen screen-review has-floating-bar mode-contagem">
@@ -26,13 +28,13 @@ export default async function mountRevisao(root) {
         </div>
       </header>
       <main class="content">
-        <h2 class="list-title">${changes.length ? plural(changes.length, 'produto vai mudar', 'produtos vão mudar') : 'Tudo o que foi contado confere'}</h2>
+        <h2 class="list-title">${changes.length ? plural(changes.length, 'produto vai mudar', 'produtos vão mudar') : counted ? 'Tudo o que foi contado confere' : 'Nenhum produto foi contado'}</h2>
         ${changes.length ? `<ul class="diff-list">${changes.map((c) => `
           <li class="diff">
             <span class="diff-name">${esc(c.product.name)}</span>
             <span class="diff-qty">${c.from} para ${c.to}</span>
             <span class="diff-delta ${c.to > c.from ? 'is-up' : 'is-down'}">${signed(c.to - c.from)}</span>
-          </li>`).join('')}</ul>` : '<p class="empty">As quantidades do armário já estavam certas.</p>'}
+          </li>`).join('')}</ul>` : `<p class="empty">${counted ? 'As quantidades do armário já estavam certas.' : 'Volte e leia os produtos para contar.'}</p>`}
 
         ${missingWithStock.length ? `
         <fieldset class="choice">
@@ -54,6 +56,13 @@ export default async function mountRevisao(root) {
     const zero = $('input[name=missing]:checked', root)?.value === 'zero';
     try {
       const n = await applyCount(zero);
+      // Diferenças entre o armário do app e o real: sinal de Saída esquecida.
+      tel('contagem', {
+        contados: Object.keys(draft.counts).length,
+        diferencas: changes.slice(0, 40).map((c) => ({ nome: c.product.name, de: c.from, para: c.to })),
+        naoContados: missingWithStock.length,
+        zerou: zero,
+      });
       const applied = changes.map((c) => ({ name: c.product.name, from: c.from, to: c.to }))
         .concat(zero ? missingWithStock.map((p) => ({ name: p.name, from: p.qty, to: 0 })) : []);
       if (n && applied.length) {

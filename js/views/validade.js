@@ -162,12 +162,12 @@ export default function mountValidade(root) {
     });
   }
 
-  async function markProduct(product, barcode) {
+  async function markProduct(product, barcode, msCodigo = null) {
     const cur = (await getProduct(product.code)) || product;
     const lots = await lotsFor(cur.code);
     const dated = lots.reduce((a, l) => a + l.qty, 0);
     const free = cur.qty - dated;
-    const log = { codigo: barcode, nome: cur.name, qtd: cur.qty, jaMarcadas: lots.map((l) => ({ data: l.expiresAt, qtd: l.qty })), livres: free };
+    const log = { codigo: barcode, nome: cur.name, qtd: cur.qty, jaMarcadas: lots.map((l) => ({ data: l.expiresAt, qtd: l.qty })), livres: free, msCodigo };
     if (cur.qty <= 0) {
       beep('error');
       tel('validade-modo', { ...log, resultado: 'zerado' });
@@ -246,7 +246,7 @@ export default function mountValidade(root) {
     });
   }
 
-  async function handleCode(barcode) {
+  async function handleCode(barcode, msCodigo = null) {
     // "Buscar pelo nome" do leitor: procura entre o que tem no armário.
     if (barcode.startsWith('SEM-')) {
       const list = (await listProducts()).filter((p) => p.qty > 0).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
@@ -257,7 +257,7 @@ export default function mountValidade(root) {
     const local = await productsByBarcode(barcode);
     if (!local.length) {
       beep('error');
-      tel('validade-modo', { codigo: barcode, resultado: 'não está no armário' });
+      tel('validade-modo', { codigo: barcode, resultado: 'não está no armário', msCodigo });
       await notice({
         title: 'Esse produto não está no armário',
         text: 'Guarde pela Entrada; lá também dá para marcar a validade.',
@@ -266,7 +266,7 @@ export default function mountValidade(root) {
       return;
     }
     const product = local.length === 1 ? local[0] : await pickProduct(local);
-    if (product) await markProduct(product, barcode);
+    if (product) await markProduct(product, barcode, msCodigo);
   }
 
   $('[data-finish]', root).addEventListener('click', () => {
@@ -281,7 +281,14 @@ export default function mountValidade(root) {
 
   render();
   renderShelf();
-  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, altLabel: 'Procurar pelo nome' });
+  // Telemetria: quanto tempo a câmera do código levou para ler, contando de
+  // quando ela ficou pronta (ao abrir ou ao voltar de um produto).
+  let readyAt = Date.now();
+  const onCode = async (barcode) => {
+    const msCodigo = Date.now() - readyAt;
+    try { await handleCode(barcode, barcode.startsWith('SEM-') ? null : msCodigo); } finally { readyAt = Date.now(); }
+  };
+  const cam = mountCamera($('.cam-host', root), { onCode, altLabel: 'Procurar pelo nome' });
   cam.notice('Leia o código de barras do produto');
   return () => { cam.stop(); offChange(); };
 }

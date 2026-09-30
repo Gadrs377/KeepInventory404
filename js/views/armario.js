@@ -7,6 +7,7 @@ import { AREAS, isMed } from '../areas.js';
 import { searchMeds } from '../remedios.js';
 import { scoreProduct, highlight } from '../search.js';
 import { medSheet, anvisaResultsHtml } from './remedioInfo.js';
+import { tel } from '../telemetry.js';
 import { showProductSheet } from './productSheet.js';
 import { daysUntil, expiryText, SOON_DAYS, WATCH_DAYS } from '../dates.js';
 import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText } from '../ui.js';
@@ -377,9 +378,18 @@ export default function mountArmario(root, m = {}) {
     keepOrder = false;
     renderAnimated();
   });
+  // Telemetria: o que foi buscado e não estava no armário (depois de parar de digitar).
+  let searchTel = 0;
   search.addEventListener('input', () => {
     setQuery(search.value);
     render();
+    clearTimeout(searchTel);
+    searchTel = setTimeout(async () => {
+      const q = savedQuery.trim();
+      if (q.length < 2) return;
+      const hits = (await listProducts()).filter((p) => scoreProduct(p, q)).length;
+      if (!hits) tel('busca-armario', { q, area: savedArea });
+    }, 1800);
   });
   // X: apaga e continua no campo, com o teclado aberto, para digitar outra coisa.
   clearBtn.addEventListener('click', () => {

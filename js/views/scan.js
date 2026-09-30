@@ -14,6 +14,7 @@ import { consumptionByProduct } from '../consumo.js';
 import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { beep } from '../sound.js';
+import { tel } from '../telemetry.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo, afterUseText } from '../ui.js';
 
 const COPY = {
@@ -48,6 +49,8 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   const session = new Map();
   // Leituras que esperam o fim: { mode, barcode, reads, reason }
   const pending = new Map();
+  // Telemetria da sessão: correções, Desfazer e trocas de modo.
+  const stats = { startedAt: Date.now(), edits: 0, undos: 0, switches: 0, lastSwitch: 0, lastSwitchFrom: '', concluded: false };
   warmUp();
 
   root.innerHTML = `
@@ -106,6 +109,9 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   // Troca de modo sem desmontar a tela: a câmera continua ligada.
   function setMode(next) {
     if (next === mode) return;
+    stats.switches += 1;
+    stats.lastSwitch = Date.now();
+    stats.lastSwitchFrom = mode;
     screen.classList.replace(`mode-${mode}`, `mode-${next}`);
     mode = next;
     fast = loadFast(mode);
@@ -174,6 +180,11 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
       onAction: async () => {
         try {
           const restored = await undoMovement(movement.id);
+          stats.undos += 1;
+          // Desfez logo depois de trocar de modo: provável troca sem querer.
+          if (stats.lastSwitch && Date.now() - stats.lastSwitch < 60000) {
+            tel('troca-desfeita', { de: stats.lastSwitchFrom, para: m, segundos: Math.round((Date.now() - stats.lastSwitch) / 1000) });
+          }
           entry.n -= n;
           entry.product = restored;
           if (entry.n <= 0) session.delete(key);
@@ -235,6 +246,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
             const name = $('input[name=name]', body).value.trim();
             const area = $('input[name=area]:checked', body)?.value;
             if (name !== product.name || area !== product.area) await updateProduct(product.code, { name, area });
+            stats.edits += 1;
             entry.n = step.value;
             entry.product = await getProduct(product.code);
             if (entry.n === 0) session.delete(key);
@@ -350,6 +362,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
         return;
       }
     }
+    stats.concluded = true;
     if (!session.size) { location.hash = '#/'; return; }
     cam.stop();
     hideToast();
@@ -416,5 +429,23 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     if (sessionStorage.getItem('ki.qr')) { sessionStorage.removeItem('ki.qr'); cam.setQrMode(true); }
   } catch { /* sem armazenamento */ }
 
-  return () => cam.stop();
+  // Resumo de cada ida ao leitor, concluída ou não.
+  function telSession() {
+    const entries = [...session.values()];
+    tel('sessao', {
+      modo: initialMode,
+      modos: [...new Set(entries.map((s) => s.mode))],
+      produtos: session.size,
+      unidades: entries.reduce((a, s) => a + s.n, 0),
+      correcoes: stats.edits,
+      desfazer: stats.undos,
+      trocas: stats.switches,
+      pendentes: pending.size,
+      rapido: fast,
+      concluiu: stats.concluded,
+      segundos: Math.round((Date.now() - stats.startedAt) / 1000),
+    });
+  }
+
+  return () => { telSession(); cam.stop(); };
 }

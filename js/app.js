@@ -16,7 +16,7 @@ import { onChange, listProducts } from './store.js';
 import { loadAreaModel, setAreaHints } from './areas.js';
 import { unlockAudio } from './sound.js';
 import { enableSwipeBack } from './swipeBack.js';
-import { tel, telStart } from './telemetry.js';
+import { tel, telStart, telReady } from './telemetry.js';
 
 const ROUTES = [
   [/^\/?$/, mountArmario],
@@ -211,7 +211,7 @@ onChange(refreshAreaHints);
 // Sem internet o app continua funcionando; só não busca nomes nas lojas.
 window.addEventListener('offline', () => toast('Sem internet. O armário continua funcionando; nomes novos você digita.', { duration: 4500 }));
 window.addEventListener('online', () => toast('Internet de volta.', { duration: 2000 }));
-route();
+route().then(telReady, telReady);
 
 // Pede ao navegador para não apagar os dados sozinho.
 if (navigator.storage && navigator.storage.persist) {

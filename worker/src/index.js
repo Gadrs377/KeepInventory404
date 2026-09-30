@@ -113,9 +113,10 @@ export default {
           // v5: respostas guardadas antes da foto guardada no catálogo ficam para trás.
           return withCors(await cached(ctx, `lookup:v5:${ean}`, 7 * DAY, async () => {
             const t0 = Date.now();
-            const r = await lookup(ean, env, ctx);
+            const etapas = {};
+            const r = await lookup(ean, env, ctx, etapas);
             const p = r.found ? r.product : {};
-            tel(env, ctx, 'r-codigo', { codigo: ean, achou: !!r.found, nome: p.name || '', fonte: p.store || '', pagina: p.page || '', foto: photoKind(p.image), ms: Date.now() - t0 });
+            tel(env, ctx, 'r-codigo', { codigo: ean, achou: !!r.found, nome: p.name || '', fonte: p.store || '', pagina: p.page || '', foto: photoKind(p.image), ms: Date.now() - t0, etapas });
             return r;
           }), allowed);
         }
@@ -232,42 +233,60 @@ async function telemetry(request, url, env) {
 // com nome e NCM) e, quando o Worker tem a chave, Cosmos (Bluesoft, 25
 // consultas grátis por dia) e Kodebar (50 por dia).
 // Antes de tudo, o catálogo próprio; o que vem de fora entra nele.
-export async function lookup(ean, env = {}, ctx = null) {
+// `etapas` (opcional) recebe quanto cada etapa levou, em ms, para a telemetria:
+// catalogo, lojas, catalogos, web, foto e de onde veio o nome (achou).
+export async function lookup(ean, env = {}, ctx = null, etapas = {}) {
   const t0 = Date.now();
   const db = env.CATALOG;
   let result = null;
   if (db) {
     const hit = await catalogGet(db, ean).catch(() => null);
+    etapas.catalogo = Date.now() - t0;
     if (hit) {
+      etapas.achou = 'catalogo';
       const { photo, ...p } = hit;
       result = { found: true, product: { ...p, image: p.image || (photo ? photoPath(ean) : ''), size: sizeOf(p.name) } };
     }
   }
   if (!result) {
-    result = await lookupLive(ean, env, t0);
+    result = await lookupLive(ean, env, t0, etapas);
     if (result.found && db && ctx) ctx.waitUntil(catalogLearn(db, result.product).catch(() => {}));
   }
   // Sem foto (catálogo de código, ou guardado antes): Cosmos e, se não tiver,
   // as imagens da busca na web. O que veio da web já tentou as duas.
   const product = result.found && result.product;
-  if (product && !product.image && !product.page && db) product.image = await findPhoto(ean, product.name, env, t0);
+  if (product && !product.image && !product.page && db) {
+    const tf = Date.now();
+    product.image = await findPhoto(ean, product.name, env, t0);
+    etapas.foto = Date.now() - tf;
+  }
   return result;
 }
 
-async function lookupLive(ean, env, t0 = Date.now()) {
+async function lookupLive(ean, env, t0 = Date.now(), etapas = {}) {
+  let t = Date.now();
   const found = await lookupStores(ean);
-  if (found.found) return found;
+  etapas.lojas = Date.now() - t;
+  if (found.found) { etapas.achou = 'lojas'; return found; }
+  t = Date.now();
   const catalogs = [lookupCadastroProduto(ean), lookupSystax(ean)];
   if (env.COSMOS_TOKEN) catalogs.push(lookupCosmos(ean, env.COSMOS_TOKEN));
   if (env.KODEBAR_KEY) catalogs.push(lookupKodebar(ean, env.KODEBAR_KEY));
   try {
-    return { found: true, product: await Promise.any(catalogs) };
+    const product = await Promise.any(catalogs);
+    etapas.catalogos = Date.now() - t;
+    etapas.achou = 'catalogos';
+    return { found: true, product };
   } catch {
+    etapas.catalogos = Date.now() - t;
     // Último recurso: o código na web (atacadistas, lojas pequenas, catálogos).
     // Só depois dos catálogos, para gastar a cota só com o que ninguém tem.
     // Código com dígito verificador errado é leitura errada: não gasta.
     if (!gtinOk(ean)) return { found: false };
+    t = Date.now();
     const web = await lookupWeb(ean, env, t0).catch(() => null);
+    etapas.web = Date.now() - t;
+    if (web) etapas.achou = 'web';
     return web ? { found: true, product: web } : { found: false };
   }
 }

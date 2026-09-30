@@ -4,9 +4,17 @@ import { createScanner, cameraSupported } from '../scanner.js';
 import { isValidCode, checkDigitOk, notaParam } from '../lookup.js';
 import { $, esc, icon, openSheet, vibrate } from '../ui.js';
 import { beep } from '../sound.js';
+import { tel } from '../telemetry.js';
 
+// App instalado no iPhone: fechar e abrir de novo faz o sistema perguntar a
+// permissão outra vez. No navegador, a permissão fica nos ajustes do site.
+const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const ERRORS = {
-  denied: 'Sem permissão para usar a câmera. Libere a câmera para este site nos ajustes do navegador ou digite o código.',
+  get denied() {
+    return installed()
+      ? 'Sem permissão para usar a câmera. Feche e abra o app de novo para o iPhone perguntar outra vez, ou digite o código.'
+      : 'Sem permissão para usar a câmera. Libere a câmera para este site nos ajustes do navegador, ou digite o código.';
+  },
   unsupported: 'Este navegador não dá acesso à câmera. Digite o código.',
   nocamera: 'Nenhuma câmera encontrada neste aparelho. Digite o código.',
   decoder: 'O leitor não carregou. Confira a internet e abra o leitor de novo, ou digite o código.',
@@ -97,7 +105,8 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
       vibrate(40);
       handle(code);
     },
-    onError({ kind }) {
+    onError({ kind, err }) {
+      tel('camera', { erro: kind, nome: (err && err.name) || '', rota: location.hash });
       msg.textContent = ERRORS[kind] || ERRORS.nocamera;
       msg.hidden = false;
       host.querySelector('.viewfinder').classList.add('is-off');
