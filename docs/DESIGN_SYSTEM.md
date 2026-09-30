@@ -162,6 +162,8 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
 
 - **Bip de leitura:** onda quadrada suavizada em 2.700 Hz por 110 ms, como o
   leitor do caixa. Toca quando a câmera reconhece um código.
+- **No leitor de Guardar e Tirar** (3.74): Guardar, 2.200 Hz e depois 2.900 Hz
+  (sobe); Tirar, 2.900 Hz e depois 2.100 Hz (desce), 60 a 70 ms cada.
 - **Bip de erro:** dois tons graves curtos, quando o código lido não pode ser
   usado (por exemplo, saída de um produto que não está no armário).
 - O som pode ser desligado em Dados. No iPhone, a chave de silencioso também

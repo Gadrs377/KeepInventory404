@@ -25,7 +25,7 @@ const ERRORS = {
  * volta a ler quando ela termina. Com `onNota`, o botão de QR Code põe o visor
  * no modo nota fiscal: mira quadrada, instrução e "Colar o link" como alternativa.
  */
-export function mountCamera(host, { onCode, onNota = null, compact = false, altLabel = 'Produto sem código de barras' }) {
+export function mountCamera(host, { onCode, onNota = null, compact = false, altLabel = 'Produto sem código de barras', sound = () => 'ok' }) {
   host.innerHTML = `
     <div class="viewfinder ${compact ? 'is-compact' : ''}">
       <video muted playsinline aria-label="Imagem da câmera"></video>
@@ -112,7 +112,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
       aim.classList.remove('is-hit');
       void aim.offsetWidth;
       aim.classList.add('is-hit');
-      beep('ok');
+      beep(sound());
       vibrate(40);
       handle(code);
     },

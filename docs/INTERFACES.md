@@ -1813,3 +1813,10 @@ Sexto passo da nova versão (PLANO_MELHORIAS, seção 4).
   (eram 1)", "Ajustou para 4 (eram 5)" (produto e Mais).
 - `sw.js` v92.
 
+## Versão 3.74: bips diferentes
+
+- **Guardar** toca dois tons subindo; **Tirar**, dois tons descendo. O ouvido
+  percebe o modo sem olhar a tela (defesa contra troca de modo sem querer,
+  PLANO_MELHORIAS, seção 11.2). Contagem e Validade continuam com o bip único.
+- `sw.js` v93.
+

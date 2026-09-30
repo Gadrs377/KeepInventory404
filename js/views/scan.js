@@ -421,7 +421,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     if (done && !session.size) location.hash = '#/';
   }
 
-  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota });
+  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota, sound: () => (mode === 'saida' ? 'out' : 'in') });
   if (initialCode) cam.handle(initialCode);
   else fastNotice();
   // Veio de "Importar nota fiscal" (Mais): abre já no modo nota.

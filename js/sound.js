@@ -54,7 +54,9 @@ function tone(c, { freq, start, duration, volume = 0.18, type = 'square' }) {
   osc.stop(start + duration + 0.01);
 }
 
-// 'ok': bip único de leitura. 'error': dois tons graves.
+// 'ok': bip único de leitura. 'in': dois tons subindo (Guardar). 'out': dois
+// tons descendo (Tirar): o ouvido percebe o modo sem olhar a tela.
+// 'error': dois tons graves.
 export function beep(kind = 'ok') {
   if (!soundEnabled()) return;
   const c = audioContext();
@@ -63,6 +65,12 @@ export function beep(kind = 'ok') {
   if (kind === 'error') {
     tone(c, { freq: 420, start: t, duration: 0.12, volume: 0.2 });
     tone(c, { freq: 320, start: t + 0.16, duration: 0.16, volume: 0.2 });
+  } else if (kind === 'in') {
+    tone(c, { freq: 2200, start: t, duration: 0.06 });
+    tone(c, { freq: 2900, start: t + 0.07, duration: 0.07 });
+  } else if (kind === 'out') {
+    tone(c, { freq: 2900, start: t, duration: 0.06 });
+    tone(c, { freq: 2100, start: t + 0.07, duration: 0.07 });
   } else {
     tone(c, { freq: 2700, start: t, duration: 0.11 });
   }
