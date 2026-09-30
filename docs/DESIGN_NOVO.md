@@ -262,6 +262,46 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
   - nunca pede data.
 - **Conferir tudo:** como na seção 2.4.
 
+
+### 2.10 Remédios
+
+A crítica completa está em [PLANO_MELHORIAS.md, seção 14](PLANO_MELHORIAS.md).
+
+![Armário na aba Remédios, busca na Anvisa, folha, página do remédio, leitor](design-novo/15-remedios-a.webp)
+![Descartar, Compras com receita, aviso na tela bloqueada, Conferir um ambiente](design-novo/16-remedios-b.webp)
+
+- **A aba Remédios volta.** As abas deslizam e só aparecem os ambientes com
+  algo em casa. Com a aba aberta, a busca diz "Buscar em casa e na Anvisa".
+- **Linha do remédio:** o nome, e embaixo o princípio ativo e a caixa
+  ("amoxicilina · 21 cápsulas"). Vencido tem selo forte; uso contínuo diz
+  quando acaba.
+- **Busca:** primeiro "Em casa", depois "Na lista da Anvisa" agrupada por
+  remédio (dose e quantidade em cada linha, laboratório e tipo embaixo). Sem o
+  "Nada no armário" gigante no meio.
+- **Folha da Anvisa:**
+  - os três dados que decidem (venda, tipo, preço máximo);
+  - "Mais sobre o remédio ›";
+  - "Ver a bula na Anvisa";
+  - **Guardar no armário**.
+- **Página do remédio:**
+  - o vencido primeiro, com "Remédio vencido não vai no lixo comum. As farmácias
+    recebem." e **Separar para descartar**;
+  - depois a quantidade (a unidade é **caixa**);
+  - depois "Sobre o remédio" em resumo.
+- **Leitor:** o cartão diz "Da lista da Anvisa · Remédios" e o botão principal
+  é **Marcar a validade da caixa**.
+- **Descartar:**
+  - o remédio sai do armário e fica em "Para descartar" até levar à farmácia;
+  - "Adicionar às Compras" já vem marcado, com a faixa da tarja e "Tarja
+    vermelha: precisa de receita".
+- **Compras:** os remédios juntos, com "Precisa de receita" (faixa vermelha) ou
+  "Precisa de receita especial" (faixa preta).
+- **Tela bloqueada:** "Requeijão Cremoso Tirolez e 1 remédio", sem o nome do
+  remédio; em Mais › Avisos, "Mostrar o nome dos remédios nos avisos",
+  desligado.
+- **Conferir um ambiente:** escolher "Remédios" e o jeito, com o tempo
+  estimado.
+
 ---
 
 ## 3. O que isto muda no plano
@@ -293,4 +333,4 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 - **Histórico como diário:** Guardou 2, Tirou 1, Contou 3 (eram 1), Marcou a
   validade…, Jogou fora 1.
 
-**Em aberto:** nada. O design está fechado para aplicar.
+**Em aberto:** as 4 perguntas dos remédios (PLANO_MELHORIAS, seção 14.5).

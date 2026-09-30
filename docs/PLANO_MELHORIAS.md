@@ -1092,3 +1092,148 @@ correções.
   Atualizar a lista de termos fixos do design system (seção 8) quando aplicar.
 - ~~"Aplicar e concluir" ou "Aplicar contagem"~~ **Decidido: "Aplicar e
   concluir".**
+
+---
+
+## 14. Remédios: crítica completa (30/09/2026)
+
+A tela de remédio do primeiro desenho novo foi feita às pressas, sem as lentes
+da seção 11. Esta seção refaz: o que o app faz hoje, o que o desenho errou, e
+cada lente. As telas estão em [DESIGN_NOVO.md, seção 2.10](DESIGN_NOVO.md).
+
+![Remédios hoje (v87)](design-novo/14-remedios-hoje.webp)
+
+### 14.1 O que o app já faz (e o desenho novo perdeu)
+
+1. **Aba Remédios no Armário**, que só aparece quando há remédio em casa. É
+   nela que a busca procura na **lista da Anvisa**, por nome, princípio ativo,
+   dose ou laboratório. **O desenho novo tirou a aba** (aparecia cortada em
+   320 px e foi removida em vez de deslizar). Foi o erro mais sério.
+2. **Resultados da Anvisa agrupados por remédio**, uma linha por caixa (dose e
+   quantidade), com laboratório e "Sem venda recente".
+3. **Folha do remédio da Anvisa:**
+   - princípio ativo, apresentação, venda (tarja com a nota "A farmácia retém a
+     receita"), tipo (genérico, similar, referência), laboratório, classe
+     terapêutica, preço máximo no RS, "Só em hospital", registro;
+   - **Ver a bula na Anvisa**;
+   - **Guardar no armário**.
+4. **Leitor:** o remédio lido vem da Anvisa, com "Remédio da lista da Anvisa.
+   Marque a validade que está na caixa."
+5. **Sem foto** de remédio (regra do app).
+6. **Na linha do Armário, o princípio ativo** aparece embaixo do nome ("Amox-ems
+   · amoxicilina tri-hidratada"). As pessoas reconhecem o remédio pelo princípio
+   ativo mais do que pela marca.
+7. **Trocar um produto comum pelos dados oficiais** quando o código é de um
+   remédio.
+
+### 14.2 O que o app de hoje faz mal
+
+1. **Vencido sem ação.** "Venceu 10/08" aparece como selo preto e "venceu há 51
+   dias" em vermelho, mas nada diz o que fazer.
+2. **A página do remédio começa pelos dados, não pelo que pede ação.** São
+   9 linhas de ficha técnica antes da validade vencida.
+3. **Busca:** "Nada no armário com 'dipirona'" com ícone grande e "Limpar
+   busca" **em cima** dos resultados da Anvisa. Parece que não achou nada, e
+   achou 142 apresentações.
+4. **"Acabando" em remédio de uso eventual.** Uma caixa de amoxicilina com 1 em
+   casa vira "Acabando", como se fosse para repor. Antibiótico não se repõe
+   (é por receita, para um tratamento).
+5. **O quadro Consumo vazio** também aparece no remédio.
+
+### 14.3 Lente por lente
+
+**Obscuridade**
+
+- A busca na Anvisa só existe dentro da aba Remédios, ou em Tudo quando nada em
+  casa bate. O campo não diz que procura lá. **Novo:** o campo diz "Buscar em
+  casa e na Anvisa" quando a aba Remédios está aberta.
+- "Precisa de receita" não aparece em lugar nenhum antes da farmácia.
+
+**Fricção**
+
+- Guardar um remédio sem data é fácil demais, e o remédio sem data some dos
+  avisos. **Novo:** no cartão do leitor, **"Marcar a validade da caixa"** é o
+  botão principal (continua opcional), com "Remédio sem data não entra nos
+  avisos de vencimento".
+- Levar à farmácia é uma tarefa para depois. **Novo:** "Separar para
+  descartar" tira do armário e deixa em "Para descartar" até a pessoa marcar
+  que levou.
+
+**Retorno**
+
+- Remédio vencido tem mais peso que comida vencida: no "Pede atenção" aparece
+  primeiro, como **"1 remédio vencido"**, com o bloco destacado.
+
+**Posição**
+
+- Na página do remédio, **o que pede ação vem primeiro** (vencido e descarte),
+  depois a quantidade, depois "Sobre o remédio" em resumo (venda, bula, "Mais
+  sobre o remédio ›").
+
+**Ciência do comportamento**
+
+- **Momento certo:** a validade se marca ao guardar (a caixa está na mão); o
+  descarte, quando a pessoa separa a caixa; a receita, quando monta as Compras.
+- **Tarefa pendente visível:** "Para descartar" fica no "Pede atenção" até ser
+  feita. Tarefa sem lembrete, a gente esquece.
+- **Agrupar:** nas Compras, os remédios ficam juntos ("para ir à farmácia de uma
+  vez"), com a receita avisada. Menos viagens, e ninguém chega à farmácia sem a
+  receita.
+- **Uso contínuo × eventual:** só remédio de uso contínuo avisa "acabando" e vai
+  para as Compras. O de uso eventual (antibiótico, analgésico de reserva) só
+  avisa a validade. Chave "Uso contínuo" no remédio; com ela, o app estima
+  quando acaba pelo ritmo (opção 3 do ROADMAP para várias unidades na
+  embalagem).
+
+**Privacidade (LGPD: dado de saúde é dado sensível)**
+
+1. **Tela bloqueada:** o aviso diz **"1 remédio"**, sem o nome. Em Mais ›
+   Avisos, "Mostrar o nome dos remédios nos avisos" (desligado por padrão).
+2. **Telemetria:** não registrar o nome nem o código de remédio (hoje registra o
+   nome de todo produto). Registrar só "remédio" e o resultado.
+3. **Backup automático:** a cópia no repassador leva o armário inteiro,
+   remédios incluídos. **Cifrar no celular antes de enviar**, com uma chave que
+   só os celulares de vocês têm. O repassador guarda sem conseguir ler.
+4. **Catálogo e comunidade:** remédio nunca vai para a comunidade (os dados já
+   vêm da Anvisa) e nunca tem foto.
+
+**HIG da Apple**
+
+- Notificação: só o que importa, sem expor o que é privado na tela bloqueada.
+- Ação que exige ir a outro lugar (farmácia) vira tarefa pendente, não alerta.
+- Revelar aos poucos: a ficha técnica fica a um toque ("Mais sobre o remédio").
+
+**Design system**
+
+- **Vermelho é só da tarja** (a faixa pequena) e de erro. "Precisa de receita"
+  é informação: selo neutro com a faixa da tarja (vermelha ou preta) na frente.
+- "Separar para descartar" é um **Tirar** (cor do Tirar), não vermelho.
+- Remédio usa o ícone de comprimido no lugar da foto, como hoje.
+
+**Escrita**
+
+- "Separar para descartar", "Precisa de receita", "Precisa de receita
+  especial" (tarja preta), "Uso contínuo", "Remédio sem data não entra nos
+  avisos de vencimento", "1 caixa" (a unidade do remédio é a caixa).
+
+**Coesão**
+
+- O remédio usa as mesmas peças do resto: linha, etiqueta, cartão do leitor,
+  aviso de vencido, Compras, Conferir. O que muda é o conteúdo: princípio ativo,
+  tarja, receita e descarte.
+
+### 14.4 Conferir um ambiente
+
+Remédio costuma ficar em outro lugar da casa (banheiro, gaveta do quarto). O
+Conferir ganha a escolha do ambiente ("Tudo, Cozinha, Limpeza, Beleza,
+Remédios") e do jeito ("Tudo, Só contar, Só validades") numa folha só,
+com o tempo estimado ("3 remédios. Leva uns 2 minutos.").
+
+### 14.5 Para decidir
+
+1. **Chave "Uso contínuo"** no remédio (só ele avisa "acabando" e vai para as
+   Compras)?
+2. **Mostrar o nome dos remédios nos avisos:** desligado por padrão?
+3. **Cifrar o backup** antes de subir (recomendo que sim, por causa dos
+   remédios)?
+4. **Telemetria sem nomes de remédio** (recomendo que sim)?
