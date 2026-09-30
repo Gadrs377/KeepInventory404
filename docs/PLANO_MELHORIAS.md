@@ -10,6 +10,9 @@ código de barras. **Nada daqui está feito.** Cada item diz o estado:
   para a ideia não voltar sem querer.
 
 O [ROADMAP](ROADMAP.md) tem o resumo; este documento tem os detalhes.
+A crítica deste plano e o desenho que sai dela estão em
+[DESIGN_NOVO.md](DESIGN_NOVO.md); onde os dois divergem, vale o DESIGN_NOVO
+(seção 3 dele).
 
 ---
 
