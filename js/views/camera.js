@@ -2,7 +2,7 @@
 
 import { createScanner, cameraSupported } from '../scanner.js';
 import { isValidCode, checkDigitOk, notaParam } from '../lookup.js';
-import { $, icon, openSheet, vibrate } from '../ui.js';
+import { $, esc, icon, openSheet, vibrate } from '../ui.js';
 import { beep } from '../sound.js';
 
 const ERRORS = {
@@ -17,7 +17,7 @@ const ERRORS = {
  * volta a ler quando ela termina. Com `onNota`, o botão de QR Code põe o visor
  * no modo nota fiscal: mira quadrada, instrução e "Colar o link" como alternativa.
  */
-export function mountCamera(host, { onCode, onNota = null, compact = false }) {
+export function mountCamera(host, { onCode, onNota = null, compact = false, altLabel = 'Produto sem código de barras' }) {
   host.innerHTML = `
     <div class="viewfinder ${compact ? 'is-compact' : ''}">
       <video muted playsinline aria-label="Imagem da câmera"></video>
@@ -33,7 +33,7 @@ export function mountCamera(host, { onCode, onNota = null, compact = false }) {
         ${onNota ? `<button type="button" class="cam-tool" data-nota aria-pressed="false" aria-label="Ler o QR Code da nota fiscal">${icon('qrCode')}</button>` : ''}
       </div>
     </div>
-    ${compact ? '' : '<button type="button" class="cam-alt" data-nocode-tool>Produto sem código de barras</button>'}`;
+    ${compact ? '' : `<button type="button" class="cam-alt" data-nocode-tool>${esc(altLabel)}</button>`}`;
 
   const video = $('video', host);
   const aim = $('.aim', host);

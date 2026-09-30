@@ -9,6 +9,7 @@ import mountDados from './views/dados.js';
 import mountCompras from './views/compras.js';
 import mountCupons from './views/cupons.js';
 import mountTestes from './views/testes.js';
+import mountValidade from './views/validade.js';
 import { closeSheet, closeMenu, hideStaleToast, collapsingTitle, toast, updateTabBar, $ } from './ui.js';
 import { refreshShopBadge } from './shop.js';
 import { onChange, listProducts } from './store.js';
@@ -28,6 +29,7 @@ const ROUTES = [
   [/^\/compras$/, mountCompras],
   [/^\/cupons$/, mountCupons],
   [/^\/testes$/, mountTestes],
+  [/^\/validade$/, mountValidade],
 ];
 
 const root = $('#app');
@@ -39,7 +41,7 @@ let navId = 0;
 // o leitor sobe de baixo como uma tela modal.
 const TAB_PATHS = ['/', '/compras', '/cupons', '/dados'];
 function depth(path) {
-  if (/^\/(entrada|saida)/.test(path)) return 'modal';
+  if (/^\/(entrada|saida|validade)/.test(path)) return 'modal';
   if (TAB_PATHS.includes(path)) return 0;
   if (path === '/revisao') return 2;
   return 1;

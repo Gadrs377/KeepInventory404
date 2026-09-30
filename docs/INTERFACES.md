@@ -1622,3 +1622,29 @@ tem certeza em vez de jogar em Cozinha calado (SYSTEM_DESIGN 5.6).
   final) e cada uso da câmera da validade, e manda em lote ao repassador
   (SYSTEM_DESIGN 5.7). Nada muda na tela.
 - `sw.js` v81; `APP_VERSION` em `js/config.js` (igual, conferido em teste).
+
+## Versão 3.63: modo Validade
+
+Para marcar depois as validades do que já está no armário (chegou das compras,
+guardou tudo e deixou as datas para outra hora), sem procurar produto por
+produto na lista.
+
+- **Validade** no topo do Armário, ao lado de Nota fiscal (`#/validade`).
+  Abre o leitor na cor âmbar das datas (texto escuro: branco no amarelo não
+  se lê; o texto em âmbar usa `--val-ink`).
+- Leu o código: acha o produto no armário e já abre a câmera da data, para
+  as unidades sem data. Salvou: a linha entra na lista ("Leite ... 20/11") e o
+  leitor espera o próximo. **Concluir** volta ao Armário.
+- **Datas que o produto já tem** aparecem em cima da câmera ("Já marcadas:
+  15/10/2026 (2 unidades). Leia uma das outras.") e não entram sozinhas pela
+  câmera. Se a data lida for uma delas, a confirmação avisa ("Essa data já
+  está marcada em 2 unidades. Se esta embalagem é uma das que já tinham data,
+  leia outra.") com **Ler outra embalagem**.
+- Todas as unidades já com data: mostra as datas e **Abrir o produto** para
+  corrigir. Zerado ou fora do armário: **Guardar pela Entrada**. Vários
+  produtos com o código: **Qual destes?**. **Procurar pelo nome** (no lugar de
+  "Produto sem código de barras") busca no que tem no armário.
+- Tela estreita: até 409 px a Nota fiscal fica só com o ícone; até 359 px,
+  as duas.
+- Telemetria: `validade-modo` (produto, datas que já tinha, resultado).
+- Testes: `tests/ui/validade.test.mjs`. `sw.js` v82.

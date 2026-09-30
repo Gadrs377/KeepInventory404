@@ -77,7 +77,10 @@ function page(html, cls = '') {
 // ---------- O fluxo ----------
 // `total()`: quantas unidades podem receber data. `lots`: datas já escolhidas
 // (a lista é alterada aqui). `finish()`: chamado em "Pronto"/"Salvar".
-function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-primary', finish }) {
+// `existing`: datas que o produto já tem no armário ([{ expiresAt, qty }]):
+// aparecem em cima da câmera e, se a data lida for uma delas, a confirmação
+// avisa (pode ser a embalagem que já tinha data, e não a nova).
+function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-primary', finish, existing = [] }) {
   let nav = navIn;
   let scanIndex = 0; // posição da página de leitura na pilha
   // Datas que já apareceram na confirmação: ao voltar para a leitura, não entram
@@ -97,6 +100,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
   // Página 1: ler com a câmera (ou ir para digitar).
   function scanPage({ asRoot = false } = {}) {
     const el = page(`
+      ${existing.length ? `<p class="exp-existing">${icon('calendar')}<span>Já marcadas: ${existing.map((l) => `${esc(formatDate(l.expiresAt))} (${plural(l.qty, 'unidade', 'unidades')})`).join(', ')}. Leia uma das outras.</span></p>` : ''}
       <div class="exp-cam"></div>
       <div class="exp-bar"><button type="button" class="btn exp-alt" data-type>${icon('keyboard')}<span>Digitar a data</span></button></div>`, 'exp-scan');
     let reading = null;
@@ -111,7 +115,8 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       const cam = readExpiryWithCamera($('.exp-cam', el), {
         // "Tirar foto" entra na barra, ao lado de "Digitar a data".
         bar: $('.exp-bar', el),
-        skip: [...confirmed, ...lots.map((l) => l.expiresAt)],
+        // Data que já está marcada não entra sozinha (ainda dá para tocar nela).
+        skip: [...confirmed, ...lots.map((l) => l.expiresAt), ...existing.map((l) => l.expiresAt)],
         onEvidence: (value) => { evidence = value; },
         onBestPhoto: (url) => { bestPhoto = url; },
         onLikely: (value) => { likely = value; },
@@ -218,12 +223,14 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
     likely = null;
     const max = left();
     const past = daysUntil(iso) < 0;
+    const dup = existing.find((l) => l.expiresAt === iso);
     const el = page(`
       <div class="exp-confirm">
         <span class="exp-confirm-icon${past ? ' is-past' : ''}" aria-hidden="true">${icon(past ? 'warning' : 'calendar')}</span>
         <p class="exp-confirm-date">${esc(formatDateLong(iso))}</p>
         <p class="exp-confirm-rel${past ? ' is-past' : ''}">${esc(relativeDays(iso))}${past ? '. Confira na embalagem.' : ''}</p>
       </div>
+      ${dup ? `<p class="exp-dup" role="note">${icon('warning')}<span>Essa data já está marcada em ${plural(dup.qty, 'unidade', 'unidades')}. Se esta embalagem é uma das que já tinham data, leia outra.</span></p>` : ''}
       ${max > 1 ? `
       <div class="exp-howmany" role="group" aria-labelledby="exp-how-label">
         <p class="exp-howmany-label" id="exp-how-label">Quantas vencem nesse dia?</p>
@@ -233,6 +240,7 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       <div class="exp-actions">
         <button type="button" class="btn ${doneClass} btn-lg" data-done>${esc(doneLabel)}</button>
         <button type="button" class="btn exp-alt" data-more hidden></button>
+        ${dup ? `<button type="button" class="btn exp-alt" data-other>${icon('camera')}<span>Ler outra embalagem</span></button>` : ''}
       </div>`, 'exp-confirm-page');
     if (evidence?.image) {
       const figure=document.createElement('figure'); figure.className='exp-evidence';
@@ -256,6 +264,9 @@ function flow({ body, nav: navIn, total, lots, doneLabel, doneClass = 'btn-prima
       track({ saved: true, savedIso: iso });
       finish();
     });
+    // Era a embalagem que já tinha data: volta à câmera sem guardar.
+    const other = $('[data-other]', el);
+    if (other) other.addEventListener('click', () => { track({ how: 'outra embalagem', dupIso: iso }); nav.pop(scanIndex); });
     // Guarda esta e volta a ler a próxima.
     more.addEventListener('click', () => {
       lots.push({ expiresAt: iso, qty: qty() });
@@ -362,14 +373,19 @@ export function bindExpiryRow(body, { total, form }) {
 
 // ---------- Página do produto: folha que já começa lendo ----------
 
-/** Resolve com [{ expiresAt, qty }] ou null se fechou sem salvar. */
-export function expirySheet({ free }) {
+/**
+ * Resolve com [{ expiresAt, qty }] ou null se fechou sem salvar. `existing`:
+ * as datas que o produto já tem (aparecem em cima da câmera). `mode`: a cor
+ * da folha (o modo Validade usa a sua).
+ */
+export function expirySheet({ free, existing = [], mode, label = 'Marcar validade', doneClass = 'btn-primary' }) {
   return openSheet({
-    label: 'Marcar validade',
+    mode,
+    label,
     title: 'Validade',
     render(body, close) {
       const lots = [];
-      const f = flow({ body, nav: null, total: () => free, lots, doneLabel: 'Salvar', finish: () => close(lots.slice()) });
+      const f = flow({ body, nav: null, total: () => free, lots, doneLabel: 'Salvar', doneClass, existing, finish: () => close(lots.slice()) });
       f.scan({ asRoot: true });
     },
   });
