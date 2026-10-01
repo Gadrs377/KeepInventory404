@@ -302,7 +302,7 @@ A crítica completa está em [PLANO_MELHORIAS.md, seção 14](PLANO_MELHORIAS.md
 - **Conferir um ambiente:** escolher "Remédios" e o jeito, com o tempo
   estimado.
 
-#### 2.10.1 Página e folha do remédio no visual antigo (proposta)
+#### 2.10.1 Página e folha do remédio no visual antigo (substituída pela 2.10.2)
 
 A página e a folha acima ficaram sem graça perto das antigas. Esta proposta
 **substitui a folha da Anvisa e a página do remédio** desenhadas acima. Volta
@@ -335,6 +335,56 @@ o visual antigo e ficam só as melhorias já decididas.
     receita").
 - **Folha da Anvisa:** a lista completa como antes. **Bula** e **Guardar no
   armário** ficam presos embaixo, sempre à vista, sem rolar até o fim.
+
+#### 2.10.2 O remédio como caixa (proposta de 01/10)
+
+A 2.10.1 voltou ao visual antigo, mas a tarja continuava uma faixinha ao lado
+de uma palavra. Esta proposta parte do que todo mundo já reconhece: **a
+embalagem do remédio.**
+
+![Armário, página vencida, rolada e uso contínuo](design-novo/18-remedio-caixa-a.webp)
+![Folha da Anvisa, Compras, leitor e escuro](design-novo/18-remedio-caixa-b.webp)
+
+- **A caixa desenhada** no lugar da foto. O desenho sai dos dados da Anvisa:
+  - nome comercial grande;
+  - princípio ativo, dose e quantidade;
+  - laboratório no canto;
+  - a **tarja de verdade**: a faixa vermelha ou preta com o texto da
+    embalagem ("VENDA SOB PRESCRIÇÃO MÉDICA, SÓ PODE SER VENDIDO COM RETENÇÃO
+    DA RECEITA");
+  - genérico com a faixa amarela do **G**, como na caixa.
+
+  Remédio continua sem foto, e mesmo assim cada um fica com uma cara
+  própria.
+- **Caixinha nas listas** (Armário, Compras, leitor): uma miniatura com a
+  faixa da tarja embaixo. Dá para ver de longe qual precisa de receita.
+- **Selo colado na caixa**, como um adesivo: "Vencido" ou "Acaba em ~6 dias".
+- **Vencido:** logo embaixo da caixa, "Venceu há 52 dias" com **Separar para
+  descartar** e "Remédio vencido não vai no lixo comum. As farmácias
+  recebem.".
+- **A tarja vira o que ela quer dizer na prática**, num cartão com a faixa da
+  cor dela:
+  - vermelha: "Precisa de receita. A farmácia fica com a receita. Para
+    comprar de novo, peça outra." e "Receita de antibiótico vale 10 dias.";
+  - preta: "Receita azul";
+  - sem tarja: "Sem receita. Compra direto no balcão.".
+
+  **Antes de aplicar:** conferir na norma da Anvisa os prazos de cada receita
+  (antibiótico, RDC 20/2011; receita azul, Portaria 344/98) e só mostrar o
+  prazo quando a classe do remédio deixar certeza.
+- **Uso contínuo com cartela:** a chave fica no topo de um cartão com a
+  cartela de comprimidos. Os que sobram aparecem cheios, pelo ritmo
+  ("Cerca de 6 comprimidos", "1 por dia. Acaba por volta de 7/10."). O botão
+  **Contar** corrige, e o cartão avisa "Já está nas Compras, com a receita
+  avisada.".
+- **Ficha completa** (rolando), como no antigo, com "Ver a bula na Anvisa".
+- **Compras: a ida à farmácia** num cartão só ("Farmácia, 2 remédios"). Cada
+  remédio mostra a receita que pede (faixa e "Receita azul" ou "Precisa de
+  receita"), e o cartão fecha com "Leve as 2 receitas.".
+- **Folha da Anvisa:** a caixa, o cartão do que a venda quer dizer, a ficha, e
+  **Bula** e **Guardar no armário** presos embaixo.
+- **Escuro:** a caixa continua clara, como a de verdade.
+- **Sem pontos separadores** em nenhuma tela (DESIGN_SYSTEM, seção 8).
 
 ---
 
