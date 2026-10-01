@@ -7,7 +7,15 @@ import { backupNow, lastBackupAt, backupKey, formatCode, fetchBackup, restoreBac
 import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
 import { debugEnabled, setDebugEnabled } from '../expiryDebug.js';
 
-const tiltOn = () => { try { return localStorage.getItem('ki.tilt') !== '0'; } catch { return true; } };
+// Movimento do celular: ligado, a menos que a pessoa desligue. No iPhone, só
+// aparece ligado depois de o sistema dar a licença.
+const tiltNeedsPerm = () => typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+const tiltOn = () => {
+  try {
+    if (localStorage.getItem('ki.tilt') === '0') return false;
+    return !tiltNeedsPerm() || localStorage.getItem('ki.tilt.ok') === '1';
+  } catch { return !tiltNeedsPerm(); }
+};
 
 export default async function mountDados(root) {
   const [products, movements] = await Promise.all([listProducts(), recentMovements(60)]);
@@ -51,7 +59,7 @@ export default async function mountDados(root) {
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
           <li><label class="group-row"><span class="group-icon">${icon('sparkle')}</span><span class="group-label">Reagir ao movimento do celular</span><input type="checkbox" class="switch" data-tilt ${tiltOn() ? 'checked' : ''}></label></li>
         </ul>
-        <p class="group-note">A caixa do remédio e os ícones do "Pede atenção" mexem um pouquinho quando o celular inclina.</p>
+        <p class="group-note">A caixa do remédio e os ícones do "Pede atenção" mexem um pouquinho quando o celular inclina.${tiltNeedsPerm() ? ' No iPhone, ligue aqui e toque em Permitir quando ele perguntar.' : ''}</p>
 
         <section class="install-note" ${installed ? 'hidden' : ''}>
           <h2 class="list-title">Instalar no celular</h2>
@@ -80,7 +88,15 @@ export default async function mountDados(root) {
 
   $('[data-tilt]', root).addEventListener('change', (e) => {
     try { localStorage.setItem('ki.tilt', e.target.checked ? '1' : '0'); } catch { /* sem armazenamento */ }
-    if (e.target.checked) askTilt();
+    if (!e.target.checked) return;
+    const sw = e.target;
+    askTilt().then((r) => {
+      if (r !== 'granted') sw.checked = false;
+      if (r === 'granted') toast('Pronto: a caixa do remédio mexe com o celular.', { duration: 2500 });
+      else if (r === 'denied') toast('O iPhone não deixou usar o movimento. Feche o app por completo, abra de novo e toque nesta chave; quando ele perguntar, toque em Permitir.', { duration: 7000 });
+      else if (r === 'unsupported') toast('Este navegador não informa o movimento do celular.', { duration: 3500 });
+      else if (r === 'error') toast('Não deu para pedir agora. Toque na chave de novo.', { duration: 3000 });
+    });
   });
   $('[data-sound]', root).addEventListener('change', (e) => {
     setSoundEnabled(e.target.checked);

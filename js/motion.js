@@ -143,7 +143,6 @@ export function tiltable(el, { base = [8, -16], max = 18, onTap = null } = {}) {
   const down = (e) => {
     active = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0 };
     el.style.transition = 'none';
-    askTilt();
     try { el.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
   };
   const move = (e) => {
@@ -157,6 +156,8 @@ export function tiltable(el, { base = [8, -16], max = 18, onTap = null } = {}) {
     if (!active) return;
     const tap = active.moved < 6;
     active = null;
+    // No iPhone, a licença do movimento só pode ser pedida no fim do toque.
+    askTilt();
     const s = spring({ stiffness: 180, damping: 12 });
     el.style.transition = `transform ${s.duration}ms ${HAS_LINEAR ? s.easing : 'cubic-bezier(0.2, 1.4, 0.3, 1)'}`;
     releasing = performance.now() + s.duration;
@@ -359,11 +360,39 @@ export function onTilt(cb) {
   startTilt();
   return () => { tiltSubs.delete(cb); if (!tiltSubs.size) stopTilt(); };
 }
-// iPhone: pede a licença do movimento (precisa ser dentro de um toque).
+// iPhone: pede a licença do movimento. O Safari só aceita o pedido dentro de
+// um toque que terminou (pointerup, touchend, click); no começo do toque
+// (pointerdown) ele recusa sem mostrar nada. Resolve com 'granted', 'denied',
+// 'unsupported' ou 'error' (este último pode tentar de novo no próximo toque).
+const PERM_KEY = 'ki.tilt.ok';
 export function askTilt() {
-  if (T.ok !== null || reduced() || tiltOff()) return;
+  if (reduced() || tiltOff()) return Promise.resolve('off');
   const D = typeof DeviceOrientationEvent !== 'undefined' ? DeviceOrientationEvent : null;
-  if (!D || typeof D.requestPermission !== 'function') { T.ok = true; return; }
-  T.ok = false;
-  D.requestPermission().then((r) => { T.ok = r === 'granted'; if (T.ok && tiltSubs.size) startTilt(); }).catch(() => {});
+  if (!D) return Promise.resolve('unsupported');
+  if (typeof D.requestPermission !== 'function') { T.ok = true; startIfWanted(); return Promise.resolve('granted'); }
+  if (T.ok === true) return Promise.resolve('granted');
+  if (T.asking) return T.asking;
+  T.asking = D.requestPermission().then((r) => {
+    T.ok = r === 'granted' ? true : null;
+    try { localStorage.setItem(PERM_KEY, r === 'granted' ? '1' : '0'); } catch { /* sem armazenamento */ }
+    startIfWanted();
+    return r === 'granted' ? 'granted' : 'denied';
+  }, () => 'error').finally(() => { T.asking = null; });
+  return T.asking;
 }
+function startIfWanted() { if (T.ok && tiltSubs.size) startTilt(); }
+
+// Já deu licença antes: o iPhone esquece quando o app fecha, mas pedir de
+// novo num toque não mostra pergunta. Basta o primeiro toque em qualquer lugar.
+(function rearm() {
+  if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') return;
+  if (typeof DeviceOrientationEvent.requestPermission !== 'function') return;
+  let had = false;
+  try { had = localStorage.getItem(PERM_KEY) === '1'; } catch { /* sem armazenamento */ }
+  if (!had) return;
+  const once = () => {
+    askTilt().then((r) => { if (r === 'granted' || r === 'denied') { document.removeEventListener('touchend', once, true); document.removeEventListener('click', once, true); } });
+  };
+  document.addEventListener('touchend', once, true);
+  document.addEventListener('click', once, true);
+})();

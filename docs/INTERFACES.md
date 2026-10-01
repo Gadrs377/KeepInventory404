@@ -1995,3 +1995,19 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
   "Reagir ao movimento do celular" desliga. Nada disso com "Reduzir
   movimento".
 - `sw.js` v100.
+
+## Versão 4.5: movimento do celular no iPhone
+
+- O Safari só dá a licença do movimento se o pedido vier no fim de um toque
+  (pointerup, touchend, click). O app pedia no começo do toque
+  (pointerdown): o Safari recusava sem mostrar nada, e o app não tentava de
+  novo. Agora pede ao soltar o dedo da caixa do remédio, e um erro deixa
+  tentar no próximo toque.
+- Mais › Som e movimento: no iPhone, a chave aparece desligada até haver
+  licença; ligar pede ali mesmo e, se o iPhone negar, ela volta a desligar e
+  o aviso diz o que fazer.
+- Com a licença dada uma vez, o primeiro toque em qualquer lugar, quando o
+  app abre, pede de novo em silêncio (o iPhone esquece ao fechar o app).
+- Teste novo: `tests/ui/movimento.test.mjs` simula o Safari (só aceita no
+  fim do toque).
+- `sw.js` v101.
