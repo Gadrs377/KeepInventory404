@@ -233,8 +233,9 @@ export default async function mountProduto(root, { code }) {
           <li class="form-row is-static lot-row ${state}">
             <span class="form-row-label">
               <span class="exp-lot-date">${formatDate(l.expiresAt)}</span>
-              <span class="exp-lot-sub">${plural(l.qty, 'unidade', 'unidades')} · ${esc(relativeDays(l.expiresAt).toLowerCase())}</span>
+              <span class="exp-lot-sub">${esc(relativeDays(l.expiresAt))}</span>
             </span>
+            <span class="form-row-value lot-qty">${plural(l.qty, 'unidade', 'unidades')}</span>
             <button type="button" class="icon-btn exp-lot-drop" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
           </li>`;
         }).join('')}

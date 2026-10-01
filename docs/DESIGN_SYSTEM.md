@@ -198,6 +198,10 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
   "Aplicar contagem". Nunca "Enviar" ou "OK".
 - Erros dizem o que houve e o que fazer.
 - Sem travessão, sem reticências decorativas, sem adjetivos de propaganda.
+- **Sem pontos separadores** ("·" ou "•") entre informações (desde a 3.75).
+  Cada informação vai no seu lugar: em outra linha, à direita da linha, ou
+  numa frase com vírgula ("Royal, 50 g"). O ponto obriga a ler e separar de
+  cabeça; o lugar já diz o que é.
 - Termos fixos (revisão da 3.24):
   - **Guardar** é pôr no armário; **Tirar** é tirar do armário; **Contar** é
     a contagem. Por isso rascunhos e ajustes usam **Salvar** ("Salvar e

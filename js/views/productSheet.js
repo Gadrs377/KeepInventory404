@@ -435,7 +435,7 @@ async function newForm(ctx, result, { photo = null } = {}) {
       <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
       ${info.comunidade ? `
       <div class="comm" data-comm>
-        <p class="comm-badge">${icon('users')}<span>Nome sugerido por outra pessoa${info.comunidade.confirmado ? ` · ${info.comunidade.sim} confirmaram` : ''}</span></p>
+        <p class="comm-badge">${icon('users')}<span>Da comunidade</span></p>
         <div class="comm-vote"><button type="button" class="btn btn-quiet btn-sm" data-vote="1">É este</button><button type="button" class="btn btn-quiet btn-sm" data-vote="-1">Não é este</button></div>
       </div>` : ''}
       <p class="sheet-text" data-msg>${info.comunidade ? '' : esc(info.med ? NEW_MSG.med : NEW_MSG[result.status] || NEW_MSG.notfound)}</p>

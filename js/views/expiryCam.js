@@ -349,10 +349,10 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
       if (e.kind === 'read') {
         const dates = e.dates.length ? e.dates.map((d) => `${formatDate(d.iso)}${d.labeled ? ' (VAL)' : ''}`).join(', ') : '—';
         const why = `${REJECT_TEXT[e.result] || e.result}${e.detail != null ? ` (${e.detail})` : ''}`;
-        li.textContent = `${when} ${e.engine === 'paddle' ? 'Paddle' : 'Tesseract'} ${e.filter} [${e.source}] “${(e.text || '').replace(/\s+/g, ' ').slice(0, 70)}” → ${dates} · ${why}`;
+        li.textContent = `${when} ${e.engine === 'paddle' ? 'Paddle' : 'Tesseract'} ${e.filter} [${e.source}] “${(e.text || '').replace(/\s+/g, ' ').slice(0, 70)}” → ${dates}, ${why}`;
         if (e.result === 'confirmed') li.className = 'is-ok';
       } else {
-        li.textContent = `${when} • ${DEBUG_EVENT[e.what] || e.what}${e.iso ? ` ${formatDate(e.iso)}` : ''}${e.detail ? ` (${e.detail})` : ''}`;
+        li.textContent = `${when} ${DEBUG_EVENT[e.what] || e.what}${e.iso ? ` ${formatDate(e.iso)}` : ''}${e.detail ? ` (${e.detail})` : ''}`;
         li.className = 'is-event';
       }
       debugList.prepend(li);
@@ -989,13 +989,13 @@ export function readExpiryWithCamera(host, { skip = [], onEvidence = () => {}, o
         progress('Tentando juntar os pontinhos da impressão');
         const dots = await readDots(full, lineH, region, texts.filter(([engine]) => engine === 'medium').map(([, text]) => text));
         if (dots.iso) texts.push(['medium pontos', dots.text, 2]);
-        else if (dots.texts.length) note({ kind: 'event', what: 'find-read', detail: `pontos sem acordo: ${dots.texts.map((t) => `“${t.replace(/\s+/g, ' ').slice(0, 30)}”`).join(' · ')}` });
+        else if (dots.texts.length) note({ kind: 'event', what: 'find-read', detail: `pontos sem acordo: ${dots.texts.map((t) => `“${t.replace(/\s+/g, ' ').slice(0, 30)}”`).join(', ')}` });
       }
       if (!alive) return { status: 'ok' };
       // (Até a versão 3.54 havia mais uma tentativa com os pontos "engordados",
       // 4 e 5 passadas: uma leitura só, sem votação, que podia confirmar data
       // errada. A leitura de pontinhos acima faz o mesmo papel, votando.)
-      note({ kind: 'event', what: 'find-read', detail: `${Math.round(performance.now() - t0)} ms: ${texts.map(([e, t]) => `${e} “${t.replace(/\s+/g, ' ').slice(0, 50)}”`).join(' · ')}` }, crop);
+      note({ kind: 'event', what: 'find-read', detail: `${Math.round(performance.now() - t0)} ms: ${texts.map(([e, t]) => `${e} “${t.replace(/\s+/g, ' ').slice(0, 50)}”`).join(', ')}` }, crop);
       if (full.close) full.close();
       const byIso = new Map();
       for (const entry of texts) {

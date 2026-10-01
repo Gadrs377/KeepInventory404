@@ -1785,7 +1785,7 @@ Quinto passo da nova versão (PLANO_MELHORIAS, seção 6; SYSTEM_DESIGN, 5.9).
 
 - Produto novo cujo nome veio de outra pessoa: selo **"Nome sugerido por outra
   pessoa"** (com "· 2 confirmaram" quando confirmado) e **É este** / **Não é
-  este**. "É este" deixa "Você confirmou este nome."; "Não é este" volta ao
+  este** (desde a 3.75 o selo diz só **"Da comunidade"**). "É este" deixa "Você confirmou este nome."; "Não é este" volta ao
   formulário sem o nome, para fotografar ou digitar.
 - Ao guardar um produto cujo nome veio da foto da embalagem, sem mexer no nome,
   ele vai para a comunidade. Digitado à mão, não vai.
@@ -1820,3 +1820,17 @@ Sexto passo da nova versão (PLANO_MELHORIAS, seção 4).
   PLANO_MELHORIAS, seção 11.2). Contagem e Validade continuam com o bip único.
 - `sw.js` v93.
 
+
+## Versão 3.75: sem pontos separadores
+
+- **Regra nova** (DESIGN_SYSTEM, seção 8): nada de "·" ou "•" entre
+  informações. Cada coisa vai no seu lugar.
+- **Validades** (produto, folha de validade e "já cadastradas"): a data em
+  cima, "Venceu há 52 dias" ou "Daqui a 212 dias" embaixo, e a quantidade à
+  direita ("2 unidades").
+- **Mais › Últimos registros:** o nome e a hora na primeira linha; o que
+  aconteceu ("Guardou 4") e "ficou 4" na segunda.
+- **Nome da comunidade:** o selo diz só **"Da comunidade"**, sem contar
+  confirmações nem dizer quem sugeriu. O voto **É este / Não é este** fica.
+- As telas de diagnóstico também trocaram o ponto por vírgula.
+- `sw.js` v94.

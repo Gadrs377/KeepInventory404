@@ -85,8 +85,9 @@ export function datesListHtml(existing, mark = '', max = Infinity) {
           ${icon('calendar')}
           <span class="exp-dates-text">
             <span class="exp-dates-date">${esc(formatDate(l.expiresAt))}</span>
-            <span class="exp-dates-sub">${plural(l.qty, 'unidade', 'unidades')} · ${esc(relativeDays(l.expiresAt).toLowerCase())}</span>
+            <span class="exp-dates-sub">${esc(relativeDays(l.expiresAt))}</span>
           </span>
+          <span class="exp-dates-qty">${plural(l.qty, 'unidade', 'unidades')}</span>
           ${l.expiresAt === mark ? '<span class="exp-dates-tag">Igual</span>' : ''}
         </li>`).join('')}
       ${rest.length ? `<li class="exp-dates-more">Mais ${plural(rest.length, 'data', 'datas')}, ${plural(rest.reduce((a, l) => a + l.qty, 0), 'unidade', 'unidades')}</li>` : ''}
@@ -371,8 +372,9 @@ export function bindExpiryRow(body, { total, form }) {
             <li class="form-row is-static">
               <span class="form-row-label">
                 <span class="exp-lot-date">${esc(formatDate(l.expiresAt))}</span>
-                <span class="exp-lot-sub">${plural(l.qty, 'unidade', 'unidades')} · ${esc(relativeDays(l.expiresAt).toLowerCase())}</span>
+                <span class="exp-lot-sub">${esc(relativeDays(l.expiresAt))}</span>
               </span>
+              <span class="form-row-value lot-qty">${plural(l.qty, 'unidade', 'unidades')}</span>
               <button type="button" class="icon-btn exp-lot-drop" data-drop="${i}" aria-label="Tirar a data ${esc(formatDate(l.expiresAt))}">${icon('close')}</button>
             </li>`).join('')}
           ${rest > 0 ? `<li><button type="button" class="form-row is-action" data-add>${icon('plus')}<span class="form-row-label">${lots.length ? 'Outra data' : 'Ler a data'}</span></button></li>` : ''}

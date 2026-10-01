@@ -95,8 +95,8 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
    - ao tocar no nome (aqui, um nome estranho vindo da busca), aparece **"Usar
      o que está na embalagem: Pó para Pudim Baunilha Royal 50g"**;
    - Onde fica, Quantidade e **Guardar 1**.
-5. **Nome da comunidade:** o nome com o selo **"Nome sugerido por outra
-   pessoa"** e o voto de um toque **É este / Não é este**.
+5. **Nome da comunidade:** o nome com o selo **"Da comunidade"** (sem
+   contar confirmações) e o voto de um toque **É este / Não é este**.
 
 ### 2.4 Conferir o armário (Contar + Validade)
 

@@ -537,7 +537,7 @@ export default function mountTestes(root) {
       out.accepted = accepted || null;
       Object.assign(out, summarizeCam(task.log(), vid.ref));
       const t = (ms) => (ms == null ? '—' : `${(ms / 1000).toFixed(1)} s`);
-      say(`  data certa na tela ${t(out.shownAt)} · perguntou ${t(out.askedAt)} · confirmou ${out.confirmedAt != null ? t(out.confirmedAt) : out.wrongConfirmed ? `ERRADO (${out.wrongConfirmed})` : 'não'} · ${out.photos} fotos, ${out.reads} leituras, leitor rápido ${out.smallBackend || '?'}`);
+      say(`  data certa na tela ${t(out.shownAt)}, perguntou ${t(out.askedAt)}, confirmou ${out.confirmedAt != null ? t(out.confirmedAt) : out.wrongConfirmed ? `ERRADO (${out.wrongConfirmed})` : 'não'}, ${out.photos} fotos, ${out.reads} leituras, leitor rápido ${out.smallBackend || '?'}`);
     } catch (e) {
       out.error = e.message;
       say(`  ✖ ${e.message}`);
@@ -589,7 +589,7 @@ export default function mountTestes(root) {
     const secs = (ms) => (ms == null ? '—' : `${Math.round(ms / 1000)} s`);
     const when = (iso) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
     usageHost.innerHTML = `
-      <p class="group-note">${list.length} leituras · ${Object.entries(count).map(([k, n]) => `${esc(k)} ${n}`).join(' · ')}${byCamera.length ? ` · pela câmera, mediana ${secs(median(byCamera.map((e) => e.ms)))}` : ''}${typed.length ? ` · digitou ${typed.length} (a data sugerida ficou em ${kept})` : ''}</p>
+      <p class="group-note">${list.length} leituras, ${Object.entries(count).map(([k, n]) => `${esc(k)} ${n}`).join(', ')}${byCamera.length ? `, pela câmera, mediana ${secs(median(byCamera.map((e) => e.ms)))}` : ''}${typed.length ? `, digitou ${typed.length} (a data sugerida ficou em ${kept})` : ''}</p>
       <table class="tests-table"><thead><tr><th>Quando</th><th>Como</th><th>Tempo</th><th>Salvou</th></tr></thead><tbody>
       ${list.slice(-15).reverse().map((e) => `<tr><td>${when(e.at)}</td><td>${esc(e.how || '?')}</td><td>${secs(e.ms)}</td><td>${e.saved ? 'sim' : 'não'}</td></tr>`).join('')}
       </tbody></table>`;

@@ -492,7 +492,7 @@ embalagem fica guardado para a próxima pessoa que ler o mesmo código.
 - **No `/lookup`:** só quando ninguém achou, e fora do cache (os votos mudam):
   o nome com mais "é este" que "não é este"; confirmado com 2 aparelhos. A
   resposta traz `comunidade: { sim, nao, confirmado }`.
-- **No app:** selo "Nome sugerido por outra pessoa" e o voto explícito "É
+- **No app:** selo "Da comunidade" (sem contagem nem quem sugeriu) e o voto explícito "É
   este" / "Não é este". Não votar não conta nada (salvar sem mexer não é
   confirmar). "Não é este" volta para fotografar ou digitar.
 

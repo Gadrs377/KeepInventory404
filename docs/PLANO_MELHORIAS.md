@@ -388,7 +388,7 @@ marketplace; tudo em maiúsculas com abreviações ("BISC RECH FRUTAS VERMELHAS
 **Como aparece:**
 
 > Pó para Pudim Baunilha Royal 50g
-> 👥 *Nome sugerido por outra pessoa*
+> 👥 *Da comunidade* (decidido em 01/10: só isso, sem contar confirmações)
 
 **Como vota, sem pergunta a mais** (recomendado):
 
