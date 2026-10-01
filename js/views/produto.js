@@ -11,6 +11,7 @@ import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
 import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
 import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
+import { tiltable, boxEnter, blisterEnter, pop } from '../motion.js';
 import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -116,10 +117,18 @@ export default async function mountProduto(root, { code }) {
   const heroTitle = $('.product-hero .mbox', root) || $('.product-hero .page-title', root);
   const navIo = new IntersectionObserver(([e]) => screenEl.classList.toggle('is-scrolled', !e.isIntersecting && e.boundingClientRect.top < 60), { rootMargin: '-56px 0px 0px 0px' });
   navIo.observe(heroTitle);
+  // A caixa do remédio entra girando e assenta; o selo cola; o dedo inclina a caixa.
+  const box = $('.product-hero .mbox', root);
+  let untilt = () => {};
+  if (box) {
+    if (!document.documentElement.dataset.nav) boxEnter(box);
+    untilt = tiltable(box.querySelector('.mbox-3d'));
+  }
 
   // Mostra a quantidade nova no meio e no botão Tirar 1.
   function showQty(product, dir = '') {
     $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
+    if (dir) pop($('.hero-qty .tag', root), { scale: dir === 'is-up' ? 1.12 : 0.9 });
     if (med) $('.hero-qty-label', root).textContent = product.qty === 1 ? 'caixa' : 'caixas';
     const pills = $('.hero-pills', root);
     if (pills) { pills.innerHTML = stockPill(product); pills.hidden = !stockPill(product); }
@@ -231,6 +240,7 @@ export default async function mountProduto(root, { code }) {
         <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday></div></div>
         ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${cur.med && cur.med.tarja && cur.med.tarja !== 'livre' ? ', com a receita avisada' : ''}.</p>` : ''}
       </div>`;
+    if (!contTop.dataset.shown) { contTop.dataset.shown = '1'; blisterEnter($('.blister', contTop)); }
     stepper($('[data-perday]', contTop), {
       value: cur.cont.perDay, min: 1, max: 12, label: 'Comprimidos por dia',
       onChange: async (v) => {
@@ -319,7 +329,7 @@ export default async function mountProduto(root, { code }) {
   });
 
   const offLots = onChange(() => renderLots());
-  const off = () => { offLots(); navIo.disconnect(); };
+  const off = () => { offLots(); navIo.disconnect(); untilt(); };
   renderLots();
 
   // Produto cadastrado antes dos remédios (ou pelas lojas) cujo código está na

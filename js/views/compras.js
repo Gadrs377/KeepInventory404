@@ -224,6 +224,8 @@ export default function mountCompras(root) {
       // A lista foi redesenhada: o visto nasce escondido e aparece com transição,
       // só na caixa que acabou de ser marcada.
       if (fresh.checked) {
+        const item = fresh.closest('.shop-item');
+        if (item) { item.classList.add('is-striking'); setTimeout(() => item.classList.remove('is-striking'), 600); }
         fresh.classList.add('is-fresh');
         requestAnimationFrame(() => requestAnimationFrame(() => fresh.classList.remove('is-fresh')));
       }

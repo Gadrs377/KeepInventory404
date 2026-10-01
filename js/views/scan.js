@@ -16,6 +16,7 @@ import { tel } from '../telemetry.js';
 import { expirySheet } from './expiryLots.js';
 import { formatDate } from '../dates.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo } from '../ui.js';
+import { flyTo, pop } from '../motion.js';
 
 const COPY = {
   entrada: { title: 'Guardar', sign: '+', head: 'Guardando' },
@@ -166,6 +167,13 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     renderLast(fresh);
     renderTicket();
     cam.flash(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}`, m);
+    // A foto voa da mira até a linha nova do cupom, que acende quando chega.
+    const line = ticket.querySelector('.paper-lines li.is-last');
+    const aim = root.querySelector('.aim');
+    if (line && aim) {
+      line.classList.add('is-landing');
+      flyTo(aim, line, { html: thumb(product, 'md') }).then(() => { line.classList.remove('is-landing'); line.classList.add('is-landed'); });
+    }
   }
 
   // Muda o total de uma linha para `target`. Diminuir desfaz os movimentos
@@ -205,7 +213,10 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     const step = e.target.closest('[data-step]');
     if (step && !step.disabled) {
       vibrate(8);
-      try { await setEntryN(lastKey, s.n + Number(step.dataset.step)); } catch (err) { toast(err.message, { duration: 3000 }); }
+      try {
+        await setEntryN(lastKey, s.n + Number(step.dataset.step));
+        pop(lastHost.querySelector('.last-n'), { scale: Number(step.dataset.step) > 0 ? 1.18 : 0.86 });
+      } catch (err) { toast(err.message, { duration: 3000 }); }
       return;
     }
     if (e.target.closest('[data-type-n]')) { await typeQuantity(lastKey); return; }

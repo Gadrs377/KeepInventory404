@@ -35,6 +35,7 @@ const APP_FILES = [
   './js/backup.js',
   './js/actions.js',
   './js/continuo.js',
+  './js/motion.js',
   './js/views/conferirMenu.js',
   './js/views/peek.js',
   './js/views/validade.js',

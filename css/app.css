@@ -776,7 +776,7 @@ mark.hit { background: none; color: var(--ink); }
   margin-bottom: calc(var(--tooth) / 2);
   font-variant-numeric: tabular-nums;
   box-shadow: 0 1px 2px rgba(22, 24, 23, 0.10), 0 10px 18px -8px rgba(22, 24, 23, 0.22);
-  animation: ticket-print var(--print-ms, 1100ms) cubic-bezier(0.22, 1, 0.36, 1) 200ms backwards;
+  animation: ticket-print var(--print-ms, 1100ms) cubic-bezier(0.22, 1, 0.36, 1) var(--print-delay, 200ms) backwards;
 }
 /* Borda rasgada: dentes desenhados como fundo de uma faixa logo abaixo do papel */
 .ticket::after {
@@ -2983,3 +2983,75 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .screen-shop .shop-add { margin: 8px 0 4px; }
 .screen-shop .pharm { margin-inline: 0; }
 .screen-cupons .rows.cupons { margin-inline: 0; }
+
+/* =====================================================================
+   Movimento (motion.js): molas, voo até o cupom, selo de pronto
+   ===================================================================== */
+
+/* A caixinha da lista vira a caixa grande na página do remédio. */
+.product-hero .mbox { view-transition-name: hero-thumb; }
+.product-hero .sr-only-soft { view-transition-name: none !important; }
+
+/* O produto que voa da mira até a linha do cupom. */
+.fly-ghost { position: fixed; z-index: 60; pointer-events: none; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28); will-change: transform; }
+.fly-ghost .thumb { width: 100%; height: 100%; border-radius: inherit; }
+.paper-lines li.is-landing .paper-line { opacity: 0.35; }
+.paper-lines li.is-landed .paper-line { animation: land 520ms var(--spring-bouncy); }
+@keyframes land {
+  0% { background: color-mix(in oklab, var(--mode) 32%, #fff); scale: 1.03; }
+  100% { scale: 1; }
+}
+
+/* Cartão da leitura: cada leitura nova chega com um pulo de mola. */
+.last-card.is-fresh { animation: card-pop 560ms var(--spring-bouncy); }
+@keyframes card-pop { 0% { transform: translateY(10px) scale(0.97); } 100% { transform: none; } }
+.last-card.is-fresh .thumb { animation: thumb-pop 600ms var(--spring-bouncy) 60ms backwards; }
+@keyframes thumb-pop { 0% { scale: 0.6; opacity: 0; } 100% { scale: 1; opacity: 1; } }
+
+/* Selo de pronto: o anel se fecha, enche e o visto se desenha. */
+.done-mark { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 2px 0 10px; color: var(--mode, var(--entrada)); }
+.done-mark svg { width: 64px; height: 64px; overflow: visible; }
+.done-ring { fill: none; stroke: currentColor; stroke-width: 4; stroke-dasharray: 0 100; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.done-fill { fill: currentColor; transform: scale(0); transform-origin: 50% 50%; }
+.done-check { fill: none; stroke: var(--on-mode, #fff); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 0 100; }
+.done-mark.is-on .done-ring { animation: ring-close 380ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.done-mark.is-on .done-fill { animation: fill-in 420ms var(--spring-bouncy) 300ms forwards; }
+.done-mark.is-on .done-check { animation: check-draw 320ms cubic-bezier(0.3, 0, 0.2, 1) 520ms forwards; }
+.done-mark.is-on svg { animation: mark-bump 520ms var(--spring-bouncy) 520ms; }
+@keyframes ring-close { to { stroke-dasharray: 100 100; } }
+@keyframes fill-in { to { transform: scale(1); } }
+@keyframes check-draw { to { stroke-dasharray: 100 100; } }
+@keyframes mark-bump { 50% { scale: 1.1; } }
+@media (prefers-reduced-motion: reduce) {
+  .done-ring, .done-check { stroke-dasharray: 100 100; }
+  .done-fill { transform: none; }
+  .done-mark.is-on * { animation: none !important; }
+}
+
+/* Pede atenção: os blocos chegam em cascata na primeira vez. */
+.attn-strip.is-first .att { animation: att-in 520ms var(--spring) backwards; }
+.attn-strip .att:nth-child(2) { animation-delay: 40ms; }
+.attn-strip .att:nth-child(3) { animation-delay: 80ms; }
+.attn-strip .att:nth-child(4) { animation-delay: 120ms; }
+.attn-strip .att:nth-child(5) { animation-delay: 160ms; }
+@keyframes att-in { from { opacity: 0; transform: translateY(10px) scale(0.96); } }
+.att[aria-pressed="true"] .att-i { animation: att-on 420ms var(--spring-bouncy); }
+@keyframes att-on { 40% { scale: 1.2; } }
+
+/* Compras: marcar risca o nome, como uma caneta. */
+.shop-item.is-striking .row-name { background: linear-gradient(currentColor, currentColor) 0 58% / 0 1.5px no-repeat; text-decoration: none; animation: strike 380ms cubic-bezier(0.3, 0, 0.2, 1) forwards; }
+@keyframes strike { to { background-size: 100% 1.5px; } }
+
+/* Conferir: o anel completo dá uma piscada. */
+.ring.is-full { animation: ring-full 700ms var(--spring-bouncy); }
+@keyframes ring-full { 40% { scale: 1.25; } }
+
+/* Remédio: a caixa responde ao dedo (motion.js tiltable). */
+.mbox-3d { cursor: grab; will-change: transform; }
+.mbox-3d:active { cursor: grabbing; }
+
+@media (prefers-reduced-motion: reduce) {
+  .last-card.is-fresh, .last-card.is-fresh .thumb, .attn-strip .att, .att[aria-pressed="true"] .att-i,
+  .paper-lines li.is-landed .paper-line, .ring.is-full { animation: none !important; }
+  .shop-item.is-striking .row-name { animation: none; background-size: 100% 1.5px; }
+}

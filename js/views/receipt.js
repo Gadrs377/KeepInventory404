@@ -3,6 +3,7 @@
 
 import { $, esc, openSheet, plural, shareText, icon, vibrate } from '../ui.js';
 import { saveReceipt } from '../store.js';
+import { successMark, reduced } from '../motion.js';
 
 const TITLE = { entrada: 'Guardado', saida: 'Tirado', contagem: 'Conferido', misto: 'Guardado e tirado' };
 
@@ -29,7 +30,7 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
         <div class="receipt-stage">
           <div class="printer-slot" aria-hidden="true"></div>
           <div class="ticket-clip">
-            <article class="ticket mode-${mode}" aria-label="Cupom" style="--print-ms: ${Math.min(1700, 600 + lines.length * 110)}ms">
+            <article class="ticket mode-${mode}" aria-label="Cupom" style="--print-ms: ${Math.min(1700, 600 + lines.length * 110)}ms; --print-delay: ${isNew && !reduced() ? 820 : 200}ms">
               <header class="ticket-head">
                 <p class="ticket-title">${TITLE[mode]}</p>
                 <p class="ticket-meta">${esc(stamp)}</p>
@@ -53,8 +54,15 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
         </div>
         <p class="ticket-hint">Toque fora do cupom para fechar.</p>`;
 
-      // O cupom desce da impressora (CSS); o celular vibra de leve como o papel saindo.
-      if (isNew && !matchMedia('(prefers-reduced-motion: reduce)').matches) vibrate([12, 70, 12, 70, 12]);
+      // Cupom novo: primeiro o selo de pronto se desenha (como a confirmação de
+      // um pagamento), depois o cupom desce da impressora e o celular vibra de
+      // leve, como o papel saindo.
+      if (isNew) {
+        successMark($('.receipt-stage', body), { label: '' }).then(() => {
+          if (!reduced()) vibrate([12, 70, 12, 70, 12]);
+        });
+        vibrate(20);
+      }
 
       // Como uma notificação de pagamento: o cupom é a tela; tocar fora fecha.
       body.addEventListener('click', (e) => {

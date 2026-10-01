@@ -148,6 +148,9 @@ export default function mountArmario(root, m = {}) {
     const conferirDue = !empty && !q && dueDays >= CONFERIR_EVERY;
     // Buscando, o "Pede atenção" sai: a lista já diz quantos achou.
     strip.hidden = empty || !!q || (!groups.length && !conferirDue);
+    // A cascata de entrada só na primeira vez que os blocos aparecem.
+    strip.classList.toggle('is-first', !strip.dataset.shown && !strip.hidden);
+    if (!strip.hidden) strip.dataset.shown = '1';
     strip.innerHTML = strip.hidden ? '' : `<div class="attn">${groups.map((g) => `
       <button type="button" class="att att-${g.id}${g.id === 'vencidos' && g.list.every(isMed) ? ' is-med' : ''}" aria-pressed="${savedFilter === g.id}" data-filter="${g.id}">
         <span class="att-i" aria-hidden="true">${icon(g.icon)}</span>

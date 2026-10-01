@@ -71,6 +71,9 @@ export default function mountInventario(root, m = {}) {
     const done = scope.filter((p) => Object.hasOwn(draft.counts, p.code)).length;
     progress.textContent = scope.length ? `${done} de ${scope.length}` : '';
     ringFg.style.strokeDasharray = `${scope.length ? Math.round((done / scope.length) * 100) : 0} 100`;
+    const ring = $('.ring', root);
+    if (scope.length && done === scope.length && !ring.classList.contains('is-full')) { ring.classList.add('is-full'); vibrate([10, 60, 20]); }
+    else if (done < scope.length) ring.classList.remove('is-full');
     review.classList.toggle('is-disabled', done === 0);
     review.setAttribute('aria-disabled', String(done === 0));
     renderTicket(scope, done);

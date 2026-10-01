@@ -1,0 +1,188 @@
+// Movimento: molas físicas (como as do iOS), o produto que voa até o cupom, o
+// selo de "pronto" que se desenha, a caixa do remédio que inclina com o dedo e
+// números que contam. Tudo respeita "Reduzir movimento": sem deslocamento, no
+// máximo um esmaecimento curto.
+
+export const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Mola ----------
+// Simula uma mola (massa, rigidez, amortecimento) e devolve a curva como
+// linear(...) do CSS e a duração até assentar. Cache por parâmetros.
+const springCache = new Map();
+export function spring({ stiffness = 260, damping = 24, mass = 1, velocity = 0 } = {}) {
+  const key = `${stiffness}|${damping}|${mass}|${velocity}`;
+  if (springCache.has(key)) return springCache.get(key);
+  const dt = 1 / 120;
+  let x = 0; let v = velocity;
+  const pts = [];
+  let t = 0;
+  let settled = 0;
+  while (t < 3) {
+    const f = -stiffness * (x - 1) - damping * v;
+    v += (f / mass) * dt;
+    x += v * dt;
+    t += dt;
+    pts.push([t, x]);
+    if (Math.abs(x - 1) < 0.001 && Math.abs(v) < 0.01) { if ((settled += dt) > 0.05) break; } else settled = 0;
+  }
+  const duration = Math.round(t * 1000);
+  // Amostra ~40 pontos: o bastante para a curva, sem string gigante.
+  const step = Math.max(1, Math.floor(pts.length / 40));
+  const stops = pts.filter((_, i) => i % step === 0 || i === pts.length - 1)
+    .map(([pt, px]) => `${px.toFixed(4)} ${((pt / t) * 100).toFixed(1)}%`);
+  const out = { easing: `linear(0, ${stops.join(', ')})`, duration };
+  springCache.set(key, out);
+  return out;
+}
+const HAS_LINEAR = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)');
+
+// Anima `el` com uma mola. Sem linear(): cai numa curva parecida.
+export function springTo(el, keyframes, opts = {}) {
+  if (!el || !el.animate) return null;
+  if (reduced()) return el.animate([{ opacity: 0.6 }, { opacity: 1 }], { duration: 150 });
+  const s = spring(opts);
+  return el.animate(keyframes, {
+    duration: opts.duration || s.duration,
+    easing: HAS_LINEAR ? s.easing : 'cubic-bezier(0.2, 0.9, 0.3, 1.1)',
+    delay: opts.delay || 0,
+    fill: opts.fill || 'none',
+    composite: opts.composite,
+  });
+}
+
+// "Pulo" de confirmação: o elemento cresce um pouco e volta com mola.
+export function pop(el, { scale = 1.08, stiffness = 420, damping = 16 } = {}) {
+  return springTo(el, [{ transform: `scale(${scale})` }, { transform: 'scale(1)' }], { stiffness, damping });
+}
+
+// Entrada em cascata (listas, cartões): cada um sobe um pouco e aparece.
+export function stagger(els, { y = 12, step = 32, max = 12, stiffness = 300, damping = 28 } = {}) {
+  if (reduced()) return;
+  [...els].slice(0, max).forEach((el, i) => springTo(el, [
+    { transform: `translateY(${y}px)`, opacity: 0 },
+    { transform: 'none', opacity: 1 },
+  ], { stiffness, damping, delay: i * step, fill: 'backwards' }));
+}
+
+// ---------- Voo até o cupom ----------
+// Uma cópia do elemento `from` voa num arco até `to` e encolhe dentro dele,
+// como o item que "cai" na sacola. Resolve quando chega.
+export function flyTo(from, to, { html = null, size = 52 } = {}) {
+  if (reduced() || !from || !to) return Promise.resolve();
+  const a = from.getBoundingClientRect ? from.getBoundingClientRect() : from;
+  const b = to.getBoundingClientRect();
+  if (!a.width || !b.width) return Promise.resolve();
+  const ghost = document.createElement('div');
+  ghost.className = 'fly-ghost';
+  ghost.innerHTML = html || (from.outerHTML || '');
+  const sx = a.left + a.width / 2 - size / 2;
+  const sy = a.top + a.height / 2 - size / 2;
+  Object.assign(ghost.style, { left: `${sx}px`, top: `${sy}px`, width: `${size}px`, height: `${size}px` });
+  document.body.append(ghost);
+  const tx = b.left + Math.min(40, b.width / 2) - size / 2 - sx;
+  const ty = b.top + b.height / 2 - size / 2 - sy;
+  // Arco: sobe um pouco antes de descer até a linha.
+  const lift = Math.min(-24, ty * -0.25);
+  const anim = ghost.animate([
+    { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0 },
+    { transform: `translate(${tx * 0.45}px, ${lift}px) scale(0.86)`, opacity: 1, offset: 0.45 },
+    { transform: `translate(${tx}px, ${ty}px) scale(0.32)`, opacity: 0.2, offset: 1 },
+  ], { duration: 560, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' });
+  return anim.finished.catch(() => {}).then(() => ghost.remove());
+}
+
+// ---------- Selo de pronto ----------
+// O círculo enche e o visto se desenha, como a confirmação de um pagamento.
+// Vai em `host`; resolve quando termina.
+export function successMark(host, { label = '' } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'done-mark';
+  wrap.setAttribute('role', 'status');
+  wrap.innerHTML = `
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle class="done-ring" cx="32" cy="32" r="28" pathLength="100"/>
+      <circle class="done-fill" cx="32" cy="32" r="28"/>
+      <path class="done-check" d="M20 33.5 L28.5 42 L45 24" pathLength="100"/>
+    </svg>
+    ${label ? `<span class="done-label">${label}</span>` : ''}`;
+  host.prepend(wrap);
+  if (reduced()) return Promise.resolve(wrap);
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => wrap.classList.add('is-on'));
+    setTimeout(() => resolve(wrap), 760);
+  });
+}
+
+// ---------- Números que contam ----------
+export function countUp(el, to, { from = 0, duration = 700 } = {}) {
+  if (!el) return;
+  if (reduced() || to === from) { el.textContent = String(to); return; }
+  const t0 = performance.now();
+  const ease = (x) => 1 - (1 - x) ** 4;
+  const tick = (now) => {
+    const k = Math.min(1, (now - t0) / duration);
+    el.textContent = String(Math.round(from + (to - from) * ease(k)));
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// ---------- Caixa que inclina ----------
+// Arrastar o dedo sobre a caixa do remédio gira em 3D; soltando, volta com mola.
+// `base`: a inclinação de repouso (rotateX e rotateY em graus).
+export function tiltable(el, { base = [8, -16], max = 18 } = {}) {
+  if (!el || reduced()) return () => {};
+  let active = null;
+  const set = (rx, ry) => { el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`; };
+  const down = (e) => {
+    active = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    el.style.transition = 'none';
+    try { el.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
+  };
+  const move = (e) => {
+    if (!active || e.pointerId !== active.id) return;
+    const dx = Math.max(-1, Math.min(1, (e.clientX - active.x) / 120));
+    const dy = Math.max(-1, Math.min(1, (e.clientY - active.y) / 120));
+    set(base[0] - dy * max, base[1] + dx * max * 1.6);
+  };
+  const up = () => {
+    if (!active) return;
+    active = null;
+    const s = spring({ stiffness: 180, damping: 12 });
+    el.style.transition = `transform ${s.duration}ms ${HAS_LINEAR ? s.easing : 'cubic-bezier(0.2, 1.4, 0.3, 1)'}`;
+    set(base[0], base[1]);
+  };
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointermove', move);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.style.touchAction = 'pan-y';
+  return () => {
+    el.removeEventListener('pointerdown', down);
+    el.removeEventListener('pointermove', move);
+    el.removeEventListener('pointerup', up);
+    el.removeEventListener('pointercancel', up);
+  };
+}
+
+// Entrada da caixa: cai girando um pouco e assenta; o selo "cola" depois.
+export function boxEnter(box) {
+  if (!box || reduced()) return;
+  const b3 = box.querySelector('.mbox-3d');
+  if (b3) springTo(b3, [
+    { transform: 'rotateX(28deg) rotateY(-38deg) translateY(-18px) scale(0.9)', opacity: 0 },
+    { transform: 'rotateX(8deg) rotateY(-16deg)', opacity: 1 },
+  ], { stiffness: 140, damping: 14, fill: 'backwards' });
+  const st = box.querySelector('.mbox-sticker:not([hidden])');
+  if (st) springTo(st, [
+    { transform: 'scale(1.6) rotate(-14deg)', opacity: 0 },
+    { transform: 'scale(1) rotate(0deg)', opacity: 1 },
+  ], { stiffness: 520, damping: 18, delay: 380, fill: 'backwards' });
+}
+
+// Cartela: os comprimidos que sobram aparecem um a um.
+export function blisterEnter(blister) {
+  if (!blister || reduced()) return;
+  const on = [...blister.querySelectorAll('i.is-on')];
+  on.forEach((p, i) => springTo(p, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { stiffness: 600, damping: 18, delay: 120 + i * 35, fill: 'backwards' }));
+}
