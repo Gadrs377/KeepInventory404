@@ -3,6 +3,7 @@
 
 import { tx, promisify, getAll, get, put, del } from './db.js';
 import { guessArea, AREA_IDS } from './areas.js';
+import { contLow, contAdd } from './continuo.js';
 
 const listeners = new Set();
 export function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -30,8 +31,26 @@ export async function newProductId(barcode) {
   return `${barcode}~${Date.now().toString(36)}`;
 }
 
+// Remédio de uso eventual (antibiótico, analgésico de reserva) não se repõe:
+// só avisa a validade. Só o de uso contínuo avisa "acabando" e vai para as
+// Compras (PLANO_MELHORIAS 14.5).
+export function wantsRefill(p) {
+  return !(p && (p.med || p.area === 'remedios') && !p.continuo);
+}
+
 export function isLow(p) {
-  return p.minQty > 0 && p.qty > 0 && p.qty <= p.minQty;
+  // Uso contínuo: pelos comprimidos que sobram (continuo.js), não pelas caixas.
+  if (p && p.continuo && p.cont) return contLow(p);
+  return wantsRefill(p) && p.minQty > 0 && p.qty > 0 && p.qty <= p.minQty;
+}
+
+// Último Conferir (contagem aplicada), em ms. Sem nenhum: 0.
+export async function lastConferirAt() {
+  const row = await get('meta', 'lastConferir');
+  if (row && row.value) return row.value;
+  const receipts = await listReceipts();
+  const r = receipts.find((x) => x.mode === 'contagem');
+  return r ? r.at : 0;
 }
 
 function defaultBarcodes(code) {
@@ -116,6 +135,8 @@ async function move(code, type, delta, info, expiresAt) {
       await trimLots(s, lotsBefore, qtyAfter);
     }
     p = { ...p, qty: qtyAfter, updatedAt: Date.now() };
+    // Uso contínuo: caixa guardada soma comprimidos na conta.
+    if (delta > 0 && type === 'entrada' && p.continuo && p.cont) p.cont = contAdd(p, delta);
     await promisify(s.products.put(p));
     const movement = { code, type, delta, qtyBefore, qtyAfter, at: Date.now(), lotsBefore };
     if (delta > 0 && dated.length) movement.expiresAt = dated[0].expiresAt;
@@ -350,6 +371,7 @@ export async function applyCount(zeroMissing) {
       await promisify(s.products.put({ ...p, qty: to, updatedAt: now }));
     }
     await promisify(s.meta.delete('countDraft'));
+    await promisify(s.meta.put({ key: 'lastConferir', value: Date.now() }));
   });
   emit();
   return targets.length;

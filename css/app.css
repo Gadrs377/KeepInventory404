@@ -1040,12 +1040,15 @@ body:has(.screen-scan, .screen-count) .sheet { background: var(--glass-solid); -
 .tab-item[aria-current="page"] { color: var(--ink); }
 .tab-item:focus-visible { outline-offset: -3px; }
 .scan-fab {
-  flex: none; width: 64px; height: 64px; border-radius: 50%;
-  display: grid; place-items: center; text-decoration: none;
-  color: var(--on-mode);
+  flex: none; width: 72px; height: 64px; border-radius: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  text-decoration: none;
+  /* Cor fixa: tinta (preto; branco no escuro). A cor do modo é só do leitor. */
+  background: var(--ink); color: var(--paper);
+  box-shadow: var(--glass-shadow);
 }
-.scan-fab.glass-regular { background: color-mix(in oklab, var(--mode) 90%, transparent); }
-.scan-fab .icon { width: 28px; height: 28px; }
+.scan-fab .icon { width: 26px; height: 26px; }
+.scan-fab-label { font: 700 12px/1 var(--font-ui); letter-spacing: 0.01em; }
 .scan-fab:active { scale: 0.96; }
 .scan-fab { --focus: var(--ink); }
 @media (min-width: 720px) {
@@ -1876,8 +1879,22 @@ body:has(.screen-scan) .sheet-footer { background: linear-gradient(to top, var(-
 :root { --tarja-vermelha: #C8102E; }
 @media (prefers-color-scheme: dark) { :root { --tarja-vermelha: #FF6B7D; } }
 
-/* Remédio sem foto: o ícone de comprimido fica mais presente que o do pacote */
-.thumb-med .icon { opacity: 0.7; }
+/* Remédio sem foto: uma caixinha branca, inclinada, com a faixa da tarja
+   embaixo (vermelha, preta ou nenhuma) e duas linhas de "texto" da embalagem. */
+.thumb-med { background: var(--shelf); }
+.mini-box {
+  position: relative; width: 70%; aspect-ratio: 3 / 2; border-radius: 3px; overflow: hidden;
+  background: linear-gradient(160deg, #fff, #eef0ed);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(22, 24, 23, 0.1);
+  rotate: -8deg;
+}
+.mini-box::before, .mini-box::after { content: ''; position: absolute; left: 14%; border-radius: 2px; }
+.mini-box::before { top: 18%; width: 50%; height: 12%; background: #161817; }
+.mini-box::after { top: 40%; width: 34%; height: 8%; background: #9aa19c; }
+.mini-box-band { position: absolute; inset: auto 0 0 0; height: 26%; }
+.mini-box.is-red .mini-box-band { background: #C8102E; }
+.mini-box.is-black .mini-box-band { background: #161817; }
+@media (forced-colors: active) { .mini-box { outline: 1px solid CanvasText; } }
 
 /* Fatos do remédio: rótulo pequeno em cima, valor embaixo, fio entre eles */
 .facts { margin: 0 0 12px; border-top: 1px solid var(--line); }
@@ -2563,3 +2580,129 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .viewfinder.is-paused video { filter: brightness(0.45) grayscale(0.4); }
 .viewfinder.is-paused .aim { opacity: 0.4; }
 @media (prefers-reduced-motion: reduce) { .cam-paused, .viewfinder video { transition: none; } }
+
+/* =====================================================================
+   Redesenho 4.0 (DESIGN_NOVO.md). Fica no fim para valer sobre o antigo.
+   ===================================================================== */
+
+/* ---------- Menu com uma linha de explicação (Conferir) ---------- */
+.menu-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; text-align: start; }
+.menu-sub { font-size: 0.7647rem; font-weight: 400; color: var(--ink-2); line-height: 1.25; }
+.menu-item:has(.menu-sub) { min-height: 60px; padding-block: 10px; }
+
+/* ---------- Armário: Pede atenção ---------- */
+.attn-strip { position: relative; margin-top: 4px; }
+.attn-strip .attn {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(112px, max-content); gap: 8px;
+  padding: 8px var(--gutter) 6px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  scroll-padding-inline: var(--gutter);
+}
+.attn-strip .attn::-webkit-scrollbar { display: none; }
+.att {
+  scroll-snap-align: start;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 108px; padding: 12px; border: 0; border-radius: 20px;
+  background: var(--shelf); color: var(--ink); text-align: start;
+  font: 600 0.8235rem/1.2 var(--font-ui); cursor: pointer;
+  transition: background-color 240ms var(--ease), color 240ms var(--ease), scale 200ms var(--spring);
+}
+.att:active { scale: 0.96; }
+.att-i { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 4px; }
+.att-i .icon { width: 17px; height: 17px; }
+.att-n { font: 800 28px/1 var(--font-num); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.att-l { max-width: 12ch; }
+.att-vencidos .att-i { background: var(--val-ink); color: var(--paper); }
+.att-vencidos.is-med { background: var(--val-soft); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--val) 70%, transparent); }
+.att-semana .att-i, .att-acabando .att-i { background: var(--acabando); color: #161817; }
+.att-zerados .att-i { outline: 1.5px dashed var(--ink-2); outline-offset: -1.5px; }
+.att-conferir .att-i { background: var(--contagem); color: var(--on-mode); }
+.att[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
+.att[aria-pressed="true"].att-zerados .att-i { outline-color: var(--paper); }
+@media (forced-colors: active) { .att[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
+
+/* Título do filtro ligado: "2 vencem esta semana" e "Mostrar tudo". */
+.filter-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px var(--gutter) 6px; }
+.filter-head h2 { margin: 0; font: 800 1.1765rem/1.2 var(--font-num); letter-spacing: -0.01em; }
+.filter-head.is-search h2, .filter-head.is-anvisa h2 { font-size: 1rem; }
+.filter-count { font-size: 0.8235rem; color: var(--ink-2); }
+.link-btn { min-height: 44px; padding: 0 2px; border: 0; background: none; color: var(--ink); font: 700 0.8824rem var(--font-ui); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Etiqueta de data ("01/10" e "amanhã"), no lugar da quantidade. */
+.date-tag {
+  flex: none; min-width: 66px; height: 50px; padding: 0 8px; border-radius: var(--r-tag);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05;
+  background: var(--acabando); color: #161817;
+}
+.date-tag b { font: 800 19px var(--font-num); font-variant-numeric: tabular-nums; }
+.date-tag em { font: 700 11px var(--font-ui); font-style: normal; }
+.date-tag.is-past { background: var(--val-ink); color: var(--paper); }
+.date-tag.is-later { background: var(--shelf); color: var(--ink); }
+.row-item.has-acts .row { padding-inline-end: var(--gutter); }
+.row-acts { display: flex; gap: 8px; padding: 0 var(--gutter) 16px; }
+.row-acts .btn { flex: 1 1 auto; min-height: 40px; padding-inline: 10px; white-space: nowrap; font-size: 0.8235rem; }
+.row-acts .btn .icon { width: 16px; height: 16px; }
+
+/* Armário vazio e busca sem resultado. */
+.empty-first .btn, .empty-search .btn { width: 100%; max-width: 320px; }
+.empty-first .btn + .btn, .empty-search .btn + .btn { margin-top: 8px; }
+
+/* ---------- Toque longo: o cartão que sobe ---------- */
+.peek-root { position: fixed; inset: 0; z-index: 40; }
+.peek-scrim {
+  position: absolute; inset: 0; background: rgba(22, 24, 23, 0.22);
+  -webkit-backdrop-filter: blur(14px) saturate(120%); backdrop-filter: blur(14px) saturate(120%);
+  opacity: 0; transition: opacity 260ms var(--ease);
+}
+.peek-root.is-open .peek-scrim { opacity: 1; }
+.peek-root.is-leaving .peek-scrim { opacity: 0; transition-duration: 200ms; }
+.peek { position: absolute; display: flex; flex-direction: column; gap: 10px; }
+.peek-card {
+  padding: 12px; border-radius: 26px; background: var(--paper);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25), inset 0 0 0 1px var(--glass-edge);
+  transform-origin: 50% 0;
+}
+.peek-root.is-leaving .peek-card { transition: opacity 200ms ease-out, scale 200ms ease-out; opacity: 0; scale: 0.94; }
+.peek-head { display: flex; gap: 12px; align-items: center; }
+.peek-text { min-width: 0; }
+.peek-name { margin: 0; font: 700 1.0588rem/1.25 var(--font-num); }
+.peek-sub { margin: 2px 0 0; color: var(--ink-2); font-size: 0.8824rem; }
+.peek-qty { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
+.peek-step {
+  width: 52px; height: 52px; border: 0; border-radius: 16px; display: grid; place-items: center;
+  background: var(--shelf); color: var(--ink); cursor: pointer;
+}
+.peek-step:disabled { color: var(--ink-disabled); }
+.peek-step .icon { width: 22px; height: 22px; }
+.peek-dates { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.peek-dates li { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: var(--r-tag); background: var(--shelf); font-size: 0.8235rem; }
+.peek-dates li b { font: 700 0.8824rem var(--font-num); font-variant-numeric: tabular-nums; }
+.peek-dates li .icon { width: 14px; height: 14px; }
+.peek-dates li.is-free { background: none; box-shadow: inset 0 0 0 1.5px var(--line); }
+.peek-menu {
+  width: min(260px, 100%); border-radius: 14px; overflow: hidden;
+  background: color-mix(in oklab, var(--paper) 92%, transparent);
+  -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25), inset 0 0 0 1px var(--glass-edge);
+  transform-origin: 0 0;
+}
+.peek-root:not(.is-open) .peek-menu { opacity: 0; scale: 0.9; }
+.peek-root.is-open .peek-menu { opacity: 1; scale: 1; transition: opacity 220ms var(--ease) 60ms, scale 420ms var(--spring-bouncy) 60ms; }
+.peek-root.is-open .peek-menu .menu-item { animation: menu-item-in 420ms var(--spring) backwards; animation-delay: calc(var(--i, 0) * 28ms + 90ms); }
+.row-item.is-peeked .row-slide { opacity: 0; }
+.row.is-pressing { transition: scale 480ms var(--ease); scale: 0.97; }
+@media (prefers-reduced-motion: reduce) {
+  .peek-scrim, .peek-menu { transition: none !important; }
+  .row.is-pressing { scale: 1; }
+}
+
+/* ---------- Botão Ler ---------- */
+.scan-fab:active { scale: 0.94; }
+
+/* ---------- Editar ---------- */
+.field-inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+.field-inline .field-label { flex: 1; }
+.btn-text-danger { align-self: center; min-height: 44px; margin-top: 12px; padding: 0 12px; border: 0; background: none; color: var(--danger); font: 700 1rem var(--font-ui); cursor: pointer; }
+.edit-code { margin: 0; text-align: center; color: var(--ink-2); font-size: 0.7647rem; font-variant-numeric: tabular-nums; }
+.stepper-lg { grid-template-columns: 64px 1fr 64px; }
+.stepper-lg .stepper-btn { width: 64px; height: 64px; }
+.stepper-lg .stepper-value { font-size: 48px; height: 64px; }

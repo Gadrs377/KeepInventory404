@@ -24,6 +24,8 @@ const ROUTES = [
   // Entrada e Saída são a mesma tela; o endereço só diz em que modo ela abre.
   [/^\/(entrada|saida)(?:\/([^/]+))?$/, (root, m) => mountScan(root, { mode: m[1], code: m[2] && decodeURIComponent(m[2]) })],
   [/^\/inventario$/, mountInventario],
+  // Conferir tudo (quantidade e datas numa passada) e Só contar são a mesma tela.
+  [/^\/conferir$/, (root, m) => mountInventario(root, Object.assign(m, { kind: 'tudo' }))],
   [/^\/revisao$/, mountRevisao],
   [/^\/produto\/([^/]+)$/, (root, m) => mountProduto(root, { code: decodeURIComponent(m[1]) })],
   [/^\/dados$/, mountDados],

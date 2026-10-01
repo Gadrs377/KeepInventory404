@@ -3,6 +3,8 @@
 // Olha os últimos 60 dias; com menos de 7 dias de histórico, divide por 7 para
 // não exagerar o ritmo de quem acabou de começar.
 
+import { contDaysLeft, CONT_WARN_DAYS } from './continuo.js';
+
 const DAY = 86400000;
 const WINDOW_DAYS = 60;
 const MIN_DAYS = 7;
@@ -51,6 +53,15 @@ export function daysLeft(p, perDay) {
 export function shoppingSuggestions(products, rates, every = 7) {
   const out = [];
   for (const p of products) {
+    // Remédio de uso eventual não se repõe (ver wantsRefill em store.js).
+    if ((p.med || p.area === 'remedios') && !p.continuo) continue;
+    // Uso contínuo: pela conta dos comprimidos (continuo.js).
+    if (p.continuo && p.cont) {
+      const d = contDaysLeft(p);
+      if (d > Math.max(every, CONT_WARN_DAYS)) continue;
+      out.push({ product: p, buy: 1, reason: d < 1 ? 'Acaba hoje' : `Uso contínuo, acaba em cerca de ${Math.max(1, Math.round(d))} dias`, rate: '', left: d });
+      continue;
+    }
     const r = rates.get(p.code) || { perDay: 0, used: 0 };
     const perDay = r.used >= 2 ? r.perDay : 0; // uma saída só não é ritmo
     const left = p.qty === 0 ? 0 : daysLeft(p, perDay);

@@ -1,6 +1,7 @@
 // Componentes compartilhados: escape de HTML, etiqueta, folha, aviso, seletor e confirmação.
 
 import { ICONS } from './icons.js';
+import { contLow, contDaysLeft, CONT_WARN_DAYS } from './continuo.js';
 
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -31,16 +32,22 @@ export function pill(kind, text) {
   return `<span class="pill pill-${kind}">${ico ? icon(ico) : ''}${esc(text)}</span>`;
 }
 
+const refills = (p) => !((p.med || p.area === 'remedios') && !p.continuo);
+const lowNow = (p) => (p.continuo && p.cont ? contLow(p) : refills(p) && p.minQty > 0 && p.qty <= p.minQty);
 export function stockPill(p) {
+  if (p.continuo && p.cont) {
+    const d = contDaysLeft(p);
+    if (d <= CONT_WARN_DAYS) return pill('low', d < 1 ? 'Acaba hoje' : `Acaba em ~${Math.round(d)} ${Math.round(d) === 1 ? 'dia' : 'dias'}`);
+  }
   if (p.qty === 0) return pill('zero', 'Zerado');
-  if (p.minQty > 0 && p.qty <= p.minQty) return pill('low', 'Acabando');
+  if (lowNow(p)) return pill('low', 'Acabando');
   return '';
 }
 
 // Depois de tirar: o aviso conta o que isso mudou, não só o número.
 // "Acabando" já põe o produto na lista de compras (sugestão automática).
 export function afterUseText(p) {
-  if (p.minQty > 0 && p.qty <= p.minQty) {
+  if (lowNow(p)) {
     return p.qty === 0 ? ' Acabou; já está na lista de compras.' : ' Está acabando; já está na lista de compras.';
   }
   return p.qty === 0 ? ' Acabou.' : '';
@@ -48,19 +55,28 @@ export function afterUseText(p) {
 
 export function tagState(p) {
   if (p.qty === 0) return 'is-zero';
-  if (p.minQty > 0 && p.qty <= p.minQty) return 'is-low';
+  if (lowNow(p)) return 'is-low';
   return '';
 }
 
 // Foto da embalagem por cima de um ícone de pacote; se a foto falhar, sobra o ícone.
-// Remédio nunca mostra foto: só o ícone de comprimido.
+// Remédio nunca mostra foto: no lugar dela, uma caixinha com a faixa da tarja
+// (vermelha, preta ou nenhuma), para ver de longe qual precisa de receita.
 const medLike = (p) => !!p && (p.area === 'remedios' || !!p.med);
+export const tarjaClass = (med) => {
+  const t = med && med.tarja;
+  return t === 'preta' ? 'is-black' : t === 'vermelha' || t === 'vermelha-retencao' ? 'is-red' : '';
+};
+export function miniBox(med) {
+  return `<span class="mini-box ${tarjaClass(med)}"><i class="mini-box-band"></i></span>`;
+}
 export function thumb(p, size = 'sm') {
   const med = medLike(p);
-  const img = p && p.image && !med
+  if (med) return `<span class="thumb thumb-${size} thumb-med" aria-hidden="true">${miniBox(p.med)}</span>`;
+  const img = p && p.image
     ? `<img src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
     : '';
-  return `<span class="thumb thumb-${size}${med ? ' thumb-med' : ''}" aria-hidden="true">${icon(med ? 'pill' : 'package')}${img}</span>`;
+  return `<span class="thumb thumb-${size}" aria-hidden="true">${icon('package')}${img}</span>`;
 }
 
 // Fim da lista de sugestões quando houve foto: nenhuma serve? Usa o que a foto
@@ -84,9 +100,8 @@ export function photoPickRow(p, alone = false) {
 // não diz o que é), a não ser que o nome já seja o princípio ativo (genérico).
 export function subtitle(p) {
   if (p && p.med && p.med.substancia) {
-    const fold = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const first = fold(p.name) === fold(p.med.substancia) ? p.brand : p.med.substancia;
-    return [first, p.size].filter(Boolean).map(esc).join(', ');
+    const dose = String(p.med.tamanho || p.size || '').split(',')[0].trim();
+    return [p.med.substancia, dose].filter(Boolean).map(esc).join(', ').replace(/(\d) (?=[a-zµ%])/gi, '$1&nbsp;');
   }
   return [p.brand, p.size].filter(Boolean).map(esc).join(', ');
 }
@@ -165,7 +180,7 @@ function buildTabBar() {
           <span class="tab-icons">${icon(t.icon, 'tab-off')}${icon(t.active, 'tab-on')}</span><span class="tab-label">${t.label}</span>
         </a>`).join('')}
     </nav>
-    <a class="scan-fab glass-regular" href="#/entrada" draggable="false">${icon('barcode')}</a>`;
+    <a class="scan-fab" href="#/entrada" draggable="false" aria-label="Ler um código">${icon('barcode')}<span class="scan-fab-label" aria-hidden="true">Ler</span></a>`;
   document.body.append(bar);
   enableScrub(bar.querySelector('.tabbar'));
   window.addEventListener('resize', () => placeGlide(false));
@@ -273,12 +288,8 @@ export function updateTabBar() {
     const on = it.dataset.tab === current;
     if (on) it.setAttribute('aria-current', 'page'); else it.removeAttribute('aria-current');
   }
-  const mode = lastScanMode();
-  const fab = bar.querySelector('.scan-fab');
-  fab.href = `#/${mode}`;
-  fab.classList.remove('mode-entrada', 'mode-saida');
-  fab.classList.add(`mode-${mode}`);
-  fab.setAttribute('aria-label', `Ler código de barras (${mode === 'saida' ? 'Saída' : 'Entrada'})`);
+  // O leitor sempre abre em Guardar (decidido em 30/09): o botão tem cor fixa,
+  // e a cor do modo só aparece dentro do leitor.
   if (current) placeGlide(!wasHidden);
 }
 
@@ -720,7 +731,7 @@ export function openMenu(anchor, items, { label = 'Opções' } = {}) {
     <div class="menu glass-thick" role="menu" aria-label="${esc(label)}" tabindex="-1">
       ${items.map((it, i) => `
         <button type="button" class="menu-item ${it.danger ? 'is-danger' : ''}" role="menuitem" data-i="${i}" style="--i:${i}">
-          <span>${esc(it.label)}</span>${it.icon ? icon(it.icon) : ''}
+          <span class="menu-text"><span>${esc(it.label)}</span>${it.sub ? `<span class="menu-sub">${esc(it.sub)}</span>` : ''}</span>${it.icon ? icon(it.icon) : ''}
         </button>`).join('')}
     </div>`;
   document.body.append(host);
