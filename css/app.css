@@ -2889,3 +2889,59 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .qty-foot span { color: var(--ink-2); font-size: 0.8824rem; }
 .ticket-hint { margin: 14px 0 4px; text-align: center; font-size: 0.8235rem; color: var(--ink-2); }
 .ticket-title { letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ---------- Conferir ---------- */
+.count-band .band-center { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.band-name { margin: 0; font: 800 1.1176rem/1.2 var(--font-num); color: var(--on-mode); white-space: nowrap; }
+.band-count { margin: 0; font-size: 0.8235rem; font-weight: 600; opacity: 0.9; font-variant-numeric: tabular-nums; }
+.ring { width: 44px; height: 44px; display: grid; place-items: center; color: var(--on-mode); }
+.ring svg { width: 30px; height: 30px; rotate: -90deg; }
+.ring circle { fill: none; stroke: currentColor; stroke-width: 5; }
+.ring-bg { opacity: 0.3; }
+.ring-fg { stroke-linecap: round; stroke-dasharray: 0 100; transition: stroke-dasharray 600ms var(--spring); }
+.count-hint { margin: 10px var(--gutter) 0; text-align: center; font-size: 0.8235rem; color: var(--ink-2); }
+.count-card .act-card { margin: 12px 0 0; }
+.act-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.act-row .btn { width: 100%; white-space: nowrap; }
+.count-card .act-card .btn-quiet { background: var(--paper); }
+.count-dates { justify-content: flex-start; margin-top: 10px; }
+.diff-note { color: var(--contagem); font-weight: 700; }
+.paper-sub { color: #3f4541; }
+.paper-ok { font-weight: 800; }
+.paper-more { border: 0; background: none; padding: 0; min-height: 32px; font: 800 0.9412rem var(--font-num); color: #161817; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.left-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.left-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.left-row .btn { flex: none; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.sheet-text-sm { font-size: 0.8235rem; color: var(--ink-2); }
+.steps { list-style: none; margin: 4px 0 8px; padding: 0; }
+.steps li { display: flex; gap: 14px; align-items: flex-start; padding: 8px 0; font-size: 1rem; }
+.steps b { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--contagem); color: var(--on-mode); display: grid; place-items: center; font: 800 15px var(--font-num); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.chips .chip { min-height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: var(--shelf); color: var(--ink); font: 700 0.8824rem var(--font-ui); cursor: pointer; }
+.chips .chip[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+
+/* Revisão */
+.review-title { padding: 4px var(--gutter) 0; }
+.review-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px var(--gutter) 4px; }
+.review-sum div { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 16px; background: var(--shelf); }
+.review-sum b { font: 800 28px/1 var(--font-num); font-variant-numeric: tabular-nums; }
+.review-sum span { font-size: 0.7647rem; font-weight: 700; color: var(--ink-2); }
+.review-sec { margin-top: 8px; }
+.review-head { display: flex; justify-content: space-between; align-items: baseline; padding-inline-end: var(--gutter); }
+.link-btn.is-danger { color: var(--danger); }
+.review-list { list-style: none; margin: 0 var(--gutter); padding: 0 12px; border-radius: 20px; background: var(--shelf); }
+.review-row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; }
+.review-row + .review-row { border-top: 1px solid var(--line); }
+.review-row .thumb { background: var(--paper); }
+.review-zero { flex: none; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.review-row.is-zeroed .row-name { text-decoration: line-through; color: var(--ink-2); }
+.review-row.is-zeroed .row-sub { color: var(--danger); }
+.review-row .diff-delta { flex: none; font: 800 1.1176rem var(--font-num); }
+.diff-delta.is-up { color: var(--contagem); }
+.diff-delta.is-down { color: var(--saida); }
+.screen-review .floating-bar .btn { width: 100%; }
+/* O texto do cartão não quebra no meio ("O armário dizia / 3"): se não couber
+   com o − +, os botões descem para a linha de baixo, à direita. */
+.last-sub { flex-wrap: wrap; row-gap: 0; }
+.last-sub > span { flex: 1 1 auto; white-space: nowrap; }
+.last-step { margin-inline-start: auto; }

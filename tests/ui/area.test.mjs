@@ -32,11 +32,13 @@ async function openNewByName(webAreas = {}) {
     return route.fulfill({ json: { results: [] } });
   });
   await page.goto(`${server.url}/#/entrada`);
-  await page.waitForSelector('[data-nocode-tool]');
+  await page.waitForSelector('[data-type]');
   // O modelo carrega em segundo plano; espera ele antes de digitar.
   await page.waitForFunction(async () => (await import('/js/areas.js')).guessAreaInfo({ name: 'Losartana 50mg' }).by === 'modelo');
   const open = async () => {
-    await page.click('[data-nocode-tool]');
+    // Produto sem código: Digitar > "Produto sem código de barras".
+    await page.click('[data-type]');
+    await page.click('.sheet [data-nocode]');
     await page.click('[data-way="name"]');
     await page.waitForSelector('#new-name');
   };

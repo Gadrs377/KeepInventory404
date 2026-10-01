@@ -23,10 +23,10 @@ async function openMode(seed) {
   await page.goto(`${server.url}/#/`);
   await page.evaluate(seed);
   await page.reload();
-  await page.click('[data-validade]');
-  await page.waitForSelector('.screen-validade [data-manual]');
+  await page.goto(page.url().replace(/#.*$/, '') + '#/validade');
+  await page.waitForSelector('.screen-validade [data-type]');
   const readCode = async (code) => {
-    await page.click('.screen-validade [data-manual]');
+    await page.click('.screen-validade [data-type]');
     await page.waitForSelector('.sheet input');
     await page.fill('.sheet input', code);
     await page.keyboard.press('Enter');

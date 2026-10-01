@@ -238,8 +238,8 @@ export default function mountArmario(root, m = {}) {
       : q ? `
         <div class="empty-state empty-search">
           <span class="empty-icon" aria-hidden="true">${icon('search')}</span>
-          <p class="empty-lead">Nada no armário com “${esc(q)}”</p>
-          <p>${outside ? `Tem ${plural(outside, 'produto', 'produtos')} em outro ambiente.` : 'Confira a escrita, ou guarde o produto lendo o código.'}</p>
+          <p class="empty-lead">${outside ? `Nada em ${esc(AREAS.find((a) => a.id === savedArea)?.short || '')} com “${esc(q)}”` : `Nada no armário com “${esc(q)}”`}</p>
+          <p>${outside ? `Mas tem ${plural(outside, 'produto', 'produtos')} no resto do armário.` : 'Confira a escrita, ou guarde o produto lendo o código.'}</p>
           ${outside ? '<button type="button" class="btn btn-quiet btn-lg" data-widen>Buscar no armário todo</button>' : `
           <a class="btn btn-primary btn-lg" href="#/entrada">${icon('barcode')}Ler o código</a>
           <button type="button" class="btn btn-quiet btn-lg" data-shop-q>${icon('cart')}Adicionar às Compras</button>`}

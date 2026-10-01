@@ -19,15 +19,22 @@ export default function mountValidade(root) {
 
   root.innerHTML = `
     <div class="screen screen-scan screen-validade has-floating-bar mode-validade">
-      <header class="band band-slim">
-        <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
-        <h1 class="band-title">${icon('calendar')}Validade</h1>
+      <header class="band band-slim count-band">
+        <a class="icon-btn band-close" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
+        <div class="band-center">
+          <h1 class="band-name">Marcar validades</h1>
+          <p class="band-count" data-marked></p>
+        </div>
+        <span class="band-end" aria-hidden="true"></span>
       </header>
       <main>
         <div class="cam-host"></div>
-        <section class="receipt" aria-label="Validades marcadas agora">
-          <ul class="receipt-lines"></ul>
-          <p class="receipt-total"></p>
+        <section class="receipt live-ticket" aria-label="Validades marcadas agora">
+          <div class="paper">
+            <p class="paper-head">Marcadas</p>
+            <ul class="receipt-lines paper-lines"></ul>
+            <p class="receipt-total paper-total"></p>
+          </div>
         </section>
         <section class="val-shelf" aria-labelledby="val-shelf-title">
           <h2 class="list-title" id="val-shelf-title">No armário</h2>
@@ -35,8 +42,9 @@ export default function mountValidade(root) {
           <ul class="quick-list val-list"></ul>
         </section>
       </main>
-      <footer class="floating-bar glass-regular glass-static">
-        <button type="button" class="btn btn-primary btn-lg" data-finish>${icon('check')}Concluir</button>
+      <footer class="floating-bar glass-regular glass-static scan-bar">
+        <button type="button" class="btn btn-quiet btn-lg" data-type>${icon('keyboard')}Digitar</button>
+        <button type="button" class="btn btn-mode btn-lg" data-finish>${icon('check')}Concluir</button>
       </footer>
     </div>`;
 
@@ -96,15 +104,16 @@ export default function mountValidade(root) {
     const entries = [...done.values()].reverse();
     lines.innerHTML = entries.map((e) => `
       <li>
-        <a class="receipt-line" href="#/produto/${encodeURIComponent(e.product.code)}" aria-label="${esc(e.product.name)}, ${esc(e.dates.map(formatDate).join(', '))}">
-          <span class="receipt-name">${esc(e.product.name)}</span>
-          <span class="receipt-dots" aria-hidden="true"></span>
-          <span class="receipt-n">${esc(e.dates.map((d) => formatDate(d).slice(0, 5)).join(', '))}</span>
+        <a class="receipt-line paper-line" href="#/produto/${encodeURIComponent(e.product.code)}" aria-label="${esc(e.product.name)}, ${esc(e.dates.map(formatDate).join(', '))}">
+          <span class="receipt-name paper-name">${esc(e.product.name)}</span>
+          <span class="paper-dots" aria-hidden="true"></span>
+          <span class="receipt-n paper-n">${esc(e.dates.map((d) => formatDate(d).slice(0, 5)).join(', '))}</span>
         </a>
       </li>`).join('');
     total.hidden = false;
     const n = entries.reduce((a, e) => a + e.dates.length, 0);
-    total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n">${plural(n, 'data', 'datas')}</span>`;
+    total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n paper-n">${plural(n, 'data', 'datas')}</span>`;
+    $('[data-marked]', root).textContent = plural(n, 'marcada', 'marcadas');
   }
 
   // Aviso com uma ação (ir para a Entrada, abrir o produto) ou só Continuar.
@@ -321,7 +330,8 @@ export default function mountValidade(root) {
     const msCodigo = Date.now() - readyAt;
     try { await handleCode(barcode, barcode.startsWith('SEM-') ? null : msCodigo); } finally { readyAt = Date.now(); }
   };
-  const cam = mountCamera($('.cam-host', root), { onCode, altLabel: 'Procurar pelo nome' });
+  const cam = mountCamera($('.cam-host', root), { onCode, altLabel: 'Procurar pelo nome', bar: true });
+  $('[data-type]', root).addEventListener('click', () => cam.manual());
   cam.notice('Leia o código de barras do produto');
   return () => { cam.stop(); offChange(); };
 }

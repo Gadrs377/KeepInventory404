@@ -341,10 +341,14 @@ export async function setCounted(code, n) {
   return draft;
 }
 
+// Conferir um ambiente só (draft.area): o que é de outro ambiente não entra
+// em "não apareceram".
 export function diffCount(products, draft) {
   const changes = [];
   const missing = [];
+  const inScope = (p) => !draft.area || draft.area === 'tudo' || (p.area || 'cozinha') === draft.area;
   for (const p of products) {
+    if (!Object.hasOwn(draft.counts, p.code) && !inScope(p)) continue;
     if (Object.hasOwn(draft.counts, p.code)) {
       const counted = draft.counts[p.code];
       if (counted !== p.qty) changes.push({ product: p, from: p.qty, to: counted });
@@ -355,13 +359,16 @@ export function diffCount(products, draft) {
   return { changes, missing };
 }
 
+// zeroMissing: true (zera todos os não conferidos) ou uma lista de códigos
+// (só esses, pelo "Zerar" de cada linha).
 export async function applyCount(zeroMissing) {
   const draft = await getCountDraft();
   if (!draft) return 0;
   const products = await listProducts();
   const { changes, missing } = diffCount(products, draft);
   const targets = changes.map((c) => [c.product.code, c.to]);
-  if (zeroMissing) missing.filter((p) => p.qty > 0).forEach((p) => targets.push([p.code, 0]));
+  const zeroSet = Array.isArray(zeroMissing) ? new Set(zeroMissing) : null;
+  if (zeroMissing) missing.filter((p) => p.qty > 0 && (!zeroSet || zeroSet.has(p.code))).forEach((p) => targets.push([p.code, 0]));
 
   await tx(['products', 'movements', 'meta', 'lots'], 'readwrite', async (s) => {
     const now = Date.now();

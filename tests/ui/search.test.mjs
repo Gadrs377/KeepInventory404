@@ -74,7 +74,7 @@ test('o que bate fora do ambiente escolhido não some: "Buscar no armário todo"
     await page.click('[data-area=cozinha]');
     await page.waitForTimeout(400);
     await page.fill('input[type=search]', 'papel');
-    assert.match(await page.textContent('.empty-filter p'), /Nada com “papel” em Cozinha, mas tem 1 produto no resto do armário/);
+    assert.match((await page.textContent('.empty-search')).replace(/\s+/g, ' '), /Nada em Cozinha com “papel” Mas tem 1 produto no resto do armário/);
     await page.click('[data-widen]');
     await page.waitForTimeout(500);
     assert.deepEqual(await names(), ['Papel Higiênico Folha Dupla']);
