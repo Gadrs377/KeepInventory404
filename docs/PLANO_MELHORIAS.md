@@ -1097,6 +1097,12 @@ correções.
 
 ---
 
+### 13.3 /better-layout (01/10/2026)
+
+Feita em todas as pranchas: nenhum problema que esconda conteúdo ou ação;
+seis médios e seis pequenos, todos corrigidos no desenho. A lista está em
+[DESIGN_NOVO.md, seção 2.11](DESIGN_NOVO.md).
+
 ## 14. Remédios: crítica completa (30/09/2026)
 
 A tela de remédio do primeiro desenho novo foi feita às pressas, sem as lentes

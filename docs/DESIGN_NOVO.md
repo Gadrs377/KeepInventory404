@@ -41,8 +41,9 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
     aparece só dentro do leitor;
   - 4 abas de ambiente, que cabem em 320 px.
 - **Produto:**
-  - foto, nome, **−/3/+** com a etiqueta grande, Validades (com "Marcar" na
-    linha sem data) e Histórico;
+  - foto no centro, nome, os três blocos **Tirar 1 / 3 / Guardar 1**, Validades
+    (com "Marcar" na linha sem data) e Histórico. É a mesma página do remédio
+    (seções 2.10 e 2.11);
   - saem a quantidade repetida no Editar, o "Onde fica" repetido, o quadro
     Consumo vazio e o "Nome estranho?".
 - **Editar:** Salvar em destaque. **"Remover do armário" em texto vermelho,
@@ -264,128 +265,105 @@ Os itens de [PLANO_MELHORIAS.md, seção 12.5](PLANO_MELHORIAS.md), feitos:
 - **Conferir tudo:** como na seção 2.4.
 
 
-### 2.10 Remédios
+### 2.10 Remédios: o remédio como caixa
 
 A crítica completa está em [PLANO_MELHORIAS.md, seção 14](PLANO_MELHORIAS.md).
+Duas versões anteriores foram descartadas: a primeira resumia demais e ficou
+sem graça, e a segunda voltava ao visual antigo, com a tarja ainda reduzida a
+uma faixinha ao lado de uma palavra. Esta parte do que todo mundo já reconhece:
+**a embalagem do remédio**.
 
-![Armário na aba Remédios, busca na Anvisa, folha, página do remédio, leitor](design-novo/15-remedios-a.webp)
-![Descartar, Compras com receita, aviso na tela bloqueada, Conferir um ambiente](design-novo/16-remedios-b.webp)
+![Armário na aba Remédios, busca na Anvisa, folha da Anvisa, página vencida, ficha](design-novo/15-remedios-a.webp)
+![Uso contínuo, leitor, descartar, Compras, tela bloqueada, Conferir um ambiente](design-novo/16-remedios-b.webp)
 
+- **A caixa desenhada no lugar da foto.** O desenho sai dos dados da Anvisa:
+  - nome comercial grande, princípio ativo, dose e quantidade;
+  - laboratório no canto;
+  - a **tarja de verdade**: a faixa vermelha ou preta com o texto que vem na
+    embalagem;
+  - genérico com a faixa amarela do **G**.
+
+  Remédio continua sem foto, e mesmo assim cada um tem cara própria. No escuro
+  a caixa continua clara, como a de verdade.
+- **Caixinha nas listas** (Armário, busca, Compras, leitor): uma miniatura com
+  a faixa da tarja embaixo. Dá para ver de longe qual precisa de receita.
 - **A aba Remédios volta.** As abas deslizam e só aparecem os ambientes com
   algo em casa. Com a aba aberta, a busca diz "Buscar em casa e na Anvisa".
-- **Linha do remédio:** o nome, e embaixo o princípio ativo e a caixa
-  ("amoxicilina · 21 cápsulas"). Vencido tem selo forte; uso contínuo diz
-  quando acaba.
+- **Linha do remédio:** o nome, e embaixo o princípio ativo e a dose
+  ("amoxicilina, 500 mg"). Vencido tem selo forte; uso contínuo diz quando
+  acaba.
 - **Busca:** primeiro "Em casa", depois "Na lista da Anvisa" agrupada por
-  remédio (dose e quantidade em cada linha, laboratório e tipo embaixo). Sem o
-  "Nada no armário" gigante no meio.
-- **Folha da Anvisa:**
-  - os três dados que decidem (venda, tipo, preço máximo);
-  - "Mais sobre o remédio ›";
-  - "Ver a bula na Anvisa";
-  - **Guardar no armário**.
+  remédio.
 - **Página do remédio:**
-  - o vencido primeiro, com "Remédio vencido não vai no lixo comum. As farmácias
-    recebem." e **Separar para descartar**;
-  - depois a quantidade (a unidade é **caixa**);
-  - depois "Sobre o remédio" em resumo.
-- **Leitor:** o cartão diz "Da lista da Anvisa · Remédios" e o botão principal
+  - a caixa, com um **selo colado** como adesivo ("Vencido", "Acaba em ~6
+    dias"), no canto de cima e longe do Editar;
+  - vencido: logo embaixo, "Venceu há 52 dias", **Separar para descartar** e
+    "Remédio vencido não vai no lixo comum. As farmácias recebem.";
+  - os três blocos de quantidade, iguais aos do produto; a unidade é
+    **caixa**;
+  - **o cartão da receita**, com a faixa da cor da tarja, dizendo o que ela
+    quer dizer na prática;
+  - rolando, a **ficha completa** como no app antigo, com "Ver a bula na
+    Anvisa".
+- **O cartão da receita**, pela tarja:
+
+  | Tarja | Cartão |
+  |---|---|
+  | Sem tarja | "Sem receita. Compra direto no balcão." |
+  | Vermelha | "Precisa de receita. Mostre na farmácia, e a receita volta com você." |
+  | Vermelha, com retenção | "Precisa de receita. A farmácia fica com a receita. Para comprar de novo, peça outra." |
+  | Preta | "Receita especial. A farmácia fica com a receita. Para comprar de novo, peça outra." |
+  | Sem informação | Sem cartão |
+
+  **Prazo da receita só quando houver certeza.** A tarja não diz sozinha qual
+  é a receita: "vermelha com retenção" vale para antibiótico (receita de 10
+  dias, RDC 20/2011) e para controlado da lista C1 (30 dias); a preta pode ser
+  receita azul ou amarela. O prazo aparece só quando a classe terapêutica da
+  Anvisa deixa certeza, como em "Penicilinas orais", que é antibiótico.
+- **Uso contínuo com cartela:** a chave fica no topo de um cartão com a cartela
+  de comprimidos. Os que sobram aparecem cheios, pelo ritmo ("Cerca de 6
+  comprimidos", "1 por dia. Acaba por volta de 7/10."). **Contar** corrige, e o
+  cartão avisa "Já está nas Compras, com a receita avisada.".
+- **Folha da Anvisa:** a caixa, o cartão da receita, a ficha no mesmo cartão da
+  página, e **Bula** e **Guardar no armário** presos embaixo.
+- **Leitor:** a caixinha no cartão, "Da lista da Anvisa", e o botão principal
   é **Marcar a validade da caixa**.
-- **Descartar:**
-  - o remédio sai do armário e fica em "Para descartar" até levar à farmácia;
-  - "Adicionar às Compras" já vem marcado, com a faixa da tarja e "Tarja
-    vermelha: precisa de receita".
-- **Compras:** os remédios juntos, com "Precisa de receita" (faixa vermelha) ou
-  "Precisa de receita especial" (faixa preta).
+- **Descartar:** o remédio sai do armário e fica em "Para descartar" até levar à
+  farmácia; "Adicionar às Compras" já vem marcado, com a faixa da tarja e
+  "Precisa de receita".
+- **Compras: a ida à farmácia** num cartão só ("Farmácia, 2 remédios"). Cada
+  remédio mostra a receita que pede, e o cartão fecha com "Leve as 2
+  receitas.".
 - **Tela bloqueada:** "Requeijão Cremoso Tirolez e 1 remédio", sem o nome do
   remédio; em Mais › Avisos, "Mostrar o nome dos remédios nos avisos",
   desligado.
 - **Conferir um ambiente:** escolher "Remédios" e o jeito, com o tempo
   estimado.
 
-#### 2.10.1 Página e folha do remédio no visual antigo (substituída pela 2.10.2)
+### 2.11 Revisão com /better-layout (01/10)
 
-A página e a folha acima ficaram sem graça perto das antigas. Esta proposta
-**substitui a folha da Anvisa e a página do remédio** desenhadas acima. Volta
-o visual antigo e ficam só as melhorias já decididas.
+Todas as pranchas passaram pelo /better-layout. O que mudou:
 
-![Página vencida, rolada e descarte](design-novo/17-remedio-rico-a.webp)
-![Uso contínuo, rolada e folha da Anvisa](design-novo/17-remedio-rico-b.webp)
-
-- **Fica do antigo:**
-  - ícone, nome e descrição no centro, com o selo embaixo;
-  - três botões grandes: Tirar 1, o número e Guardar 1;
-  - "Sobre o remédio" com a lista completa (princípio ativo, apresentação,
-    venda com a faixa da tarja e a nota, tipo, laboratório, classe
-    terapêutica, preço máximo, registro) e "Ver a bula na Anvisa" dentro do
-    cartão;
-  - a Validade com a lixeira, "venceu há N dias" em vermelho e "Lembrete no
-    calendário".
-- **Entra do novo:**
-  - a unidade é **caixa** ("1 caixa · venceu há 51 dias");
-  - **vencido:** a Validade sobe para logo abaixo da quantidade, com
-    **Separar para descartar** e "Vencido não vai no lixo comum. As farmácias
-    recebem."; o Lembrete some, porque não serve para remédio vencido;
-  - sem nada vencido, a ordem é a antiga: quantidade, Sobre o remédio,
-    Validade;
-  - seção **Uso** com a chave "Uso contínuo". Quando está ligada, mostra o
-    ritmo e o aviso ("1 por dia. Avisa 7 dias antes de acabar e põe nas
-    Compras."), e o selo do topo diz "Acaba em ~6 dias";
-  - o histórico como diário (Guardou 1, Tirou 1);
-  - tarja preta com a receita dita ("Receita azul (B1). A farmácia retém a
-    receita").
-- **Folha da Anvisa:** a lista completa como antes. **Bula** e **Guardar no
-  armário** ficam presos embaixo, sempre à vista, sem rolar até o fim.
-
-#### 2.10.2 O remédio como caixa (proposta de 01/10)
-
-A 2.10.1 voltou ao visual antigo, mas a tarja continuava uma faixinha ao lado
-de uma palavra. Esta proposta parte do que todo mundo já reconhece: **a
-embalagem do remédio.**
-
-![Armário, página vencida, rolada e uso contínuo](design-novo/18-remedio-caixa-a.webp)
-![Folha da Anvisa, Compras, leitor e escuro](design-novo/18-remedio-caixa-b.webp)
-
-- **A caixa desenhada** no lugar da foto. O desenho sai dos dados da Anvisa:
-  - nome comercial grande;
-  - princípio ativo, dose e quantidade;
-  - laboratório no canto;
-  - a **tarja de verdade**: a faixa vermelha ou preta com o texto da
-    embalagem ("VENDA SOB PRESCRIÇÃO MÉDICA, SÓ PODE SER VENDIDO COM RETENÇÃO
-    DA RECEITA");
-  - genérico com a faixa amarela do **G**, como na caixa.
-
-  Remédio continua sem foto, e mesmo assim cada um fica com uma cara
-  própria.
-- **Caixinha nas listas** (Armário, Compras, leitor): uma miniatura com a
-  faixa da tarja embaixo. Dá para ver de longe qual precisa de receita.
-- **Selo colado na caixa**, como um adesivo: "Vencido" ou "Acaba em ~6 dias".
-- **Vencido:** logo embaixo da caixa, "Venceu há 52 dias" com **Separar para
-  descartar** e "Remédio vencido não vai no lixo comum. As farmácias
-  recebem.".
-- **A tarja vira o que ela quer dizer na prática**, num cartão com a faixa da
-  cor dela:
-  - vermelha: "Precisa de receita. A farmácia fica com a receita. Para
-    comprar de novo, peça outra." e "Receita de antibiótico vale 10 dias.";
-  - preta: "Receita azul";
-  - sem tarja: "Sem receita. Compra direto no balcão.".
-
-  **Antes de aplicar:** conferir na norma da Anvisa os prazos de cada receita
-  (antibiótico, RDC 20/2011; receita azul, Portaria 344/98) e só mostrar o
-  prazo quando a classe do remédio deixar certeza.
-- **Uso contínuo com cartela:** a chave fica no topo de um cartão com a
-  cartela de comprimidos. Os que sobram aparecem cheios, pelo ritmo
-  ("Cerca de 6 comprimidos", "1 por dia. Acaba por volta de 7/10."). O botão
-  **Contar** corrige, e o cartão avisa "Já está nas Compras, com a receita
-  avisada.".
-- **Ficha completa** (rolando), como no antigo, com "Ver a bula na Anvisa".
-- **Compras: a ida à farmácia** num cartão só ("Farmácia, 2 remédios"). Cada
-  remédio mostra a receita que pede (faixa e "Receita azul" ou "Precisa de
-  receita"), e o cartão fecha com "Leve as 2 receitas.".
-- **Folha da Anvisa:** a caixa, o cartão do que a venda quer dizer, a ficha, e
-  **Bula** e **Guardar no armário** presos embaixo.
-- **Escuro:** a caixa continua clara, como a de verdade.
-- **Sem pontos separadores** em nenhuma tela (DESIGN_SYSTEM, seção 8).
+- **Cartão do leitor** (Guardar, Tirar, Conferir, Contar): o nome ganha a
+  largura toda, e o **− +1 +** desce para a linha de baixo, ao lado de "Agora
+  5 no armário". Antes, os botões apertavam o nome e cortavam o fim dele
+  ("Lava-Louças Máquina Ypê…"), justo onde está o tamanho que separa um
+  produto do outro.
+- **Produto e remédio com a mesma página:** foto (ou caixa) no centro, nome,
+  os **três blocos** Tirar 1, número e Guardar 1, e o **Editar escrito**, não
+  só um lápis. Os textos embaixo dos blocos ficam na mesma linha.
+- **Notas dos cartões** (vencido, descartar) alinhadas à esquerda, na margem
+  do título, e não centralizadas.
+- **"É um destes?"** ganhou a barra de cima com o X e o título, como as outras
+  folhas; "Na embalagem" vem logo depois da pergunta.
+- **Faltam 15:** cada produto tem um botão **Contar**. Antes, um quadrado
+  tracejado vazio parecia caixa de marcar.
+- **Vencem esta semana:** os botões ficam colados no produto deles e longe do
+  próximo, sem precisar da linha divisória.
+- **Revisão:** "Zerar os 4" na mesma linha do título da seção.
+- **Número e unidade não se separam** ("1 g", "500 mg") na quebra de linha.
+- **A 320 px**, o texto do cartão do leitor fica numa linha e os botões vão
+  para a direita, embaixo.
 
 ---
 
@@ -422,5 +400,8 @@ embalagem do remédio.**
   telemetria sem nomes de remédio ficam para antes de abrir o app a outras
   pessoas (PLANO_MELHORIAS, seção 15); o desenho da tela bloqueada e da opção
   em Mais › Avisos já está pronto para essa hora.
+
+- **Remédio como caixa** (01/10), seção 2.10.
+- **Correções do /better-layout** (01/10), seção 2.11.
 
 **Em aberto:** nada. O design está fechado para aplicar.
