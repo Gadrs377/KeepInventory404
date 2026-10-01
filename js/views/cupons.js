@@ -2,7 +2,7 @@
 
 import { listReceipts } from '../store.js';
 import { showReceipt } from './receipt.js';
-import { $, esc, icon, tabBar } from '../ui.js';
+import { $, esc, icon, tabBar, plural } from '../ui.js';
 
 const timeFmt = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -20,11 +20,14 @@ function dayLabel(ts) {
 }
 
 const INFO = {
-  entrada: { title: 'Entrada', icon: 'in' },
-  saida: { title: 'Saída', icon: 'out' },
-  contagem: { title: 'Contagem', icon: 'count' },
-  misto: { title: 'Entrada e saída', icon: 'receipt' },
+  entrada: { icon: 'in', title: (r) => `Guardou ${plural(r.lines.length, 'produto', 'produtos')}` },
+  saida: { icon: 'out', title: (r) => `Tirou ${plural(r.lines.length, 'produto', 'produtos')}` },
+  contagem: { icon: 'listChecks', title: () => 'Conferiu o armário' },
+  misto: { icon: 'receipt', title: (r) => `Guardou e tirou, ${plural(r.lines.length, 'produto', 'produtos')}` },
 };
+// Nota fiscal: "Nota fiscal do Zaffari" (a nota do cupom diz "Zaffari, R$ 160,59").
+const titleOf = (r) => (r.note && r.mode === 'entrada' ? `Nota fiscal do ${r.note.split(',')[0]}` : (INFO[r.mode] || INFO.entrada).title(r));
+const subOf = (r) => [timeFmt.format(new Date(r.at)), r.mode === 'contagem' ? r.total.label : r.note ? plural(r.lines.length, 'item', 'itens') : ''].filter(Boolean).join(', ');
 
 export default async function mountCupons(root) {
   const list = await listReceipts();
@@ -39,22 +42,24 @@ export default async function mountCupons(root) {
           const day = dayLabel(r.at);
           const head = i === 0 || dayLabel(list[i - 1].at) !== day
             ? `${i ? '</ul>' : ''}<h2 class="list-title">${day}</h2><ul class="rows cupons">` : '';
+          const mode = r.note && r.mode === 'entrada' ? 'nota' : r.mode;
           return `${head}
           <li>
-            <button type="button" class="row cupom-row mode-${esc(r.mode)}" data-i="${i}">
-              <span class="cupom-icon" aria-hidden="true">${icon(info.icon)}</span>
+            <button type="button" class="row cupom-row mode-${esc(mode === 'nota' ? 'entrada' : r.mode)}" data-i="${i}">
+              <span class="cupom-icon is-${esc(mode)}" aria-hidden="true">${icon(mode === 'nota' ? 'receipt' : info.icon)}</span>
               <span class="row-main">
-                <span class="row-name">${info.title}, ${esc(r.total.label)}</span>
-                <span class="row-sub">${timeFmt.format(new Date(r.at))}</span>
+                <span class="row-name">${esc(titleOf(r))}</span>
+                <span class="row-sub">${esc(subOf(r))}</span>
               </span>
               <span class="cupom-total">${esc(r.total.value)}</span>
+              ${icon('chevron', 'row-chevron')}
             </button>
           </li>`;
         }).join('') + '</ul>'
         : `<div class="empty-state">
             <span class="empty-icon" aria-hidden="true">${icon('receipt')}</span>
             <p class="empty-lead">Nenhum cupom ainda</p>
-            <p>Ao tocar em Concluir no leitor ou aplicar uma contagem, o cupom fica aqui.</p>
+            <p>Ao concluir no leitor ou aplicar o Conferir, o cupom fica aqui.</p>
             <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
           </div>`}
       </main>

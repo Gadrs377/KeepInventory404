@@ -394,14 +394,54 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   });
 
   renderTicket();
-  // Nota fiscal lida (ou link colado): a compra inteira entra de uma vez.
+  // Nota fiscal lida (ou link colado): um cartão diz de onde é, quantos itens
+  // e o total ("Ver os 7 itens"); a revisão abre por cima, e tudo entra de uma vez.
   async function handleNota(p) {
     if (mode !== 'entrada') setMode('entrada');
     notaBtn.classList.remove('is-on');
-    const { importNota } = await import('./nota.js');
-    const done = await importNota(p);
-    if (done && !session.size) location.hash = '#/';
+    const nota = await import('./nota.js');
+    lastKey = '';
+    lastHost.innerHTML = `
+      <div class="last-card nota-card is-fresh">
+        <div class="last-row"><span class="nota-ico" aria-hidden="true">${icon('receipt')}</span>
+          <div class="last-text"><p class="last-name">Nota fiscal</p><div class="last-sub"><span><span class="spinner" aria-hidden="true"></span> Buscando a nota</span></div></div></div>
+      </div>`;
+    let data;
+    try {
+      data = await nota.fetchNota(p);
+    } catch (err) {
+      lastHost.innerHTML = `
+        <div class="last-card nota-card">
+          <div class="last-row"><span class="nota-ico" aria-hidden="true">${icon('receipt')}</span>
+            <div class="last-text"><p class="last-name">Não deu para ler a nota</p><div class="last-sub"><span>${esc(err.message)}</span></div></div></div>
+          <div class="act-row"><button type="button" class="btn btn-quiet btn-lg" data-nota-no>Agora não</button><button type="button" class="btn btn-mode btn-lg" data-nota-retry>Tentar de novo</button></div>
+        </div>`;
+      return;
+    }
+    const s = nota.notaSummary(data);
+    lastHost.innerHTML = `
+      <div class="last-card nota-card is-fresh">
+        <div class="last-row"><span class="nota-ico" aria-hidden="true">${icon('receipt')}</span>
+          <div class="last-text"><p class="last-name">Nota fiscal do ${esc(s.store)}</p><div class="last-sub"><span>${esc([s.when, plural(s.items, 'item', 'itens'), s.total].filter(Boolean).join(', '))}</span></div></div></div>
+        <div class="act-row"><button type="button" class="btn btn-quiet btn-lg" data-nota-no>Agora não</button><button type="button" class="btn btn-mode btn-lg" data-nota-go>${icon('listChecks')}Ver os ${s.items} itens</button></div>
+      </div>`;
+    notaPending = { p, data };
   }
+  let notaPending = null;
+  lastHost.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-nota-no]')) { notaPending = null; renderLast(); return; }
+    if (e.target.closest('[data-nota-retry]')) { cam.handle(notaPending ? notaPending.p : '', handleNota); return; }
+    if (e.target.closest('[data-nota-go]') && notaPending) {
+      const { p, data } = notaPending;
+      const { importNota } = await import('./nota.js');
+      cam.pause();
+      const done = await importNota(p, data);
+      cam.resume();
+      notaPending = null;
+      renderLast();
+      if (done && !session.size) location.hash = '#/';
+    }
+  });
 
   const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota, bar: true, sound: () => (mode === 'saida' ? 'out' : 'in') });
   if (initialCode) cam.handle(initialCode);

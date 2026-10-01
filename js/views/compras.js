@@ -7,6 +7,7 @@ import { listLots, onChange } from '../store.js';
 import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
+import { rxNeed } from './remedioInfo.js';
 import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows, pill } from '../ui.js';
 
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus', remedios: 'pill' };
@@ -29,15 +30,17 @@ export default function mountCompras(root) {
       </header>
       <main class="content">
         <p class="lead" data-lead>Montando a lista pelo seu consumo</p>
-        <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
-
         <form class="shop-add" novalidate>
-          <label class="field-label" for="shop-extra">Adicionar à lista</label>
           <div class="shop-add-row">
-            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Ex.: pão, frutas" enterkeyhint="done">
-            <button type="submit" class="btn btn-quiet btn-icon" aria-label="Adicionar à lista">${icon('plus')}</button>
+            <input class="input" id="shop-extra" maxlength="60" autocomplete="off" placeholder="Adicionar à lista" aria-label="Adicionar à lista" enterkeyhint="done">
+            <button type="submit" class="btn btn-quiet btn-icon" aria-label="Adicionar">${icon('plus')}</button>
           </div>
         </form>
+        <div class="shop-lists" aria-busy="true">${skeletonRows(4, 'shop-list')}</div>
+        <div class="shop-back">
+          <span>Voltou do mercado?</span>
+          <button type="button" class="btn btn-quiet btn-sm" data-nota>${icon('qrCode')}Ler a nota fiscal</button>
+        </div>
 
       </main>
       ${tabBar('compras')}
@@ -81,28 +84,38 @@ export default function mountCompras(root) {
     const open = items.filter((i) => !state.checked[i.product.code]).length + state.extra.filter((x) => !x.checked).length;
     const all = items.length + state.extra.length;
     lead.textContent = all
-      ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}, pensando em ${plural(state.every, 'dia', 'dias')}.` : 'Tudo marcado. Boas compras.')
+      ? (open ? `${plural(open, 'item para comprar', 'itens para comprar')}, pensando nos próximos ${plural(state.every, 'dia', 'dias')}.` : 'Tudo no carrinho. Boas compras.')
       : '';
     lead.hidden = !all;
 
-    const groups = AREAS.map((a) => ({ ...a, rows: items.filter((i) => (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
-    lists.innerHTML = groups.map((g) => `
-      <h2 class="list-title list-title-icon">${icon(AREA_ICON[g.id])}${g.label}</h2>
-      <ul class="shop-list">${g.rows.map((i) => {
-        const done = !!state.checked[i.product.code];
-        return `
+    // Remédios num cartão só: a ida à farmácia, com a receita de cada um.
+    const isMedItem = (i) => !!(i.product.med || i.product.area === 'remedios');
+    const meds = items.filter(isMedItem);
+    const itemRow = (i) => {
+      const done = !!state.checked[i.product.code];
+      return `
         <li>
           <label class="shop-item ${done ? 'is-done' : ''}">
             <input type="checkbox" class="check" data-code="${esc(i.product.code)}" ${done ? 'checked' : ''}>
             ${thumb(i.product)}
             <span class="row-main">
               <span class="row-name">${esc(i.product.name)}</span>
-              <span class="row-meta">${statusOf(i)}</span>
+              <span class="row-meta">${done ? '<span class="row-sub">No carrinho</span>' : statusOf(i)}</span>
             </span>
             <span class="shop-qty"><span class="sr-only">Comprar </span>${i.buy}</span>
           </label>
         </li>`;
-      }).join('')}</ul>`).join('')
+    };
+    const needs = meds.map((i) => rxNeed(i.product.med)).filter(Boolean).length;
+    const groups = AREAS.filter((a) => a.id !== 'remedios').map((a) => ({ ...a, rows: items.filter((i) => !isMedItem(i) && (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
+    lists.innerHTML = (meds.length ? `
+      <section class="pharm" aria-labelledby="pharm-title">
+        <div class="pharm-head"><h2 id="pharm-title">Farmácia</h2><span>${plural(meds.length, 'remédio', 'remédios')}</span></div>
+        <ul class="shop-list">${meds.map(itemRow).join('')}</ul>
+        ${needs ? `<p class="pharm-note">${icon('fileText')}Leve ${needs === 1 ? 'a receita' : `as ${needs} receitas`}.</p>` : ''}
+      </section>` : '') + groups.map((g) => `
+      <h2 class="list-title list-title-icon">${icon(AREA_ICON[g.id])}${g.label}<span class="title-count">${g.rows.length}</span></h2>
+      <ul class="shop-list">${g.rows.map(itemRow).join('')}</ul>`).join('')
       + (state.extra.length ? `
       <h2 class="list-title">Outros</h2>
       <ul class="shop-list">${state.extra.map((x) => `
@@ -128,6 +141,8 @@ export default function mountCompras(root) {
   // Estado em pílula (Zerado, Acabando) e o resto em texto: quanto tem, previsão, ritmo.
   function statusOf(i) {
     const p = i.product;
+    const rx = rxNeed(p.med);
+    if (rx) return `<span class="rx-need ${rx.cls}">${esc(rx.text)}</span><span class="row-sub">${esc(i.reason)}</span>`;
     if (p.qty === 0) return `${pill('zero', 'Zerado')}<span class="row-sub">${esc(i.rate)}</span>`;
     if (i.reason.startsWith('Acabando')) return `${pill('low', 'Acabando')}<span class="row-sub">${esc([`tem ${p.qty}`, i.rate].filter(Boolean).join(', '))}</span>`;
     return `<span class="row-sub">${esc([i.reason, i.rate].filter(Boolean).join(', '))}</span>`;
@@ -242,6 +257,11 @@ export default function mountCompras(root) {
     input.value = '';
     render();
     input.focus();
+  });
+
+  $('[data-nota]', root).addEventListener('click', () => {
+    try { sessionStorage.setItem('ki.qr', '1'); } catch { /* sem armazenamento */ }
+    location.hash = '#/entrada';
   });
 
   $('[data-share]', root).addEventListener('click', () => {

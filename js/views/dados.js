@@ -28,32 +28,24 @@ export default async function mountDados(root) {
         <h1 class="page-title">Mais</h1>
       </header>
       <main class="content stack">
-        <ul class="group" aria-label="Atalhos">
-          <li><a class="group-row" href="#/inventario"><span class="group-icon is-contagem">${icon('count')}</span><span class="group-label">Contar o armário</span>${icon('chevron', 'group-chevron')}</a></li>
+        <h2 class="list-title">Armário</h2>
+        <ul class="group">
+          <li><button type="button" class="group-row" data-conferir aria-haspopup="menu"><span class="group-icon is-contagem">${icon('listChecks')}</span><span class="group-label">Conferir o armário</span>${icon('chevron', 'group-chevron')}</button></li>
+          <li><a class="group-row" href="#/cupons"><span class="group-icon">${icon('receipt')}</span><span class="group-label">Cupons</span>${icon('chevron', 'group-chevron')}</a></li>
         </ul>
 
-        <h2 class="list-title">Backup</h2>
+        <h2 class="list-title">Dados</h2>
         <ul class="group">
           <li><button type="button" class="group-row" data-auto><span class="group-icon">${icon('upload')}</span><span class="group-label">Cópia automática</span><span class="group-value" data-auto-at>${autoText()}</span></button></li>
-          <li><button type="button" class="group-row" data-restore-auto><span class="group-icon">${icon('download')}</span><span class="group-label">Restaurar de uma cópia</span>${icon('chevron', 'group-chevron')}</button></li>
-          <li><button type="button" class="group-row" data-export><span class="group-icon">${icon('download')}</span><span class="group-label">Baixar backup</span></button></li>
-          <li><label class="group-row file-btn"><span class="group-icon">${icon('upload')}</span><span class="group-label">Restaurar backup</span><input type="file" accept="application/json,.json" data-import class="sr-only"></label></li>
+          <li><button type="button" class="group-row" data-export><span class="group-icon">${icon('download')}</span><span class="group-label">Baixar uma cópia</span></button></li>
+          <li><button type="button" class="group-row" data-restore-auto><span class="group-icon">${icon('upload')}</span><span class="group-label">Restaurar uma cópia</span>${icon('chevron', 'group-chevron')}</button></li>
           <li><button type="button" class="group-row" data-csv><span class="group-icon">${icon('table')}</span><span class="group-label">Baixar planilha</span></button></li>
         </ul>
-        <p class="group-note">Uma cópia vai sozinha para o servidor do app sempre que o armário muda. Para levar o armário a outro celular, use "Restaurar de uma cópia" com o código desta casa.${persisted ? ' Neste celular, os dados estão protegidos contra limpeza automática.' : ''}</p>
+        <p class="group-note">Uma cópia vai sozinha para o servidor do app sempre que o armário muda. Para levar o armário a outro celular, use "Restaurar uma cópia" com o código desta casa.${persisted ? ' Neste celular, os dados estão protegidos contra limpeza automática.' : ''}</p>
 
         <h2 class="list-title">Som</h2>
         <ul class="group">
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
-        </ul>
-
-        <h2 class="list-title">Ajuda para melhorar</h2>
-        <ul class="group">
-          <li><label class="group-row"><span class="group-icon">${icon('fileText')}</span><span class="group-label">Diagnóstico da leitura de validade</span><input type="checkbox" class="switch" data-debug ${debugEnabled() ? 'checked' : ''}></label></li>
-        </ul>
-        <p class="group-note">Mostra, embaixo da câmera, o que o leitor viu em cada tentativa e por que não confirmou. Tem um botão para copiar tudo e mandar para quem cuida do app.</p>
-        <ul class="group">
-          <li><a class="group-row" href="#/testes"><span class="group-icon">${icon('bolt')}</span><span class="group-label">Testes (leitor com GPU)</span>${icon('chevron', 'group-chevron')}</a></li>
         </ul>
 
         <section class="install-note" ${installed ? 'hidden' : ''}>
@@ -71,6 +63,12 @@ export default async function mountDados(root) {
               <span class="history-qty">ficou ${m.qtyAfter}</span>
             </li>`).join('')}</ul>` : '<p class="empty">Nenhum registro ainda.</p>'}
         </section>
+        <h2 class="list-title">Avançado</h2>
+        <ul class="group">
+          <li><label class="group-row"><span class="group-icon">${icon('fileText')}</span><span class="group-label">Diagnóstico da leitura de validade</span><input type="checkbox" class="switch" data-debug ${debugEnabled() ? 'checked' : ''}></label></li>
+          <li><a class="group-row" href="#/testes"><span class="group-icon">${icon('bolt')}</span><span class="group-label">Testes (leitor com GPU)</span>${icon('chevron', 'group-chevron')}</a></li>
+        </ul>
+        <p class="group-note">O diagnóstico mostra, embaixo da câmera, o que o leitor viu em cada tentativa e por que não confirmou.</p>
       </main>
       ${tabBar('mais')}
     </div>`;
@@ -98,19 +96,21 @@ export default async function mountDados(root) {
 
   $('[data-restore-auto]', root).addEventListener('click', () => {
     openSheet({
-      label: 'Restaurar de uma cópia',
+      label: 'Restaurar uma cópia',
       render(body, close) {
         body.innerHTML = `
-          <h2 class="sheet-title">Restaurar de uma cópia</h2>
+          <h2 class="sheet-title">Restaurar uma cópia</h2>
           <p class="sheet-text">Código desta casa:</p>
           <p class="backup-code" data-code>${esc(formatCode(backupKey()))}</p>
           <button type="button" class="btn btn-quiet btn-sm" data-copy>${icon('share')}Copiar o código</button>
           <form class="stack" novalidate>
             <label class="field"><span class="field-label">Código da cópia</span>
               <input class="input" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ex.: A1B2 C3D4 …" aria-describedby="restore-note"></label>
-            <p class="field-note" id="restore-note">No outro celular, abra Mais › Restaurar de uma cópia e copie o código de lá. Tudo o que está no armário deste celular é substituído.</p>
+            <p class="field-note" id="restore-note">No outro celular, abra Mais › Restaurar uma cópia e copie o código de lá. Tudo o que está no armário deste celular é substituído.</p>
             <button type="submit" class="btn btn-primary btn-lg">${icon('download')}Buscar a cópia</button>
-          </form>`;
+          </form>
+          <label class="btn btn-quiet file-btn restore-file">${icon('upload')}<span>Usar um arquivo baixado</span><input type="file" accept="application/json,.json" data-import class="sr-only"></label>`;
+        $('[data-import]', body).addEventListener('change', (e) => { close(null); restoreFile(e); });
         $('[data-copy]', body).addEventListener('click', async () => {
           try { await navigator.clipboard.writeText(formatCode(backupKey())); toast('Código copiado.', { duration: 2000 }); } catch { toast('Não deu para copiar. Anote o código.', { duration: 3000 }); }
         });
@@ -143,8 +143,8 @@ export default async function mountDados(root) {
 
   $('[data-export]', root).addEventListener('click', async () => {
     const data = await exportData();
-    download(`armario-backup-${today()}.json`, JSON.stringify(data, null, 2), 'application/json');
-    toast('Backup baixado.', { duration: 2500 });
+    download(`armario-copia-${today()}.json`, JSON.stringify(data, null, 2), 'application/json');
+    toast('Cópia baixada.', { duration: 2500 });
   });
 
   $('[data-csv]', root).addEventListener('click', async () => {
@@ -156,7 +156,7 @@ export default async function mountDados(root) {
     toast('Planilha baixada.', { duration: 2500 });
   });
 
-  $('[data-import]', root).addEventListener('change', async (e) => {
+  async function restoreFile(e) {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
@@ -176,11 +176,16 @@ export default async function mountDados(root) {
     if (!ok) return;
     try {
       const n = await importData(data);
-      toast(`Backup restaurado com ${n} produtos.`);
+      toast(`Cópia restaurada com ${n} produtos.`);
       location.hash = '#/';
     } catch (err) {
       toast(err.message);
     }
+  }
+
+  $('[data-conferir]', root).addEventListener('click', async (e) => {
+    const { conferirMenu } = await import('./conferirMenu.js');
+    conferirMenu(e.currentTarget);
   });
 }
 

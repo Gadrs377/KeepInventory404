@@ -51,14 +51,27 @@ export function storeName(razao) {
   return prettyName(first);
 }
 
-/** Abre a importação. Resolve true quando algo entrou no armário. */
-export async function importNota(p) {
+// O que o cartão do leitor mostra antes de abrir a revisão: "Nota fiscal do
+// Zaffari", data, itens e total.
+export function notaSummary(data) {
+  return {
+    store: storeName(data.store.name),
+    when: data.issuedAt ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(data.issuedAt)) : '',
+    items: data.items.length,
+    total: money.format(data.total),
+  };
+}
+export { fetchNota };
+
+/** Abre a importação. Resolve true quando algo entrou no armário.
+ *  `data`: a nota já buscada (pelo cartão do leitor), para não buscar de novo. */
+export async function importNota(p, data = null) {
   const result = await openSheet({
     mode: 'entrada',
     title: 'Nota fiscal',
     label: 'Nota fiscal',
     className: 'sheet-tall',
-    render(body, close) { load(body, close, p); },
+    render(body, close) { if (data) show(body, close, data); else load(body, close, p); },
   });
   if (!result) return false;
   await showReceipt(result);
@@ -98,7 +111,12 @@ async function load(body, close, p) {
     clearTimeout(slow);
   }
   if (!body.isConnected) return;
+  show(body, close, data);
+}
+
+async function show(body, close, data) {
   const [map, products, already] = await Promise.all([nfceMap(), listProducts(), notaImported(data.key)]);
+  if (!body.isConnected) return;
   review(body, close, data, prepare(data, map, products), products, already);
 }
 
@@ -153,6 +171,7 @@ function review(body, close, data, rows, products, already) {
     ${already ? `<p class="nota-warn">${icon('receipt')}<span>Esta nota já entrou no armário em ${esc(dayFmt.format(new Date(already.at)))}. Guardar de novo soma outra vez.</span></p>` : ''}
     <p class="field-note">Toque num item para corrigir. Na próxima nota deste mercado, ele já vem certo.</p>
     <ul class="nota-items">${rows.map((r, i) => `<li class="nota-item" data-i="${i}"></li>`).join('')}</ul>
+    <p class="nota-off" data-off-note></p>
     <div class="sheet-footer"><button type="button" class="btn btn-mode btn-lg" data-save></button></div>`;
 
   const list = $('.nota-items', body);
@@ -210,6 +229,9 @@ function review(body, close, data, rows, products, already) {
   function updateSave() {
     const on = rows.filter((r) => r.on);
     saveBtn.innerHTML = on.length ? `${icon('in')}Guardar ${plural(on.length, 'item', 'itens')}` : 'Marque um item para guardar';
+    const off = rows.length - on.length;
+    const offNote = $('[data-off-note]', body);
+    if (offNote) offNote.textContent = off ? `${plural(off, 'item fica', 'itens ficam')} de fora.` : '';
     saveBtn.disabled = !on.length;
   }
 
