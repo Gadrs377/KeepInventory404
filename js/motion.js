@@ -186,3 +186,92 @@ export function blisterEnter(blister) {
   const on = [...blister.querySelectorAll('i.is-on')];
   on.forEach((p, i) => springTo(p, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { stiffness: 600, damping: 18, delay: 120 + i * 35, fill: 'backwards' }));
 }
+
+// ---------- Balanço (inércia) ----------
+// Como gente em pé no ônibus: quando a faixa arranca, os blocos ficam um pouco
+// para trás; quando ela para, vão para a frente e voltam, num "blup". Cada
+// bloco tem a sua mola (uns mais duros, outros mais soltos), para não
+// balançarem todos juntos.
+//   items:  o que balança (seletor, dentro de `host`)
+//   inner:  o que vai pendurado dentro do bloco e balança com atraso
+//   lean:   graus de inclinação por px/s da rolagem para o lado (0 = nada)
+//   skew:   inclina como texto em itálico, em vez de girar (bom para texto)
+//   drop:   px de atraso por px/s da rolagem da página (0 = nada)
+//   pitch:  graus de rotateX por px de atraso vertical (caixa em 3D)
+const swayHosts = new Set();
+let swayRaf = 0;
+let swayT = 0;
+let pageY = null;
+let pageV = 0;
+let swayPoke = 0; // última rolagem: o laço segue vivo um pouco depois dela
+const clampTo = (v, m) => Math.max(-m, Math.min(m, v));
+
+export function sway(host, { items, inner = '', lean = 0.004, max = 5, skew = false, drop = 0, maxDrop = 5, pitch = 0 } = {}) {
+  if (!host || reduced()) return () => {};
+  const h = { host, items, inner, lean, max, skew, drop, maxDrop, pitch, sc: null, lastX: null, v: 0, state: new WeakMap() };
+  const onScroll = (e) => {
+    const t = e.target;
+    if (t instanceof Element && host.contains(t)) h.sc = t;
+    wakeSway();
+  };
+  host.addEventListener('scroll', onScroll, { capture: true, passive: true });
+  swayHosts.add(h);
+  if (drop) window.addEventListener('scroll', wakeSway, { passive: true });
+  return () => {
+    host.removeEventListener('scroll', onScroll, true);
+    swayHosts.delete(h);
+  };
+}
+
+function wakeSway() {
+  swayPoke = performance.now();
+  if (swayRaf || reduced()) return;
+  swayT = performance.now();
+  swayRaf = requestAnimationFrame(swayFrame);
+}
+
+function swayFrame(now) {
+  const dt = Math.min(0.034, Math.max(0.004, (now - swayT) / 1000));
+  swayT = now;
+  const y = window.scrollY;
+  const rawY = pageY === null ? 0 : (y - pageY) / dt;
+  pageY = y;
+  pageV += (rawY - pageV) * 0.35;
+  let busy = Math.abs(rawY) > 1 || now - swayPoke < 150;
+  for (const h of swayHosts) {
+    if (!h.host.isConnected) { swayHosts.delete(h); continue; }
+    const sc = h.sc && h.sc.isConnected ? h.sc : null;
+    const x = sc ? sc.scrollLeft : 0;
+    const rawX = sc && h.lastX !== null && h.lastSc === sc ? (x - h.lastX) / dt : 0;
+    h.lastX = x;
+    h.lastSc = sc;
+    h.v += (rawX - h.v) * 0.35;
+    if (Math.abs(rawX) > 1 || Math.abs(h.v) > 2) busy = true;
+    const ta = h.lean ? clampTo(h.v * h.lean, h.max) : 0;
+    const ty = h.drop ? clampTo(pageV * h.drop, h.maxDrop) : 0;
+    h.host.querySelectorAll(h.items).forEach((el, i) => {
+      let s = h.state.get(el);
+      if (!s) h.state.set(el, (s = { a: 0, va: 0, y: 0, vy: 0, b: 0, vb: 0, k: 150 + (i % 3) * 45 }));
+      // Molas pouco amortecidas: passam do ponto e voltam (o "blup").
+      s.va += (s.k * (ta - s.a) - 6.5 * s.va) * dt; s.a += s.va * dt;
+      s.vy += (210 * (ty - s.y) - 11 * s.vy) * dt; s.y += s.vy * dt;
+      s.vb += (90 * (s.a - s.b) - 6 * s.vb) * dt; s.b += s.vb * dt;
+      const live = Math.abs(s.a) > 0.03 || Math.abs(s.va) > 0.2 || Math.abs(s.y) > 0.05 || Math.abs(s.vy) > 0.3
+        || Math.abs(s.b - s.a) > 0.03 || Math.abs(s.vb) > 0.2;
+      if (live) busy = true;
+      if (!live) { s.a = s.va = s.y = s.vy = s.b = s.vb = 0; }
+      const parts = [];
+      if (h.pitch && s.y) parts.push('perspective(700px)');
+      if (s.y) parts.push(`translateY(${s.y.toFixed(2)}px)`);
+      if (h.pitch && s.y) parts.push(`rotateX(${(-s.y * h.pitch).toFixed(2)}deg)`);
+      if (s.a) parts.push(h.skew ? `skewX(${(-s.a).toFixed(2)}deg)` : `rotate(${s.a.toFixed(2)}deg)`);
+      el.style.transform = parts.join(' ');
+      if (h.inner) {
+        const inn = el.querySelector(h.inner);
+        if (inn) inn.style.transform = live && s.b !== s.a ? `rotate(${((s.b - s.a) * 2.2).toFixed(2)}deg)` : '';
+      }
+    });
+  }
+  if (busy) swayRaf = requestAnimationFrame(swayFrame);
+  else { swayRaf = 0; pageY = null; pageV = 0; }
+}

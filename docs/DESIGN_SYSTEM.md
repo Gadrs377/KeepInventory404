@@ -212,6 +212,15 @@ Molas físicas (massa, rigidez e amortecimento simulados e convertidos em
   ligado pula o ícone.
 - **Toque longo:** a linha cresce até o cartão (FLIP com mola) e o fundo
   desfoca.
+- **Inércia (4.2, `sway`):** o que fica no topo reage à rolagem como gente em
+  pé no ônibus: fica para trás quando arranca, vai para a frente quando para,
+  e volta com uma mola pouco amortecida (passa do ponto uma ou duas vezes).
+  Usado nos blocos do "Pede atenção", nas abas de ambiente e na caixa do
+  remédio. Movimento pequeno (até 6° ou 8 px) e só enquanto algo rola.
+- **Bobeirinhas (4.2):** pulinhos com o jeito de cada ícone nas abas de baixo
+  e nos blocos do "Pede atenção", selo das Compras que pula, linha de leitor
+  no botão Ler, ícone dos vazios que flutua. Sempre curtos e de uma vez só
+  (o flutuar dos vazios é o único que repete).
 - Com `prefers-reduced-motion`, nada se desloca: no máximo um esmaecimento
   curto.
 

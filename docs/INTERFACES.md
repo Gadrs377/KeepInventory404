@@ -1908,3 +1908,30 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
   tarja, porque não dá para saber qual é.
 - O selo ("Vencido", "Acaba em ~6 dias") fica mais para fora da caixa.
 - `sw.js` v97.
+
+## Versão 4.2: inércia e aviso de receita
+
+- **Inércia (motion.js `sway`):** como gente em pé no ônibus. Os blocos do
+  "Pede atenção" ficam um pouco para trás quando a faixa arranca e, quando ela
+  para, vão para a frente e voltam ("blup"). Giram pelos pés; o ícone vai
+  pendurado e balança com atraso; cada bloco tem a sua mola, para não
+  balançarem juntos. Rolando a página, os blocos também descem um pouco e
+  quicam ao parar. As abas de ambiente se inclinam como texto em itálico. Na
+  página do remédio, a caixa fica para trás quando a página rola e balança
+  para a frente quando ela para.
+- A faixa do "Pede atenção" não volta mais para o começo ao ligar um filtro:
+  guarda onde estava e anda até o bloco escolhido.
+- **Bobeirinhas:** a aba tocada dá um pulinho com o jeito do ícone (a caixa
+  quica, o carrinho arranca e freia, o cupom sai da impressora, as linhas do
+  Mais balançam); o selo das Compras pula quando o número muda; o botão Ler,
+  na primeira vez, tem uma linha de leitor passando pelo código; cada bloco do
+  "Pede atenção" reage do seu jeito ao ligar (o aviso treme, o calendário
+  pula, a ampulheta vira, o tracejado gira); o ícone dos vazios flutua.
+- **Aviso de receita só quando a farmácia fica com ela** (tarja preta e
+  vermelha com retenção): na prática, ninguém leva receita para a tarja
+  vermelha comum. Sem cartão "Precisa de receita" nem "Sem receita" para os
+  outros; a ficha não tem mais a linha "Venda"; nas Compras, "Leve a receita"
+  só para os retidos. A tarja continua na caixa desenhada. Teste novo em
+  `tests/ui/remedio.test.mjs`.
+- Com `prefers-reduced-motion`, nada disso se mexe.
+- `sw.js` v98.

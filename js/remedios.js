@@ -85,13 +85,6 @@ export function baseInfo() {
 
 // ---------- Textos ----------
 
-export const TARJA = {
-  livre: { label: 'Sem tarja', note: 'Venda sem receita' },
-  vermelha: { label: 'Tarja vermelha', note: 'Venda com receita' },
-  'vermelha-retencao': { label: 'Tarja vermelha', note: 'A farmácia retém a receita' },
-  preta: { label: 'Tarja preta', note: 'Receita especial, retida na farmácia' },
-};
-
 export const TIPO = {
   'Genérico': 'Genérico',
   Similar: 'Similar',

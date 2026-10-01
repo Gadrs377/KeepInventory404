@@ -1484,8 +1484,8 @@ html[data-nav="up"]:active-view-transition, html[data-nav="down"]:active-view-tr
 /* Aba não encolhe nem pula ao tocar (o iPhone só destaca) */
 .tab-item:active { scale: 1; opacity: 0.7; }
 .tab-item.is-over { color: var(--ink); }
-/* Ícone vazado e cheio no mesmo lugar. Como no iPhone: a troca é na hora,
-   sem escala nem mola (o que se mexe é só a pílula). */
+/* Ícone vazado e cheio no mesmo lugar: a troca é na hora. O pulinho da aba
+   escolhida fica no fim do arquivo (Inércia e bobeirinhas). */
 .tab-icons { position: relative; display: grid; width: 24px; height: 24px; }
 .tab-icons > .icon { grid-area: 1 / 1; }
 .tab-icons > .tab-on, .tab-item[aria-current="page"] .tab-off { visibility: hidden; }
@@ -2780,7 +2780,6 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .rx-band { flex: none; width: 10px; }
 .rx-card.is-red .rx-band { background: #C8102E; }
 .rx-card.is-black .rx-band { background: #161817; }
-.rx-card.is-free .rx-band { width: 0; }
 .rx-body { padding: 14px 16px; }
 .rx-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
 .rx-title b { font: 800 1.1176rem var(--font-num); }
@@ -3086,3 +3085,74 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 /* O selo fica mais para fora da caixa, sem tapar o laboratório. */
 .mbox-sticker { top: -12px; right: 2px; }
 .mbox { padding-top: 22px; }
+
+/* ---------- Inércia e bobeirinhas (4.2) ---------- */
+/* Pede atenção: cada bloco é uma pessoa em pé no ônibus (motion.js sway). Gira
+   pelos pés; o ícone vai pendurado e balança com atraso. A faixa ganha folga
+   em cima e embaixo para os cantos não serem cortados no balanço. */
+body .attn-strip .attn { padding-block: 12px 14px; margin-block: -4px -8px; }
+.attn-strip .att { transform-origin: 50% 100%; }
+.attn-strip .att-i { transform-origin: 50% 0; }
+.home-tools .tabs .tab { transform-origin: 50% 100%; }
+.product-hero > .mbox { transform-origin: 50% 0; }
+
+/* Cada bloco responde do seu jeito quando liga o filtro. */
+.att[aria-pressed="true"] .att-i .icon { animation: 520ms var(--spring-bouncy) both; }
+.att-vencidos[aria-pressed="true"] .att-i .icon { animation-name: att-shake; animation-timing-function: ease-out; }
+.att-semana[aria-pressed="true"] .att-i .icon { animation-name: att-page; }
+.att-acabando[aria-pressed="true"] .att-i .icon { animation-name: att-flip; animation-duration: 700ms; }
+.att-zerados[aria-pressed="true"] .att-i { animation-name: att-on, att-spin; animation-duration: 420ms, 900ms; animation-timing-function: var(--spring-bouncy), cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes att-shake { 0%, 100% { rotate: 0deg; } 15% { rotate: -16deg; } 35% { rotate: 13deg; } 55% { rotate: -8deg; } 75% { rotate: 4deg; } }
+@keyframes att-page { 0% { translate: 0 0; } 30% { translate: 0 -5px; scale: 1.1 0.92; } 60% { translate: 0 1px; scale: 0.96 1.04; } 100% { translate: 0 0; scale: 1; } }
+@keyframes att-flip { from { rotate: 0deg; } to { rotate: 180deg; } }
+@keyframes att-spin { to { rotate: 180deg; } }
+
+/* Barra de abas: a aba escolhida dá um pulinho com o jeito do ícone. */
+.tab-item.is-hop .tab-icons { animation: 640ms both; transform-origin: 50% 100%; }
+.tab-item[data-tab="armario"].is-hop .tab-icons { animation-name: hop-box; }
+.tab-item[data-tab="compras"].is-hop .tab-icons { animation-name: hop-cart; }
+.tab-item[data-tab="cupons"].is-hop .tab-icons { animation-name: hop-receipt; transform-origin: 50% 0; }
+.tab-item[data-tab="mais"].is-hop .tab-icons { animation-name: hop-menu; transform-origin: 50% 50%; }
+/* A caixa amassa, pula e assenta. */
+@keyframes hop-box {
+  0% { transform: none; } 18% { transform: scale(1.14, 0.84); }
+  45% { transform: translateY(-7px) scale(0.94, 1.08); } 70% { transform: translateY(0) scale(1.08, 0.92); }
+  85% { transform: scale(0.98, 1.02); } 100% { transform: none; }
+}
+/* O carrinho arranca (inclina para trás), freia (inclina para a frente) e volta. */
+@keyframes hop-cart {
+  0% { transform: none; } 25% { transform: translateX(6px) rotate(-9deg); }
+  48% { transform: translateX(7px) rotate(7deg); } 66% { transform: translateX(3px) rotate(-4deg); }
+  82% { transform: translateX(1px) rotate(1.5deg); } 100% { transform: none; }
+}
+/* O cupom sai da impressora: estica para baixo e volta. */
+@keyframes hop-receipt {
+  0% { transform: none; } 30% { transform: translateY(-3px) scaleY(0.9); }
+  60% { transform: translateY(2px) scaleY(1.12); } 80% { transform: scaleY(0.97); } 100% { transform: none; }
+}
+@keyframes hop-menu { 0%, 100% { transform: none; } 20% { transform: rotate(-12deg); } 45% { transform: rotate(9deg); } 70% { transform: rotate(-4deg); } }
+
+/* Selo das Compras: pula quando o número muda. */
+.tab-badge.is-bump { animation: badge-bump 560ms var(--spring-bouncy); }
+@keyframes badge-bump { 0% { scale: 1; } 30% { scale: 1.45; rotate: -10deg; } 60% { scale: 0.92; rotate: 4deg; } 100% { scale: 1; rotate: 0deg; } }
+
+/* Botão Ler: na primeira vez, uma linha de leitor passa pelo código. */
+.scan-fab-ico { position: relative; display: grid; place-items: center; }
+.scan-fab-ico::after {
+  content: ''; position: absolute; left: -3px; right: -3px; top: 50%; height: 2px; border-radius: 2px;
+  background: #FF453A; box-shadow: 0 0 6px 1px rgba(255, 69, 58, 0.7); opacity: 0;
+}
+.scan-fab.is-sweep .scan-fab-ico::after { animation: fab-sweep 1100ms ease-in-out 1; }
+@keyframes fab-sweep {
+  0% { opacity: 0; translate: 0 -12px; } 12% { opacity: 1; } 45% { translate: 0 12px; }
+  80% { opacity: 1; translate: 0 -10px; } 100% { opacity: 0; translate: 0 -10px; }
+}
+
+/* Vazios: o ícone flutua devagar, como coisa boiando. */
+.empty-icon .icon { animation: float 3.6s ease-in-out infinite; }
+@keyframes float { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -4px; rotate: -4deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .att[aria-pressed="true"] .att-i .icon, .att-zerados[aria-pressed="true"] .att-i, .tab-item.is-hop .tab-icons,
+  .tab-badge.is-bump, .scan-fab.is-sweep .scan-fab-ico::after, .empty-icon .icon { animation: none !important; }
+}

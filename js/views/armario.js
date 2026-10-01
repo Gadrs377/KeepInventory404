@@ -13,6 +13,7 @@ import { showProductSheet } from './productSheet.js';
 import { daysUntil, expiryText, formatDate, SOON_DAYS, WATCH_DAYS } from '../dates.js';
 import { editProduct, markExpiry, confirmDiscard, unitWord } from '../actions.js';
 import { conferirMenu } from './conferirMenu.js';
+import { sway } from '../motion.js';
 import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText, reducedMotion } from '../ui.js';
 
 let savedFilter = 'todos';
@@ -151,6 +152,8 @@ export default function mountArmario(root, m = {}) {
     // A cascata de entrada só na primeira vez que os blocos aparecem.
     strip.classList.toggle('is-first', !strip.dataset.shown && !strip.hidden);
     if (!strip.hidden) strip.dataset.shown = '1';
+    // A faixa é redesenhada a cada filtro: guarda onde estava rolada.
+    const stripX = strip.firstElementChild ? strip.firstElementChild.scrollLeft : 0;
     strip.innerHTML = strip.hidden ? '' : `<div class="attn">${groups.map((g) => `
       <button type="button" class="att att-${g.id}${g.id === 'vencidos' && g.list.every(isMed) ? ' is-med' : ''}" aria-pressed="${savedFilter === g.id}" data-filter="${g.id}">
         <span class="att-i" aria-hidden="true">${icon(g.icon)}</span>
@@ -162,6 +165,7 @@ export default function mountArmario(root, m = {}) {
         <span class="att-n">${dueDays}</span>
         <span class="att-l">dias sem conferir</span>
       </button>` : ''}</div>`;
+    if (strip.firstElementChild && stripX) strip.firstElementChild.scrollLeft = stripX;
 
     if (empty) {
       shelf.innerHTML = `
@@ -432,8 +436,11 @@ export default function mountArmario(root, m = {}) {
     savedFilter = savedFilter === btn.dataset.filter ? 'todos' : btn.dataset.filter;
     keepOrder = false;
     vibrate(6);
-    btn.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
-    renderAnimated();
+    // Depois da troca, a faixa anda até o bloco escolhido (e os blocos balançam).
+    renderAnimated().then(() => {
+      const on = strip.querySelector('.att[aria-pressed="true"]');
+      if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    });
   });
   conferirBtn.addEventListener('click', () => conferirMenu(conferirBtn));
 
@@ -567,8 +574,9 @@ export default function mountArmario(root, m = {}) {
 
   // Trocar de ambiente ou de filtro: as linhas que continuam deslizam para o
   // novo lugar, as que saem somem e as novas aparecem (View Transitions).
+  // Resolve quando a troca terminou (a tela nova já é a de verdade).
   function renderAnimated() {
-    if (!document.startViewTransition || reducedMotion()) { render(); return; }
+    if (!document.startViewTransition || reducedMotion()) { render(); return Promise.resolve(); }
     const name = () => shelf.querySelectorAll('.row-item').forEach((li, i) => {
       if (i > 40) return;
       li.style.viewTransitionName = vtName(li.dataset.code);
@@ -583,7 +591,7 @@ export default function mountArmario(root, m = {}) {
     strip.dataset.vt = '';
     const t = document.startViewTransition(() => { render(); name(); });
     t.ready.catch(() => {});
-    t.finished.catch(() => {}).then(() => root.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; }));
+    return t.finished.catch(() => {}).then(() => root.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; }));
   }
 
   // Remédio da lista da Anvisa: os dados e "Guardar no armário" (a folha da Entrada).
@@ -600,7 +608,12 @@ export default function mountArmario(root, m = {}) {
     location.hash = '#/entrada';
   }
 
+  // Inércia: os blocos do "Pede atenção" balançam quando a faixa anda e para
+  // (e quando a página rola), as abas de ambiente se inclinam como texto.
+  const unswayStrip = sway(strip, { items: '.att', inner: '.att-i', lean: 0.005, max: 6, drop: 0.0016, maxDrop: 4 });
+  const unswayTabs = sway(tabs, { items: '.tab', lean: 0.003, max: 7, skew: true });
+
   const off = onChange(load);
   load();
-  return () => { alive = false; clearTimeout(medTimer); clearTimeout(foundTimer); off(); };
+  return () => { alive = false; clearTimeout(medTimer); clearTimeout(foundTimer); off(); unswayStrip(); unswayTabs(); };
 }

@@ -6,12 +6,12 @@ import { getProduct, updateProduct, movementsFor, lotsFor, onChange, undoMovemen
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { medByEan, medInfo } from '../remedios.js';
-import { medFacts, medBoxHtml, rxCardHtml, boxDataOf, fitMedBox } from './remedioInfo.js';
+import { medFacts, medBoxHtml, rxCardHtml, rxNeed, boxDataOf, fitMedBox } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
 import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
 import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
-import { tiltable, boxEnter, blisterEnter, pop } from '../motion.js';
+import { tiltable, boxEnter, blisterEnter, pop, sway } from '../motion.js';
 import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -79,7 +79,7 @@ export default async function mountProduto(root, { code }) {
         ${p.med ? `
         <section aria-labelledby="med-title">
           <h2 class="list-title" id="med-title">Sobre o remédio</h2>
-          <div class="group-card">${medFacts(p.med, { venda: !rxCardHtml(p.med) })}</div>
+          <div class="group-card">${medFacts(p.med)}</div>
         </section>` : ''}
         ${med ? '<div data-cont data-place="bottom"></div>' : ''}
 
@@ -120,10 +120,14 @@ export default async function mountProduto(root, { code }) {
   // A caixa do remédio entra girando e assenta; o selo cola; o dedo inclina a caixa.
   const box = $('.product-hero .mbox', root);
   let untilt = () => {};
+  let unsway = () => {};
   if (box) {
     fitMedBox(root);
     if (!document.documentElement.dataset.nav) boxEnter(box);
     untilt = tiltable(box.querySelector('.mbox-3d'));
+    // Rolando a página, a caixa fica um pouco para trás e, quando a página
+    // para, balança para a frente e assenta (motion.js sway).
+    unsway = sway(box.parentElement, { items: ':scope > .mbox', lean: 0, drop: 0.004, maxDrop: 8, pitch: 0.9 });
   }
 
   // Mostra a quantidade nova no meio e no botão Tirar 1.
@@ -239,7 +243,7 @@ export default async function mountProduto(root, { code }) {
           <button type="button" class="btn btn-quiet btn-sm" data-cont-count>Contar</button>
         </div>
         <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday></div></div>
-        ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${cur.med && cur.med.tarja && cur.med.tarja !== 'livre' ? ', com a receita avisada' : ''}.</p>` : ''}
+        ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${rxNeed(cur.med) ? ', com o aviso da receita' : ''}.</p>` : ''}
       </div>`;
     if (!contTop.dataset.shown) { contTop.dataset.shown = '1'; blisterEnter($('.blister', contTop)); }
     stepper($('[data-perday]', contTop), {
@@ -331,7 +335,7 @@ export default async function mountProduto(root, { code }) {
   });
 
   const offLots = onChange(() => renderLots());
-  const off = () => { offLots(); navIo.disconnect(); untilt(); };
+  const off = () => { offLots(); navIo.disconnect(); untilt(); unsway(); };
   renderLots();
 
   // Produto cadastrado antes dos remédios (ou pelas lojas) cujo código está na

@@ -1,6 +1,7 @@
 // Remédio: ligar o uso contínuo não pode travar a tela (o seletor "Toma por
-// dia" gravava ao montar e a tela entrava num ciclo sem fim) e todo remédio
-// tem a caixa, mesmo sem os dados da Anvisa.
+// dia" gravava ao montar e a tela entrava num ciclo sem fim), todo remédio
+// tem a caixa, mesmo sem os dados da Anvisa, e o aviso de receita só aparece
+// quando a farmácia fica com ela.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer } from './harness.mjs';
@@ -65,6 +66,37 @@ test('remédio sem os dados da Anvisa também tem a caixa', async () => {
     // O nome cabe na caixa (diminui até caber, no máximo duas linhas).
     const fits = await page.$eval('.mbox-name', (el) => el.scrollWidth <= el.clientWidth + 1);
     assert.ok(fits, 'o nome não passa da largura da caixa');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('aviso de receita só quando a farmácia fica com ela; a tarja continua na caixa', async () => {
+  const { ctx, page, errors } = await open(async () => {
+    const s = await import('/js/store.js');
+    const m = (tarja) => ({ nome: 'Remédio', substancia: 'teste', tamanho: '500 mg, 20 comprimidos', laboratorio: 'EMS', tipo: 'Genérico', tarja });
+    for (const t of ['livre', 'vermelha', 'vermelha-retencao', 'preta']) {
+      await s.addStock(`SEM-rx-${t}`, 1, { barcodes: [], name: `Remédio ${t}`, area: 'remedios', med: m(t) });
+    }
+  });
+  try {
+    const base = page.url().replace(/#.*$/, '');
+    const seen = {};
+    for (const t of ['livre', 'vermelha', 'vermelha-retencao', 'preta']) {
+      await page.goto(`${base}#/produto/SEM-rx-${t}`);
+      await page.waitForFunction((name) => document.querySelector('.product-hero .page-title')?.textContent === name && document.querySelector('.product-hero .mbox'), `Remédio ${t}`);
+      seen[t] = await page.evaluate(() => ({
+        card: !!document.querySelector('.rx-card'),
+        tarja: document.querySelector('.mbox-tarja')?.textContent || '',
+        venda: [...document.querySelectorAll('.fact dt')].some((d) => d.textContent === 'Venda'),
+      }));
+    }
+    assert.equal(seen.livre.card, false);
+    assert.equal(seen.vermelha.card, false, 'tarja vermelha comum não ganha aviso');
+    assert.equal(seen['vermelha-retencao'].card, true);
+    assert.equal(seen.preta.card, true);
+    assert.match(seen.vermelha.tarja, /PRESCRIÇÃO/, 'a tarja continua na caixa');
+    assert.match(seen.preta.tarja, /DEPENDÊNCIA/);
+    assert.ok(Object.values(seen).every((x) => !x.venda), 'a ficha não repete a venda');
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });

@@ -180,13 +180,26 @@ function buildTabBar() {
           <span class="tab-icons">${icon(t.icon, 'tab-off')}${icon(t.active, 'tab-on')}</span><span class="tab-label">${t.label}</span>
         </a>`).join('')}
     </nav>
-    <a class="scan-fab" href="#/entrada" draggable="false" aria-label="Ler um código">${icon('barcode')}<span class="scan-fab-label" aria-hidden="true">Ler</span></a>`;
+    <a class="scan-fab" href="#/entrada" draggable="false" aria-label="Ler um código"><span class="scan-fab-ico">${icon('barcode')}</span><span class="scan-fab-label" aria-hidden="true">Ler</span></a>`;
   document.body.append(bar);
+  // Na primeira vez que a barra aparece, uma linha de leitor passa pelo código.
+  if (!reducedMotion()) setTimeout(() => bar.querySelector('.scan-fab').classList.add('is-sweep'), 900);
   enableScrub(bar.querySelector('.tabbar'));
   window.addEventListener('resize', () => placeGlide(false));
 }
 
 function items() { return [...bar.querySelectorAll('.tab-item')]; }
+
+// A aba escolhida dá um pulinho com o jeito do ícone: a caixa quica, o
+// carrinho anda e freia, o cupom sai da impressora, as linhas do Mais balançam.
+function hop(it) {
+  if (!it || reducedMotion()) return;
+  it.classList.remove('is-hop');
+  void it.offsetWidth;
+  it.classList.add('is-hop');
+  clearTimeout(it._hop);
+  it._hop = setTimeout(() => it.classList.remove('is-hop'), 800);
+}
 
 // Pílula sob a aba escolhida. Desliza com mola; no caminho estica um pouco,
 // como uma gota de vidro, e volta ao tamanho ao chegar.
@@ -249,6 +262,7 @@ function enableScrub(nav) {
     setTimeout(() => { delete nav.dataset.justScrubbed; }, 60);
     if (target && location.hash !== target.getAttribute('href')) {
       vibrate(8);
+      hop(target);
       location.hash = target.getAttribute('href');
     } else placeGlide(true);
   };
@@ -261,6 +275,7 @@ function enableScrub(nav) {
     if (!it || it.getAttribute('aria-current')) return;
     items().forEach((x) => (x === it ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current')));
     placeGlide(true);
+    hop(it);
     vibrate(6);
   }, true);
 }

@@ -53,4 +53,11 @@ export async function refreshShopBadge() {
     link.querySelector('.tab-icons').append(badge);
   }
   badge.innerHTML = `<span aria-hidden="true">${n > 99 ? '99+' : n}</span><span class="sr-only">, ${n} ${n === 1 ? 'item' : 'itens'} para comprar</span>`;
+  // Número mudou: o selo dá um pulo (na primeira vez que aparece, só entra).
+  if (badge.dataset.n && badge.dataset.n !== String(n)) {
+    badge.classList.remove('is-bump');
+    void badge.offsetWidth;
+    badge.classList.add('is-bump');
+  }
+  badge.dataset.n = String(n);
 }

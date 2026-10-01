@@ -1,7 +1,7 @@
 // Dados de um remédio da base da Anvisa: a lista de fatos (usada na página do
 // produto e na folha da busca) e a folha que abre ao tocar num resultado.
 
-import { medByEan, medInfo, bulaUrl, registroText, money, TARJA, TIPO } from '../remedios.js';
+import { medByEan, medInfo, bulaUrl, registroText, money, TIPO } from '../remedios.js';
 import { productsByBarcode } from '../store.js';
 import { $, esc, icon, openSheet, thumb, subtitle, toast, tag, tagState, pill } from '../ui.js';
 
@@ -101,47 +101,44 @@ export function fitMedBox(root) {
   }
 }
 
-// O que a tarja quer dizer na prática. O prazo da receita só aparece quando há
+// Aviso de receita só quando a farmácia fica com ela (tarja preta e vermelha
+// com retenção): sem a receita na mão, não compra. A tarja vermelha comum e a
+// venda livre não ganham aviso, que na prática ninguém leva receita para elas;
+// a tarja continua na caixa desenhada. O prazo da receita só aparece quando há
 // certeza: "com retenção" vale para antibiótico e para controlado da lista C1,
 // e a classe terapêutica da Anvisa é que separa os dois.
 const ANTIBIOTICO = /penicilin|cefalospor|macrol[ií]d|quinolon|tetraciclin|sulfonamid|antibi[óo]tic|aminoglicos|carbapen|monobact|glicopept|nitrofuran|lincosam|anfenic/i;
 export function rxCardHtml(med) {
-  const t = med.tarja;
-  if (!t) return '';
   const c = {
-    livre: { band: 'free', icon: 'check', title: 'Sem receita', text: 'Compra direto no balcão.' },
-    vermelha: { band: 'red', icon: 'fileText', title: 'Precisa de receita', text: 'Mostre na farmácia, e a receita volta com você.' },
-    'vermelha-retencao': { band: 'red', icon: 'fileText', title: 'Precisa de receita', text: 'A farmácia fica com a receita. Para comprar de novo, peça outra.', note: ANTIBIOTICO.test(med.classe || '') ? 'Receita de antibiótico vale 10 dias.' : '' },
-    preta: { band: 'black', icon: 'fileText', title: 'Receita especial', text: 'A farmácia fica com a receita. Para comprar de novo, peça outra.' },
-  }[t];
+    'vermelha-retencao': { band: 'red', title: 'A farmácia fica com a receita', text: 'Para comprar de novo, peça outra ao médico.', note: ANTIBIOTICO.test(med.classe || '') ? 'Receita de antibiótico vale 10 dias.' : '' },
+    preta: { band: 'black', title: 'Receita especial', text: 'A farmácia fica com a receita. Para comprar de novo, peça outra ao médico.' },
+  }[med.tarja];
   if (!c) return '';
   return `
     <div class="rx-card is-${c.band}">
       <span class="rx-band" aria-hidden="true"></span>
       <div class="rx-body">
-        <p class="rx-title">${icon(c.icon)}<b>${c.title}</b></p>
+        <p class="rx-title">${icon('fileText')}<b>${c.title}</b></p>
         <p class="rx-text">${c.text}</p>
         ${c.note ? `<p class="rx-note">${c.note}</p>` : ''}
       </div>
     </div>`;
 }
 
-// O que pede cada remédio nas Compras: "Precisa de receita", "Receita especial".
+// O que pede cada remédio nas Compras, só quando a receita fica na farmácia.
 export function rxNeed(med) {
   const t = med && med.tarja;
   if (t === 'preta') return { cls: 'is-black', text: 'Receita especial' };
-  if (t === 'vermelha' || t === 'vermelha-retencao') return { cls: 'is-red', text: 'Precisa de receita' };
+  if (t === 'vermelha-retencao') return { cls: 'is-red', text: 'Leve a receita' };
   return null;
 }
 
 // Lista de fatos: o que está na caixa e na bula, na ordem em que se procura.
-// Com o cartão da receita na tela, a linha "Venda" sai (venda: false).
-export function medFacts(med, { venda = true } = {}) {
-  const t = venda && TARJA[med.tarja];
+// A tarja não entra aqui: ela está na caixa, e o aviso, no cartão da receita.
+export function medFacts(med) {
   const rows = [
     ['Princípio ativo', esc(med.substancia)],
     ['Apresentação', `${esc(med.tamanho || med.apresentacao)}${med.forma && !String(med.tamanho).includes(med.forma) ? `<span class="fact-sub">${esc(med.forma)}</span>` : ''}`],
-    t && ['Venda', `<span class="tarja tarja-${esc(med.tarja)}" aria-hidden="true"></span>${esc(t.label)}<span class="fact-sub">${esc(t.note)}</span>`],
     med.tipo && ['Tipo', esc(TIPO[med.tipo] || med.tipo)],
     med.laboratorio && ['Laboratório', esc(med.laboratorio)],
     med.classe && ['Classe terapêutica', esc(med.classe)],
@@ -173,7 +170,7 @@ export function medSheet(ean) {
           ${medBoxHtml(med, { size: 'sm' })}
           ${have ? `<p class="med-have">${icon('package')}No armário: ${have.qty === 1 ? '1 caixa' : `${have.qty} caixas`}. <a href="#/produto/${encodeURIComponent(have.code)}">Ver</a></p>` : ''}
           ${rxCardHtml(med)}
-          <div class="group-card med-facts-card">${medFacts(med, { venda: !rxCardHtml(med) }).replace(/<a class="btn[^>]*>.*?<\/a>/s, '')}</div>
+          <div class="group-card med-facts-card">${medFacts(med).replace(/<a class="btn[^>]*>.*?<\/a>/s, '')}</div>
           <div class="sheet-sticky med-bar">
             <a class="btn btn-quiet btn-lg" href="${esc(bulaUrl(med))}" target="_blank" rel="noopener">${icon('fileText')}Bula</a>
             <button type="button" class="btn btn-mode btn-lg mode-entrada" data-keep>${icon('in')}Guardar no armário</button>
