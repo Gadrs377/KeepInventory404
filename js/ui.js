@@ -471,15 +471,27 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
   const head = cut > 0 && cut < 80 ? message.slice(0, cut) : message;
   const rest = cut > 0 && cut < 80 ? message.slice(cut + 2) : '';
   const glyph = { entrada: 'in', saida: 'out', contagem: 'count' }[mode];
-  host.innerHTML = `
+  const html = `
     ${glyph ? `<span class="toast-icon" aria-hidden="true">${icon(glyph)}</span>` : ''}
     <span class="toast-text"><span class="toast-head">${esc(head)}</span>${rest ? `<span class="toast-sub">${esc(rest)}</span>` : ''}</span>
     ${action ? `<button type="button" class="toast-action">${esc(action)}</button>` : ''}`;
+  // Aviso já na tela (tocou − de novo, por exemplo): não entra de novo, só
+  // troca o texto e dá um tapinha. Senão, entra com mola, como os do sistema.
+  const showing = !host.hidden && !host.classList.contains('is-out') && host.firstElementChild;
+  host.innerHTML = html;
   host.hidden = false;
-  // Entra com mola, como os avisos do sistema; reinicia a cada aviso novo.
-  host.classList.remove('is-in');
-  void host.offsetWidth;
-  host.classList.add('is-in');
+  host.style.translate = '';
+  host.style.opacity = '';
+  if (showing && !reducedMotion()) {
+    host.classList.add('is-in');
+    host.animate([{ scale: '1' }, { scale: '1.035' }, { scale: '1' }], { duration: 320, easing: 'cubic-bezier(0.3, 1.4, 0.5, 1)' });
+    $('.toast-text', host).animate([{ opacity: 0.2, translate: '0 4px' }, { opacity: 1, translate: '0 0' }], { duration: 240, easing: 'ease-out' });
+  } else {
+    host.classList.remove('is-in');
+    void host.offsetWidth;
+    host.classList.add('is-in');
+  }
+  armToastSwipe(host);
   const live = $('#toast-live');
   if (live) live.textContent = message;
   if (action) {
@@ -498,6 +510,63 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
     host.onpointerenter = host.onfocusin = host.onpointerleave = host.onfocusout = null;
     toastTimer = setTimeout(hideToast, duration);
   }
+}
+
+// Arrastar o aviso: segue o dedo para os lados (e um pouco para baixo, com
+// resistência). Jogado com força ou arrastado longe, sai voando; senão volta
+// com mola.
+function armToastSwipe(host) {
+  if (host.dataset.swipe) return;
+  host.dataset.swipe = '1';
+  let d = null;
+  host.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button') || e.button > 0) return;
+    d = { x: e.clientX, y: e.clientY, t: performance.now(), vx: 0, lx: e.clientX, lt: performance.now(), on: false, id: e.pointerId };
+  });
+  host.addEventListener('pointermove', (e) => {
+    if (!d || e.pointerId !== d.id) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.on) {
+      if (Math.hypot(dx, dy) < 6) return;
+      d.on = true;
+      clearTimeout(toastTimer);
+      try { host.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
+    }
+    const now = performance.now();
+    d.vx = (e.clientX - d.lx) / Math.max(1, now - d.lt);
+    d.lx = e.clientX; d.lt = now;
+    const ry = dy > 0 ? dy * 0.6 : dy * 0.15;
+    host.style.translate = `${dx}px ${ry}px`;
+    host.style.rotate = `${dx * 0.03}deg`;
+    host.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 400));
+  });
+  const end = (e) => {
+    if (!d || e.pointerId !== d.id) return;
+    const was = d;
+    d = null;
+    if (!was.on) return;
+    const dx = e.clientX - was.x;
+    const dy = e.clientY - was.y;
+    const fling = Math.abs(was.vx) > 0.6 || Math.abs(dx) > 110 || dy > 70;
+    const from = { translate: host.style.translate || '0 0', rotate: host.style.rotate || '0deg', opacity: host.style.opacity || '1' };
+    host.style.translate = ''; host.style.rotate = ''; host.style.opacity = '';
+    if (fling) {
+      const dir = dy > 70 && Math.abs(dx) < 60 ? null : Math.sign(dx || was.vx) || 1;
+      const to = dir === null ? { translate: '0 140px', rotate: '0deg', opacity: 0 } : { translate: `${dir * (window.innerWidth + 60)}px ${dy * 0.3}px`, rotate: `${dir * 14}deg`, opacity: 0 };
+      host.animate([from, to], { duration: 300, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)', fill: 'forwards' }).finished.catch(() => {}).then(() => {
+        host.getAnimations().forEach((a) => a.cancel());
+        host.hidden = true; host.innerHTML = ''; host.classList.remove('is-in');
+      });
+      vibrate(6);
+    } else {
+      host.animate([from, { translate: '0 0', rotate: '0deg', opacity: 1 }], { duration: 480, easing: SPRING_EASE_SOFT });
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideToast, 3000);
+    }
+  };
+  host.addEventListener('pointerup', end);
+  host.addEventListener('pointercancel', end);
 }
 
 export function hideToast() {

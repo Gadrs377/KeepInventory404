@@ -130,34 +130,53 @@ export function countUp(el, to, { from = 0, duration = 700 } = {}) {
 // ---------- Caixa que inclina ----------
 // Arrastar o dedo sobre a caixa do remédio gira em 3D; soltando, volta com mola.
 // `base`: a inclinação de repouso (rotateX e rotateY em graus).
-export function tiltable(el, { base = [8, -16], max = 18 } = {}) {
+export function tiltable(el, { base = [8, -16], max = 18, onTap = null } = {}) {
   if (!el || reduced()) return () => {};
   let active = null;
-  const set = (rx, ry) => { el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`; };
+  let releasing = 0;
+  let phone = [0, 0];
+  const set = (rx, ry) => {
+    el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    // O brilho da embalagem corre junto com a inclinação.
+    el.style.setProperty('--sheen', `${((ry - base[1]) * 2.2).toFixed(1)}%`);
+  };
   const down = (e) => {
-    active = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    active = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0 };
     el.style.transition = 'none';
+    askTilt();
     try { el.setPointerCapture(e.pointerId); } catch { /* sem captura */ }
   };
   const move = (e) => {
     if (!active || e.pointerId !== active.id) return;
     const dx = Math.max(-1, Math.min(1, (e.clientX - active.x) / 120));
     const dy = Math.max(-1, Math.min(1, (e.clientY - active.y) / 120));
+    active.moved = Math.max(active.moved, Math.hypot(e.clientX - active.x, e.clientY - active.y));
     set(base[0] - dy * max, base[1] + dx * max * 1.6);
   };
   const up = () => {
     if (!active) return;
+    const tap = active.moved < 6;
     active = null;
     const s = spring({ stiffness: 180, damping: 12 });
     el.style.transition = `transform ${s.duration}ms ${HAS_LINEAR ? s.easing : 'cubic-bezier(0.2, 1.4, 0.3, 1)'}`;
-    set(base[0], base[1]);
+    releasing = performance.now() + s.duration;
+    set(base[0] - phone[1], base[1] + phone[0]);
+    if (tap && onTap) onTap();
   };
+  // Celular inclinado: a caixa acompanha um pouco (até 5 graus).
+  const offTilt = onTilt((x, y) => {
+    phone = [clampTo(x * 0.25, 5), clampTo(y * 0.2, 4)];
+    if (active || performance.now() < releasing) return;
+    el.style.transition = 'transform 120ms linear';
+    set(base[0] - phone[1], base[1] + phone[0]);
+  });
   el.addEventListener('pointerdown', down);
   el.addEventListener('pointermove', move);
   el.addEventListener('pointerup', up);
   el.addEventListener('pointercancel', up);
   el.style.touchAction = 'pan-y';
   return () => {
+    offTilt();
     el.removeEventListener('pointerdown', down);
     el.removeEventListener('pointermove', move);
     el.removeEventListener('pointerup', up);
@@ -208,7 +227,7 @@ const clampTo = (v, m) => Math.max(-m, Math.min(m, v));
 
 export function sway(host, { items, inner = '', lean = 0.004, max = 5, skew = false, drop = 0, maxDrop = 5, pitch = 0 } = {}) {
   if (!host || reduced()) return () => {};
-  const h = { host, items, inner, lean, max, skew, drop, maxDrop, pitch, sc: null, lastX: null, v: 0, state: new WeakMap() };
+  const h = { host, items, inner, lean, max, skew, drop, maxDrop, pitch, sc: null, lastX: null, v: 0, state: new WeakMap(), gx: 0, woke: 0 };
   const onScroll = (e) => {
     const t = e.target;
     if (t instanceof Element && host.contains(t)) h.sc = t;
@@ -216,10 +235,16 @@ export function sway(host, { items, inner = '', lean = 0.004, max = 5, skew = fa
   };
   host.addEventListener('scroll', onScroll, { capture: true, passive: true });
   swayHosts.add(h);
+  // O que vai pendurado (o ícone) cai um tiquinho para o lado do chão.
+  const offTilt = inner ? onTilt((x) => {
+    h.gx = clampTo(-x * 0.15, 3);
+    if (Math.abs(h.gx - h.woke) > 0.15) { h.woke = h.gx; wakeSway(); }
+  }) : () => {};
   if (drop) window.addEventListener('scroll', wakeSway, { passive: true });
   return () => {
     host.removeEventListener('scroll', onScroll, true);
     swayHosts.delete(h);
+    offTilt();
   };
 }
 
@@ -268,7 +293,8 @@ function swayFrame(now) {
       el.style.transform = parts.join(' ');
       if (h.inner) {
         const inn = el.querySelector(h.inner);
-        if (inn) inn.style.transform = live && s.b !== s.a ? `rotate(${((s.b - s.a) * 2.2).toFixed(2)}deg)` : '';
+        const r = (live ? (s.b - s.a) * 2.2 : 0) + h.gx;
+        if (inn) inn.style.transform = Math.abs(r) > 0.03 ? `rotate(${r.toFixed(2)}deg)` : '';
       }
     });
   }
@@ -296,4 +322,48 @@ export function floatLabel(anchor, text, { mode = '' } = {}) {
     { transform: `translate(calc(-50% + ${drift * 0.3}px), -18px) scale(1.12)`, opacity: 1, offset: 0.25 },
     { transform: `translate(calc(-50% + ${drift}px), -46px) scale(0.95)`, opacity: 0 },
   ], { duration: 820, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' }).finished.catch(() => {}).then(() => el.remove());
+}
+
+// ---------- Movimento do celular ----------
+// Bem de leve, porque a pessoa está com o celular na mão: só a mudança conta
+// (segurar inclinado volta a ser o "neutro" em um segundo), tudo suavizado e
+// com limite. No iPhone, o sistema pede licença: askTilt() num toque.
+const tiltSubs = new Set();
+const T = { on: false, ok: null, x: 0, y: 0, bx: null, by: null, raf: 0 };
+const tiltOff = () => { try { return localStorage.getItem('ki.tilt') === '0'; } catch { return false; } };
+function onOrient(e) {
+  if (e.gamma == null || e.beta == null) return;
+  if (T.bx === null) { T.bx = e.gamma; T.by = e.beta; }
+  T.bx += (e.gamma - T.bx) * 0.025;
+  T.by += (e.beta - T.by) * 0.025;
+  T.x += (clampTo(e.gamma - T.bx, 20) - T.x) * 0.2;
+  T.y += (clampTo(e.beta - T.by, 20) - T.y) * 0.2;
+  if (!T.raf) T.raf = requestAnimationFrame(() => { T.raf = 0; for (const f of tiltSubs) f(T.x, T.y); });
+}
+function startTilt() {
+  if (T.on || typeof DeviceOrientationEvent === 'undefined') return;
+  const needs = typeof DeviceOrientationEvent.requestPermission === 'function';
+  if (needs && T.ok !== true) return;
+  window.addEventListener('deviceorientation', onOrient);
+  T.on = true;
+}
+function stopTilt() {
+  if (!T.on) return;
+  window.removeEventListener('deviceorientation', onOrient);
+  T.on = false; T.bx = T.by = null; T.x = T.y = 0;
+}
+// cb(x, y): graus de inclinação recente para o lado (x) e para a frente (y).
+export function onTilt(cb) {
+  if (reduced() || tiltOff()) return () => {};
+  tiltSubs.add(cb);
+  startTilt();
+  return () => { tiltSubs.delete(cb); if (!tiltSubs.size) stopTilt(); };
+}
+// iPhone: pede a licença do movimento (precisa ser dentro de um toque).
+export function askTilt() {
+  if (T.ok !== null || reduced() || tiltOff()) return;
+  const D = typeof DeviceOrientationEvent !== 'undefined' ? DeviceOrientationEvent : null;
+  if (!D || typeof D.requestPermission !== 'function') { T.ok = true; return; }
+  T.ok = false;
+  D.requestPermission().then((r) => { T.ok = r === 'granted'; if (T.ok && tiltSubs.size) startTilt(); }).catch(() => {});
 }

@@ -11,9 +11,9 @@ import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
 import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
 import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
-import { tiltable, boxEnter, blisterEnter, pop, sway, floatLabel } from '../motion.js';
-import { morph } from '../morph.js';
-import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
+import { tiltable, boxEnter, blisterEnter, pop, sway, floatLabel, springTo } from '../motion.js';
+import { morph, roll, reveal } from '../morph.js';
+import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, reducedMotion, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Guardou ${m.delta}`,
@@ -125,20 +125,70 @@ export default async function mountProduto(root, { code }) {
   if (box) {
     fitMedBox(root);
     if (!document.documentElement.dataset.nav) boxEnter(box);
-    untilt = tiltable(box.querySelector('.mbox-3d'));
+    // Tocar na caixa (sem arrastar) chacoalha: os comprimidos fazem barulho.
+    untilt = tiltable(box.querySelector('.mbox-3d'), {
+      onTap: () => {
+        if (reducedMotion()) return;
+        vibrate([6, 40, 6, 40, 6]);
+        box.animate([
+          { translate: '0 0', rotate: '0deg' },
+          { translate: '0 -10px', rotate: '-4deg', offset: 0.18 },
+          { translate: '0 -6px', rotate: '4deg', offset: 0.34 },
+          { translate: '0 -3px', rotate: '-3deg', offset: 0.5 },
+          { translate: '0 0', rotate: '2deg', offset: 0.66 },
+          { translate: '0 0', rotate: '-1deg', offset: 0.82 },
+          { translate: '0 0', rotate: '0deg' },
+        ], { duration: 560, easing: 'ease-out' });
+      },
+    });
     // Rolando a página, a caixa fica um pouco para trás e, quando a página
     // para, balança para a frente e assenta (motion.js sway).
     unsway = sway(box.parentElement, { items: ':scope > .mbox', lean: 0, drop: 0.004, maxDrop: 8, pitch: 0.9 });
   }
 
-  // Mostra a quantidade nova no meio e no botão Tirar 1.
-  function showQty(product, dir = '') {
-    $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
-    if (dir) pop($('.hero-qty .tag', root), { scale: dir === 'is-up' ? 1.12 : 0.9 });
+  // Mostra a quantidade nova no meio e no botão Tirar 1. Muda a etiqueta no
+  // lugar (nunca troca o elemento: ela é a que voa da lista até aqui, e trocá-la
+  // no meio da abertura cancelava a animação), e só o que mudou se mexe.
+  function showQty(product) {
+    const t = $('.hero-qty .tag', root);
+    const n = $('.tag-n', t);
+    const before = Number(n.textContent);
+    const cls = `tag ${tagState(product)} tag-lg`.replace(/\s+/g, ' ').trim();
+    if (t.className !== cls) t.className = cls; // a cor muda com transição
+    if (before !== product.qty) {
+      n.textContent = String(product.qty);
+      roll(n, before);
+      pop(t, { scale: product.qty > before ? 1.12 : 0.9 });
+    }
     if (med) $('.hero-qty-label', root).textContent = product.qty === 1 ? 'caixa' : 'caixas';
-    const pills = $('.hero-pills', root);
-    if (pills) { morph(pills, stockPill(product)); pills.hidden = !stockPill(product); }
+    const html = stockPill(product);
+    const st = $('.mbox-sticker', root);
+    if (st) setSticker(st, html);
+    else {
+      const pills = $('.product-meta .hero-pills', root);
+      if (pills && pills.innerHTML.trim() !== html) {
+        if (html && !pills.hidden) morph(pills, html);
+        else reveal(pills, !!html, html ? (el) => { el.innerHTML = html; } : null);
+      }
+    }
     $('[data-use="-1"]', root).disabled = product.qty === 0;
+  }
+
+  // Selo da caixa do remédio: o velho descola (gira e cai), o novo cola com
+  // um tapinha. Mesmo selo com outro texto: só o texto troca.
+  function setSticker(st, html) {
+    const cur = st.innerHTML.trim();
+    if (cur === html) return;
+    const slap = () => springTo(st, [{ transform: 'scale(1.5) rotate(-12deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { stiffness: 520, damping: 18 });
+    if (cur && html) { morph(st, html); return; }
+    if (html) { st.innerHTML = html; st.hidden = false; slap(); return; }
+    const peel = reducedMotion() ? null : st.animate([
+      { transform: 'none', opacity: 1 },
+      { transform: 'translate(8px, -10px) rotate(18deg) scale(1.05)', opacity: 1, offset: 0.35 },
+      { transform: 'translate(22px, 40px) rotate(38deg) scale(0.9)', opacity: 0 },
+    ], { duration: 520, easing: 'cubic-bezier(0.4, 0, 0.7, 1)' });
+    const done = () => { st.hidden = true; st.replaceChildren(); };
+    if (peel) peel.onfinish = done; else done();
   }
 
   // Tirar 1 e Guardar 1 no topo: o que mais se faz na página do produto.
@@ -149,7 +199,7 @@ export default async function mountProduto(root, { code }) {
     try {
       const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
       vibrate(12);
-      showQty(product, delta < 0 ? 'is-down' : 'is-up');
+      showQty(product);
       floatLabel($('.hero-qty .tag', root), delta < 0 ? '−1' : '+1', { mode: delta < 0 ? 'saida' : 'entrada' });
       toast(`${delta < 0 ? '−1' : '+1'}. Agora tem ${product.qty}.${delta < 0 ? afterUseText(product) : ''}`, {
         mode: delta < 0 ? 'saida' : 'entrada',

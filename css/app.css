@@ -3219,3 +3219,32 @@ html[data-nav="tab"][data-tab-dir="right"]::view-transition-new(root) { animatio
 html[data-nav="tab"][data-tab-dir="left"]::view-transition-new(root) { animation: vt-tab-in-l 340ms var(--spring) both; }
 @keyframes vt-tab-in-r { from { opacity: 0; translate: 28px 0; } }
 @keyframes vt-tab-in-l { from { opacity: 0; translate: -28px 0; } }
+
+/* ---------- 4.4: toques e movimento do celular ---------- */
+/* Aviso de baixo: arrasta para os lados e joga fora. */
+.toast { touch-action: none; -webkit-user-select: none; user-select: none; }
+
+/* Caixa do remédio: um brilho de embalagem corre com a inclinação (dedo ou
+   celular; motion.js tiltable põe --sheen). */
+.mbox-face::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.55) 47%, rgba(255, 255, 255, 0.1) 54%, transparent 64%);
+  background-size: 300% 100%; background-position: calc(62% - var(--sheen, 0%)) 0;
+  mix-blend-mode: soft-light; opacity: 0.9;
+}
+
+/* Bobeirinhas de toque (js/play.js). */
+.empty-icon.is-boing { animation: boing 760ms var(--spring-bouncy); }
+@keyframes boing { 0% { scale: 1; } 20% { scale: 0.82 1.12; } 45% { scale: 1.16 0.88; translate: 0 -10px; } 70% { scale: 0.96 1.04; translate: 0 0; } 100% { scale: 1; } }
+.list-title-icon > .icon.is-wiggle, .hero-qty-label.is-wiggle, .is-wiggle { animation: wiggle 620ms ease-in-out; }
+@keyframes wiggle { 0%, 100% { rotate: 0deg; } 20% { rotate: -14deg; } 45% { rotate: 11deg; } 70% { rotate: -5deg; } }
+.product-hero > .thumb.is-wobble { animation: wobble 700ms var(--spring-bouncy); }
+@keyframes wobble { 0% { scale: 1; rotate: 0deg; } 25% { scale: 0.9; rotate: -6deg; } 55% { scale: 1.06; rotate: 4deg; } 80% { scale: 0.98; rotate: -1deg; } 100% { scale: 1; rotate: 0deg; } }
+.search > .icon.is-hop { animation: s-hop 280ms var(--spring-bouncy); }
+@keyframes s-hop { 40% { translate: 0 -3px; scale: 1.12; } }
+.search > .icon.is-look { animation: s-look 680ms ease-in-out; }
+@keyframes s-look { 25% { rotate: -18deg; } 60% { rotate: 14deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-icon.is-boing, .is-wiggle, .product-hero > .thumb.is-wobble, .search > .icon.is-hop, .search > .icon.is-look { animation: none !important; }
+}

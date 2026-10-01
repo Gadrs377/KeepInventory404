@@ -4,7 +4,7 @@
 // Base de remédios (data/remedios): responde do cache na hora e atualiza por
 // trás; muda uma vez por mês e não se perde quando o app ganha versão nova.
 
-const VERSION = 'v99';
+const VERSION = 'v100';
 const APP_CACHE = `app-${VERSION}`;
 const ASSET_CACHE = 'assets-v1';
 const DATA_CACHE = 'remedios-v1';
@@ -37,6 +37,7 @@ const APP_FILES = [
   './js/continuo.js',
   './js/motion.js',
   './js/morph.js',
+  './js/play.js',
   './js/views/conferirMenu.js',
   './js/views/peek.js',
   './js/views/validade.js',

@@ -1968,3 +1968,30 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
 - **Busca sem resultado:** a lupa balança a cabeça ("não achei").
 - Com `prefers-reduced-motion`, tudo muda na hora.
 - `sw.js` v99.
+
+## Versão 4.4: abertura do produto de volta, toques e movimento do celular
+
+- **A abertura do produto voltou a animar.** Logo depois de abrir, a página
+  trocava a etiqueta de quantidade por outra igual; a etiqueta é uma das que
+  voam da linha até a página, e trocá-la no meio cancelava a animação (a
+  página aparecia num supetão). Agora a etiqueta muda no lugar: só a cor (com
+  transição) e o número (rolando) quando mudam. Teste novo:
+  `tests/ui/transicao.test.mjs` (abrir e voltar têm de durar a animação toda).
+- **"Acabando" saindo no produto:** a pílula encolhe e some, e o que vem
+  embaixo sobe junto (antes o espaço sumia de uma vez). No remédio, o selo da
+  caixa descola (gira e cai) e o novo cola com um tapinha.
+- **Aviso de baixo:** com um aviso já na tela, o novo não entra de novo (só
+  troca o texto com um tapinha); arrastar o aviso para os lados ou para baixo
+  e soltar com força joga fora; soltar devagar volta com mola.
+- **Toques:** tocar na caixa do remédio chacoalha (com vibração de
+  comprimidos); o ícone dos vazios quica; o ícone dos títulos balança; a foto
+  do produto balança; a lupa olha em volta ao entrar na busca e pula a cada
+  letra (js/play.js).
+- **Movimento do celular (bem de leve):** a caixa do remédio inclina até
+  5 graus com o celular e o brilho da embalagem corre junto; os ícones do
+  "Pede atenção" pendem um tiquinho para o lado do chão. Só a mudança conta:
+  segurando inclinado, volta ao neutro em cerca de um segundo. No iPhone, a
+  licença é pedida no primeiro toque na caixa. Mais › Som e movimento ›
+  "Reagir ao movimento do celular" desliga. Nada disso com "Reduzir
+  movimento".
+- `sw.js` v100.

@@ -287,7 +287,7 @@ function resize(el, from, to) {
 }
 
 // Número que muda: o novo entra rolando, do lado certo.
-function roll(el, from) {
+export function roll(el, from) {
   const a = parseFloat(String(from).replace(',', '.'));
   const b = parseFloat(String(el.textContent).replace(',', '.'));
   const up = !(Number.isFinite(a) && Number.isFinite(b)) || b >= a;
@@ -307,4 +307,32 @@ function restartCss(el) {
   for (const a of el.getAnimations({ subtree: true })) {
     if (a instanceof CSSAnimation) { a.cancel(); a.play(); }
   }
+}
+
+// Mostra ou esconde um bloco sem pular: a altura (e a margem) vão até zero, ou
+// saem de zero, e o que vem embaixo acompanha. `fill(el)` põe o conteúdo novo
+// antes de aparecer; ao esconder, o conteúdo fica até o fim e depois sai.
+export function reveal(el, show, fill = null) {
+  if (!el) return;
+  const shown = !el.hidden;
+  if (show && fill) fill(el);
+  if (show === shown) return;
+  if (reduced() || !el.isConnected) {
+    el.hidden = !show;
+    if (!show && fill === null) el.replaceChildren();
+    return;
+  }
+  for (const a of el.getAnimations()) a.cancel();
+  el.hidden = false;
+  const cs = getComputedStyle(el);
+  const h = el.getBoundingClientRect().height;
+  const full = { height: `${h}px`, marginTop: cs.marginTop, marginBottom: cs.marginBottom, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1, transform: 'none' };
+  const zero = { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0, transform: 'scale(0.9)' };
+  el.style.overflow = 'clip';
+  const s = SLIDE();
+  const a = el.animate(show ? [zero, full] : [full, zero], { duration: s.duration, easing: ease(s), fill: show ? 'none' : 'forwards' });
+  a.onfinish = () => {
+    el.style.overflow = '';
+    if (!show) { el.hidden = true; el.replaceChildren(); a.cancel(); }
+  };
 }

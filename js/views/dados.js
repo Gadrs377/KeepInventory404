@@ -2,9 +2,12 @@
 
 import { exportData, importData, listProducts, recentMovements } from '../store.js';
 import { $, esc, icon, toast, when, confirmSheet, download, tabBar, openSheet } from '../ui.js';
+import { askTilt } from '../motion.js';
 import { backupNow, lastBackupAt, backupKey, formatCode, fetchBackup, restoreBackup } from '../backup.js';
 import { beep, soundEnabled, setSoundEnabled } from '../sound.js';
 import { debugEnabled, setDebugEnabled } from '../expiryDebug.js';
+
+const tiltOn = () => { try { return localStorage.getItem('ki.tilt') !== '0'; } catch { return true; } };
 
 export default async function mountDados(root) {
   const [products, movements] = await Promise.all([listProducts(), recentMovements(60)]);
@@ -43,10 +46,12 @@ export default async function mountDados(root) {
         </ul>
         <p class="group-note">Uma cópia vai sozinha para o servidor do app sempre que o armário muda. Para levar o armário a outro celular, use "Restaurar uma cópia" com o código desta casa.${persisted ? ' Neste celular, os dados estão protegidos contra limpeza automática.' : ''}</p>
 
-        <h2 class="list-title">Som</h2>
+        <h2 class="list-title">Som e movimento</h2>
         <ul class="group">
           <li><label class="group-row"><span class="group-icon">${icon('sound')}</span><span class="group-label">Bip ao ler um código</span><input type="checkbox" class="switch" data-sound ${soundEnabled() ? 'checked' : ''}></label></li>
+          <li><label class="group-row"><span class="group-icon">${icon('sparkle')}</span><span class="group-label">Reagir ao movimento do celular</span><input type="checkbox" class="switch" data-tilt ${tiltOn() ? 'checked' : ''}></label></li>
         </ul>
+        <p class="group-note">A caixa do remédio e os ícones do "Pede atenção" mexem um pouquinho quando o celular inclina.</p>
 
         <section class="install-note" ${installed ? 'hidden' : ''}>
           <h2 class="list-title">Instalar no celular</h2>
@@ -73,6 +78,10 @@ export default async function mountDados(root) {
       ${tabBar('mais')}
     </div>`;
 
+  $('[data-tilt]', root).addEventListener('change', (e) => {
+    try { localStorage.setItem('ki.tilt', e.target.checked ? '1' : '0'); } catch { /* sem armazenamento */ }
+    if (e.target.checked) askTilt();
+  });
   $('[data-sound]', root).addEventListener('change', (e) => {
     setSoundEnabled(e.target.checked);
     if (e.target.checked) beep('ok');

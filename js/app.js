@@ -18,6 +18,7 @@ import { unlockAudio } from './sound.js';
 import { enableSwipeBack } from './swipeBack.js';
 import { tel, telStart, telReady } from './telemetry.js';
 import { startAutoBackup } from './backup.js';
+import { initPlay } from './play.js';
 
 const ROUTES = [
   [/^\/?$/, mountArmario],
@@ -220,6 +221,7 @@ window.addEventListener('offline', () => toast('Sem internet. O armário continu
 window.addEventListener('online', () => toast('Internet de volta.', { duration: 2000 }));
 route().then(telReady, telReady);
 startAutoBackup();
+initPlay();
 
 // Pede ao navegador para não apagar os dados sozinho.
 if (navigator.storage && navigator.storage.persist) {
