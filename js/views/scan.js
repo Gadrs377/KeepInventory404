@@ -1,55 +1,36 @@
-// Leitor único: Entrada e Saída na mesma tela. O interruptor da faixa troca o
-// modo (e a cor) sem desligar a câmera. O que foi registrado aparece como um cupom.
-//
-// Modo rápido (como o caixa do mercado): cada leitura de um produto conhecido
-// soma ou tira 1 na hora, só com o bip. O que o app não conhece, ou um código
-// com mais de um produto, fica em "Para resolver" até o fim. Fica ligado por
-// padrão na Saída (quase sempre sai 1) e desligado na Entrada.
+// Leitor: Guardar e Tirar na mesma tela. O seletor da faixa troca o modo (e a
+// cor) sem desligar a câmera. Cada leitura de um produto conhecido guarda ou
+// tira 1 na hora; o cartão embaixo da câmera tem − número + para corrigir (no
+// lugar do antigo "Rápido" e do Desfazer). O que foi registrado aparece num
+// cupom vivo; Concluir imprime o cupom final.
 
 import { mountCamera } from './camera.js';
 import { showProductSheet } from './productSheet.js';
 import { showReceipt } from './receipt.js';
-import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, setStock, updateProduct, listProducts, recentMovements } from '../store.js';
-import { consumptionByProduct } from '../consumo.js';
+import { undoMovement, productsByBarcode, addStock, removeStock, getProduct, updateProduct, addLot } from '../store.js';
+import { addToShopList } from '../shop.js';
 import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
-import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo, afterUseText } from '../ui.js';
+import { expirySheet } from './expiryLots.js';
+import { formatDate } from '../dates.js';
+import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo } from '../ui.js';
 
 const COPY = {
-  entrada: {
-    title: 'Entrada', sign: '+',
-    fastNotice: 'Rápido: cada leitura guarda 1',
-  },
-  saida: {
-    title: 'Saída', sign: '−',
-    fastNotice: 'Rápido: cada leitura tira 1',
-  },
+  entrada: { title: 'Guardar', sign: '+', head: 'Guardando' },
+  saida: { title: 'Tirar', sign: '−', head: 'Tirando' },
 };
-
-// Modo rápido lembrado por modo. Sem escolha salva: ligado na Saída.
-function loadFast(mode) {
-  try {
-    const v = localStorage.getItem(`ki.fast.${mode}`);
-    return v === null ? mode === 'saida' : v === '1';
-  } catch {
-    return mode === 'saida';
-  }
-}
-function saveFast(mode, on) {
-  try { localStorage.setItem(`ki.fast.${mode}`, on ? '1' : '0'); } catch { /* sem armazenamento */ }
-}
 
 export default function mountScan(root, { mode: initialMode, code: initialCode }) {
   let mode = initialMode;
-  let fast = loadFast(mode);
   try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
-  // Uma linha por produto e modo: { mode, product, n }, a mais recente no fim.
+  // Uma linha por produto e modo: { mode, product, n, moves: [{ id, n }] },
+  // a mais recente no fim. `moves` permite desfazer de verdade (sem criar
+  // saídas falsas no histórico) quando o − do cartão corrige.
   const session = new Map();
-  // Leituras que esperam o fim: { mode, barcode, reads, reason }
-  const pending = new Map();
-  // Telemetria da sessão: correções, Desfazer e trocas de modo.
+  let lastKey = '';
+  // Telemetria da sessão: correções, desfazer e trocas de modo.
   const stats = { startedAt: Date.now(), edits: 0, undos: 0, switches: 0, lastSwitch: 0, lastSwitchFrom: '', concluded: false };
   warmUp();
 
@@ -57,7 +38,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     <div class="screen screen-scan has-floating-bar mode-${mode}">
       <header class="band band-slim">
         <h1 class="sr-only">Leitor</h1>
-        <a class="icon-btn" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
+        <a class="icon-btn band-close" href="#/" aria-label="Fechar e voltar ao armário">${icon('close')}</a>
         <div class="mode-switch" role="radiogroup" aria-label="Registrar">
           ${['entrada', 'saida'].map((m) => `
             <label class="mode-opt">
@@ -65,46 +46,25 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
               <span>${icon(m === 'entrada' ? 'in' : 'out')}${COPY[m].title}</span>
             </label>`).join('')}
         </div>
-        <label class="fast-toggle">
-          <input type="checkbox" class="sr-only" data-fast ${fast ? 'checked' : ''}>
-          <span class="fast-pill" aria-hidden="true">${icon('bolt')}<span>Rápido</span></span>
-          <span class="sr-only">Modo rápido</span>
-        </label>
+        <span class="band-end" aria-hidden="true"></span>
       </header>
       <main>
         <div class="cam-host"></div>
-        <section class="pending" aria-label="Leituras para resolver" hidden>
-          <h2 class="list-title">Para resolver</h2>
-          <ul class="pending-list"></ul>
-        </section>
-        <section class="receipt" aria-label="Registrados agora">
-          <ul class="receipt-lines"></ul>
-          <p class="receipt-total"></p>
-        </section>
-        <section class="quick-out" aria-labelledby="quick-out-title" hidden>
-          <h2 class="list-title" id="quick-out-title">Usados com frequência</h2>
-          <ul class="quick-list"></ul>
-          <button type="button" class="btn btn-quiet btn-sm" data-quick-search>${icon('search')}Procurar outro no armário</button>
-        </section>
+        <div class="last-host" aria-live="polite"></div>
+        <section class="live-ticket" aria-label="Registrados agora"></section>
       </main>
-      <footer class="floating-bar glass-regular glass-static">
-        <button type="button" class="btn btn-primary btn-lg" data-finish>${icon('check')}Concluir</button>
+      <footer class="floating-bar glass-regular glass-static scan-bar">
+        <button type="button" class="btn btn-quiet btn-lg" data-type>${icon('keyboard')}Digitar</button>
+        <button type="button" class="btn btn-quiet btn-lg" data-nota>${icon('qrCode')}Nota fiscal</button>
+        <button type="button" class="btn btn-mode btn-lg" data-finish hidden>${icon('check')}Concluir</button>
       </footer>
     </div>`;
 
   const screen = $('.screen-scan', root);
-  const lines = $('.receipt-lines', root);
-  const total = $('.receipt-total', root);
-  const fastInput = $('[data-fast]', root);
-  const pendingBox = $('.pending', root);
-  const pendingList = $('.pending-list', root);
-
-  // Nada de texto fixo explicando o modo: quando o modo rápido está ligado, um
-  // aviso curto aparece por cima da câmera e some (ao abrir, trocar de modo ou
-  // ligar o Rápido). O que o app não conhece aparece em "Para resolver" na hora.
-  function fastNotice() {
-    if (fast) cam.notice(COPY[mode].fastNotice);
-  }
+  const lastHost = $('.last-host', root);
+  const ticket = $('.live-ticket', root);
+  const notaBtn = $('[data-nota]', root);
+  const finishBtn = $('[data-finish]', root);
 
   // Troca de modo sem desmontar a tela: a câmera continua ligada.
   function setMode(next) {
@@ -114,102 +74,212 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     stats.lastSwitchFrom = mode;
     screen.classList.replace(`mode-${mode}`, `mode-${next}`);
     mode = next;
-    fast = loadFast(mode);
-    fastInput.checked = fast;
     const radio = $(`input[name=scan-mode][value="${mode}"]`, root);
     if (radio) { radio.checked = true; glideTo($('.mode-switch', root), radio.closest('label')); }
-    fastNotice();
-    renderQuick();
     history.replaceState(null, '', `#/${mode}`);
     try { localStorage.setItem('ki.lastMode', mode); } catch { /* sem armazenamento */ }
     vibrate(10);
+    renderTicket();
   }
 
   const signed = (s) => `${COPY[s.mode].sign}${s.n}`;
   const signedNet = (net) => `${net > 0 ? '+' : net < 0 ? '−' : ''}${Math.abs(net)}`;
   const netOf = (entries) => entries.reduce((a, s) => a + (s.mode === 'entrada' ? s.n : -s.n), 0);
 
-  let freshKey = ''; // linha que acabou de mudar: entra com destaque
-  function renderSession() {
-    renderQuick(); // as quantidades da lista "Tirar sem ler" acompanham
-    if (!session.size) {
-      lines.innerHTML = '<li class="receipt-empty">O que você guardar ou tirar aparece aqui.</li>';
-      total.hidden = true;
+  // ---------- Cartão da última leitura ----------
+  function renderLast(fresh = false) {
+    const s = session.get(lastKey);
+    if (!s) { lastHost.innerHTML = ''; return; }
+    const p = s.product;
+    const ended = s.mode === 'saida' && p.qty === 0;
+    const sub = ended ? '<strong>Acabou.</strong> Era a última.' : `Agora <strong>${p.qty}</strong> no armário`;
+    lastHost.innerHTML = `
+      <div class="last-card mode-${s.mode}${fresh ? ' is-fresh' : ''}">
+        <div class="last-row">
+          ${thumb(p, 'md')}
+          <div class="last-text">
+            <p class="last-name">${esc(p.name)}</p>
+            <div class="last-sub">
+              <span>${sub}</span>
+              <div class="last-step" role="group" aria-label="Quantidade desta leitura">
+                <button type="button" class="last-step-btn" data-step="-1" aria-label="Menos 1">${icon('minus')}</button>
+                <button type="button" class="tag tag-mode last-n" data-type-n aria-label="${s.mode === 'entrada' ? 'Entraram' : 'Saíram'} ${s.n}. Tocar para digitar">${signed(s)}</button>
+                <button type="button" class="last-step-btn" data-step="1" aria-label="Mais 1" ${s.mode === 'saida' && p.qty === 0 ? 'disabled' : ''}>${icon('plus')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${s.mode === 'entrada'
+          ? `<button type="button" class="btn btn-quiet last-act" data-expiry>${icon('calendar')}${s.dates ? `Validade ${esc(s.dates)}` : 'Marcar validade'}</button>`
+          : ended ? `<button type="button" class="btn btn-quiet last-act" data-shop>${icon('cart')}Adicionar às Compras</button>` : ''}
+      </div>`;
+  }
+
+  // ---------- Cupom vivo ----------
+  function renderTicket() {
+    const entries = [...session.values()];
+    notaBtn.hidden = !!entries.length || mode !== 'entrada';
+    finishBtn.hidden = !entries.length;
+    $('[data-type]', root).classList.toggle('is-wide', !entries.length && mode !== 'entrada');
+    if (!entries.length) {
+      ticket.innerHTML = `
+        <div class="scan-empty">
+          <p class="scan-empty-lead">Nada lido ainda</p>
+          <p>Cada leitura ${mode === 'entrada' ? 'guarda' : 'tira'} 1.</p>
+          <p>Para ${mode === 'entrada' ? 'guardar' : 'tirar'} 2, tire da mira e leia de novo.</p>
+        </div>`;
       return;
     }
-    const entries = [...session.values()];
-    // Cada linha abre a edição: dá para corrigir antes de concluir.
-    lines.innerHTML = entries.slice().reverse().map((s) => `
-      <li class="${`${s.mode}:${s.product.code}` === freshKey ? 'is-fresh' : ''}">
-        <button type="button" class="receipt-line receipt-edit" data-edit="${esc(`${s.mode}:${s.product.code}`)}" aria-label="Editar ${esc(s.product.name)}, ${signed(s)}">
-          <span class="receipt-name">${esc(s.product.name)}</span>
-          <span class="receipt-dots" aria-hidden="true"></span>
-          <span class="receipt-n">${signed(s)}</span>
-        </button>
-      </li>`).join('');
-    freshKey = '';
-    total.hidden = false;
-    total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n">${signedNet(netOf(entries))}</span>`;
+    const modes = new Set(entries.map((s) => s.mode));
+    const head = modes.size > 1 ? 'Guardando e tirando' : COPY[entries[0].mode].head;
+    ticket.innerHTML = `
+      <div class="paper">
+        <p class="paper-head">${head}</p>
+        <ul class="paper-lines">
+          ${entries.slice().reverse().map((s) => {
+            const key = `${s.mode}:${s.product.code}`;
+            return `
+            <li class="${key === lastKey ? 'is-last' : ''}">
+              <button type="button" class="paper-line" data-edit="${esc(key)}" aria-label="Corrigir ${esc(s.product.name)}, ${signed(s)}">
+                <span class="paper-name">${esc(s.product.name)}</span>
+                <span class="paper-dots" aria-hidden="true"></span>
+                <span class="paper-n">${signed(s)}</span>
+                ${icon('chevron', 'paper-chev')}
+              </button>
+            </li>`;
+          }).join('')}
+        </ul>
+        <p class="paper-total"><span>${plural(entries.length, 'produto', 'produtos')}</span><span class="paper-n">${signedNet(netOf(entries))}</span></p>
+      </div>
+      <p class="paper-hint">Toque numa linha para corrigir</p>`;
   }
 
-  function renderPending() {
-    pendingBox.hidden = !pending.size;
-    pendingList.innerHTML = [...pending.entries()].map(([key, p]) => `
-      <li class="pending-row">
-        <span class="row-main">
-          <span class="row-name">${esc(p.reason)}</span>
-          <span class="row-sub">${COPY[p.mode].title}, código ${esc(p.barcode)}${p.reads > 1 ? `, lido ${p.reads} vezes` : ''}</span>
-        </span>
-        <button type="button" class="btn btn-quiet btn-sm" data-resolve="${esc(key)}" aria-label="Resolver o código ${esc(p.barcode)}">Resolver</button>
-      </li>`).join('');
-  }
-
-  function record(m, product, movement, n) {
+  function record(m, product, movement, n, { fresh = true } = {}) {
     const key = `${m}:${product.code}`;
-    const entry = session.get(key) || { mode: m, product, n: 0 };
+    const entry = session.get(key) || { mode: m, product, n: 0, moves: [] };
     session.delete(key); // volta para o fim: é a linha mais recente
     entry.product = product;
     entry.n += n;
+    entry.moves.push({ id: movement.id, n });
     session.set(key, entry);
-    freshKey = key;
-    renderSession();
+    lastKey = key;
+    renderLast(fresh);
+    renderTicket();
     cam.flash(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}`, m);
-    toast(`${m === 'entrada' ? '+' : '−'}${n} ${product.name}. Agora tem ${product.qty}.${m === 'saida' ? afterUseText(product) : ''}`, {
-      mode: m,
-      action: 'Desfazer',
-      onAction: async () => {
-        try {
-          const restored = await undoMovement(movement.id);
-          stats.undos += 1;
-          // Desfez logo depois de trocar de modo: provável troca sem querer.
-          if (stats.lastSwitch && Date.now() - stats.lastSwitch < 60000) {
-            tel('troca-desfeita', { de: stats.lastSwitchFrom, para: m, segundos: Math.round((Date.now() - stats.lastSwitch) / 1000) });
-          }
-          entry.n -= n;
-          entry.product = restored;
-          if (entry.n <= 0) session.delete(key);
-          renderSession();
-          toast('Desfeito.', { duration: 2500 });
-        } catch (err) {
-          toast(err.message, { duration: 4000 });
-        }
-      },
-    });
   }
 
-  // Editar uma linha da sessão: quantidade registrada, nome e ambiente.
-  // A diferença na quantidade vira um ajuste no estoque (0 desfaz a linha).
+  // Muda o total de uma linha para `target`. Diminuir desfaz os movimentos
+  // (o histórico não ganha uma saída que não houve); aumentar registra mais.
+  async function setEntryN(key, target) {
+    const entry = session.get(key);
+    if (!entry || target === entry.n) return;
+    const code = entry.product.code;
+    while (entry.n > target && entry.moves.length) {
+      const mv = entry.moves.pop();
+      const restored = await undoMovement(mv.id);
+      entry.n -= mv.n;
+      entry.product = restored;
+      stats.undos += 1;
+      if (stats.lastSwitch && Date.now() - stats.lastSwitch < 60000) {
+        tel('troca-desfeita', { de: stats.lastSwitchFrom, para: entry.mode, segundos: Math.round((Date.now() - stats.lastSwitch) / 1000) });
+      }
+    }
+    if (target > entry.n) {
+      const more = target - entry.n;
+      const r = entry.mode === 'entrada' ? await addStock(code, more) : await removeStock(code, more);
+      entry.moves.push({ id: r.movement.id, n: more });
+      entry.n += more;
+      entry.product = r.product;
+    }
+    if (entry.n <= 0) {
+      session.delete(key);
+      if (lastKey === key) lastKey = [...session.keys()].pop() || '';
+    }
+    renderLast();
+    renderTicket();
+  }
+
+  lastHost.addEventListener('click', async (e) => {
+    const s = session.get(lastKey);
+    if (!s) return;
+    const step = e.target.closest('[data-step]');
+    if (step && !step.disabled) {
+      vibrate(8);
+      try { await setEntryN(lastKey, s.n + Number(step.dataset.step)); } catch (err) { toast(err.message, { duration: 3000 }); }
+      return;
+    }
+    if (e.target.closest('[data-type-n]')) { await typeQuantity(lastKey); return; }
+    if (e.target.closest('[data-shop]')) {
+      toast(addToShopList(s.product.name) ? `${s.product.name} está nas Compras.` : `${s.product.name} já estava nas Compras.`, { duration: 2500 });
+      return;
+    }
+    if (e.target.closest('[data-expiry]')) {
+      cam.pause();
+      try {
+        const picked = await expirySheet({ free: s.n, mode: 'entrada' });
+        if (picked && picked.length) {
+          for (const l of picked) await addLot(s.product.code, l.qty, l.expiresAt);
+          s.dates = picked.map((l) => formatDate(l.expiresAt)).join(', ');
+          renderLast();
+          toast(`Validade ${s.dates}.`, { mode: 'entrada', duration: 2500 });
+        }
+      } finally {
+        cam.resume();
+      }
+    }
+  });
+
+  // Tocar no número do cartão: teclado de números ("Quantas unidades entraram?").
+  async function typeQuantity(key) {
+    const s = session.get(key);
+    if (!s) return;
+    const fresh = (await getProduct(s.product.code)) || s.product;
+    const base = s.mode === 'entrada' ? fresh.qty - s.n : fresh.qty + s.n;
+    const max = s.mode === 'saida' ? base : 999;
+    cam.pause();
+    const n = await openSheet({
+      mode: s.mode,
+      label: 'Digitar a quantidade',
+      render(body, close) {
+        body.innerHTML = `
+          <form class="stack qty-type" novalidate>
+            <div class="product-head">${thumb(fresh, 'md')}<div class="product-meta"><p class="product-name">${esc(fresh.name)}</p>
+              <p class="product-sub">${s.mode === 'entrada' ? 'Quantas unidades entraram?' : 'Quantas unidades saíram?'}</p></div></div>
+            <input class="input qty-big" type="text" inputmode="numeric" pattern="[0-9]*" value="${s.n}" aria-label="Quantidade" autocomplete="off">
+            <div class="qty-foot"><span data-after></span><button type="submit" class="btn btn-mode btn-lg" data-ok></button></div>
+          </form>`;
+        const input = $('input', body);
+        const after = $('[data-after]', body);
+        const ok = $('[data-ok]', body);
+        const upd = () => {
+          const v = Math.max(0, Math.min(max, parseInt(input.value.replace(/\D/g, ''), 10) || 0));
+          after.textContent = `Fica com ${s.mode === 'entrada' ? base + v : base - v} no armário`;
+          ok.innerHTML = `${icon('check')}${v ? `${COPY[s.mode].title} ${v}` : 'Tirar da lista'}`;
+          return v;
+        };
+        upd();
+        input.addEventListener('input', upd);
+        setTimeout(() => { input.focus(); input.select(); }, 300);
+        $('form', body).addEventListener('submit', (e) => { e.preventDefault(); close(upd()); });
+      },
+    });
+    cam.resume();
+    if (n === null || n === undefined) return;
+    stats.edits += 1;
+    try { await setEntryN(key, n); } catch (err) { toast(err.message, { duration: 3000 }); }
+  }
+
+  // Corrigir uma linha do cupom: quantidade, nome e onde fica.
   async function editEntry(key) {
     const entry = session.get(key);
     if (!entry) return;
     const product = (await getProduct(entry.product.code)) || entry.product;
-    const sign = entry.mode === 'entrada' ? 1 : -1;
-    // Saída: dá para tirar no máximo o que ainda tem mais o que já saiu nesta linha.
     const max = entry.mode === 'saida' ? entry.n + product.qty : 999;
     cam.pause();
-    await openSheet({
+    const r = await openSheet({
       mode: entry.mode,
-      label: `Editar ${product.name}`,
+      label: `Corrigir ${product.name}`,
+      title: 'Corrigir',
       render(body, close) {
         body.innerHTML = `
           <form class="stack" novalidate>
@@ -237,44 +307,39 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
             <button type="submit" class="btn btn-mode btn-lg">${icon('check')}Salvar</button>
           </form>`;
         const step = stepper($('.stepper-host', body), { value: entry.n, min: 0, max, label: 'Quantidade registrada' });
-        $('form', body).addEventListener('submit', async (e) => {
+        $('form', body).addEventListener('submit', (e) => {
           e.preventDefault();
-          try {
-            const fresh = await getProduct(product.code);
-            const diff = step.value - entry.n;
-            if (diff) await setStock(product.code, fresh.qty + sign * diff, 'ajuste');
-            const name = $('input[name=name]', body).value.trim();
-            const area = $('input[name=area]:checked', body)?.value;
-            if (name !== product.name || area !== product.area) await updateProduct(product.code, { name, area });
-            stats.edits += 1;
-            entry.n = step.value;
-            entry.product = await getProduct(product.code);
-            if (entry.n === 0) session.delete(key);
-            // O nome mudou para as outras linhas do mesmo produto também.
-            for (const other of session.values()) if (other.product.code === product.code) other.product = entry.product;
-            renderSession();
-            close(true);
-            toast(entry.n === 0 ? `${entry.product.name} saiu da lista.` : 'Linha atualizada.', { duration: 2500 });
-          } catch (err) {
-            toast(err.message, { duration: 4000 });
-          }
+          close({ n: step.value, name: $('input[name=name]', body).value.trim(), area: $('input[name=area]:checked', body)?.value });
         });
       },
     });
     cam.resume();
+    if (!r) return;
+    try {
+      if (r.name !== product.name || r.area !== product.area) {
+        await updateProduct(product.code, { name: r.name, area: r.area });
+        const fresh = await getProduct(product.code);
+        for (const other of session.values()) if (other.product.code === product.code) other.product = { ...other.product, name: fresh.name, area: fresh.area };
+      }
+      stats.edits += 1;
+      await setEntryN(key, r.n);
+      toast(r.n === 0 ? `${product.name} saiu da lista.` : 'Linha corrigida.', { duration: 2500 });
+    } catch (err) {
+      toast(err.message, { duration: 4000 });
+    }
   }
 
-  lines.addEventListener('click', (e) => {
+  ticket.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-edit]');
     if (btn) editEntry(btn.dataset.edit);
   });
 
-  // Fluxo normal: a folha pergunta a quantidade.
+  // Produto que o app não conhece (ou um código com vários): a folha pergunta.
   async function sheetFlow(barcode, qty, m = mode) {
     const r = await showProductSheet({ mode: m, barcode, qty });
     if (!r) return false;
     if (r.kind === 'switch') {
-      // Saída de algo que não está no armário: vira entrada aqui mesmo.
+      // Tirar algo que não está no armário: vira Guardar aqui mesmo.
       setMode('entrada');
       return sheetFlow(r.code, qty, 'entrada');
     }
@@ -282,8 +347,8 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     return true;
   }
 
-  // Modo rápido: 1 por leitura, sem folha.
-  async function fastFlow(barcode) {
+  // Cada leitura de um produto conhecido: 1 na hora, só com o bip.
+  async function handleCode(barcode) {
     const m = mode;
     const local = barcode.startsWith('SEM-') ? [] : await productsByBarcode(barcode);
     if (local.length === 1) {
@@ -297,71 +362,23 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
       record(m, r.product, r.movement, 1);
       return;
     }
-    if (barcode.startsWith('SEM-')) { await sheetFlow(barcode); return; }
-    const reason = local.length ? `${local.length} produtos com este código` : (m === 'entrada' ? 'Produto novo' : 'Não está no armário');
-    const key = `${m}:${barcode}`;
-    const p = pending.get(key) || { mode: m, barcode, reads: 0, reason };
-    p.reads += 1;
-    pending.set(key, p);
-    vibrate([30, 60, 30]);
-    renderPending();
-    toast(`${reason}. Ficou em Para resolver.`, { duration: 2500 });
-  }
-
-  async function handleCode(barcode) {
-    if (fast) return fastFlow(barcode);
-    return sheetFlow(barcode);
+    await sheetFlow(barcode);
   }
 
   $('.mode-switch', root).addEventListener('change', (e) => {
     if (e.target.name === 'scan-mode') setMode(e.target.value);
   });
 
-  pendingList.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-resolve]');
-    if (!btn) return;
-    const key = btn.dataset.resolve;
-    const p = pending.get(key);
-    if (!p) return;
-    cam.pause();
-    try {
-      const done = await sheetFlow(p.barcode, p.reads, p.mode);
-      if (done) { pending.delete(key); renderPending(); }
-    } finally {
-      cam.resume();
-    }
+  $('[data-type]', root).addEventListener('click', () => cam.manual());
+  notaBtn.addEventListener('click', () => {
+    const on = !cam.qrMode;
+    cam.setQrMode(on);
+    notaBtn.classList.toggle('is-on', on);
+    notaBtn.setAttribute('aria-pressed', String(on));
+    vibrate(8);
   });
 
-  fastInput.addEventListener('change', () => {
-    fast = fastInput.checked;
-    saveFast(mode, fast);
-    cam.notice(fast ? COPY[mode].fastNotice : 'Rápido desligado: cada leitura pergunta quantos');
-  });
-
-  $('[data-finish]', root).addEventListener('click', async () => {
-    if (pending.size) {
-      cam.pause();
-      const choice = await openSheet({
-        mode,
-        label: 'Leituras para resolver',
-        render(body, close) {
-          body.innerHTML = `
-            <h2 class="sheet-title">${plural(pending.size, 'leitura ficou', 'leituras ficaram')} sem registrar</h2>
-            <p class="sheet-text">Elas não mudaram o armário. Resolva agora ou conclua sem elas.</p>
-            <div class="sheet-actions">
-              <button type="button" class="btn btn-mode" data-back>Resolver agora</button>
-              <button type="button" class="btn btn-quiet" data-anyway>Concluir sem elas</button>
-            </div>`;
-          $('[data-back]', body).addEventListener('click', () => close('back'));
-          $('[data-anyway]', body).addEventListener('click', () => close('anyway'));
-        },
-      });
-      if (choice !== 'anyway') {
-        cam.resume();
-        if (choice === 'back') pendingBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
-      }
-    }
+  finishBtn.addEventListener('click', async () => {
     stats.concluded = true;
     if (!session.size) { location.hash = '#/'; return; }
     cam.stop();
@@ -376,57 +393,21 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     location.hash = '#/';
   });
 
-  // Saída sem ler: os produtos que vocês mais usam, com Tirar 1. Resolve o
-  // que não tem código (rolo de papel toalha, cápsula solta, pão).
-  const quick = $('.quick-out', root);
-  const quickList = $('.quick-list', root);
-  let quickRates = null;
-  async function renderQuick() {
-    if (mode !== 'saida') { quick.hidden = true; return; }
-    const products = (await listProducts()).filter((p) => p.qty > 0);
-    if (!quickRates) quickRates = consumptionByProduct(products, await recentMovements(2000));
-    if (mode !== 'saida') return;
-    const rateOf = (p) => (quickRates.get(p.code) || { perDay: 0 }).perDay;
-    const top = products.sort((a, b) => rateOf(b) - rateOf(a) || b.updatedAt - a.updatedAt).slice(0, 6);
-    quick.hidden = !top.length;
-    $('#quick-out-title', root).textContent = top.some((p) => rateOf(p) > 0) ? 'Usados com frequência' : 'No armário';
-    quickList.innerHTML = top.map((p) => `
-      <li class="quick-row">
-        ${thumb(p)}
-        <span class="row-main"><span class="row-name">${esc(p.name)}</span><span class="row-sub">Tem ${p.qty}</span></span>
-        <button type="button" class="btn btn-quiet btn-sm" data-quick="${esc(p.code)}" aria-label="Tirar 1 de ${esc(p.name)}">${icon('minus')}Tirar 1</button>
-      </li>`).join('');
-  }
-  quickList.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-quick]');
-    if (!btn || btn.disabled) return;
-    btn.disabled = true;
-    try {
-      const r = await removeStock(btn.dataset.quick, 1);
-      vibrate(15);
-      record('saida', r.product, r.movement, 1);
-    } catch (err) {
-      btn.disabled = false;
-      toast(err.message, { duration: 3000 });
-    }
-  });
-  $('[data-quick-search]', root).addEventListener('click', () => cam.handle(`SEM-${Date.now()}`));
-
-  renderSession();
+  renderTicket();
   // Nota fiscal lida (ou link colado): a compra inteira entra de uma vez.
   async function handleNota(p) {
     if (mode !== 'entrada') setMode('entrada');
+    notaBtn.classList.remove('is-on');
     const { importNota } = await import('./nota.js');
     const done = await importNota(p);
     if (done && !session.size) location.hash = '#/';
   }
 
-  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota, sound: () => (mode === 'saida' ? 'out' : 'in') });
+  const cam = mountCamera($('.cam-host', root), { onCode: handleCode, onNota: handleNota, bar: true, sound: () => (mode === 'saida' ? 'out' : 'in') });
   if (initialCode) cam.handle(initialCode);
-  else fastNotice();
-  // Veio de "Importar nota fiscal" (Mais): abre já no modo nota.
+  // Veio de "Ler a nota fiscal" (Armário, Compras): abre já no modo nota.
   try {
-    if (sessionStorage.getItem('ki.qr')) { sessionStorage.removeItem('ki.qr'); cam.setQrMode(true); }
+    if (sessionStorage.getItem('ki.qr')) { sessionStorage.removeItem('ki.qr'); cam.setQrMode(true); notaBtn.classList.add('is-on'); }
   } catch { /* sem armazenamento */ }
 
   // Resumo de cada ida ao leitor, concluída ou não.
@@ -440,8 +421,6 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
       correcoes: stats.edits,
       desfazer: stats.undos,
       trocas: stats.switches,
-      pendentes: pending.size,
-      rapido: fast,
       concluiu: stats.concluded,
       segundos: Math.round((Date.now() - stats.startedAt) / 1000),
     });

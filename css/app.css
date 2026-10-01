@@ -2815,3 +2815,77 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .med-have a { color: var(--ink); font-weight: 700; }
 .med-facts-card { margin-top: 12px; border-radius: 24px; }
 .med-bar { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+
+/* ---------- Leitor: faixa, cartão, cupom vivo e barra ---------- */
+.screen-scan .band.band-slim { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding-inline: var(--gutter); padding-bottom: 10px; }
+.band-close { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in oklab, var(--on-mode) 20%, transparent); }
+.band-end { width: 44px; }
+/* Só a lanterna fica na imagem, no canto, em vidro escuro. */
+.screen-scan .cam-tools { left: auto; right: 10px; top: 10px; bottom: auto; transform: none; }
+.screen-scan .cam-tools:not(:has(.cam-tool:not([hidden]))) { display: none; }
+
+/* Cartão da última leitura: sólido, encostado na câmera. */
+.last-host { position: relative; z-index: 3; margin: -30px var(--gutter) 0; }
+.last-host:empty { display: none; }
+.last-card {
+  padding: 12px; border-radius: 26px; background: var(--paper);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-edge);
+}
+.last-row { display: flex; gap: 12px; align-items: center; }
+.last-row .thumb { border-radius: 14px; }
+.last-text { flex: 1; min-width: 0; }
+.last-name { margin: 0; font: 700 1rem/1.25 var(--font-num); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.last-sub { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.last-sub > span { flex: 1; min-width: 0; font-size: 0.8824rem; color: var(--ink-2); }
+.last-sub strong { color: var(--ink); font-family: var(--font-num); font-weight: 800; }
+.last-step { flex: none; display: flex; align-items: center; margin-inline-end: -8px; }
+.last-step-btn { width: 44px; height: 44px; border: 0; background: none; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.last-step-btn:disabled { color: var(--ink-disabled); }
+.last-step-btn .icon { width: 18px; height: 18px; }
+.last-n { min-width: 52px; height: 44px; border: 0; font-size: 22px; cursor: pointer; }
+.tag-mode { background: var(--mode); color: var(--on-mode); }
+.last-act { width: 100%; margin-top: 10px; min-height: 44px; border-radius: 14px; }
+@container (max-width: 340px) { .last-sub { flex-wrap: wrap; } }
+@media (max-width: 340px) {
+  .last-sub { flex-wrap: wrap; }
+  .last-sub > span { flex-basis: 100%; }
+  .last-step { margin-inline-start: auto; }
+}
+
+/* Cupom vivo: papel, título espaçado, pontinhos, ›, traço duplo e total. */
+.live-ticket { padding: 14px var(--gutter) 0; }
+.paper {
+  padding: 12px 14px; border-radius: 4px; background: #fff; color: #161817;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06), inset 0 0 0 1px #e3e6e3;
+}
+.paper-head { margin: 0 0 6px; font: 800 12px var(--font-num); letter-spacing: 0.14em; text-transform: uppercase; color: #3f4541; }
+.paper-lines { list-style: none; margin: 0; padding: 0; }
+.paper-line {
+  display: flex; align-items: last baseline; gap: 6px; width: 100%; padding: 5px 0;
+  border: 0; background: none; color: inherit; font: 400 0.8824rem/1.3 var(--font-ui); text-align: start; cursor: pointer;
+}
+.paper-name { max-width: 72%; overflow-wrap: anywhere; }
+.paper-dots { flex: 1 1 16px; border-bottom: 2px dotted #a3aaa6; translate: 0 -4px; }
+.paper-n { flex: none; font: 800 1rem var(--font-num); font-variant-numeric: tabular-nums; }
+.paper-chev { flex: none; width: 12px; height: 12px; color: #a3aaa6; align-self: center; }
+.paper-lines li.is-last .paper-line { margin-inline: -8px; padding-inline: 8px; width: calc(100% + 16px); border-radius: 6px; background: color-mix(in oklab, var(--mode) 10%, #fff); }
+.paper-total { display: flex; justify-content: space-between; margin: 6px 0 0; padding-top: 6px; border-top: 3px double #161817; font-weight: 700; font-size: 0.8824rem; }
+.paper-total .paper-n { font-size: 1.0588rem; }
+.paper-hint { margin: 8px 0 0; text-align: center; font-size: 0.7647rem; color: var(--ink-2); }
+.scan-empty { padding: 18px 24px 0; text-align: center; color: var(--ink-2); font-size: 0.8824rem; }
+.scan-empty p { margin: 0; }
+.scan-empty-lead { color: var(--ink); font: 700 1rem var(--font-num); margin-bottom: 4px !important; }
+
+/* Barra de baixo: Digitar + Nota fiscal, depois Digitar + Concluir. */
+.scan-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scan-bar > [hidden] { display: none; }
+.scan-bar > .is-wide { grid-column: 1 / -1; }
+.scan-bar .btn { min-height: 52px; white-space: nowrap; }
+.scan-bar [data-nota].is-on { background: var(--ink); color: var(--paper); }
+
+/* Quantidade digitada. */
+.qty-big { height: 88px; text-align: center; font: 800 56px var(--font-num); font-variant-numeric: tabular-nums; }
+.qty-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qty-foot span { color: var(--ink-2); font-size: 0.8824rem; }
+.ticket-hint { margin: 14px 0 4px; text-align: center; font-size: 0.8235rem; color: var(--ink-2); }
+.ticket-title { letter-spacing: 0.08em; text-transform: uppercase; }

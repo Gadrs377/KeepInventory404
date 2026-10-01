@@ -25,7 +25,9 @@ const ERRORS = {
  * volta a ler quando ela termina. Com `onNota`, o botão de QR Code põe o visor
  * no modo nota fiscal: mira quadrada, instrução e "Colar o link" como alternativa.
  */
-export function mountCamera(host, { onCode, onNota = null, compact = false, altLabel = 'Produto sem código de barras', sound = () => 'ok' }) {
+export function mountCamera(host, { onCode, onNota = null, compact = false, altLabel = 'Produto sem código de barras', sound = () => 'ok', bar = false }) {
+  // bar: a tela tem a barra de baixo (Digitar, Nota fiscal): a câmera fica só
+  // com a lanterna, e os outros botões viram funções (manual(), setQrMode()).
   host.innerHTML = `
     <div class="viewfinder ${compact ? 'is-compact' : ''}">
       <video muted playsinline aria-label="Imagem da câmera"></video>
@@ -38,11 +40,11 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
       ${onNota ? '<p class="cam-qr-note" hidden>Aponte para o QR Code no fim do cupom</p><button type="button" class="cam-hint cam-paste" data-paste hidden>Não lê? <strong>Colar o link da nota</strong></button>' : ''}
       <div class="cam-tools">
         <button type="button" class="cam-tool" data-torch hidden aria-pressed="false" aria-label="Lanterna">${icon('torch')}</button>
-        <button type="button" class="cam-tool" data-manual aria-label="Digitar código">${icon('keyboard')}</button>
-        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-pressed="false" aria-label="Ler o QR Code da nota fiscal">${icon('qrCode')}</button>` : ''}
+        <button type="button" class="cam-tool" data-manual aria-label="Digitar código" ${bar ? 'hidden' : ''}>${icon('keyboard')}</button>
+        ${onNota ? `<button type="button" class="cam-tool" data-nota aria-pressed="false" aria-label="Ler o QR Code da nota fiscal" ${bar ? 'hidden' : ''}>${icon('qrCode')}</button>` : ''}
       </div>
     </div>
-    ${compact ? '' : `<button type="button" class="cam-alt" data-nocode-tool>${esc(altLabel)}</button>`}`;
+    ${compact || bar ? '' : `<button type="button" class="cam-alt" data-nocode-tool>${esc(altLabel)}</button>`}`;
 
   const video = $('video', host);
   const aim = $('.aim', host);
@@ -138,13 +140,15 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
     torchBtn.setAttribute('aria-pressed', String(torchOn));
   });
 
-  $('[data-manual]', host).addEventListener('click', async () => {
+  async function manual() {
     scanner.pause();
     clearTimeout(hintTimer);
+    pausedLook(true);
     const code = await manualCodeSheet();
     if (code) await handle(code);
-    else if (alive && !paused) { scanner.resume(); armHint(); }
-  });
+    else if (alive && !paused) { scanner.resume(); armHint(); pausedLook(false); }
+  }
+  $('[data-manual]', host).addEventListener('click', manual);
 
   // Modo nota fiscal: a mesma câmera, com mira quadrada e resolução maior
   // (o QR Code do cupom é denso e vem impresso pequeno).
@@ -236,6 +240,8 @@ export function mountCamera(host, { onCode, onNota = null, compact = false, altL
     flash,
     notice,
     setQrMode,
+    manual,
+    get qrMode() { return qrMode; },
     pause() {
       paused = true;
       clearTimeout(hintTimer);

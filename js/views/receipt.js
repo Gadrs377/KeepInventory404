@@ -4,7 +4,7 @@
 import { $, esc, openSheet, plural, shareText, icon, vibrate } from '../ui.js';
 import { saveReceipt } from '../store.js';
 
-const TITLE = { entrada: 'Entrada', saida: 'Saída', contagem: 'Contagem', misto: 'Entrada e saída' };
+const TITLE = { entrada: 'Guardado', saida: 'Tirado', contagem: 'Conferido', misto: 'Guardado e tirado' };
 
 const stampFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -20,7 +20,7 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
   if (isNew) saveReceipt({ mode, lines, total }).catch(() => {});
   return openSheet({
     mode,
-    label: `Cupom da ${TITLE[mode].toLowerCase()}`,
+    label: 'Cupom',
     className: 'sheet-solid',
     render(body, close) {
       body.innerHTML = `
@@ -51,14 +51,16 @@ export function showReceipt({ mode, lines, total, note = '', at }) {
             </article>
           </div>
         </div>
-        <div class="sheet-actions">
-          <button type="button" class="btn btn-primary btn-lg" data-done>${isNew ? `${icon('back')}Voltar ao armário` : 'Fechar'}</button>
-        </div>`;
+        <p class="ticket-hint">Toque fora do cupom para fechar.</p>`;
 
       // O cupom desce da impressora (CSS); o celular vibra de leve como o papel saindo.
       if (isNew && !matchMedia('(prefers-reduced-motion: reduce)').matches) vibrate([12, 70, 12, 70, 12]);
 
-      $('[data-done]', body).addEventListener('click', () => close(true));
+      // Como uma notificação de pagamento: o cupom é a tela; tocar fora fecha.
+      body.addEventListener('click', (e) => {
+        if (e.target.closest('.ticket, [data-share]')) return;
+        close(true);
+      });
       $('[data-share]', body).addEventListener('click', () => {
         const text = [
           `${TITLE[mode]} ${stamp}`,
