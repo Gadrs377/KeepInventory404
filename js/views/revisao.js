@@ -6,7 +6,7 @@ import { listProducts, getCountDraft, diffCount, applyCount } from '../store.js'
 import { $, esc, icon, plural, toast, thumb, vibrate } from '../ui.js';
 import { showReceipt } from './receipt.js';
 import { tel } from '../telemetry.js';
-import { countUp } from '../motion.js';
+import { countUp, stagger } from '../motion.js';
 
 export default async function mountRevisao(root) {
   const [products, draft] = await Promise.all([listProducts(), getCountDraft()]);
@@ -66,6 +66,7 @@ export default async function mountRevisao(root) {
     </div>`;
 
   root.querySelectorAll('.review-sum b').forEach((b) => countUp(b, Number(b.textContent) || 0));
+  stagger(root.querySelectorAll('.review-sum > div, .review-row'), { step: 35, max: 14 });
 
   // Zerar por linha (de novo desfaz) e "Zerar os N" de uma vez.
   function setZero(code, on) {

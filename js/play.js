@@ -10,6 +10,7 @@ const TAP = [
   ['.product-hero > .thumb', 'is-wobble'],
   ['.receipt-head, .paper-head', 'is-wiggle'],
   ['.hero-qty-label', 'is-wiggle'],
+  ['.pocket.is-on', 'is-press'],
 ];
 
 function replay(el, cls, ms = 900) {

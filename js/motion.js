@@ -203,7 +203,7 @@ export function boxEnter(box) {
 // Cartela: os comprimidos que sobram aparecem um a um.
 export function blisterEnter(blister) {
   if (!blister || reduced()) return;
-  const on = [...blister.querySelectorAll('i.is-on')];
+  const on = [...blister.querySelectorAll('.pocket.is-on .dose')];
   on.forEach((p, i) => springTo(p, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { stiffness: 600, damping: 18, delay: 120 + i * 35, fill: 'backwards' }));
 }
 

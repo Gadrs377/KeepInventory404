@@ -9,7 +9,7 @@ import { medByEan, medInfo } from '../remedios.js';
 import { medFacts, medBoxHtml, rxCardHtml, rxNeed, boxDataOf, fitMedBox } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
-import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
+import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS, pillKind, cartelaState } from '../continuo.js';
 import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
 import { tiltable, boxEnter, blisterEnter, pop, sway, floatLabel, springTo } from '../motion.js';
 import { morph, roll, reveal } from '../morph.js';
@@ -24,6 +24,16 @@ const TYPE_LABEL = {
 };
 
 const isMedProduct = (p) => !!(p.med || p.area === 'remedios');
+
+// Histórico: cada linha com o nome do movimento, para a linha nova entrar no
+// topo deslizando (morph) quando a pessoa tira ou guarda nesta página.
+function historyHtml(history) {
+  return history.length ? `<ul class="history">${history.map((m) => `
+    <li class="history-item type-${m.type}" data-key="mv-${m.id}">
+      <span class="history-type">${TYPE_LABEL[m.type] ? TYPE_LABEL[m.type](m) : esc(m.type)}</span>
+      <span class="history-at">${when(m.at)}</span>
+    </li>`).join('')}</ul>` : '<p class="sheet-text" data-key="mv-none">Nenhum registro ainda.</p>';
+}
 
 export default async function mountProduto(root, { code }) {
   const p = await getProduct(code);
@@ -100,13 +110,7 @@ export default async function mountProduto(root, { code }) {
 
         <section aria-labelledby="hist-title">
           <h2 class="list-title" id="hist-title">Histórico</h2>
-          <div class="group-card">
-          ${history.length ? `<ul class="history">${history.map((m) => `
-            <li class="history-item type-${m.type}">
-              <span class="history-type">${TYPE_LABEL[m.type] ? TYPE_LABEL[m.type](m) : esc(m.type)}</span>
-              <span class="history-at">${when(m.at)}</span>
-            </li>`).join('')}</ul>` : '<p class="sheet-text">Nenhum registro ainda.</p>'}
-          </div>
+          <div class="group-card" data-history>${historyHtml(history)}</div>
         </section>
       </main>
       ${tabBar('armario')}
@@ -266,6 +270,34 @@ export default async function mountProduto(root, { code }) {
   const contTop = $('[data-cont][data-place="top"]', root);
   const contBottom = $('[data-cont][data-place="bottom"]', root);
   const contHost = contTop && { addEventListener: (t, f) => { contTop.addEventListener(t, f); contBottom.addEventListener(t, f); } };
+  // Cartela como a de verdade: alumínio, bolhas, o comprimido (redondo com
+  // risquinho, cápsula de duas cores ou drágea) e a bolha rasgada do que já
+  // foi tomado. Mostra a cartela de agora e, atrás, as cheias que sobram.
+  const CAPS = [['#E3A33B', '#FBF3E2'], ['#D2544F', '#F6E6D2'], ['#4C7EC2', '#F3F5F8'], ['#5E9E6C', '#EEF3E8'], ['#8A67BD', '#F5F1FA']];
+  const capColor = CAPS[[...code].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 3) % CAPS.length];
+  function contHtml(cur, leftN, d) {
+    const kind = pillKind(cur);
+    const word = { capsula: ['cápsula', 'cápsulas'], dragea: ['drágea', 'drágeas'], comprimido: ['comprimido', 'comprimidos'] }[kind];
+    const c = cartelaState(leftN, cur.cont.perBox);
+    const pockets = Array.from({ length: c.size }, (_, i) => `<span class="pocket${i < c.current ? ' is-on' : ''}" style="--i:${i};--dir:${i % 2 ? 1 : -1}"><i class="dose"></i></span>`).join('');
+    return `
+      <div class="cont-card" data-key="cont-on">
+        <label class="cont-head"><span><b>Uso contínuo</b></span>
+          <input type="checkbox" class="switch" data-cont-toggle role="switch" checked aria-label="Uso contínuo"></label>
+        <div class="blister-stack" style="--behind:${Math.min(3, c.full)}">
+          ${Array.from({ length: Math.min(3, c.full) }, (_, i) => `<span class="blister-behind" style="--b:${i + 1}" aria-hidden="true"></span>`).join('')}
+          <div class="blister is-${kind}" data-key="sheet-${c.sheet}" style="--cols:${c.cols};--rows:${c.rows};--cap-a:${capColor[0]};--cap-b:${capColor[1]}" role="img" aria-label="Cerca de ${leftN} ${leftN === 1 ? word[0] : word[1]}${c.full ? `: a cartela aberta com ${c.current} e mais ${c.full === 1 ? '1 cartela cheia' : `${c.full} cartelas cheias`}` : ''}">${pockets}</div>
+        </div>
+        ${c.full ? `<p class="blister-more" data-fade>e mais <b data-roll>${c.full}</b> ${c.full === 1 ? 'cartela cheia' : 'cartelas cheias'}</p>` : ''}
+        <div class="cont-row">
+          <span><b>Cerca de <span data-roll>${leftN}</span> ${leftN === 1 ? word[0] : word[1]}</b><em data-fade>${plural(cur.cont.perDay, 'por dia', 'por dia').replace(/^(\d+) /, '$1 ')}${Number.isFinite(d) ? `. Acaba por volta de ${contEndText(cur)}.` : '.'}</em></span>
+          <button type="button" class="btn btn-quiet btn-sm" data-cont-count>Contar</button>
+        </div>
+        <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday data-morph-keep></div></div>
+        ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${rxNeed(cur.med) ? ', com o aviso da receita' : ''}.</p>` : ''}
+      </div>`;
+  }
+
   let contCur = null; // o remédio da última vez (o seletor lê daqui)
   function renderCont(cur) {
     if (!contTop) return;
@@ -281,27 +313,20 @@ export default async function mountProduto(root, { code }) {
       delete contTop.dataset.shown;
       return;
     }
-    const total = Math.min(60, cur.cont.perBox);
-    const leftN = Math.round(contLeft(cur));
-    const shown = Math.min(total, leftN);
+    const realLeft = Math.round(contLeft(cur));
     const d = contDaysLeft(cur);
     morph(contBottom, '');
-    // Muda só o que mudou: o comprimido tomado sai da cartela, o número rola.
-    morph(contTop, `
-      <div class="cont-card" data-key="cont-on">
-        <label class="cont-head"><span><b>Uso contínuo</b></span>
-          <input type="checkbox" class="switch" data-cont-toggle role="switch" checked aria-label="Uso contínuo"></label>
-        <div class="blister" style="--cols:${total > 30 ? 12 : 10}" role="img" aria-label="Cerca de ${leftN} comprimidos">
-          ${Array.from({ length: total }, (_, i) => `<i class="${i < shown ? 'is-on' : ''}" style="--i:${i}"></i>`).join('')}
-        </div>
-        <div class="cont-row">
-          <span><b>Cerca de <span data-roll>${leftN}</span> ${leftN === 1 ? 'comprimido' : 'comprimidos'}</b><em data-fade>${plural(cur.cont.perDay, 'por dia', 'por dia').replace(/^(\d+) /, '$1 ')}${Number.isFinite(d) ? `. Acaba por volta de ${contEndText(cur)}.` : '.'}</em></span>
-          <button type="button" class="btn btn-quiet btn-sm" data-cont-count>Contar</button>
-        </div>
-        <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday data-morph-keep></div></div>
-        ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${rxNeed(cur.med) ? ', com o aviso da receita' : ''}.</p>` : ''}
-      </div>`);
-    if (!contTop.dataset.shown) { contTop.dataset.shown = '1'; blisterEnter($('.blister', contTop)); }
+    // Tomou desde a última vez que viu? A cartela abre como estava e, logo
+    // depois, os que foram tomados saltam da bolha (no máximo 3).
+    const seenKey = `ki.cartela.${code}`;
+    let seen = NaN;
+    try { seen = Number(localStorage.getItem(seenKey)); } catch { /* sem armazenamento */ }
+    const first = !contTop.dataset.shown;
+    const replay = first && Number.isFinite(seen) && seen > realLeft && seen - realLeft <= 3 && !reducedMotion();
+    try { localStorage.setItem(seenKey, String(realLeft)); } catch { /* sem armazenamento */ }
+    morph(contTop, contHtml(cur, replay ? seen : realLeft, d));
+    if (replay) setTimeout(() => { if (contTop.isConnected && contCur) morph(contTop, contHtml(contCur, Math.round(contLeft(contCur)), contDaysLeft(contCur))); }, 900);
+    if (first) { contTop.dataset.shown = '1'; blisterEnter($('.blister', contTop)); }
     // O seletor é montado uma vez só (morph não mexe nele) e lê o remédio atual.
     const host = $('[data-perday]', contTop);
     if (!host.dataset.mounted) {
@@ -347,6 +372,7 @@ export default async function mountProduto(root, { code }) {
     showQty(cur);
     renderAlert(cur, lots);
     renderCont(cur);
+    movementsFor(code, 30).then((h) => { const host = $('[data-history]', root); if (host && host.isConnected) morph(host, historyHtml(h)); });
     const dated = lots.reduce((a, l) => a + l.qty, 0);
     const free = cur.qty - dated;
     morph(lotsHost, `

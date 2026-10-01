@@ -152,6 +152,8 @@ export default function mountArmario(root, m = {}) {
     const oldest = products.reduce((a, p) => Math.min(a, p.createdAt || Date.now()), Date.now());
     const dueDays = lastConferir ? days : Math.floor((Date.now() - oldest) / DAY);
     const conferirDue = !empty && !q && dueDays >= CONFERIR_EVERY;
+    // Faz tempo que não confere: o botão acena (duas vezes, ao abrir).
+    conferirBtn.classList.toggle('is-due', dueDays >= CONFERIR_EVERY && !empty);
     // Buscando, o "Pede atenção" sai: a lista já diz quantos achou.
     strip.hidden = empty || !!q || (!groups.length && !conferirDue);
     // A cascata de entrada só na primeira vez que os blocos aparecem.
@@ -172,7 +174,7 @@ export default function mountArmario(root, m = {}) {
     if (empty) {
       morph(shelf, `
         <div class="empty-state empty-first">
-          <span class="empty-icon" aria-hidden="true">${icon('package')}</span>
+          <span class="empty-icon is-box" aria-hidden="true">${icon('package')}</span>
           <p class="empty-lead">Armário vazio</p>
           <p>Guarde o primeiro produto lendo o código de barras, ou a nota fiscal da última compra.</p>
           <a class="btn btn-primary btn-lg" href="#/entrada">${icon('barcode')}Ler um código</a>

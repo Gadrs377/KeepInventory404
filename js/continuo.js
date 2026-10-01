@@ -53,3 +53,31 @@ export function contEndText(p, now = Date.now()) {
   const end = new Date(now + d * DAY);
   return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'numeric' }).format(end);
 }
+
+// ---------- Cartela ----------
+// Forma do comprimido, pelo que a caixa diz: cápsula, drágea ou comprimido.
+export function pillKind(p) {
+  const t = `${(p && p.med && (p.med.forma || '')) || ''} ${(p && p.med && p.med.tamanho) || (p && p.size) || ''}`;
+  if (/c[áa]psula/i.test(t)) return 'capsula';
+  if (/dr[áa]gea/i.test(t)) return 'dragea';
+  return 'comprimido';
+}
+
+// Quantos vêm em cada cartela e como ficam dispostos (colunas x linhas). As
+// caixas costumam ter cartelas de 10, 14, 15, 7...; na dúvida, 10.
+export function cartelaOf(perBox) {
+  const n = Math.max(1, Math.round(perBox || 30));
+  const LAYOUT = { 10: [5, 2], 14: [7, 2], 15: [5, 3], 8: [4, 2], 7: [7, 1], 12: [6, 2], 6: [3, 2], 4: [4, 1], 5: [5, 1] };
+  if (n <= 10 && LAYOUT[n]) return { size: n, cols: LAYOUT[n][0], rows: LAYOUT[n][1] };
+  for (const k of [10, 14, 15, 8, 7, 12, 6]) if (n % k === 0) return { size: k, cols: LAYOUT[k][0], rows: LAYOUT[k][1] };
+  return { size: 10, cols: 5, rows: 2 };
+}
+
+// O que sobrou, em cartelas: a de agora (com quantos ainda tem) e as cheias.
+export function cartelaState(left, perBox) {
+  const c = cartelaOf(perBox);
+  const n = Math.max(0, Math.round(left));
+  const sheets = Math.ceil(n / c.size);
+  const current = n === 0 ? 0 : n - (sheets - 1) * c.size;
+  return { ...c, current, full: Math.max(0, sheets - 1), sheet: sheets };
+}

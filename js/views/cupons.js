@@ -3,6 +3,9 @@
 import { listReceipts } from '../store.js';
 import { showReceipt } from './receipt.js';
 import { $, esc, icon, tabBar, plural } from '../ui.js';
+import { stagger } from '../motion.js';
+
+let cascaded = false; // a lista entra em cascata só na primeira vez da sessão
 
 const timeFmt = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -57,7 +60,7 @@ export default async function mountCupons(root) {
           </li>`;
         }).join('') + '</ul>'
         : `<div class="empty-state">
-            <span class="empty-icon" aria-hidden="true">${icon('receipt')}</span>
+            <span class="empty-icon is-receipt" aria-hidden="true">${icon('receipt')}</span>
             <p class="empty-lead">Nenhum cupom ainda</p>
             <p>Ao concluir no leitor ou aplicar o Conferir, o cupom fica aqui.</p>
             <a class="btn btn-primary" href="#/entrada">${icon('barcode')}Abrir o leitor</a>
@@ -67,6 +70,7 @@ export default async function mountCupons(root) {
     </div>`;
 
   const rows = $('.content', root);
+  if (!cascaded && list.length) { cascaded = true; stagger(root.querySelectorAll('.cupom-row'), { step: 40, max: 10 }); }
   if (list.length) {
     rows.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-i]');

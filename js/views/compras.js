@@ -9,6 +9,9 @@ import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
 import { rxNeed } from './remedioInfo.js';
 import { morph } from '../morph.js';
+import { stagger } from '../motion.js';
+
+let shopCascaded = false;
 import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows, pill } from '../ui.js';
 
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus', remedios: 'pill' };
@@ -135,11 +138,13 @@ export default function mountCompras(root) {
         </li>`).join('')}</ul>` : '')
       + (all ? '' : `
       <div class="empty-state" data-key="empty">
-        <span class="empty-icon" aria-hidden="true">${icon('cart')}</span>
+        <span class="empty-icon is-cart" aria-hidden="true">${icon('cart')}</span>
         <p class="empty-lead">Nada para comprar</p>
         <p>O que estiver acabando aparece aqui.</p>
       </div>`)
       + (done ? `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear data-key="clear">${icon('check')}Limpar marcados</button>` : ''), { animate: !first });
+    // Primeira vez da sessão: os itens entram em cascata.
+    if (first && !shopCascaded) { shopCascaded = true; stagger(lists.querySelectorAll('.shop-item, .pharm-head, .list-title'), { step: 30, max: 12 }); }
   }
 
   // Estado em pílula (Zerado, Acabando) e o resto em texto: quanto tem, previsão, ritmo.

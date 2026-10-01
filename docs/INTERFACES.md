@@ -2011,3 +2011,29 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
 - Teste novo: `tests/ui/movimento.test.mjs` simula o Safari (só aceita no
   fim do toque).
 - `sw.js` v101.
+
+## Versão 4.6: cartela de verdade e entradas com jeito
+
+- **Cartela do uso contínuo redesenhada.** Antes era uma grade de 30
+  bolinhas achatadas, sem cara de cartela. Agora:
+  - folha de alumínio escovado com bolhas transparentes; o comprimido é
+    redondo com o risquinho do meio, a cápsula tem duas cores (a cor sai do
+    código do produto) e a drágea é oval e brilhante, pelo que a caixa diz;
+  - mostra a cartela aberta (10, 14, 15, 7... por cartela, pela quantidade
+    da caixa) e as cheias empilhadas atrás, com "e mais N cartelas cheias";
+  - a bolha do que já foi tomado fica amassada e o alumínio rasgado;
+  - ao abrir o remédio, se tomou desde a última vez (até 3), a cartela abre
+    como estava e os comprimidos tomados saltam da bolha girando;
+  - tocar num comprimido aperta a bolha.
+- **Histórico do produto ao vivo:** tirar ou guardar na página põe a linha
+  nova no topo, deslizando.
+- **Cascatas:** a lista de Cupons e a das Compras entram em cascata na
+  primeira vez da sessão; a Revisão do Conferir também.
+- **Vazios com entrada:** a caixa do Armário cai e quica, o carrinho das
+  Compras chega como o ônibus (inclina ao andar, ao frear) e o cupom sai da
+  impressora.
+- **Pede atenção:** na primeira vez, cada ícone faz o seu gesto (o aviso
+  treme, o calendário pula, a ampulheta vira, o tracejado gira).
+- **Conferir atrasado** (30 dias ou mais): o botão acena duas vezes ao abrir
+  o Armário.
+- `sw.js` v102.
