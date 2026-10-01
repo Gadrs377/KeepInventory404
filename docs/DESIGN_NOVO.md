@@ -96,7 +96,8 @@ responde; backup mais cedo; aviso de vencimento com hora certa.
      o que está na embalagem: Pó para Pudim Baunilha Royal 50g"**;
    - Onde fica, Quantidade e **Guardar 1**.
 5. **Nome da comunidade:** o nome com o selo **"Da comunidade"** (sem
-   contar confirmações) e o voto de um toque **É este / Não é este**.
+   contar confirmações) como ponta de um contorno fino em volta do nome e do
+   voto, para ficar claro que é o nome que veio da comunidade, e o voto de um toque **É este / Não é este**.
 
 ### 2.4 Conferir o armário (Contar + Validade)
 
