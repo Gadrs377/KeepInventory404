@@ -433,17 +433,18 @@ async function newForm(ctx, result, { photo = null } = {}) {
   body.innerHTML = `
     <form class="stack" novalidate>
       <div data-head>${head({ ...info, name: info.name || 'Produto novo', code: barcode }, null)}</div>
-      ${info.comunidade ? `
-      <div class="comm" data-comm>
-        <p class="comm-badge">${icon('users')}<span>Da comunidade</span></p>
-        <div class="comm-vote"><button type="button" class="btn btn-quiet btn-sm" data-vote="1">É este</button><button type="button" class="btn btn-quiet btn-sm" data-vote="-1">Não é este</button></div>
-      </div>` : ''}
       <p class="sheet-text" data-msg>${info.comunidade ? '' : esc(info.med ? NEW_MSG.med : NEW_MSG[result.status] || NEW_MSG.notfound)}</p>
       ${result.status === 'offline' ? '<button type="button" class="btn btn-quiet btn-sm" data-retry>Buscar de novo</button>' : ''}
       <div class="field">
+        ${info.comunidade ? `
+        <fieldset class="comm-box" data-comm>
+          <legend class="comm-tag">${icon('users')}<span>Da comunidade</span></legend>` : ''}
         <label class="field-label" for="new-name">Nome do produto</label>
         <input class="input" id="new-name" name="name" type="search" enterkeyhint="done" autocomplete="off" maxlength="80"
           value="${esc(info.name || '')}" placeholder="Ex.: feijão camil" aria-describedby="new-name-error new-name-status">
+        ${info.comunidade ? `
+          <div class="comm-vote"><button type="button" class="btn btn-quiet btn-sm" data-vote="1">É este</button><button type="button" class="btn btn-quiet btn-sm" data-vote="-1">Não é este</button></div>
+        </fieldset>` : ''}
         <p class="field-error" id="new-name-error" hidden></p>
         <p class="suggest-status" id="new-name-status" aria-live="polite"></p>
         <button type="button" class="suggest-front" data-front-name hidden>${icon('camera')}<span><span class="suggest-front-label">Usar o que está na embalagem</span><span class="suggest-front-name"></span></span></button>
@@ -634,6 +635,8 @@ async function newForm(ctx, result, { photo = null } = {}) {
 
   nameInput.addEventListener('input', () => {
     const q = nameInput.value.trim();
+    // Nome mudado já não é o da comunidade: o contorno solta o campo.
+    if (comm) comm.classList.toggle('is-own', q !== info.name);
     if (frontBtn && !frontBtn.hidden && q === fromPhoto?.name) frontBtn.hidden = true;
     if (q) { nameInput.removeAttribute('aria-invalid'); nameError.hidden = true; }
     applyGuess({ ...info, name: q });

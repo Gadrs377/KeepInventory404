@@ -1834,3 +1834,16 @@ Sexto passo da nova versão (PLANO_MELHORIAS, seção 4).
   confirmações nem dizer quem sugeriu. O voto **É este / Não é este** fica.
 - As telas de diagnóstico também trocaram o ponto por vírgula.
 - `sw.js` v94.
+
+## Versão 3.76: o selo da comunidade abraça o nome
+
+- O selo **"Da comunidade"** é a ponta de um contorno fino que envolve o
+  campo **Nome do produto** e o voto **É este / Não é este**. O selo e a linha
+  têm o mesmo traço, para ler como uma peça só: fica claro que "da
+  comunidade" é o nome, e que o voto é sobre ele.
+- Raio do contorno concêntrico com o do campo (o do campo mais o espaço até a
+  linha).
+- **Mudou o nome, o contorno solta:** ao editar o nome, ele deixa de ser o da
+  comunidade, e o contorno, o selo e o voto somem. Se voltar ao mesmo nome,
+  voltam.
+- `sw.js` v95.
