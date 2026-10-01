@@ -1891,3 +1891,20 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
 - **Animações** (DESIGN_SYSTEM, seção 7): selo de pronto, o produto voando até
   o cupom, a caixa do remédio, a cartela, o anel do Conferir.
 - `sw.js` v96.
+
+## Versão 4.1: correções do remédio
+
+- **Uso contínuo travava a tela.** O seletor "Toma por dia" avisava "mudou" ao
+  ser montado; o aviso gravava o remédio, a gravação redesenhava o cartão, que
+  montava o seletor de novo, sem fim. Agora o seletor só avisa quando o número
+  muda de verdade (vale para todos os seletores do app). Teste novo:
+  `tests/ui/remedio.test.mjs`.
+- **A caixa cabe tudo:** o nome, o princípio ativo e a dose diminuem até caber
+  (no máximo duas linhas cada); a caixa cresce em altura quando precisa; o
+  laboratório e o G ficam numa coluna à direita, que o nome não invade
+  (laboratório longo vira reticências). A ficha completa continua logo abaixo.
+- **Todo remédio tem a caixa,** também os cadastrados sem os dados da Anvisa
+  (à mão, por loja, por foto): a caixa sai do nome, da marca e do tamanho, sem
+  tarja, porque não dá para saber qual é.
+- O selo ("Vencido", "Acaba em ~6 dias") fica mais para fora da caixa.
+- `sw.js` v97.

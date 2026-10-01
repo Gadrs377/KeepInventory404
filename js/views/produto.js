@@ -6,7 +6,7 @@ import { getProduct, updateProduct, movementsFor, lotsFor, onChange, undoMovemen
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
 import { medByEan, medInfo } from '../remedios.js';
-import { medFacts, medBoxHtml, rxCardHtml } from './remedioInfo.js';
+import { medFacts, medBoxHtml, rxCardHtml, boxDataOf, fitMedBox } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
 import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
@@ -55,11 +55,11 @@ export default async function mountProduto(root, { code }) {
       </header>
       <main class="content">
         <section class="product-hero">
-          ${p.med ? medBoxHtml(p.med, { sticker: sticker(p) }) : thumb(p, med ? 'xl' : 'lg')}
+          ${med ? medBoxHtml(boxDataOf(p), { sticker: sticker(p) }) : thumb(p, 'lg')}
           <div class="product-meta">
-            <h1 class="page-title${p.med ? ' sr-only-soft' : ''}">${esc(p.name)}</h1>
-            ${subtitle(p) && !p.med ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
-            ${p.med ? '' : stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : '<p class="hero-pills" hidden></p>'}
+            <h1 class="page-title${med ? ' sr-only-soft' : ''}">${esc(p.name)}</h1>
+            ${subtitle(p) && !med ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
+            ${med ? '' : stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : '<p class="hero-pills" hidden></p>'}
           </div>
         </section>
 
@@ -121,6 +121,7 @@ export default async function mountProduto(root, { code }) {
   const box = $('.product-hero .mbox', root);
   let untilt = () => {};
   if (box) {
+    fitMedBox(root);
     if (!document.documentElement.dataset.nav) boxEnter(box);
     untilt = tiltable(box.querySelector('.mbox-3d'));
   }
@@ -244,6 +245,7 @@ export default async function mountProduto(root, { code }) {
     stepper($('[data-perday]', contTop), {
       value: cur.cont.perDay, min: 1, max: 12, label: 'Comprimidos por dia',
       onChange: async (v) => {
+        if (v === cur.cont.perDay) return;
         const now = Date.now();
         const next = { ...cur.cont, n: contLeft(cur, now), at: now, perDay: v };
         await updateProduct(code, { cont: next });

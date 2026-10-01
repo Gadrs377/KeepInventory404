@@ -819,13 +819,16 @@ export function stepper(host, { value = 1, min = 1, max = 999, label = 'Quantida
   const [dec, inc] = $$('.stepper-btn', host);
   let current = value;
 
-  function set(n, fromInput = false) {
+  // onChange só quando o número muda de verdade: nunca ao montar (quem grava
+  // no onChange e redesenha a tela entraria num ciclo sem fim).
+  function set(n, fromInput = false, silent = false) {
     const parsed = Math.round(Number(n));
+    const before = current;
     current = Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : min;
     if (!fromInput || String(current) !== input.value) input.value = String(current);
     dec.disabled = current <= min;
     inc.disabled = current >= max;
-    onChange && onChange(current);
+    if (!silent && current !== before && onChange) onChange(current);
   }
 
   host.addEventListener('click', (e) => {
@@ -846,7 +849,7 @@ export function stepper(host, { value = 1, min = 1, max = 999, label = 'Quantida
   });
   input.addEventListener('blur', () => set(input.value === '' ? min : current));
 
-  set(value);
+  set(value, false, true);
   return {
     get value() { return current; },
     set,

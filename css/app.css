@@ -3059,3 +3059,30 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .head-pill[data-conferir] .head-pill-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
 @media (max-width: 359px) { .head-pill[data-conferir] { width: auto; padding-inline: 12px 14px; } }
 .text-large .head-pill[data-conferir] { width: auto; padding-inline: 12px 14px; }
+
+/* A caixa cresce com o conteúdo: a face fica no fluxo (a tarja embaixo, no
+   fluxo também) e as laterais acompanham a altura dela. */
+.mbox-3d { height: auto; min-height: 150px; }
+.mbox-face { position: relative; inset: auto; min-height: 150px; }
+.mbox-side { top: 0; bottom: 0; height: auto; }
+.mbox-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: normal; word-break: normal; hyphens: auto; max-width: 72%; line-height: 1.05; }
+.mbox-act { overflow-wrap: anywhere; }
+.mbox-dose { flex-wrap: wrap; row-gap: 0; max-width: 100%; }
+.mbox-dose em { overflow-wrap: anywhere; }
+.mbox-tarja { position: relative; inset: auto; margin: auto -14px -12px; padding-top: 6px; }
+.mbox-face:has(.mbox-tarja) .mbox-dose { margin-bottom: 10px; }
+.mbox-face:not(:has(.mbox-tarja)) .mbox-dose { margin-bottom: 4px; }
+/* Dose e quantidade: um bloco de até duas linhas, que diminui até caber. */
+.mbox-dose { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 20px; line-height: 1.15; max-width: 100%; }
+.mbox-dose b { font: inherit; font-family: var(--font-num); font-weight: 800; white-space: normal; margin-inline-end: 6px; }
+.mbox-dose em { font-size: 0.6em; }
+/* Cabeça da caixa: o nome à esquerda; laboratório e G numa coluna à direita,
+   que o nome não invade (laboratório longo vira reticências). */
+.mbox-head { display: flex; align-items: flex-start; gap: 8px; }
+.mbox-head .mbox-name { flex: 1 1 auto; min-width: 0; max-width: none; }
+.mbox-brand { flex: none; max-width: 38%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-inline-end: -14px; padding-top: 2px; }
+.mbox-brand .mbox-lab { position: static; max-width: 100%; padding-inline-end: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.mbox-brand .mbox-gen { position: static; }
+/* O selo fica mais para fora da caixa, sem tapar o laboratório. */
+.mbox-sticker { top: -12px; right: 2px; }
+.mbox { padding-top: 22px; }

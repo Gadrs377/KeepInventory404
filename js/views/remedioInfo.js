@@ -52,14 +52,19 @@ export function medBoxHtml(med, { sticker = '', size = '' } = {}) {
   const [dose, ...rest] = String(med.tamanho || '').split(/,\s+(?=\d)/);
   const qty = rest.join(', ').trim();
   const band = BOX_TEXT[med.tarja];
+  // Primeiro palpite pelo tamanho; fitMedBox() ajusta de verdade depois de desenhar.
   const long = String(med.nome).length > 16 ? (String(med.nome).length > 24 ? ' is-longer' : ' is-long') : '';
   return `
     <div class="mbox ${size}" aria-hidden="true">
       <div class="mbox-3d">
         <div class="mbox-face">
-          ${med.laboratorio ? `<span class="mbox-lab">${esc(med.laboratorio)}</span>` : ''}
-          ${med.tipo === 'Genérico' ? '<span class="mbox-gen"><i>G</i><em>Genérico</em></span>' : ''}
-          <b class="mbox-name${long}">${esc(med.nome)}</b>
+          <div class="mbox-head">
+            <b class="mbox-name${long}">${esc(med.nome)}</b>
+            ${med.laboratorio || med.tipo === 'Genérico' ? `<span class="mbox-brand">
+              ${med.laboratorio ? `<span class="mbox-lab">${esc(med.laboratorio)}</span>` : ''}
+              ${med.tipo === 'Genérico' ? '<span class="mbox-gen"><i>G</i><em>Genérico</em></span>' : ''}
+            </span>` : ''}
+          </div>
           <span class="mbox-act">${esc(med.substancia || '')}</span>
           <span class="mbox-dose"><b>${esc(dose.trim())}</b>${qty ? `<em>${esc(qty)}</em>` : ''}</span>
           ${band ? `<span class="mbox-tarja is-${med.tarja === 'preta' ? 'black' : 'red'}">${band.map(esc).join('<br>')}</span>` : ''}
@@ -68,6 +73,32 @@ export function medBoxHtml(med, { sticker = '', size = '' } = {}) {
       </div>
       ${sticker}
     </div>`;
+}
+
+// Remédio cadastrado sem os dados da Anvisa (à mão, por loja, por foto): a caixa
+// sai do nome, da marca e do tamanho, sem tarja (não dá para saber qual é).
+export function boxDataOf(p) {
+  if (p.med) return p.med;
+  return { nome: p.name, substancia: '', tamanho: p.size || '', laboratorio: p.brand || '', tarja: '', tipo: '' };
+}
+
+// Depois de desenhar: o nome e o princípio ativo diminuem até caber (no máximo
+// duas linhas cada), e a caixa cresce em altura se ainda faltar espaço.
+export function fitMedBox(root) {
+  for (const box of root.querySelectorAll('.mbox')) {
+    const shrink = (el, from, min) => {
+      if (!el) return;
+      let size = from;
+      el.style.fontSize = `${size}px`;
+      while (size > min && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+    shrink(box.querySelector('.mbox-name'), 26, 14);
+    shrink(box.querySelector('.mbox-act'), 12, 9.5);
+    shrink(box.querySelector('.mbox-dose'), 20, 11);
+  }
 }
 
 // O que a tarja quer dizer na prática. O prazo da receita só aparece quando há
@@ -147,6 +178,7 @@ export function medSheet(ean) {
             <a class="btn btn-quiet btn-lg" href="${esc(bulaUrl(med))}" target="_blank" rel="noopener">${icon('fileText')}Bula</a>
             <button type="button" class="btn btn-mode btn-lg mode-entrada" data-keep>${icon('in')}Guardar no armário</button>
           </div>`;
+        fitMedBox(body);
         $('[data-keep]', body).addEventListener('click', () => close(ean));
       }).catch(() => {
         if (body.isConnected) body.innerHTML = '<p class="sheet-text">Sem internet para abrir a lista da Anvisa. Tente de novo quando a conexão voltar.</p>';
