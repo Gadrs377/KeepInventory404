@@ -17,6 +17,7 @@ import { expirySheet } from './expiryLots.js';
 import { formatDate } from '../dates.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, vibrate, stepper, thumb, subtitle, glideTo } from '../ui.js';
 import { flyTo, pop } from '../motion.js';
+import { morph } from '../morph.js';
 
 const COPY = {
   entrada: { title: 'Guardar', sign: '+', head: 'Guardando' },
@@ -90,12 +91,14 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
   // ---------- Cartão da última leitura ----------
   function renderLast(fresh = false) {
     const s = session.get(lastKey);
-    if (!s) { lastHost.innerHTML = ''; return; }
+    if (!s) { morph(lastHost, ''); return; }
     const p = s.product;
     const ended = s.mode === 'saida' && p.qty === 0;
-    const sub = ended ? '<strong>Acabou.</strong> Era a última.' : `Agora <strong>${p.qty}</strong> no armário`;
-    lastHost.innerHTML = `
-      <div class="last-card mode-${s.mode}${fresh ? ' is-fresh' : ''}">
+    const sub = ended ? '<strong>Acabou.</strong> Era a última.' : `Agora <strong data-roll>${p.qty}</strong> no armário`;
+    // Leitura nova: o cartão chega de novo (CSS is-fresh). Ajuste no − e no +:
+    // muda só o que mudou (js/morph.js), sem piscar.
+    const html = `
+      <div class="last-card mode-${s.mode}${fresh ? ' is-fresh' : ''}" data-key="last-${esc(lastKey)}">
         <div class="last-row">
           ${thumb(p, 'md')}
           <div class="last-text">
@@ -114,6 +117,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
           ? `<button type="button" class="btn btn-quiet last-act" data-expiry>${icon('calendar')}${s.dates ? `Validade ${esc(s.dates)}` : 'Marcar validade'}</button>`
           : ended ? `<button type="button" class="btn btn-quiet last-act" data-shop>${icon('cart')}Adicionar às Compras</button>` : ''}
       </div>`;
+    if (fresh) lastHost.innerHTML = html; else morph(lastHost, html);
   }
 
   // ---------- Cupom vivo ----------
@@ -123,24 +127,24 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
     finishBtn.hidden = !entries.length;
     $('[data-type]', root).classList.toggle('is-wide', !entries.length && mode !== 'entrada');
     if (!entries.length) {
-      ticket.innerHTML = `
-        <div class="scan-empty">
+      morph(ticket, `
+        <div class="scan-empty" data-key="empty">
           <p class="scan-empty-lead">Nada lido ainda</p>
           <p>Cada leitura ${mode === 'entrada' ? 'guarda' : 'tira'} 1.</p>
           <p>Para ${mode === 'entrada' ? 'guardar' : 'tirar'} 2, tire da mira e leia de novo.</p>
-        </div>`;
+        </div>`);
       return;
     }
     const modes = new Set(entries.map((s) => s.mode));
     const head = modes.size > 1 ? 'Guardando e tirando' : COPY[entries[0].mode].head;
-    ticket.innerHTML = `
-      <div class="paper">
+    morph(ticket, `
+      <div class="paper" data-key="paper">
         <p class="paper-head">${head}</p>
         <ul class="paper-lines">
           ${entries.slice().reverse().map((s) => {
             const key = `${s.mode}:${s.product.code}`;
             return `
-            <li class="${key === lastKey ? 'is-last' : ''}">
+            <li class="${key === lastKey ? 'is-last' : ''}" data-key="pl-${esc(key)}">
               <button type="button" class="paper-line" data-edit="${esc(key)}" aria-label="Corrigir ${esc(s.product.name)}, ${signed(s)}">
                 <span class="paper-name">${esc(s.product.name)}</span>
                 <span class="paper-dots" aria-hidden="true"></span>
@@ -152,7 +156,7 @@ export default function mountScan(root, { mode: initialMode, code: initialCode }
         </ul>
         <p class="paper-total"><span>${plural(entries.length, 'produto', 'produtos')}</span><span class="paper-n">${signedNet(netOf(entries))}</span></p>
       </div>
-      <p class="paper-hint">Toque numa linha para corrigir</p>`;
+      <p class="paper-hint">Toque numa linha para corrigir</p>`);
   }
 
   function record(m, product, movement, n, { fresh = true } = {}) {

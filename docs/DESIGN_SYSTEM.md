@@ -221,6 +221,13 @@ Molas físicas (massa, rigidez e amortecimento simulados e convertidos em
   e nos blocos do "Pede atenção", selo das Compras que pula, linha de leitor
   no botão Ler, ícone dos vazios que flutua. Sempre curtos e de uma vez só
   (o flutuar dos vazios é o único que repete).
+- **Nada pisca (4.3, js/morph.js):** uma tela nunca é redesenhada inteira
+  por causa de uma mudança pequena. Muda só o que mudou: o que sai fecha o
+  espaço devagar, o que entra abre espaço, o que muda de lugar desliza, os
+  números rolam e as cores mudam com transição. Regra para telas novas: toda
+  lista que muda enquanto a pessoa olha usa `morph()` e dá `data-key` aos
+  itens.
+- **Recibo do toque (4.3):** "−1" ou "+1" sobe da etiqueta tocada e some.
 - Com `prefers-reduced-motion`, nada se desloca: no máximo um esmaecimento
   curto.
 

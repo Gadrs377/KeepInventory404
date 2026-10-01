@@ -332,6 +332,7 @@ export function glideTo(container, active, { line = false } = {}) {
     ind = document.createElement('span');
     ind.className = `glide${line ? ' glide-line' : ''}`;
     ind.setAttribute('aria-hidden', 'true');
+    ind.setAttribute('data-morph-ignore', '');
     container.prepend(ind);
     container.classList.add('has-glide');
     ind.classList.add('no-anim');
@@ -577,7 +578,9 @@ export function openSheet({ mode = '', label = 'Produto', render, className = ''
     });
     hoist.observe(body, { childList: true });
     requestAnimationFrame(() => {
-      sheet.classList.add('is-open');
+      sheet.classList.add('is-open', 'is-opening');
+      // O conteúdo sobe em cascata só na abertura (trocas depois: sheetMotion).
+      setTimeout(() => sheet.classList.remove('is-opening'), 700);
       if (!sheet.contains(document.activeElement)) sheet.focus({ preventScroll: true });
       // Só a folha alta empurra a tela de trás (como a folha grande do iPhone);
       // a média fica por cima, sem mexer no fundo.

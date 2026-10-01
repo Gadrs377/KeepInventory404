@@ -3156,3 +3156,66 @@ body .attn-strip .attn { padding-block: 12px 14px; margin-block: -4px -8px; }
   .att[aria-pressed="true"] .att-i .icon, .att-zerados[aria-pressed="true"] .att-i, .tab-item.is-hop .tab-icons,
   .tab-badge.is-bump, .scan-fab.is-sweep .scan-fab-ico::after, .empty-icon .icon { animation: none !important; }
 }
+
+/* Cartela: o comprimido tomado afunda e esvazia (morph troca só a classe). */
+.blister i { scale: 0.84; transition: scale 460ms var(--spring-bouncy), background 300ms var(--ease), box-shadow 300ms var(--ease); }
+.blister i.is-on { scale: 1; }
+@media (prefers-reduced-motion: reduce) { .blister i { transition: none; } }
+
+/* ---------- Movimento da 4.3: nada pisca, tudo desliza ---------- */
+/* As cores de estado mudam com transição (o morph troca só a classe): a
+   etiqueta preta fica amarela, a pílula "Acabando" vira "Zerado" sem estalo. */
+.tag, .pill, .rx-need, .shop-item, .shop-item .row-name, .lot-row, .val-row {
+  transition-property: background-color, color, border-color, box-shadow, outline-color, opacity;
+  transition-duration: 320ms; transition-timing-function: var(--ease);
+}
+
+/* "−1" / "+1" que sobe do número tocado (motion.js floatLabel). */
+.float-n {
+  position: fixed; z-index: 90; pointer-events: none;
+  font: 800 20px/1 var(--font-num); color: var(--ink);
+  text-shadow: 0 1px 0 var(--paper), 0 0 10px var(--paper);
+}
+.float-n.mode-saida { color: var(--saida); }
+.float-n.mode-entrada { color: var(--entrada); }
+
+/* Chave: a bolinha estica ao apertar, como no iPhone, e vai com mola. */
+.switch::after { transition-property: translate, width; transition-duration: 380ms, 220ms; transition-timing-function: var(--spring-bouncy), var(--ease); }
+.switch:active::after { width: 30px; }
+.switch:checked:active::after { translate: 16px 0; }
+.switch { transition: background-color 260ms var(--ease); }
+
+/* Caixa de marcar: pula ao encher. */
+.check.is-pop { animation: check-pop 460ms var(--spring-bouncy); }
+@keyframes check-pop { 0% { scale: 1; } 35% { scale: 1.28; } 65% { scale: 0.92; } 100% { scale: 1; } }
+
+/* Busca sem resultado: a lupa balança a cabeça ("não achei") e depois flutua. */
+.empty-search .empty-icon .icon { animation: shake-no 760ms ease-in-out 120ms 1 both, float 3.6s ease-in-out 900ms infinite; }
+@keyframes shake-no { 0%, 100% { rotate: 0deg; translate: 0 0; } 20% { rotate: -14deg; translate: -4px 0; } 45% { rotate: 12deg; translate: 4px 0; } 70% { rotate: -6deg; translate: -2px 0; } }
+
+/* Folhas: o conteúdo sobe em cascata enquanto a folha abre. */
+.sheet.is-opening .sheet-body > * { animation: sheet-item 520ms var(--spring) backwards; }
+.sheet.is-opening .sheet-body > :nth-child(2) { animation-delay: 30ms; }
+.sheet.is-opening .sheet-body > :nth-child(3) { animation-delay: 60ms; }
+.sheet.is-opening .sheet-body > :nth-child(4) { animation-delay: 90ms; }
+.sheet.is-opening .sheet-body > :nth-child(5) { animation-delay: 120ms; }
+.sheet.is-opening .sheet-body > :nth-child(n+6) { animation-delay: 150ms; }
+.sheet.is-opening .sheet-body > .sheet-sticky { animation: none; }
+@keyframes sheet-item { from { opacity: 0; translate: 0 14px; } }
+
+/* Título grande: ao rolar, encolhe um pouco e esmaece, como no iPhone. */
+@supports (animation-timeline: scroll()) {
+  .home-head .page-title { transform-origin: 0 100%; animation: title-shrink linear both; animation-timeline: scroll(root); animation-range: 0 90px; }
+  @keyframes title-shrink { to { scale: 0.88; opacity: 0.35; translate: 0 -3px; } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check.is-pop, .empty-search .empty-icon .icon, .sheet.is-opening .sheet-body > *, .home-head .page-title { animation: none !important; }
+  .switch::after, .switch { transition: none; }
+}
+
+/* Entre abas: a tela nova vem um pouco do lado da aba tocada. */
+html[data-nav="tab"][data-tab-dir="right"]::view-transition-new(root) { animation: vt-tab-in-r 340ms var(--spring) both; }
+html[data-nav="tab"][data-tab-dir="left"]::view-transition-new(root) { animation: vt-tab-in-l 340ms var(--spring) both; }
+@keyframes vt-tab-in-r { from { opacity: 0; translate: 28px 0; } }
+@keyframes vt-tab-in-l { from { opacity: 0; translate: -28px 0; } }

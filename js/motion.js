@@ -275,3 +275,25 @@ function swayFrame(now) {
   if (busy) swayRaf = requestAnimationFrame(swayFrame);
   else { swayRaf = 0; pageY = null; pageV = 0; }
 }
+
+// ---------- "−1" que sobe ----------
+// Um número pequeno sai de `anchor` e sobe sumindo, como um recibo do toque:
+// mostra o que aconteceu bem onde a pessoa está olhando.
+export function floatLabel(anchor, text, { mode = '' } = {}) {
+  if (!anchor || reduced() || !anchor.getBoundingClientRect) return;
+  const r = anchor.getBoundingClientRect();
+  if (!r.width) return;
+  const el = document.createElement('span');
+  el.className = `float-n${mode ? ` mode-${mode}` : ''}`;
+  el.setAttribute('aria-hidden', 'true');
+  el.textContent = text;
+  el.style.left = `${r.left + r.width / 2}px`;
+  el.style.top = `${r.top}px`;
+  document.body.append(el);
+  const drift = (Math.random() - 0.5) * 16;
+  el.animate([
+    { transform: 'translate(-50%, 0) scale(0.6)', opacity: 0 },
+    { transform: `translate(calc(-50% + ${drift * 0.3}px), -18px) scale(1.12)`, opacity: 1, offset: 0.25 },
+    { transform: `translate(calc(-50% + ${drift}px), -46px) scale(0.95)`, opacity: 0 },
+  ], { duration: 820, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' }).finished.catch(() => {}).then(() => el.remove());
+}

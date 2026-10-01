@@ -30,7 +30,8 @@ async function openHome() {
     for (const [code, name, brand, area] of items) await s.addStock(code, 2, { name, brand, area, source: 'loja' });
   }, ITEMS);
   await page.waitForSelector('.row-item');
-  const names = () => page.$$eval('.row-item .row-name', (els) => els.map((e) => e.textContent));
+  // O que está saindo (esmaecendo com data-leaving) não conta.
+const names = () => page.$$eval('.row-item .row-name', (els) => els.filter((e) => !e.closest('[data-leaving]')).map((e) => e.textContent));
   return { ctx, page, errors, names };
 }
 
@@ -61,7 +62,7 @@ test('busca tolerante, com o mais parecido primeiro e o pedaço que bateu em des
     assert.deepEqual(await names(), ['Detergente Líquido']);
     await page.fill('input[type=search]', 'ninho lei');
     assert.deepEqual(await names(), ['Leite em Pó Ninho']);
-    assert.deepEqual(await page.$$eval('.row-name mark.hit', (els) => els.map((e) => e.textContent)), ['Lei', 'Ninho']);
+    assert.deepEqual(await page.$$eval('.row-name mark.hit', (els) => els.filter((e) => !e.closest('[data-leaving]')).map((e) => e.textContent)), ['Lei', 'Ninho']);
     await page.fill('input[type=search]', 'papelhigienico');
     assert.deepEqual(await names(), ['Papel Higiênico Folha Dupla']);
     assert.deepEqual(errors, []);

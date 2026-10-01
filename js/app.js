@@ -94,6 +94,7 @@ async function route() {
   if (prevPath !== null) scrollMem.set(prevPath, window.scrollY);
   const restoreY = kind === 'push' || kind === 'up' ? 0 : scrollMem.get(path) || 0;
   if (prevPath !== path) tel('tela', { rota: path, de: prevPath });
+  const fromPath = prevPath;
   prevPath = path;
   rememberTab(path);
   closeMenu();
@@ -127,6 +128,9 @@ async function route() {
     // "Reduzir movimento" ligado: no lugar de deslizar, um esmaecimento curto
     // (é o que a Apple recomenda: trocar movimento em x, y e z por fade).
     html.dataset.nav = reducedMotion.matches ? 'fade' : kind;
+    // Entre abas, a tela nova vem um pouco do lado da aba tocada (acompanha a
+    // pílula da barra).
+    if (kind === 'tab') html.dataset.tabDir = TAB_PATHS.indexOf(path) > TAB_PATHS.indexOf(fromPath) ? 'right' : 'left';
     const t = document.startViewTransition(render);
     t.ready.catch(() => {});
     t.finished.catch(() => {}).then(() => {

@@ -1935,3 +1935,36 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
   `tests/ui/remedio.test.mjs`.
 - Com `prefers-reduced-motion`, nada disso se mexe.
 - `sw.js` v98.
+
+## Versão 4.3: nada pisca, tudo desliza
+
+- **js/morph.js:** as telas não são mais redesenhadas a cada mudança. O app
+  compara o HTML novo com o que está na tela e muda só o que mudou, então
+  fotos, foco e rolagem ficam, e nada "pisca". Cada mudança se mexe com mola:
+  - o que sai some no lugar e o espaço fecha devagar (o de baixo desliza para
+    cima, nunca pula); no meio de uma linha (o "−" que some, uma pílula), a
+    peça vira um fantasma e os vizinhos deslizam já;
+  - o que entra abre espaço a partir de zero;
+  - o que muda de lugar desliza até lá, inclusive de uma lista para outra
+    (busca, filtros);
+  - linhas e cartões que mudam de altura crescem ou encolhem;
+  - números rolam para o lado certo; textos curtos (pílulas) trocam suave;
+  - cores de estado (etiqueta preta, amarela, tracejada) mudam com transição.
+  Itens se reconhecem por `data-key` (ou `data-code`, ou `id`).
+- Onde vale: Armário (lista, "Pede atenção", abas, aviso do Conferir),
+  página do produto (etiqueta, pílulas, vencido, uso contínuo, validades),
+  Compras, leitor (cartão e cupom vivo), Conferir (cartão e cupom) e
+  Validades.
+- **Compras:** marcar risca o nome, o círculo pula ao encher e, meio segundo
+  depois, o item desce para o fim do grupo, deslizando.
+- **"−1" que sobe:** tirar 1 na lista ou no produto solta um "−1" (ou "+1")
+  que sobe da etiqueta e some.
+- **Cartela:** o comprimido tomado afunda e esvazia.
+- **Chave:** a bolinha estica ao apertar e vai com mola.
+- **Folhas:** o conteúdo sobe em cascata na abertura.
+- **Título grande:** encolhe um pouco e esmaece ao rolar (onde o navegador tem
+  animação por rolagem).
+- **Abas de baixo:** a tela nova vem um pouco do lado da aba tocada.
+- **Busca sem resultado:** a lupa balança a cabeça ("não achei").
+- Com `prefers-reduced-motion`, tudo muda na hora.
+- `sw.js` v99.

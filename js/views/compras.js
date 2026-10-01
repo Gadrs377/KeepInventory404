@@ -8,6 +8,7 @@ import { AREAS } from '../areas.js';
 import { daysUntil, expiryText, WATCH_DAYS } from '../dates.js';
 import { loadShop as loadState, saveShop as saveState, shopSuggestions } from '../shop.js';
 import { rxNeed } from './remedioInfo.js';
+import { morph } from '../morph.js';
 import { $, esc, icon, plural, stepper, shareText, claudeUrl, thumb, toast, tabBar, openMenu, openSheet, skeletonRows, pill } from '../ui.js';
 
 const AREA_ICON = { cozinha: 'pot', limpeza: 'spray', beleza: 'lotus', remedios: 'pill' };
@@ -18,6 +19,8 @@ export default function mountCompras(root) {
   let items = [];
   let products = [];
   let expiring = [];
+  // Marcados descem para o fim do grupo, mas só depois de o risco aparecer.
+  const sunk = new Set(Object.keys(state.checked));
 
   root.innerHTML = `
     <div class="screen screen-shop has-tabbar">
@@ -80,6 +83,7 @@ export default function mountCompras(root) {
   });
 
   function render() {
+    const first = lists.hasAttribute('aria-busy');
     lists.removeAttribute('aria-busy');
     const open = items.filter((i) => !state.checked[i.product.code]).length + state.extra.filter((x) => !x.checked).length;
     const all = items.length + state.extra.length;
@@ -90,11 +94,13 @@ export default function mountCompras(root) {
 
     // Remédios num cartão só: a ida à farmácia, com a receita de cada um.
     const isMedItem = (i) => !!(i.product.med || i.product.area === 'remedios');
-    const meds = items.filter(isMedItem);
+    // Dentro de cada grupo, o que já está no carrinho vai para o fim.
+    const sink = (rows) => rows.slice().sort((a, b) => Number(sunk.has(a.product.code)) - Number(sunk.has(b.product.code)));
+    const meds = sink(items.filter(isMedItem));
     const itemRow = (i) => {
       const done = !!state.checked[i.product.code];
       return `
-        <li>
+        <li data-key="shop-${esc(i.product.code)}">
           <label class="shop-item ${done ? 'is-done' : ''}">
             <input type="checkbox" class="check" data-code="${esc(i.product.code)}" ${done ? 'checked' : ''}>
             ${thumb(i.product)}
@@ -107,19 +113,20 @@ export default function mountCompras(root) {
         </li>`;
     };
     const needs = meds.map((i) => rxNeed(i.product.med)).filter(Boolean).length;
-    const groups = AREAS.filter((a) => a.id !== 'remedios').map((a) => ({ ...a, rows: items.filter((i) => !isMedItem(i) && (i.product.area || 'cozinha') === a.id) })).filter((g) => g.rows.length);
-    lists.innerHTML = (meds.length ? `
-      <section class="pharm" aria-labelledby="pharm-title">
+    const groups = AREAS.filter((a) => a.id !== 'remedios').map((a) => ({ ...a, rows: sink(items.filter((i) => !isMedItem(i) && (i.product.area || 'cozinha') === a.id)) })).filter((g) => g.rows.length);
+    const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
+    morph(lists, (meds.length ? `
+      <section class="pharm" aria-labelledby="pharm-title" data-key="pharm">
         <div class="pharm-head"><h2 id="pharm-title">Farmácia</h2><span>${plural(meds.length, 'remédio', 'remédios')}</span></div>
         <ul class="shop-list">${meds.map(itemRow).join('')}</ul>
         ${needs ? `<p class="pharm-note">${icon('fileText')}Leve ${needs === 1 ? 'a receita' : `as ${needs} receitas`}.</p>` : ''}
       </section>` : '') + groups.map((g) => `
-      <h2 class="list-title list-title-icon">${icon(AREA_ICON[g.id])}${g.label}<span class="title-count">${g.rows.length}</span></h2>
-      <ul class="shop-list">${g.rows.map(itemRow).join('')}</ul>`).join('')
+      <h2 class="list-title list-title-icon" data-key="h-${g.id}">${icon(AREA_ICON[g.id])}${g.label}<span class="title-count">${g.rows.length}</span></h2>
+      <ul class="shop-list" data-key="ul-${g.id}">${g.rows.map(itemRow).join('')}</ul>`).join('')
       + (state.extra.length ? `
-      <h2 class="list-title">Outros</h2>
-      <ul class="shop-list">${state.extra.map((x) => `
-        <li>
+      <h2 class="list-title" data-key="h-outros">Outros</h2>
+      <ul class="shop-list" data-key="ul-outros">${state.extra.map((x) => `
+        <li data-key="x-${x.id}">
           <div class="shop-item ${x.checked ? 'is-done' : ''}">
             <input type="checkbox" class="check" id="x-${x.id}" data-extra="${x.id}" ${x.checked ? 'checked' : ''}>
             <label class="row-main" for="x-${x.id}"><span class="row-name">${esc(x.name)}</span></label>
@@ -127,15 +134,12 @@ export default function mountCompras(root) {
           </div>
         </li>`).join('')}</ul>` : '')
       + (all ? '' : `
-      <div class="empty-state">
+      <div class="empty-state" data-key="empty">
         <span class="empty-icon" aria-hidden="true">${icon('cart')}</span>
         <p class="empty-lead">Nada para comprar</p>
         <p>O que estiver acabando aparece aqui.</p>
-      </div>`);
-
-    const done = Object.keys(state.checked).length + state.extra.filter((x) => x.checked).length;
-    if (done) lists.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear>${icon('check')}Limpar marcados</button>`);
-
+      </div>`)
+      + (done ? `<button type="button" class="btn btn-quiet btn-sm shop-clear" data-clear data-key="clear">${icon('check')}Limpar marcados</button>` : ''), { animate: !first });
   }
 
   // Estado em pílula (Zerado, Acabando) e o resto em texto: quanto tem, previsão, ritmo.
@@ -217,18 +221,17 @@ export default function mountCompras(root) {
       if (x) x.checked = box.checked;
     }
     saveState(state);
+    const code = box.dataset.code;
     render();
-    const fresh = lists.querySelector(box.dataset.code ? `[data-code="${CSS.escape(box.dataset.code)}"]` : `[data-extra="${box.dataset.extra}"]`);
-    if (fresh) {
-      fresh.focus();
-      // A lista foi redesenhada: o visto nasce escondido e aparece com transição,
-      // só na caixa que acabou de ser marcada.
-      if (fresh.checked) {
-        const item = fresh.closest('.shop-item');
-        if (item) { item.classList.add('is-striking'); setTimeout(() => item.classList.remove('is-striking'), 600); }
-        fresh.classList.add('is-fresh');
-        requestAnimationFrame(() => requestAnimationFrame(() => fresh.classList.remove('is-fresh')));
-      }
+    if (box.checked) {
+      // O círculo pula ao encher.
+      box.classList.remove('is-pop'); void box.offsetWidth; box.classList.add('is-pop');
+      // Risca como uma caneta e, um instante depois, desce para o fim do grupo.
+      const item = box.closest('.shop-item');
+      if (item) { item.classList.add('is-striking'); setTimeout(() => item.classList.remove('is-striking'), 600); }
+      if (code) setTimeout(() => { if (!alive || !state.checked[code]) return; sunk.add(code); render(); }, 520);
+    } else if (code && sunk.delete(code)) {
+      render();
     }
   });
 
@@ -242,6 +245,7 @@ export default function mountCompras(root) {
     }
     if (e.target.closest('[data-clear]')) {
       state.checked = {};
+      sunk.clear();
       state.extra = state.extra.filter((x) => !x.checked);
       saveState(state);
       render();

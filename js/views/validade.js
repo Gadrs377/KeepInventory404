@@ -12,6 +12,7 @@ import { addToShopList } from '../shop.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, thumb, subtitle, vibrate } from '../ui.js';
+import { morph } from '../morph.js';
 
 export default function mountValidade(root) {
   // Marcadas nesta visita: code -> { product, dates: ['2026-10-15', ...] }
@@ -69,8 +70,8 @@ export default function mountValidade(root) {
     shelfNote.textContent = !shelf.length ? 'O armário está vazio.'
       : missing.length ? `${plural(missing.length, 'produto tem', 'produtos têm')} unidade sem data. Leia o código ou toque no produto.`
         : 'Todos os produtos já têm data.';
-    shelfList.innerHTML = shelf.map((x) => `
-      <li>
+    morph(shelfList, shelf.map((x) => `
+      <li data-key="v-${esc(x.p.code)}">
         <button type="button" class="quick-row val-row${x.free ? ' is-missing' : ''}" data-code="${esc(x.p.code)}">
           ${thumb(x.p)}
           <span class="row-main">
@@ -82,7 +83,7 @@ export default function mountValidade(root) {
           </span>
           ${icon('chevron', 'val-chev')}
         </button>
-      </li>`).join('');
+      </li>`).join(''));
   }
   shelfList.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-code]');
@@ -97,22 +98,22 @@ export default function mountValidade(root) {
   function render() {
     receipt.hidden = !done.size;
     if (!done.size) {
-      lines.innerHTML = '';
+      morph(lines, '');
       total.hidden = true;
       return;
     }
     const entries = [...done.values()].reverse();
-    lines.innerHTML = entries.map((e) => `
-      <li>
+    morph(lines, entries.map((e) => `
+      <li data-key="l-${esc(e.product.code)}">
         <a class="receipt-line paper-line" href="#/produto/${encodeURIComponent(e.product.code)}" aria-label="${esc(e.product.name)}, ${esc(e.dates.map(formatDate).join(', '))}">
           <span class="receipt-name paper-name">${esc(e.product.name)}</span>
           <span class="paper-dots" aria-hidden="true"></span>
           <span class="receipt-n paper-n">${esc(e.dates.map((d) => formatDate(d).slice(0, 5)).join(', '))}</span>
         </a>
-      </li>`).join('');
+      </li>`).join(''));
     total.hidden = false;
     const n = entries.reduce((a, e) => a + e.dates.length, 0);
-    total.innerHTML = `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n paper-n">${plural(n, 'data', 'datas')}</span>`;
+    morph(total, `<span>${plural(entries.length, 'produto', 'produtos')}</span><span class="receipt-n paper-n">${plural(n, 'data', 'datas')}</span>`);
     $('[data-marked]', root).textContent = plural(n, 'marcada', 'marcadas');
   }
 

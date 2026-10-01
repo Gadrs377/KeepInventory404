@@ -13,7 +13,8 @@ import { showProductSheet } from './productSheet.js';
 import { daysUntil, expiryText, formatDate, SOON_DAYS, WATCH_DAYS } from '../dates.js';
 import { editProduct, markExpiry, confirmDiscard, unitWord } from '../actions.js';
 import { conferirMenu } from './conferirMenu.js';
-import { sway } from '../motion.js';
+import { sway, floatLabel } from '../motion.js';
+import { morph } from '../morph.js';
 import { $, esc, icon, plural, subtitle, tag, tagState, thumb, toast, vibrate, tabBar, openMenu, skeletonRows, glideTo, pill, stockPill, afterUseText, reducedMotion } from '../ui.js';
 
 let savedFilter = 'todos';
@@ -117,7 +118,11 @@ export default function mountArmario(root, m = {}) {
   ];
   const TABS = [{ id: 'tudo', short: 'Tudo' }, ...AREAS];
 
-  function render() {
+  // Muda só o que mudou (js/morph.js): nada pisca e tudo desliza. Dentro de
+  // uma troca de tela (renderAnimated) muda na hora, e a troca anima.
+  function render({ animate = true } = {}) {
+    // Primeira vez (no lugar dos esqueletos): entra com a cascata do CSS.
+    const anim = animate && !shelf.hasAttribute('aria-busy');
     const empty = !products.length;
     // Armário vazio: sem Conferir, sem busca, sem "Pede atenção" (não há o que mostrar).
     conferirBtn.hidden = empty;
@@ -128,8 +133,8 @@ export default function mountArmario(root, m = {}) {
     const showTabs = usedAreas.size > 1;
     if (!showTabs || (savedArea !== 'tudo' && !usedAreas.has(savedArea))) savedArea = 'tudo';
     tabs.hidden = !showTabs;
-    tabs.innerHTML = showTabs ? TABS.filter((t) => t.id === 'tudo' || usedAreas.has(t.id)).map((t) => `
-      <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}">${t.short}</button>`).join('') : '';
+    morph(tabs, showTabs ? TABS.filter((t) => t.id === 'tudo' || usedAreas.has(t.id)).map((t) => `
+      <button type="button" class="tab" aria-pressed="${savedArea === t.id}" data-area="${t.id}" data-key="tab-${t.id}">${t.short}</button>`).join('') : '', { animate: anim });
     if (showTabs) glideTo(tabs, tabs.querySelector('[aria-pressed="true"]'), { line: true });
     search.placeholder = savedArea === 'remedios' ? 'Buscar em casa e na Anvisa' : 'Buscar no armário';
     search.setAttribute('aria-label', search.placeholder);
@@ -152,30 +157,27 @@ export default function mountArmario(root, m = {}) {
     // A cascata de entrada só na primeira vez que os blocos aparecem.
     strip.classList.toggle('is-first', !strip.dataset.shown && !strip.hidden);
     if (!strip.hidden) strip.dataset.shown = '1';
-    // A faixa é redesenhada a cada filtro: guarda onde estava rolada.
-    const stripX = strip.firstElementChild ? strip.firstElementChild.scrollLeft : 0;
-    strip.innerHTML = strip.hidden ? '' : `<div class="attn">${groups.map((g) => `
-      <button type="button" class="att att-${g.id}${g.id === 'vencidos' && g.list.every(isMed) ? ' is-med' : ''}" aria-pressed="${savedFilter === g.id}" data-filter="${g.id}">
+    morph(strip, strip.hidden ? '' : `<div class="attn">${groups.map((g) => `
+      <button type="button" class="att att-${g.id}${g.id === 'vencidos' && g.list.every(isMed) ? ' is-med' : ''}" aria-pressed="${savedFilter === g.id}" data-filter="${g.id}" data-key="att-${g.id}">
         <span class="att-i" aria-hidden="true">${icon(g.icon)}</span>
         <span class="att-n">${g.list.length}</span>
         <span class="att-l">${esc(g.label(g.list.length, g.list))}</span>
       </button>`).join('')}${conferirDue ? `
-      <button type="button" class="att att-conferir" data-due>
+      <button type="button" class="att att-conferir" data-due data-key="att-due">
         <span class="att-i" aria-hidden="true">${icon('listChecks')}</span>
         <span class="att-n">${dueDays}</span>
         <span class="att-l">dias sem conferir</span>
-      </button>` : ''}</div>`;
-    if (strip.firstElementChild && stripX) strip.firstElementChild.scrollLeft = stripX;
+      </button>` : ''}</div>`, { animate: anim });
 
     if (empty) {
-      shelf.innerHTML = `
+      morph(shelf, `
         <div class="empty-state empty-first">
           <span class="empty-icon" aria-hidden="true">${icon('package')}</span>
           <p class="empty-lead">Armário vazio</p>
           <p>Guarde o primeiro produto lendo o código de barras, ou a nota fiscal da última compra.</p>
           <a class="btn btn-primary btn-lg" href="#/entrada">${icon('barcode')}Ler um código</a>
           <button type="button" class="btn btn-quiet btn-lg" data-nota>${icon('qrCode')}Ler a nota fiscal</button>
-        </div>`;
+        </div>`, { animate: false });
       shelf.removeAttribute('aria-busy');
       return;
     }
@@ -230,17 +232,17 @@ export default function mountArmario(root, m = {}) {
       for (const a of AREAS) {
         const rows = visible.filter((p) => (p.area || 'cozinha') === a.id);
         if (!rows.length) continue;
-        listHtml += `<h2 class="list-title list-title-icon shelf-title">${icon(a.icon)}${a.label}<span class="title-count">${rows.length}</span></h2>
-          <ul class="${ulClass}">${rows.map((p) => rowHtml(p, i++)).join('')}</ul>`;
+        listHtml += `<h2 class="list-title list-title-icon shelf-title" data-key="h-${a.id}">${icon(a.icon)}${a.label}<span class="title-count">${rows.length}</span></h2>
+          <ul class="${ulClass}" data-key="ul-${a.id}">${rows.map((p) => rowHtml(p, i++)).join('')}</ul>`;
       }
     } else {
       listHtml = `<ul class="${ulClass}">${visible.map(rowHtml).join('')}</ul>`;
     }
     // Filtro do "Pede atenção" ligado: o título diz o que é e "Mostrar tudo" volta.
     const head = filter
-      ? `<div class="filter-head"><h2>${esc(filter.title(filter.list.length))}</h2><button type="button" class="link-btn" data-reset>Mostrar tudo</button></div>`
+      ? `<div class="filter-head" data-key="filter-head"><h2>${esc(filter.title(filter.list.length))}</h2><button type="button" class="link-btn" data-reset>Mostrar tudo</button></div>`
       : q && visible.length ? `<div class="filter-head is-search"><h2>${visible.length} no armário</h2></div>` : '';
-    shelf.innerHTML = head + (visible.length
+    morph(shelf, head + (visible.length
       ? listHtml + (outside ? `<div class="search-more"><p>Mais ${plural(outside, 'produto', 'produtos')} com “${esc(q)}” fora de ${esc(AREAS.find((a) => a.id === savedArea)?.short || '')}.</p><button type="button" class="btn btn-quiet btn-sm" data-widen>Mostrar</button></div>` : '')
       : q ? `
         <div class="empty-state empty-search">
@@ -252,7 +254,7 @@ export default function mountArmario(root, m = {}) {
           <button type="button" class="btn btn-quiet btn-lg" data-shop-q>${icon('cart')}Adicionar às Compras</button>`}
         </div>`
         : `<div class="empty-filter"><p>Nada guardado em ${esc(AREAS.find((a) => a.id === savedArea)?.short || 'nenhum lugar')} ainda.</p></div>`)
-      + medsHtml(visible.length);
+      + medsHtml(visible.length), { animate: anim });
     announce(q, visible.length);
 
     lastQty = new Map(products.map((p) => [p.code, p.qty]));
@@ -348,7 +350,7 @@ export default function mountArmario(root, m = {}) {
     const n = draft ? Object.keys(draft.counts).length : 0;
     draftNote.hidden = !n;
     if (n) {
-      draftNote.innerHTML = `<span>Conferir em andamento, ${plural(n, 'produto conferido', 'produtos conferidos')}.</span><a class="btn btn-quiet btn-sm" href="#/${draft.kind === 'tudo' ? 'conferir' : 'inventario'}">Continuar</a>`;
+      morph(draftNote, `<span>Conferir em andamento, ${plural(n, 'produto conferido', 'produtos conferidos')}.</span><a class="btn btn-quiet btn-sm" href="#/${draft.kind === 'tudo' ? 'conferir' : 'inventario'}">Continuar</a>`);
     }
     render();
   }
@@ -358,7 +360,10 @@ export default function mountArmario(root, m = {}) {
   async function minusOne(code, btn, delta = -1) {
     if (btn) btn.disabled = true;
     try {
+      // O "−1" sobe da etiqueta da linha.
+      const rowTag = shelf.querySelector(`.row-item[data-code="${CSS.escape(code)}"] .tag`);
       const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
+      floatLabel(rowTag, delta < 0 ? '−1' : '+1', { mode: delta < 0 ? 'saida' : 'entrada' });
       vibrate(15);
       toast(`${delta < 0 ? '−1' : '+1'} ${product.name}. Agora tem ${product.qty}.${delta < 0 ? afterUseText(product) : ''}`, {
         mode: delta < 0 ? 'saida' : 'entrada',
@@ -576,7 +581,7 @@ export default function mountArmario(root, m = {}) {
   // novo lugar, as que saem somem e as novas aparecem (View Transitions).
   // Resolve quando a troca terminou (a tela nova já é a de verdade).
   function renderAnimated() {
-    if (!document.startViewTransition || reducedMotion()) { render(); return Promise.resolve(); }
+    if (!document.startViewTransition || reducedMotion()) { render({ animate: false }); return Promise.resolve(); }
     const name = () => shelf.querySelectorAll('.row-item').forEach((li, i) => {
       if (i > 40) return;
       li.style.viewTransitionName = vtName(li.dataset.code);
@@ -589,7 +594,7 @@ export default function mountArmario(root, m = {}) {
     tools.dataset.vt = '';
     strip.style.viewTransitionName = 'home-attn';
     strip.dataset.vt = '';
-    const t = document.startViewTransition(() => { render(); name(); });
+    const t = document.startViewTransition(() => { render({ animate: false }); name(); });
     t.ready.catch(() => {});
     return t.finished.catch(() => {}).then(() => root.querySelectorAll('[data-vt]').forEach((el) => { el.style.viewTransitionName = ''; delete el.dataset.vt; }));
   }

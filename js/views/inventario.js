@@ -13,6 +13,7 @@ import { AREAS } from '../areas.js';
 import { warmUp } from '../scanner.js';
 import { daysUntil, formatDate, relativeDays } from '../dates.js';
 import { $, esc, icon, openSheet, thumb, toast, plural, vibrate, stepper } from '../ui.js';
+import { morph } from '../morph.js';
 
 // ~37 s por produto, da telemetria de 30/09.
 const SECONDS_PER_PRODUCT = 37;
@@ -84,27 +85,27 @@ export default function mountInventario(root, m = {}) {
     const counted = order.filter((c) => Object.hasOwn(draft.counts, c)).map((c) => products.find((p) => p.code === c)).filter(Boolean);
     const left = scope.length - done;
     if (!counted.length) {
-      ticket.innerHTML = `
-        <div class="scan-empty">
+      morph(ticket, `
+        <div class="scan-empty" data-key="empty">
           <p class="scan-empty-lead">Leia o código do primeiro produto</p>
           <p>${kind === 'tudo' ? 'Se a quantidade estiver errada, ajuste. Se faltar a data, marque ou pule.' : 'Se a quantidade estiver errada, ajuste no − e no +.'}</p>
           ${left ? `<button type="button" class="link-btn" data-left>Ver os ${left} que faltam</button>` : ''}
-        </div>`;
+        </div>`);
       return;
     }
-    ticket.innerHTML = `
-      <div class="paper">
+    morph(ticket, `
+      <div class="paper" data-key="paper">
         <p class="paper-head">${COPY.head}</p>
         <ul class="paper-lines">
           ${counted.slice().reverse().map((p) => {
             const n = draft.counts[p.code];
             const marked = (draft.marked || {})[p.code];
             return `
-            <li class="${p.code === lastCode ? 'is-last' : ''}">
+            <li class="${p.code === lastCode ? 'is-last' : ''}" data-key="pl-${esc(p.code)}">
               <button type="button" class="paper-line" data-code="${esc(p.code)}" aria-label="Corrigir ${esc(p.name)}, ${n}">
                 <span class="paper-name">${esc(p.name)}${marked ? `<span class="paper-sub">, vence ${esc(formatDate(marked, false))}</span>` : ''}</span>
                 <span class="paper-dots" aria-hidden="true"></span>
-                <span class="paper-n">${n}${n === p.qty ? '<span class="paper-ok" aria-label="confere"> ✓</span>' : ''}</span>
+                <span class="paper-n"><span data-roll>${n}</span>${n === p.qty ? '<span class="paper-ok" aria-label="confere"> ✓</span>' : ''}</span>
                 ${icon('chevron', 'paper-chev')}
               </button>
             </li>`;
@@ -112,21 +113,25 @@ export default function mountInventario(root, m = {}) {
         </ul>
         <p class="paper-total"><span>${plural(counted.length, COPY.verb, COPY.done)}</span>${left ? `<button type="button" class="paper-more" data-left>Ver os ${left} que faltam</button>` : '<span>Todos</span>'}</p>
       </div>
-      <p class="paper-hint">Toque numa linha para corrigir</p>`;
+      <p class="paper-hint">Toque numa linha para corrigir</p>`);
   }
 
   // Cartão do produto que acabou de ser lido: − número + (a contagem), as datas
   // que já tem e, se venceu, o aviso com Jogar fora.
   function renderCard() {
     const p = products.find((x) => x.code === lastCode);
-    if (!p || !Object.hasOwn(draft.counts, p.code)) { card.innerHTML = ''; return; }
+    if (!p || !Object.hasOwn(draft.counts, p.code)) { morph(card, ''); return; }
     const n = draft.counts[p.code];
     const lots = lotsBy.get(p.code) || [];
     const past = lots.filter((l) => daysUntil(l.expiresAt) < 0);
     const sub = n !== p.qty ? `<span class="diff-note">O armário dizia ${p.qty}</span>`
       : kind === 'tudo' && lots.length && lots.reduce((a, l) => a + l.qty, 0) >= n ? 'Todas com data' : `${unitWord(p, n)}`;
-    card.innerHTML = `
-      <div class="last-card mode-contagem">
+    // Mesmo produto (− e +, data marcada): muda só o que mudou. Outro produto:
+    // o cartão chega de novo.
+    const same = card.dataset.code === p.code;
+    card.dataset.code = p.code;
+    const html = `
+      <div class="last-card mode-contagem" data-key="card-${esc(p.code)}">
         <div class="last-row">
           ${thumb(p, 'md')}
           <div class="last-text">
@@ -135,7 +140,7 @@ export default function mountInventario(root, m = {}) {
               <span>${sub}</span>
               <div class="last-step" role="group" aria-label="Quantos tem">
                 <button type="button" class="last-step-btn" data-step="-1" aria-label="Menos 1" ${n ? '' : 'disabled'}>${icon('minus')}</button>
-                <span class="tag tag-mode last-n" aria-live="polite">${n}</span>
+                <span class="tag tag-mode last-n" aria-live="polite" data-roll>${n}</span>
                 <button type="button" class="last-step-btn" data-step="1" aria-label="Mais 1">${icon('plus')}</button>
               </div>
             </div>
@@ -154,6 +159,7 @@ export default function mountInventario(root, m = {}) {
         <p class="act-note">${(p.med || p.area === 'remedios') ? 'Remédio vencido vai para a farmácia, não para o lixo comum.' : 'Jogar fora tira do armário. Depois, você escolhe se vai para as Compras.'}</p>
       </div>` : ''}
       ${n === p.qty && !past.length ? '<p class="count-hint">Se o número estiver errado, ajuste no − e no +. Senão, leia o próximo.</p>' : ''}`;
+    if (same) morph(card, html); else card.innerHTML = html;
   }
 
   async function setCount(code, n) {

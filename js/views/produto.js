@@ -11,7 +11,8 @@ import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
 import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
 import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
-import { tiltable, boxEnter, blisterEnter, pop, sway } from '../motion.js';
+import { tiltable, boxEnter, blisterEnter, pop, sway, floatLabel } from '../motion.js';
+import { morph } from '../morph.js';
 import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
@@ -136,7 +137,7 @@ export default async function mountProduto(root, { code }) {
     if (dir) pop($('.hero-qty .tag', root), { scale: dir === 'is-up' ? 1.12 : 0.9 });
     if (med) $('.hero-qty-label', root).textContent = product.qty === 1 ? 'caixa' : 'caixas';
     const pills = $('.hero-pills', root);
-    if (pills) { pills.innerHTML = stockPill(product); pills.hidden = !stockPill(product); }
+    if (pills) { morph(pills, stockPill(product)); pills.hidden = !stockPill(product); }
     $('[data-use="-1"]', root).disabled = product.qty === 0;
   }
 
@@ -149,6 +150,7 @@ export default async function mountProduto(root, { code }) {
       const { product, movement } = delta < 0 ? await removeStock(code, 1) : await addStock(code, 1);
       vibrate(12);
       showQty(product, delta < 0 ? 'is-down' : 'is-up');
+      floatLabel($('.hero-qty .tag', root), delta < 0 ? '−1' : '+1', { mode: delta < 0 ? 'saida' : 'entrada' });
       toast(`${delta < 0 ? '−1' : '+1'}. Agora tem ${product.qty}.${delta < 0 ? afterUseText(product) : ''}`, {
         mode: delta < 0 ? 'saida' : 'entrada',
         action: 'Desfazer',
@@ -191,14 +193,14 @@ export default async function mountProduto(root, { code }) {
   const alertHost = $('[data-alert]', root);
   function renderAlert(cur, lots) {
     const past = med ? lots.filter((l) => daysUntil(l.expiresAt) < 0) : [];
-    if (!past.length) { alertHost.innerHTML = ''; return; }
+    if (!past.length) { morph(alertHost, ''); return; }
     const l = past[0];
-    alertHost.innerHTML = `
-      <div class="act-card">
+    morph(alertHost, `
+      <div class="act-card" data-key="act-${l.id}">
         <div class="act-head"><b>${esc(relativeDays(l.expiresAt))}</b><span>${formatDate(l.expiresAt)}, ${unitWord(cur, l.qty)}</span></div>
         <button type="button" class="btn btn-mode mode-saida btn-lg" data-discard-lot="${l.id}">${icon('trash')}Separar para descartar</button>
         <p class="act-note">Remédio vencido não vai no lixo comum. As farmácias recebem.</p>
-      </div>`;
+      </div>`);
   }
   alertHost.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-discard-lot]');
@@ -214,47 +216,57 @@ export default async function mountProduto(root, { code }) {
   const contTop = $('[data-cont][data-place="top"]', root);
   const contBottom = $('[data-cont][data-place="bottom"]', root);
   const contHost = contTop && { addEventListener: (t, f) => { contTop.addEventListener(t, f); contBottom.addEventListener(t, f); } };
+  let contCur = null; // o remédio da última vez (o seletor lê daqui)
   function renderCont(cur) {
     if (!contTop) return;
+    contCur = cur;
     const on = !!(cur.continuo && cur.cont);
-    contTop.innerHTML = '';
-    contBottom.innerHTML = '';
     if (!on) {
-      contBottom.innerHTML = `
-        <div class="cont-card is-off">
+      morph(contTop, '');
+      morph(contBottom, `
+        <div class="cont-card is-off" data-key="cont-off">
           <label class="cont-head"><span><b>Uso contínuo</b><em>Avisa antes de acabar e põe nas Compras.</em></span>
             <input type="checkbox" class="switch" data-cont-toggle role="switch" aria-label="Uso contínuo"></label>
-        </div>`;
+        </div>`);
+      delete contTop.dataset.shown;
       return;
     }
     const total = Math.min(60, cur.cont.perBox);
     const leftN = Math.round(contLeft(cur));
     const shown = Math.min(total, leftN);
     const d = contDaysLeft(cur);
-    contTop.innerHTML = `
-      <div class="cont-card">
+    morph(contBottom, '');
+    // Muda só o que mudou: o comprimido tomado sai da cartela, o número rola.
+    morph(contTop, `
+      <div class="cont-card" data-key="cont-on">
         <label class="cont-head"><span><b>Uso contínuo</b></span>
           <input type="checkbox" class="switch" data-cont-toggle role="switch" checked aria-label="Uso contínuo"></label>
         <div class="blister" style="--cols:${total > 30 ? 12 : 10}" role="img" aria-label="Cerca de ${leftN} comprimidos">
           ${Array.from({ length: total }, (_, i) => `<i class="${i < shown ? 'is-on' : ''}" style="--i:${i}"></i>`).join('')}
         </div>
         <div class="cont-row">
-          <span><b>Cerca de ${plural(leftN, 'comprimido', 'comprimidos')}</b><em>${plural(cur.cont.perDay, 'por dia', 'por dia').replace(/^(\d+) /, '$1 ')}${Number.isFinite(d) ? `. Acaba por volta de ${contEndText(cur)}.` : '.'}</em></span>
+          <span><b>Cerca de <span data-roll>${leftN}</span> ${leftN === 1 ? 'comprimido' : 'comprimidos'}</b><em data-fade>${plural(cur.cont.perDay, 'por dia', 'por dia').replace(/^(\d+) /, '$1 ')}${Number.isFinite(d) ? `. Acaba por volta de ${contEndText(cur)}.` : '.'}</em></span>
           <button type="button" class="btn btn-quiet btn-sm" data-cont-count>Contar</button>
         </div>
-        <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday></div></div>
+        <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday data-morph-keep></div></div>
         ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${rxNeed(cur.med) ? ', com o aviso da receita' : ''}.</p>` : ''}
-      </div>`;
+      </div>`);
     if (!contTop.dataset.shown) { contTop.dataset.shown = '1'; blisterEnter($('.blister', contTop)); }
-    stepper($('[data-perday]', contTop), {
-      value: cur.cont.perDay, min: 1, max: 12, label: 'Comprimidos por dia',
-      onChange: async (v) => {
-        if (v === cur.cont.perDay) return;
-        const now = Date.now();
-        const next = { ...cur.cont, n: contLeft(cur, now), at: now, perDay: v };
-        await updateProduct(code, { cont: next });
-      },
-    });
+    // O seletor é montado uma vez só (morph não mexe nele) e lê o remédio atual.
+    const host = $('[data-perday]', contTop);
+    if (!host.dataset.mounted) {
+      host.dataset.mounted = '1';
+      stepper(host, {
+        value: cur.cont.perDay, min: 1, max: 12, label: 'Comprimidos por dia',
+        onChange: async (v) => {
+          const c = contCur;
+          if (!c || !c.cont || v === c.cont.perDay) return;
+          const now = Date.now();
+          const next = { ...c.cont, n: contLeft(c, now), at: now, perDay: v };
+          await updateProduct(code, { cont: next });
+        },
+      });
+    }
   }
   if (contHost) {
     contHost.addEventListener('change', async (e) => {
@@ -287,13 +299,13 @@ export default async function mountProduto(root, { code }) {
     renderCont(cur);
     const dated = lots.reduce((a, l) => a + l.qty, 0);
     const free = cur.qty - dated;
-    lotsHost.innerHTML = `
+    morph(lotsHost, `
       <ul class="form-rows lot-rows">
         ${lots.map((l) => {
           const n = daysUntil(l.expiresAt);
           const state = n < 0 ? 'is-past' : n <= SOON_DAYS ? 'is-soon' : '';
           return `
-          <li class="form-row is-static lot-row ${state}">
+          <li class="form-row is-static lot-row ${state}" data-key="lot-${l.id}">
             <span class="form-row-label">
               <span class="exp-lot-date">${icon('calendar')}${formatDate(l.expiresAt)}</span>
               <span class="exp-lot-sub">${esc(relativeDays(l.expiresAt))}, ${unitWord(cur, l.qty)}</span>
@@ -302,7 +314,7 @@ export default async function mountProduto(root, { code }) {
           </li>`;
         }).join('')}
         ${free > 0 ? `
-          <li class="form-row is-static lot-row is-free">
+          <li class="form-row is-static lot-row is-free" data-key="lot-free">
             <span class="form-row-label"><span class="exp-lot-date">Sem data</span><span class="exp-lot-sub">${unitWord(cur, free)}</span></span>
             <button type="button" class="btn btn-quiet btn-sm lot-mark" data-add-lot>Marcar</button>
           </li>` : ''}
@@ -310,7 +322,7 @@ export default async function mountProduto(root, { code }) {
         ${lots.length && !lots.every((l) => daysUntil(l.expiresAt) < 0) ? `<li><button type="button" class="form-row is-action" data-ics>${icon('calendar')}<span class="form-row-label">Lembrete no calendário</span>${icon('chevron', 'row-chevron')}</button></li>` : ''}
       </ul>
       ${lots.length && free > 0 ? `<p class="group-note">Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} sem data`}, depois a que vence antes.</p>`
-        : lots.length > 1 ? '<p class="group-note">Ao tirar, sai primeiro o que vence antes.</p>' : ''}`;
+        : lots.length > 1 ? '<p class="group-note">Ao tirar, sai primeiro o que vence antes.</p>' : ''}`);
   }
 
   lotsHost.addEventListener('click', async (e) => {
