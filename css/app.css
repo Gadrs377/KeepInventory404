@@ -2706,3 +2706,112 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
 .stepper-lg { grid-template-columns: 64px 1fr 64px; }
 .stepper-lg .stepper-btn { width: 64px; height: 64px; }
 .stepper-lg .stepper-value { font-size: 48px; height: 64px; }
+
+/* ---------- Página do produto e do remédio ---------- */
+.nav-text-btn {
+  justify-self: end; min-height: 44px; padding: 0 6px; border: 0; background: none;
+  color: var(--ink); font: 700 1rem var(--font-ui); cursor: pointer;
+}
+.nav-text-btn:active { opacity: 0.6; }
+.thumb-lg { width: 120px; height: 120px; border-radius: 20px; }
+.thumb-xl { width: 120px; height: 120px; border-radius: 22px; }
+.sr-only-soft { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.screen-product .quick-actions { margin-top: 18px; }
+.screen-product .quick-actions .btn-stack { min-height: 80px; border-radius: 20px; flex-direction: column; gap: 6px; }
+.screen-product .hero-qty .tag-lg { height: 64px; min-width: 64px; font-size: 40px; }
+.screen-product .history li { grid-template-columns: 1fr auto; }
+.screen-product .history-type { color: var(--ink); }
+.screen-product .history .type-entrada .history-type { color: var(--entrada); }
+.screen-product .history .type-saida .history-type, .screen-product .history .type-descarte .history-type { color: var(--saida); }
+.screen-product .history .type-contagem .history-type { color: var(--contagem); }
+.lot-row .exp-lot-date { display: inline-flex; align-items: center; gap: 6px; }
+.lot-row .exp-lot-date .icon { width: 16px; height: 16px; }
+.lot-row.is-free .exp-lot-date { font-family: var(--font-num); font-weight: 700; }
+.lot-mark { flex: none; min-height: 36px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.lot-row.is-past .exp-lot-sub { color: var(--danger); }
+
+/* A caixa do remédio: desenhada com os dados da Anvisa, em 3D leve. Continua
+   clara no escuro, como uma caixa de verdade. */
+.product-hero .mbox { grid-area: foto; }
+.mbox { position: relative; display: flex; justify-content: center; width: 100%; padding: 14px 0 10px; perspective: 900px; }
+.mbox-3d {
+  --w: 268px; --h: 150px; --d: 34px;
+  position: relative; width: var(--w); height: var(--h);
+  transform: rotateX(8deg) rotateY(-16deg); transform-style: preserve-3d;
+  transition: transform 600ms var(--spring);
+}
+.mbox-face {
+  position: absolute; inset: 0; border-radius: 6px; overflow: hidden;
+  display: flex; flex-direction: column; padding: 12px 14px;
+  background: linear-gradient(160deg, #fff, #f1f2f0); color: #161817; text-align: start;
+  box-shadow: inset 0 0 0 1px rgba(22, 24, 23, 0.08);
+}
+.mbox-side { position: absolute; top: 0; right: calc(var(--d) * -1); width: var(--d); height: var(--h); background: linear-gradient(90deg, #dadDD9, #c6cac6); transform-origin: left; transform: rotateY(90deg); border-radius: 0 4px 4px 0; }
+.mbox-top { position: absolute; left: 0; top: calc(var(--d) * -1); width: var(--w); height: var(--d); background: linear-gradient(0deg, #e9ebe8, #f7f8f6); transform-origin: bottom; transform: rotateX(90deg); }
+.mbox::after { content: ''; position: absolute; left: 50%; bottom: 2px; width: 260px; height: 18px; translate: -46% 0; background: radial-gradient(closest-side, rgba(22, 24, 23, 0.22), transparent); z-index: -1; }
+.mbox-lab { position: absolute; top: 10px; right: 12px; font: 800 11px var(--font-num); letter-spacing: 0.06em; color: #3f4541; text-transform: uppercase; }
+.mbox-gen { position: absolute; right: 0; top: 30px; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; background: #FFD400; border-radius: 4px 0 0 4px; }
+.mbox-gen i { width: 22px; height: 22px; border-radius: 4px; background: #1D3E8E; color: #FFD400; font: 900 16px/22px var(--font-num); text-align: center; font-style: normal; }
+.mbox-gen em { font: 800 8px/1.1 var(--font-ui); color: #1D3E8E; font-style: normal; text-transform: uppercase; }
+.mbox-name { font: 800 26px/1 var(--font-num); letter-spacing: -0.01em; max-width: 70%; overflow-wrap: anywhere; }
+.mbox-name.is-long { font-size: 21px; }
+.mbox-name.is-longer { font-size: 17px; }
+.mbox-act { font-size: 12px; color: #3f4541; margin-top: 3px; max-width: 75%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mbox-dose { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.mbox-dose b { font: 800 20px var(--font-num); white-space: nowrap; }
+.mbox-dose em { font-style: normal; font-size: 12px; font-weight: 600; color: #3f4541; }
+.mbox-tarja { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 6px 7px; font: 800 8.5px/1.35 var(--font-ui); letter-spacing: 0.01em; color: #fff; text-align: center; text-wrap: balance; }
+.mbox-tarja.is-red { background: #C8102E; }
+.mbox-tarja.is-black { background: #161817; }
+.mbox-sticker { position: absolute; top: -4px; right: 4px; rotate: 5deg; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18)); }
+.mbox-sticker .pill { height: 28px; padding: 0 12px; font-size: 13px; border-radius: 14px; }
+.mbox.sm .mbox-3d { scale: 0.86; margin: -10px 0; }
+
+/* Vencido: logo embaixo da caixa. */
+.act-card { margin: 14px 0 0; padding: 14px; border-radius: 24px; background: var(--val-soft); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--val) 70%, transparent); }
+.act-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.act-head b { font: 800 1.2353rem var(--font-num); }
+.act-head span { font-size: 0.8824rem; color: var(--ink-2); }
+.act-card .btn { width: 100%; }
+.act-note { margin: 8px 0 0; font-size: 0.8235rem; color: var(--ink-2); }
+
+/* O que a tarja quer dizer na prática. */
+.rx-card { display: flex; margin-top: 14px; border-radius: 24px; background: var(--shelf); overflow: hidden; }
+.rx-band { flex: none; width: 10px; }
+.rx-card.is-red .rx-band { background: #C8102E; }
+.rx-card.is-black .rx-band { background: #161817; }
+.rx-card.is-free .rx-band { width: 0; }
+.rx-body { padding: 14px 16px; }
+.rx-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.rx-title b { font: 800 1.1176rem var(--font-num); }
+.rx-title .icon { width: 20px; height: 20px; }
+.rx-text { margin: 0; font-size: 0.8824rem; }
+.rx-note { margin: 6px 0 0; font-size: 0.8235rem; color: var(--ink-2); }
+
+/* Uso contínuo com cartela. */
+.cont-card { margin-top: 14px; padding: 14px 16px; border-radius: 24px; background: var(--shelf); }
+.cont-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.cont-head > span { display: flex; flex-direction: column; }
+.cont-head b { font: 800 1.1176rem var(--font-num); }
+.cont-head em { font-style: normal; font-size: 0.8235rem; color: var(--ink-2); }
+.blister { display: grid; grid-template-columns: repeat(var(--cols, 10), 1fr); gap: 6px; margin-top: 12px; padding: 10px; border-radius: 14px; background: linear-gradient(135deg, #e9ecef, #d4d9de); box-shadow: inset 0 0 0 1px rgba(22, 24, 23, 0.08); }
+.blister i { aspect-ratio: 1.5; border-radius: 50%; background: rgba(22, 24, 23, 0.07); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.14); }
+.blister i.is-on { background: radial-gradient(circle at 35% 30%, #fff, #eef0f2 60%, #d7dbdf); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(22, 24, 23, 0.06); }
+@media (prefers-color-scheme: dark) { .blister { background: linear-gradient(135deg, #3a3f3c, #2c302e); } .blister i.is-on { background: radial-gradient(circle at 35% 30%, #fff, #d9dcda); } }
+.cont-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.cont-row > span { display: flex; flex-direction: column; }
+.cont-row b { font: 700 1rem var(--font-num); }
+.cont-row em { font-style: normal; font-size: 0.8235rem; color: var(--ink-2); }
+.cont-row .btn { flex: none; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.cont-perday { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 0.8824rem; color: var(--ink-2); }
+.stepper-xs { grid-template-columns: 40px 44px 40px; }
+.stepper-xs .stepper-btn { width: 40px; height: 40px; border-radius: 12px; }
+.stepper-xs .stepper-value { font-size: 20px; height: 40px; }
+.cont-note { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 0.8235rem; color: var(--ink-2); }
+.cont-note .icon { width: 16px; height: 16px; }
+/* Folha da Anvisa: a caixa, o cartão da receita, a ficha e a barra presa. */
+.med-have { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; font-size: 0.8824rem; color: var(--ink-2); }
+.med-have .icon { width: 16px; height: 16px; }
+.med-have a { color: var(--ink); font-weight: 700; }
+.med-facts-card { margin-top: 12px; border-radius: 24px; }
+.med-bar { display: grid; grid-template-columns: auto 1fr; gap: 8px; }

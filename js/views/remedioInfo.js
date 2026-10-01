@@ -36,9 +36,77 @@ export function anvisaResultsHtml(rows) {
   }).join('');
 }
 
+// ---------- A caixa ----------
+// O remédio não tem foto: o app desenha a caixa com os dados da Anvisa. Nome
+// grande, princípio ativo, dose e quantidade, o laboratório no canto, a tarja
+// de verdade (a faixa e o texto que vêm na embalagem) e o G do genérico.
+
+const BOX_TEXT = {
+  vermelha: ['VENDA SOB PRESCRIÇÃO MÉDICA'],
+  'vermelha-retencao': ['VENDA SOB PRESCRIÇÃO MÉDICA', 'SÓ PODE SER VENDIDO COM RETENÇÃO DA RECEITA'],
+  preta: ['VENDA SOB PRESCRIÇÃO MÉDICA', 'O ABUSO DESTE MEDICAMENTO PODE CAUSAR DEPENDÊNCIA'],
+};
+
+export function medBoxHtml(med, { sticker = '', size = '' } = {}) {
+  // "0,5 mg, 30 comprimidos": a vírgula decimal fica na dose.
+  const [dose, ...rest] = String(med.tamanho || '').split(/,\s+(?=\d)/);
+  const qty = rest.join(', ').trim();
+  const band = BOX_TEXT[med.tarja];
+  const long = String(med.nome).length > 16 ? (String(med.nome).length > 24 ? ' is-longer' : ' is-long') : '';
+  return `
+    <div class="mbox ${size}" aria-hidden="true">
+      <div class="mbox-3d">
+        <div class="mbox-face">
+          ${med.laboratorio ? `<span class="mbox-lab">${esc(med.laboratorio)}</span>` : ''}
+          ${med.tipo === 'Genérico' ? '<span class="mbox-gen"><i>G</i><em>Genérico</em></span>' : ''}
+          <b class="mbox-name${long}">${esc(med.nome)}</b>
+          <span class="mbox-act">${esc(med.substancia || '')}</span>
+          <span class="mbox-dose"><b>${esc(dose.trim())}</b>${qty ? `<em>${esc(qty)}</em>` : ''}</span>
+          ${band ? `<span class="mbox-tarja is-${med.tarja === 'preta' ? 'black' : 'red'}">${band.map(esc).join('<br>')}</span>` : ''}
+        </div>
+        <i class="mbox-side"></i><i class="mbox-top"></i>
+      </div>
+      ${sticker}
+    </div>`;
+}
+
+// O que a tarja quer dizer na prática. O prazo da receita só aparece quando há
+// certeza: "com retenção" vale para antibiótico e para controlado da lista C1,
+// e a classe terapêutica da Anvisa é que separa os dois.
+const ANTIBIOTICO = /penicilin|cefalospor|macrol[ií]d|quinolon|tetraciclin|sulfonamid|antibi[óo]tic|aminoglicos|carbapen|monobact|glicopept|nitrofuran|lincosam|anfenic/i;
+export function rxCardHtml(med) {
+  const t = med.tarja;
+  if (!t) return '';
+  const c = {
+    livre: { band: 'free', icon: 'check', title: 'Sem receita', text: 'Compra direto no balcão.' },
+    vermelha: { band: 'red', icon: 'fileText', title: 'Precisa de receita', text: 'Mostre na farmácia, e a receita volta com você.' },
+    'vermelha-retencao': { band: 'red', icon: 'fileText', title: 'Precisa de receita', text: 'A farmácia fica com a receita. Para comprar de novo, peça outra.', note: ANTIBIOTICO.test(med.classe || '') ? 'Receita de antibiótico vale 10 dias.' : '' },
+    preta: { band: 'black', icon: 'fileText', title: 'Receita especial', text: 'A farmácia fica com a receita. Para comprar de novo, peça outra.' },
+  }[t];
+  if (!c) return '';
+  return `
+    <div class="rx-card is-${c.band}">
+      <span class="rx-band" aria-hidden="true"></span>
+      <div class="rx-body">
+        <p class="rx-title">${icon(c.icon)}<b>${c.title}</b></p>
+        <p class="rx-text">${c.text}</p>
+        ${c.note ? `<p class="rx-note">${c.note}</p>` : ''}
+      </div>
+    </div>`;
+}
+
+// O que pede cada remédio nas Compras: "Precisa de receita", "Receita especial".
+export function rxNeed(med) {
+  const t = med && med.tarja;
+  if (t === 'preta') return { cls: 'is-black', text: 'Receita especial' };
+  if (t === 'vermelha' || t === 'vermelha-retencao') return { cls: 'is-red', text: 'Precisa de receita' };
+  return null;
+}
+
 // Lista de fatos: o que está na caixa e na bula, na ordem em que se procura.
-export function medFacts(med) {
-  const t = TARJA[med.tarja];
+// Com o cartão da receita na tela, a linha "Venda" sai (venda: false).
+export function medFacts(med, { venda = true } = {}) {
+  const t = venda && TARJA[med.tarja];
   const rows = [
     ['Princípio ativo', esc(med.substancia)],
     ['Apresentação', `${esc(med.tamanho || med.apresentacao)}${med.forma && !String(med.tamanho).includes(med.forma) ? `<span class="fact-sub">${esc(med.forma)}</span>` : ''}`],
@@ -62,6 +130,7 @@ export function medFacts(med) {
 export function medSheet(ean) {
   return openSheet({
     label: 'Remédio',
+    title: 'Da lista da Anvisa',
     render(body, close) {
       body.innerHTML = '<p class="loading-note"><span class="spinner" aria-hidden="true"></span><span>Abrindo os dados da Anvisa</span></p>';
       Promise.all([medByEan(ean), productsByBarcode(ean)]).then(([med, home]) => {
@@ -70,19 +139,13 @@ export function medSheet(ean) {
         const p = { ...medInfo(med), code: ean };
         const have = home[0];
         body.innerHTML = `
-          <div class="product-head">
-            ${thumb(p, 'md')}
-            <div class="product-meta">
-              <h2 class="product-name">${esc(med.nome)}</h2>
-              <p class="product-sub">${subtitle(p)}</p>
-              <p class="product-code">${esc(ean)}</p>
-            </div>
-            ${have ? `<div class="product-stock"><span class="product-stock-label">No armário</span>${tag(have.qty, tagState(have), '')}</div>` : ''}
-          </div>
-          ${medFacts(med)}
-          <div class="sheet-actions">
+          ${medBoxHtml(med, { size: 'sm' })}
+          ${have ? `<p class="med-have">${icon('package')}No armário: ${have.qty === 1 ? '1 caixa' : `${have.qty} caixas`}. <a href="#/produto/${encodeURIComponent(have.code)}">Ver</a></p>` : ''}
+          ${rxCardHtml(med)}
+          <div class="group-card med-facts-card">${medFacts(med, { venda: !rxCardHtml(med) }).replace(/<a class="btn[^>]*>.*?<\/a>/s, '')}</div>
+          <div class="sheet-sticky med-bar">
+            <a class="btn btn-quiet btn-lg" href="${esc(bulaUrl(med))}" target="_blank" rel="noopener">${icon('fileText')}Bula</a>
             <button type="button" class="btn btn-mode btn-lg mode-entrada" data-keep>${icon('in')}Guardar no armário</button>
-            ${have ? `<a class="btn btn-quiet" href="#/produto/${encodeURIComponent(have.code)}">Ver no armário</a>` : ''}
           </div>`;
         $('[data-keep]', body).addEventListener('click', () => close(ean));
       }).catch(() => {

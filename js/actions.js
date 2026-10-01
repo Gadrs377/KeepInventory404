@@ -91,7 +91,7 @@ export async function fixQuantity(code) {
 // lado a lado; Onde fica; Avisar quando tiver; Salvar; Remover em texto
 // vermelho no fim; o código em nota de rodapé. Resolve com 'deleted',
 // 'saved' ou null.
-export async function editProduct(code) {
+export async function editProduct(code, { fixName = false } = {}) {
   const p = await getProduct(code);
   if (!p) return null;
   const r = await openSheet({
@@ -103,6 +103,7 @@ export async function editProduct(code) {
         <form class="stack edit-form" novalidate>
           <label class="field"><span class="field-label">Nome</span>
             <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
+          ${fixName ? '<button type="button" class="link-btn edit-fixname" data-fixname>Nome estranho? Buscar o nome certo</button>' : ''}
           <div class="field-row">
             <label class="field"><span class="field-label">Marca</span>
               <input class="input" name="brand" maxlength="40" value="${esc(p.brand)}" autocomplete="off"></label>
@@ -118,7 +119,7 @@ export async function editProduct(code) {
           </fieldset>
           <div class="field field-inline">
             <span class="field-label">Avisar quando tiver</span>
-            <div class="stepper-host stepper-sm" data-min></div>
+            <div class="stepper-host stepper-xs" data-min></div>
           </div>
           <p class="field-error" role="alert" hidden></p>
           <div class="sheet-sticky"><button type="submit" class="btn btn-primary btn-lg">${icon('check')}Salvar</button></div>
@@ -128,6 +129,8 @@ export async function editProduct(code) {
       const minStep = stepper($('[data-min]', body), { value: p.minQty, min: 0, max: 999, label: 'Avisar quando tiver' });
       const err = $('.field-error', body);
       $('[data-delete]', body).addEventListener('click', () => close('delete'));
+      const fix = $('[data-fixname]', body);
+      if (fix) fix.addEventListener('click', () => close('fixname'));
       $('form', body).addEventListener('submit', async (e) => {
         e.preventDefault();
         const val = (n) => $(`[name=${n}]`, body).value;

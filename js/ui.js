@@ -100,7 +100,7 @@ export function photoPickRow(p, alone = false) {
 // não diz o que é), a não ser que o nome já seja o princípio ativo (genérico).
 export function subtitle(p) {
   if (p && p.med && p.med.substancia) {
-    const dose = String(p.med.tamanho || p.size || '').split(',')[0].trim();
+    const dose = String(p.med.tamanho || p.size || '').split(/,\s+(?=\d)/)[0].trim();
     return [p.med.substancia, dose].filter(Boolean).map(esc).join(', ').replace(/(\d) (?=[a-zµ%])/gi, '$1&nbsp;');
   }
   return [p.brand, p.size].filter(Boolean).map(esc).join(', ');

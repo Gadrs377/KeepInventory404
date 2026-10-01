@@ -212,6 +212,9 @@ export async function updateProduct(code, fields) {
   };
   // Trocou o ambiente: a casa ensinou onde isso fica (areas.js, setAreaHints).
   if (next.area !== p.area) next.areaByUser = true;
+  // Uso contínuo (remédio): a chave e a conta dos comprimidos (continuo.js).
+  if ('continuo' in fields) next.continuo = !!fields.continuo;
+  if ('cont' in fields) { if (fields.cont) next.cont = fields.cont; else delete next.cont; }
   await put('products', next);
   emit();
   return next;

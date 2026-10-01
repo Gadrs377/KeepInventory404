@@ -1,15 +1,17 @@
-// Página do produto: dados, validades, consumo, ajuste manual e histórico.
+// Página do produto (e do remédio, a mesma página): foto ou caixa no centro,
+// nome, os três blocos Tirar 1 / número / Guardar 1, validades e histórico.
+// O resto (nome, marca, onde fica, aviso) fica em Editar.
 
-import { getProduct, updateProduct, setStock, movementsFor, deleteProduct, lotsFor, addLot, removeLot, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
+import { getProduct, updateProduct, movementsFor, lotsFor, onChange, undoMovement, addStock, removeStock, applyInfo } from '../store.js';
 import { lookupRemote, identifyPhoto, checkDigitOk } from '../lookup.js';
 import { photoToDataUrl, photoThumb, photoProduct } from '../photo.js';
-import { AREAS, areaLabel } from '../areas.js';
 import { medByEan, medInfo } from '../remedios.js';
-import { medFacts } from './remedioInfo.js';
+import { medFacts, medBoxHtml, rxCardHtml } from './remedioInfo.js';
 import { consumptionByProduct, rateText, daysLeft } from '../consumo.js';
 import { formatDate, daysUntil, relativeDays, icsFor, SOON_DAYS } from '../dates.js';
-import { expirySheet } from './expiryLots.js';
-import { $, esc, icon, stepper, subtitle, tag, tagState, thumb, toast, when, confirmSheet, stockPill, openSheet, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
+import { contLeft, contDaysLeft, contStart, contEndText, CONT_WARN_DAYS } from '../continuo.js';
+import { editProduct, fixQuantity, markExpiry, confirmDiscard, unitWord } from '../actions.js';
+import { $, esc, icon, subtitle, tag, tagState, thumb, toast, when, stockPill, openSheet, stepper, download, plural, afterUseText, vibrate, tabBar, photoPickRow } from '../ui.js';
 
 const TYPE_LABEL = {
   entrada: (m) => `Guardou ${m.delta}`,
@@ -18,6 +20,8 @@ const TYPE_LABEL = {
   ajuste: (m) => `Ajustou para ${m.qtyAfter} (eram ${m.qtyBefore})`,
   contagem: (m) => `Contou ${m.qtyAfter} (eram ${m.qtyBefore})`,
 };
+
+const isMedProduct = (p) => !!(p.med || p.area === 'remedios');
 
 export default async function mountProduto(root, { code }) {
   const p = await getProduct(code);
@@ -34,96 +38,91 @@ export default async function mountProduto(root, { code }) {
   const rate = consumptionByProduct([p], allMoves).get(code);
   const perDay = rate && rate.used >= 2 ? rate.perDay : 0;
   const left = daysLeft(p, perDay);
-  const usage = perDay
-    ? `Sai ${rateText(perDay)}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}`
-    : 'Aparece depois de algumas saídas.';
-  const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
+  const med = isMedProduct(p);
   const home = { href: '#/', label: 'Voltar ao armário' };
+  const trusted = p.source === 'loja' || ['off', 'obf', 'opf', 'anvisa', 'foto', 'comunidade'].includes(p.source);
+
+  // Selo colado na caixa do remédio, como um adesivo; no produto, a pílula.
+  const sticker = (prod) => (stockPill(prod) ? `<span class="mbox-sticker hero-pills">${stockPill(prod)}</span>` : '<span class="mbox-sticker hero-pills" hidden></span>');
 
   root.innerHTML = `
-    <div class="screen screen-product has-tabbar">
+    <div class="screen screen-product has-tabbar${med ? ' is-med' : ''}">
       <header class="topbar nav-bar">
         <a class="icon-btn glass-btn" href="${home.href}" aria-label="${home.label}">${icon('chevronLeft')}</a>
         <span class="nav-title" aria-hidden="true">${esc(p.name)}</span>
-        <button type="button" class="icon-btn glass-btn" data-edit aria-label="Editar detalhes">${icon('pencil')}</button>
+        <button type="button" class="nav-text-btn" data-edit>Editar</button>
       </header>
       <main class="content">
         <section class="product-hero">
-          ${thumb(p, p.image && !p.med ? 'lg' : 'md')}
+          ${p.med ? medBoxHtml(p.med, { sticker: sticker(p) }) : thumb(p, med ? 'xl' : 'lg')}
           <div class="product-meta">
-            <h1 class="page-title">${esc(p.name)}</h1>
-            ${subtitle(p) ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
-            ${stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : ''}
-            ${p.source === 'loja' || ['off', 'obf', 'opf'].includes(p.source) || p.source === 'anvisa' || p.source === 'foto' ? '' : '<button type="button" class="link-sm" data-fixname>Nome estranho? Buscar o nome certo</button>'}
+            <h1 class="page-title${p.med ? ' sr-only-soft' : ''}">${esc(p.name)}</h1>
+            ${subtitle(p) && !p.med ? `<p class="product-sub">${subtitle(p)}</p>` : ''}
+            ${p.med ? '' : stockPill(p) ? `<p class="hero-pills">${stockPill(p)}</p>` : '<p class="hero-pills" hidden></p>'}
           </div>
         </section>
 
+        <div data-alert></div>
+        ${med ? '<div data-cont data-place="top"></div>' : ''}
+
         <div class="quick-actions">
           <button type="button" class="btn btn-quiet btn-stack" data-use="-1" ${p.qty ? '' : 'disabled'}>${icon('minus')}Tirar 1</button>
-          <button type="button" class="hero-qty" data-edit-qty aria-label="Corrigir a quantidade">${tag(p.qty, `${tagState(p)} tag-lg`)}<span class="hero-qty-label">no armário</span></button>
+          <button type="button" class="hero-qty" data-edit-qty aria-label="Corrigir a quantidade">${tag(p.qty, `${tagState(p)} tag-lg`)}<span class="hero-qty-label">${med ? (p.qty === 1 ? 'caixa' : 'caixas') : 'no armário'}</span></button>
           <button type="button" class="btn btn-quiet btn-stack" data-use="1">${icon('plus')}Guardar 1</button>
         </div>
+
+        ${p.med ? rxCardHtml(p.med) : ''}
 
         <div data-med-offer hidden></div>
 
         ${p.med ? `
         <section aria-labelledby="med-title">
           <h2 class="list-title" id="med-title">Sobre o remédio</h2>
-          <div class="group-card">${medFacts(p.med)}</div>
+          <div class="group-card">${medFacts(p.med, { venda: !rxCardHtml(p.med) })}</div>
         </section>` : ''}
+        ${med ? '<div data-cont data-place="bottom"></div>' : ''}
 
         <section aria-labelledby="lots-title">
-          <h2 class="list-title" id="lots-title">Validade</h2>
+          <h2 class="list-title" id="lots-title">Validades</h2>
           <div data-lots></div>
         </section>
 
+        ${perDay || (p.lastPrice && p.lastPrice.value) ? `
         <section aria-labelledby="use-title">
           <h2 class="list-title" id="use-title">Consumo</h2>
           <div class="group-card">
-            <p class="sheet-text">${esc(usage)}</p>
+            ${perDay ? `<p class="sheet-text">Sai ${esc(rateText(perDay))}.${p.qty > 0 && left < 120 ? ` O que tem dura cerca de ${Math.max(1, Math.round(left))} dias.` : ''}</p>` : ''}
             ${p.lastPrice && p.lastPrice.value ? `<p class="sheet-text">Último preço ${esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.lastPrice.value))}${p.lastPrice.unit && p.lastPrice.unit !== 'UN' ? ` o ${esc(p.lastPrice.unit.toLowerCase())}` : ''}, ${esc(p.lastPrice.store || 'mercado')}, ${esc(new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(p.lastPrice.at)))}.</p>` : ''}
           </div>
-          <p class="group-note">${p.minQty > 0 ? `Aparece como acabando com ${p.minQty} ou menos.` : 'Sem aviso de acabando.'}</p>
-        </section>
+        </section>` : ''}
 
         <section aria-labelledby="hist-title">
           <h2 class="list-title" id="hist-title">Histórico</h2>
           <div class="group-card">
           ${history.length ? `<ul class="history">${history.map((m) => `
             <li class="history-item type-${m.type}">
-              <span>${TYPE_LABEL[m.type] ? TYPE_LABEL[m.type](m) : esc(m.type)}</span>
-              <span class="history-qty">ficou ${m.qtyAfter}</span>
-              <span class="history-when">${when(m.at)}</span>
+              <span class="history-type">${TYPE_LABEL[m.type] ? TYPE_LABEL[m.type](m) : esc(m.type)}</span>
+              <span class="history-at">${when(m.at)}</span>
             </li>`).join('')}</ul>` : '<p class="sheet-text">Nenhum registro ainda.</p>'}
           </div>
         </section>
-
-        <section aria-labelledby="details-title">
-          <h2 class="list-title" id="details-title">Detalhes</h2>
-          <div class="group-card">
-            <dl class="facts">
-              <div class="fact"><dt>Código de barras</dt><dd class="fact-num">${esc(barcodes.length ? barcodes.join(', ') : 'Sem código')}</dd></div>
-              <div class="fact"><dt>Onde fica</dt><dd>${esc(areaLabel(p.area))}</dd></div>
-            </dl>
-          </div>
-        </section>
-
       </main>
       ${tabBar('armario')}
     </div>`;
 
   // Barra do topo como no iPhone: transparente sobre o topo da página; quando o
-  // nome sai de vista, ganha vidro e o nome aparece pequeno no meio.
+  // nome (ou a caixa) sai de vista, ganha vidro e o nome aparece pequeno no meio.
   const screenEl = $('.screen-product', root);
-  const heroTitle = $('.product-hero .page-title', root);
+  const heroTitle = $('.product-hero .mbox', root) || $('.product-hero .page-title', root);
   const navIo = new IntersectionObserver(([e]) => screenEl.classList.toggle('is-scrolled', !e.isIntersecting && e.boundingClientRect.top < 60), { rootMargin: '-56px 0px 0px 0px' });
   navIo.observe(heroTitle);
 
   // Mostra a quantidade nova no meio e no botão Tirar 1.
   function showQty(product, dir = '') {
     $('.hero-qty .tag', root).outerHTML = tag(product.qty, `${tagState(product)} tag-lg ${dir}`);
+    if (med) $('.hero-qty-label', root).textContent = product.qty === 1 ? 'caixa' : 'caixas';
     const pills = $('.hero-pills', root);
-    if (pills) pills.innerHTML = stockPill(product);
+    if (pills) { pills.innerHTML = stockPill(product); pills.hidden = !stockPill(product); }
     $('[data-use="-1"]', root).disabled = product.qty === 0;
   }
 
@@ -153,64 +152,111 @@ export default async function mountProduto(root, { code }) {
     }
   });
 
-  const fixName = $('[data-fixname]', root);
-  if (fixName) {
-    fixName.addEventListener('click', async () => {
+  // Editar: a mesma folha da home. "Nome estranho?" fica lá dentro, para quem
+  // precisa, sem ocupar a página.
+  async function openEdit() {
+    const r = await editProduct(code, { fixName: !trusted });
+    if (r === 'deleted') { location.hash = home.href; return; }
+    if (r === 'fixname') {
       const cur = (await getProduct(code)) || p;
       if (await fixNameSheet(cur)) {
         toast('Nome corrigido.', { duration: 2500 });
         window.dispatchEvent(new HashChangeEvent('hashchange'));
       }
-    });
+      return;
+    }
+    if (r === 'saved') window.dispatchEvent(new HashChangeEvent('hashchange'));
   }
+  $('[data-edit]', root).addEventListener('click', openEdit);
+  $('[data-edit-qty]', root).addEventListener('click', async () => {
+    const product = await fixQuantity(code);
+    if (product) showQty(product);
+  });
 
-  // Quantidade corrigida na folha Editar: grava como ajuste, com Desfazer.
-  async function fixQty(target) {
-    const { product, movement } = await setStock(code, target, 'ajuste');
-    showQty(product);
-    toast(`Quantidade corrigida para ${product.qty}.`, {
-      action: movement ? 'Desfazer' : undefined,
-      onAction: async () => {
-        try {
-          showQty(await undoMovement(movement.id));
-          toast('Correção desfeita.', { duration: 2500 });
-        } catch (err) {
-          toast(err.message, { duration: 4000 });
-        }
+  // ---------- Vencido (remédio): o que pede ação vem primeiro ----------
+  const alertHost = $('[data-alert]', root);
+  function renderAlert(cur, lots) {
+    const past = med ? lots.filter((l) => daysUntil(l.expiresAt) < 0) : [];
+    if (!past.length) { alertHost.innerHTML = ''; return; }
+    const l = past[0];
+    alertHost.innerHTML = `
+      <div class="act-card">
+        <div class="act-head"><b>${esc(relativeDays(l.expiresAt))}</b><span>${formatDate(l.expiresAt)}, ${unitWord(cur, l.qty)}</span></div>
+        <button type="button" class="btn btn-mode mode-saida btn-lg" data-discard-lot="${l.id}">${icon('trash')}Separar para descartar</button>
+        <p class="act-note">Remédio vencido não vai no lixo comum. As farmácias recebem.</p>
+      </div>`;
+  }
+  alertHost.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-discard-lot]');
+    if (!b) return;
+    const cur = await getProduct(code);
+    const lot = lots.find((x) => String(x.id) === b.dataset.discardLot);
+    if (cur && lot) await confirmDiscard(cur, lot);
+  });
+
+  // ---------- Uso contínuo (remédio) ----------
+  // Ligado, o cartão com a cartela fica no alto (pede atenção); desligado, a
+  // chave fica embaixo, depois da ficha, sem ocupar o topo do remédio eventual.
+  const contTop = $('[data-cont][data-place="top"]', root);
+  const contBottom = $('[data-cont][data-place="bottom"]', root);
+  const contHost = contTop && { addEventListener: (t, f) => { contTop.addEventListener(t, f); contBottom.addEventListener(t, f); } };
+  function renderCont(cur) {
+    if (!contTop) return;
+    const on = !!(cur.continuo && cur.cont);
+    contTop.innerHTML = '';
+    contBottom.innerHTML = '';
+    if (!on) {
+      contBottom.innerHTML = `
+        <div class="cont-card is-off">
+          <label class="cont-head"><span><b>Uso contínuo</b><em>Avisa antes de acabar e põe nas Compras.</em></span>
+            <input type="checkbox" class="switch" data-cont-toggle role="switch" aria-label="Uso contínuo"></label>
+        </div>`;
+      return;
+    }
+    const total = Math.min(60, cur.cont.perBox);
+    const leftN = Math.round(contLeft(cur));
+    const shown = Math.min(total, leftN);
+    const d = contDaysLeft(cur);
+    contTop.innerHTML = `
+      <div class="cont-card">
+        <label class="cont-head"><span><b>Uso contínuo</b></span>
+          <input type="checkbox" class="switch" data-cont-toggle role="switch" checked aria-label="Uso contínuo"></label>
+        <div class="blister" style="--cols:${total > 30 ? 12 : 10}" role="img" aria-label="Cerca de ${leftN} comprimidos">
+          ${Array.from({ length: total }, (_, i) => `<i class="${i < shown ? 'is-on' : ''}" style="--i:${i}"></i>`).join('')}
+        </div>
+        <div class="cont-row">
+          <span><b>Cerca de ${plural(leftN, 'comprimido', 'comprimidos')}</b><em>${plural(cur.cont.perDay, 'por dia', 'por dia').replace(/^(\d+) /, '$1 ')}${Number.isFinite(d) ? `. Acaba por volta de ${contEndText(cur)}.` : '.'}</em></span>
+          <button type="button" class="btn btn-quiet btn-sm" data-cont-count>Contar</button>
+        </div>
+        <div class="cont-perday"><span>Toma por dia</span><div class="stepper-host stepper-xs" data-perday></div></div>
+        ${d <= CONT_WARN_DAYS ? `<p class="cont-note">${icon('cart')}Já está nas Compras${cur.med && cur.med.tarja && cur.med.tarja !== 'livre' ? ', com a receita avisada' : ''}.</p>` : ''}
+      </div>`;
+    stepper($('[data-perday]', contTop), {
+      value: cur.cont.perDay, min: 1, max: 12, label: 'Comprimidos por dia',
+      onChange: async (v) => {
+        const now = Date.now();
+        const next = { ...cur.cont, n: contLeft(cur, now), at: now, perDay: v };
+        await updateProduct(code, { cont: next });
       },
     });
   }
-
-  // Tudo o que se corrige numa folha "Editar", como nos Contatos do iPhone: a
-  // página fica para consultar. Tocar no número grande abre a mesma folha.
-  async function openEdit(focusQty) {
-    const cur = (await getProduct(code)) || p;
-    const r = await editSheet(cur, focusQty);
-    if (r === 'delete') {
-      const ok = await confirmSheet({
-        title: `Remover ${cur.name}?`,
-        text: 'O produto e o histórico dele saem do armário. Não dá para desfazer.',
-        confirm: 'Remover produto',
-        danger: true,
-      });
-      if (!ok) return;
-      await deleteProduct(code);
-      toast(`${cur.name} removido.`, { duration: 3000 });
-      location.hash = home.href;
-    } else if (r) {
-      const qtyChanged = r.qty !== cur.qty;
-      if (qtyChanged) {
-        try { await fixQty(r.qty); } catch (err) { toast(err.message); return; }
-      }
-      if (r.details) {
-        if (!qtyChanged) toast('Detalhes salvos.', { duration: 2500 });
-        // Desenha a página de novo pelo roteador (limpa os ouvintes da versão antiga).
-        window.dispatchEvent(new HashChangeEvent('hashchange'));
-      }
-    }
+  if (contHost) {
+    contHost.addEventListener('change', async (e) => {
+      if (!e.target.matches('[data-cont-toggle]')) return;
+      const cur = await getProduct(code);
+      if (e.target.checked) await updateProduct(code, { continuo: true, cont: contStart(cur) });
+      else await updateProduct(code, { continuo: false, cont: null });
+      vibrate(8);
+    });
+    contHost.addEventListener('click', async (e) => {
+      if (!e.target.closest('[data-cont-count]')) return;
+      const cur = await getProduct(code);
+      const n = await countPills(cur);
+      if (n === null) return;
+      await updateProduct(code, { cont: { ...cur.cont, n, at: Date.now() } });
+      toast(`Conta corrigida: ${plural(n, 'comprimido', 'comprimidos')}.`, { duration: 2500 });
+    });
   }
-  $('[data-edit]', root).addEventListener('click', () => openEdit(false));
-  $('[data-edit-qty]', root).addEventListener('click', () => openEdit(true));
 
   // ---------- Validades ----------
   const lotsHost = $('[data-lots]', root);
@@ -220,10 +266,11 @@ export default async function mountProduto(root, { code }) {
     const cur = await getProduct(code);
     lots = await lotsFor(code);
     if (!cur || !lotsHost.isConnected) return;
+    showQty(cur);
+    renderAlert(cur, lots);
+    renderCont(cur);
     const dated = lots.reduce((a, l) => a + l.qty, 0);
     const free = cur.qty - dated;
-    // Lista como nos Ajustes: uma linha por data (a que vence logo em amarelo),
-    // e as ações como linhas em destaque no fim.
     lotsHost.innerHTML = `
       <ul class="form-rows lot-rows">
         ${lots.map((l) => {
@@ -232,25 +279,28 @@ export default async function mountProduto(root, { code }) {
           return `
           <li class="form-row is-static lot-row ${state}">
             <span class="form-row-label">
-              <span class="exp-lot-date">${formatDate(l.expiresAt)}</span>
-              <span class="exp-lot-sub">${esc(relativeDays(l.expiresAt))}</span>
+              <span class="exp-lot-date">${icon('calendar')}${formatDate(l.expiresAt)}</span>
+              <span class="exp-lot-sub">${esc(relativeDays(l.expiresAt))}, ${unitWord(cur, l.qty)}</span>
             </span>
-            <span class="form-row-value lot-qty">${plural(l.qty, 'unidade', 'unidades')}</span>
-            <button type="button" class="icon-btn exp-lot-drop" data-remove-lot="${l.id}" aria-label="Apagar validade de ${formatDate(l.expiresAt)}">${icon('trash')}</button>
+            <button type="button" class="icon-btn exp-lot-drop" data-remove-lot="${l.id}" aria-label="Apagar a validade ${formatDate(l.expiresAt)}">${icon('trash')}</button>
           </li>`;
         }).join('')}
-        ${!lots.length && !cur.qty ? '<li class="form-row is-static"><span class="form-row-label is-muted">Sem unidades no armário.</span></li>' : ''}
-        ${free > 0 ? `<li><button type="button" class="form-row is-action" data-add-lot>${icon('plus')}<span class="form-row-label">Marcar validade</span>${lots.length ? `<span class="form-row-value">${free} sem data</span>` : ''}</button></li>` : ''}
-        ${lots.length ? `<li><button type="button" class="form-row is-action" data-ics>${icon('calendar')}<span class="form-row-label">Lembrete no calendário</span></button></li>` : ''}
+        ${free > 0 ? `
+          <li class="form-row is-static lot-row is-free">
+            <span class="form-row-label"><span class="exp-lot-date">Sem data</span><span class="exp-lot-sub">${unitWord(cur, free)}</span></span>
+            <button type="button" class="btn btn-quiet btn-sm lot-mark" data-add-lot>Marcar</button>
+          </li>` : ''}
+        ${!lots.length && !cur.qty ? '<li class="form-row is-static"><span class="form-row-label is-muted">Nada no armário agora.</span></li>' : ''}
+        ${lots.length && !lots.every((l) => daysUntil(l.expiresAt) < 0) ? `<li><button type="button" class="form-row is-action" data-ics>${icon('calendar')}<span class="form-row-label">Lembrete no calendário</span>${icon('chevron', 'row-chevron')}</button></li>` : ''}
       </ul>
-      ${lots.length && lots.length + (free > 0 ? 1 : 0) >= 2 ? `<p class="group-note">${free > 0
-        ? `Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} unidades sem data`}, depois a que vence antes.`
-        : 'Ao tirar, sai primeiro o que vence antes.'}</p>` : ''}`;
+      ${lots.length && free > 0 ? `<p class="group-note">Ao tirar, ${free === 1 ? 'sai primeiro a unidade sem data' : `saem primeiro as ${free} sem data`}, depois a que vence antes.</p>`
+        : lots.length > 1 ? '<p class="group-note">Ao tirar, sai primeiro o que vence antes.</p>' : ''}`;
   }
 
   lotsHost.addEventListener('click', async (e) => {
     const rm = e.target.closest('[data-remove-lot]');
     if (rm) {
+      const { removeLot } = await import('../store.js');
       await removeLot(Number(rm.dataset.removeLot));
       toast('Validade apagada. As unidades continuam no armário.', { duration: 3000 });
       return;
@@ -264,17 +314,7 @@ export default async function mountProduto(root, { code }) {
     if (e.target.closest('[data-add-lot]')) {
       const cur = await getProduct(code);
       const free = cur.qty - lots.reduce((a, l) => a + l.qty, 0);
-      const picked = await expirySheet({ free });
-      if (!picked || !picked.length) return;
-      try {
-        for (const l of picked) await addLot(code, l.qty, l.expiresAt);
-        const units = picked.reduce((a, l) => a + l.qty, 0);
-        toast(picked.length === 1
-          ? `Validade ${formatDate(picked[0].expiresAt)} marcada em ${plural(units, 'unidade', 'unidades')}.`
-          : `${picked.length} validades marcadas em ${plural(units, 'unidade', 'unidades')}.`, { duration: 3000 });
-      } catch (err) {
-        toast(err.message, { duration: 4000 });
-      }
+      try { await markExpiry(code, free); } catch (err) { toast(err.message, { duration: 4000 }); }
     }
   });
 
@@ -284,6 +324,7 @@ export default async function mountProduto(root, { code }) {
 
   // Produto cadastrado antes dos remédios (ou pelas lojas) cujo código está na
   // lista da Anvisa: oferece trocar pelos dados oficiais e passar para Remédios.
+  const barcodes = Array.isArray(p.barcodes) ? p.barcodes : [];
   if (!p.med && barcodes.length) {
     Promise.all(barcodes.map((b) => medByEan(b).catch(() => null))).then((found) => {
       const i = found.findIndex(Boolean);
@@ -310,68 +351,21 @@ export default async function mountProduto(root, { code }) {
   return off;
 }
 
-// Dá validade a unidades que já estão no armário sem data.
-function editSheet(p, focusQty = false) {
+// "Contar" do uso contínuo: quantos comprimidos tem agora.
+function countPills(p) {
   return openSheet({
-    label: 'Editar detalhes',
+    label: 'Contar os comprimidos',
+    title: 'Quantos comprimidos tem?',
     render(body, close) {
       body.innerHTML = `
-        <h2 class="sheet-title">Editar</h2>
         <form class="stack" novalidate>
-          <div class="field">
-            <span class="field-label">Quantidade no armário</span>
-            <div class="stepper-host stepper-sm" data-qty></div>
-          </div>
-          <label class="field"><span class="field-label">Nome</span>
-            <input class="input" name="name" maxlength="80" value="${esc(p.name)}" autocomplete="off"></label>
-          <div class="field-row">
-            <label class="field"><span class="field-label">Marca</span>
-              <input class="input" name="brand" maxlength="40" value="${esc(p.brand)}" autocomplete="off"></label>
-            <label class="field"><span class="field-label">Tamanho</span>
-              <input class="input" name="size" maxlength="20" value="${esc(p.size)}" autocomplete="off" placeholder="Ex.: 1 kg"></label>
-          </div>
-          <fieldset class="segmented">
-            <legend class="field-label">Onde fica</legend>
-            <div class="segmented-track">
-              ${AREAS.map((a) => `
-                <label class="segment"><input type="radio" name="area" value="${a.id}" ${a.id === (p.area || 'cozinha') ? 'checked' : ''}><span>${a.short}</span></label>`).join('')}
-            </div>
-          </fieldset>
-          <div class="field">
-            <span class="field-label">Avisar quando tiver esta quantidade ou menos</span>
-            <div class="stepper-host stepper-sm" data-min></div>
-          </div>
-          <p class="field-error" role="alert" hidden></p>
-          <div class="sheet-sticky"><button type="submit" class="btn btn-primary">${icon('check')}Salvar</button></div>
-          <div class="sheet-actions">
-            <button type="button" class="btn btn-danger-ghost" data-delete>${icon('trash')}Remover do armário</button>
-          </div>
+          <p class="sheet-text">${esc(p.name)}: some todas as caixas abertas.</p>
+          <div class="stepper-host stepper-lg" data-n></div>
+          <div class="sheet-sticky"><button type="submit" class="btn btn-primary btn-lg">${icon('check')}Salvar</button></div>
         </form>`;
-      const qtyStep = stepper($('[data-qty]', body), { value: p.qty, min: 0, max: 9999, label: 'Quantidade no armário' });
-      const minStep = stepper($('[data-min]', body), { value: p.minQty, min: 0, max: 999, label: 'Avisar com' });
-      if (focusQty) setTimeout(() => $('[data-qty] .stepper-value', body)?.focus({ preventScroll: true }), 350);
-      const err = $('.field-error', body);
-      $('[data-delete]', body).addEventListener('click', () => close('delete'));
-      $('form', body).addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const val = (n) => $(`[name=${n}]`, body).value;
-        const fields = {
-          name: val('name'),
-          brand: val('brand'),
-          size: val('size'),
-          minQty: minStep.value,
-          area: $('input[name=area]:checked', body)?.value,
-        };
-        const details = fields.name.trim() !== p.name || fields.brand !== (p.brand || '') || fields.size !== (p.size || '')
-          || fields.minQty !== p.minQty || fields.area !== (p.area || 'cozinha');
-        try {
-          if (details) await updateProduct(p.code, fields);
-          close({ details, qty: qtyStep.value });
-        } catch (e2) {
-          err.hidden = false;
-          err.textContent = e2.message;
-        }
-      });
+      const step = stepper($('[data-n]', body), { value: Math.round(contLeft(p) || 0), min: 0, max: 9999, label: 'Comprimidos' });
+      setTimeout(() => $('.stepper-value', body)?.focus({ preventScroll: true }), 380);
+      $('form', body).addEventListener('submit', (e) => { e.preventDefault(); close(step.value); });
     },
   });
 }
