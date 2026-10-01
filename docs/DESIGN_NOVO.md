@@ -1,8 +1,21 @@
 # Design novo (proposta de 30/09/2026)
 
 Crítica do [plano de melhorias](PLANO_MELHORIAS.md) e o desenho que sai dela:
-câmera, todos os modos e as telas do app. **Nada disto está no app.** É para
-discutir antes de aplicar.
+câmera, todos os modos e as telas do app.
+
+**Aplicado no app na versão 4.0 (v96, 01/10/2026).** O que ficou diferente
+das pranchas, e por quê:
+
+- **A data continua na câmera de validade, numa folha.** No Conferir e no
+  "Marcar validade" do leitor, a leitura da data abre a câmera que já foi
+  afinada para validade (Paddle, votação, foto nítida). Refazer essa leitura
+  dentro da faixa do leitor seria arriscar a parte que mais custou acertar.
+- **Mais › Avisos não entrou.** Aviso no celular com o app fechado precisa de
+  notificação vinda do servidor (Web Push com o repassador mandando no dia e na
+  hora escolhidos). É um passo próprio, depois deste.
+- **No Conferir, a quantidade começa no que o armário diz** (é conferir): se
+  está certo, lê o próximo; se não, − e +. Produto zerado no app, mas que está
+  na mão, começa em 1.
 
 Critérios usados: o nosso [design system](DESIGN_SYSTEM.md) (direção "caixa
 do mercado"), a [HIG da Apple](APPLE_HIG.md), retorno, fricção, obscuridade,

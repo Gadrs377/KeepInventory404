@@ -1847,3 +1847,47 @@ Sexto passo da nova versão (PLANO_MELHORIAS, seção 4).
   comunidade, e o contorno, o selo e o voto somem. Se voltar ao mesmo nome,
   voltam.
 - `sw.js` v95.
+
+## Versão 4.0: o design novo (DESIGN_NOVO.md)
+
+O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
+
+- **Armário:** uma ação no topo, **Conferir**, com o menu dos três jeitos
+  (Conferir tudo, Só contar, Só marcar validades). O **Pede atenção**
+  (vencidos, vencem esta semana, acabando, zerados, dias sem conferir) filtra a
+  lista no lugar; nos que vencem, a data vira a etiqueta e a linha ganha
+  Adicionar às Compras e Jogar fora. **Toque longo** sobe o cartão com − número
+  + e as validades, com um menu curto. Armário vazio e busca sem resultado com
+  as ações certas.
+- **Produto e remédio, a mesma página:** foto (ou a caixa) no centro, os três
+  blocos Tirar 1 / número / Guardar 1, **Editar** escrito. Editar: Nome, Marca e
+  Tamanho, Onde fica, Avisar quando tiver, Salvar, Remover em texto vermelho e
+  o código no rodapé. Tocar no número corrige a quantidade.
+- **Remédio como caixa:** a caixa desenhada pelos dados da Anvisa (tarja de
+  verdade, G do genérico), o selo colado, o vencido com **Separar para
+  descartar**, o cartão do que a tarja quer dizer, a unidade **caixa**, a ficha
+  completa e o **Uso contínuo** com a cartela (estima quantos comprimidos sobram
+  pelo ritmo; **Contar** corrige; avisa uma semana antes e põe nas Compras).
+  Remédio de uso eventual não aparece como acabando nem vai para as Compras.
+- **Leitor:** Guardar e Tirar; cada leitura de um produto conhecido guarda ou
+  tira 1 na hora; o cartão tem − +1 + (no lugar do Rápido e do Desfazer) e
+  tocar no número abre o teclado; Tirar que acaba oferece Adicionar às
+  Compras; o cupom vivo; a barra Digitar + Nota fiscal / Concluir; o QR Code da
+  nota vira um cartão com **Ver os N itens**; o cupom final "GUARDADO" fecha ao
+  tocar fora.
+- **Conferir:** faixa azul com o anel; a quantidade começa no que o armário
+  diz; o cupom "Conferidos" com ✓; **Ver os N que faltam** por ambiente, com
+  Contar; vencido com Jogar fora e Ainda está bom; na primeira vez, os três
+  passos, o ambiente e o tempo estimado. **Revisão:** resumo em números, Não
+  apareceram com Zerar por linha e Zerar todos, Diferenças, **Aplicar e
+  concluir**.
+- **Compras:** Adicionar à lista no alto, os remédios num cartão **Farmácia**
+  com a receita de cada um e "Leve as receitas", "No carrinho" no marcado e
+  "Voltou do mercado? Ler a nota fiscal".
+- **Cupons** por dia, em cartões, com o ícone na cor do modo e a seta.
+- **Mais:** Armário (Conferir, Cupons), Dados (Cópia automática, Baixar uma
+  cópia, Restaurar uma cópia, Baixar planilha), Som e Avançado.
+- **Botão Ler** com cor fixa e o nome; o leitor sempre abre em Guardar.
+- **Animações** (DESIGN_SYSTEM, seção 7): selo de pronto, o produto voando até
+  o cupom, a caixa do remédio, a cartela, o anel do Conferir.
+- `sw.js` v96.

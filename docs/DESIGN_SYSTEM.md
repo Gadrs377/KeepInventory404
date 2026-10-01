@@ -188,6 +188,33 @@ fica sólido. No máximo 2 camadas de vidro por tela no celular.
   - A faixa do leitor troca de cor (Entrada ↔ Saída) em 360 ms.
 - `prefers-reduced-motion` remove todas as transições.
 
+### Movimento da versão 4.0 (js/motion.js)
+
+Molas físicas (massa, rigidez e amortecimento simulados e convertidos em
+`linear()` do CSS), como as do iOS. Cada movimento diz alguma coisa:
+
+- **Selo de pronto** (Concluir, Aplicar e concluir): o anel se fecha, enche na
+  cor do modo e o visto se desenha, como a confirmação de um pagamento. Só
+  depois o cupom desce da impressora.
+- **O produto voa até o cupom:** a cada leitura, a foto sai da mira num arco e
+  encolhe dentro da linha nova do cupom, que acende quando ela chega. Mostra
+  onde a leitura foi parar.
+- **Cartão da leitura:** chega com um pulo de mola; o número pula ao tocar em
+  − ou +.
+- **Remédio:** a caixinha da lista cresce até virar a caixa da página; a caixa
+  entra girando e assenta; o selo "cola" depois; o dedo inclina a caixa em 3D,
+  e ela volta com mola; a cartela do uso contínuo enche um comprimido de cada
+  vez.
+- **Conferir:** o anel avança a cada produto e dá uma piscada quando completa.
+- **Revisão:** os números do resumo contam até o valor.
+- **Compras:** marcar risca o nome como uma caneta.
+- **Pede atenção:** os blocos chegam em cascata só na primeira vez; o bloco
+  ligado pula o ícone.
+- **Toque longo:** a linha cresce até o cartão (FLIP com mola) e o fundo
+  desfoca.
+- Com `prefers-reduced-motion`, nada se desloca: no máximo um esmaecimento
+  curto.
+
 ## 8. Escrita
 
 - Verbos claros e iguais do começo ao fim: o botão **Tirar 2** gera o aviso

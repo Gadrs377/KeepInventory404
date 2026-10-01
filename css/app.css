@@ -3055,3 +3055,7 @@ html.swiping #app { background: var(--paper); box-shadow: -10px 0 30px rgb(0 0 0
   .paper-lines li.is-landed .paper-line, .ring.is-full { animation: none !important; }
   .shop-item.is-striking .row-name { animation: none; background-size: 100% 1.5px; }
 }
+/* O Conferir mantém o nome mesmo na tela estreita (ícone sem nome não diz o que faz). */
+.head-pill[data-conferir] .head-pill-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+@media (max-width: 359px) { .head-pill[data-conferir] { width: auto; padding-inline: 12px 14px; } }
+.text-large .head-pill[data-conferir] { width: auto; padding-inline: 12px 14px; }
