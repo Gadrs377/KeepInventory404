@@ -1,18 +1,74 @@
-# Modo Mercado (proposta v2)
+# Modo Mercado (proposta v3)
 
 Proposta de fluxo, **ainda não implementada**. A pessoa fotografa a etiqueta
 de preço e, quando sai a nota, o app confere se algo foi cobrado mais caro. O
 módulo fica dentro de **Compras**.
 
-Esta versão refaz a v1 depois de pesquisa e crítica. A aparência ainda vai
-ser trabalhada; aqui o foco é o fluxo e as decisões.
+A v2 refez a v1 com pesquisa de comportamento. A v3 refaz a v2 com pesquisa
+de interação: escaneamento profissional, tempos de resposta, desfazer contra
+confirmar, avisos que somem, interrupções, som e uso andando. A aparência
+ainda vai ser trabalhada; o foco é o fluxo e as decisões.
 
-Pranchas da v2:
-[E, em casa e no corredor](modo-mercado/prancha-E.webp) ·
-[F, caixa, conferência e depois](modo-mercado/prancha-F.webp).
-Da v1 continuam valendo as telas de conferência
-([C](modo-mercado/prancha-C.webp)) e o valor recuperado
-([D](modo-mercado/prancha-D.webp)).
+Pranchas da v3:
+[G, no corredor](modo-mercado/prancha-G.webp) ·
+[H, corrigir, caixa e conferência](modo-mercado/prancha-H.webp).
+Da v2 continuam valendo a entrada (E1), o atendimento (F3) e a próxima ida
+(F4), em [E](modo-mercado/prancha-E.webp) e [F](modo-mercado/prancha-F.webp).
+Da v1, o valor recuperado ([D](modo-mercado/prancha-D.webp)).
+
+## 0. Rodada 3: interação, fricção e retorno
+
+### O que a pesquisa mostrou
+
+| Achado | Fonte | O que muda |
+|---|---|---|
+| Leitores profissionais de código deixam a **lista** como tela principal. A câmera é uma **prévia pequena** que só abre ao apertar um **botão grande** de gatilho, ao alcance do polegar, e some depois de ler. | Scandit SparkScan (documentação e estudo de ergonomia) | Na v2 a câmera ocupava metade da tela o tempo todo. Agora a lista manda; a câmera só aparece quando a pessoa pede. |
+| Apertar e **segurar** o gatilho lê várias seguidas; um toque lê uma. A câmera entra em espera sozinha para poupar bateria. | Scandit SparkScan | Um toque por etiqueta; segurar para um corredor de ofertas. |
+| Quando há vários códigos no quadro, um **mirador** escolhe só o do centro. | Scandit (modo alvo); Apple VisionKit, que realça o que reconhece e deixa tocar para escolher | Gôndola tem etiquetas lado a lado. Só a do meio é lida; as vizinhas aparecem apagadas e podem ser tocadas. |
+| Mesmo código lido de novo em poucos segundos não conta como novo. | Scandit | Etiqueta repetida não duplica a linha. |
+| Até **0,1 s** parece instantâneo; até **1 s** não quebra o raciocínio; até **10 s** a pessoa ainda espera, desde que veja o andamento. | Nielsen, tempos de resposta | Realce na etiqueta antes de 0,1 s; preço na lista antes de 1 s; depois disso, a causa (“reflexo”) e a saída. |
+| Abaixo de **400 ms** nem a pessoa nem o sistema esperam um pelo outro. | Limiar de Doherty (Laws of UX) | A câmera fica aquecida uns 20 s depois de cada leitura, para o próximo toque ser imediato. |
+| Pedir confirmação para tudo ensina a confirmar sem ler. **Desfazer** funciona melhor: a ação acontece e o erro é corrigido depois. | Artigos de UX sobre confirmação e desfazer | Nada de “Confirmar” por etiqueta. A correção fica na própria linha. |
+| Aviso que some sozinho com botão dentro (“Desfazer” num toast) falha em acessibilidade: some antes de alguém alcançar, e o leitor de tela não anuncia o botão. | WCAG 2.2.1 e 4.1.3; Scott O'Hara; Adrian Roselli | A pílula do que foi lido só informa. **Corrigir** fica na linha, sem prazo. |
+| Janela por cima interrompe; quase sempre aparece na hora errada. | Nielsen Norman, sobre sobreposições | A pergunta do cartão vira uma linha no topo da lista e não para a leitura. |
+| Um bom padrão poupa uma pergunta. Cada pergunta a mais é carga mental. | Shopify, carga cognitiva; artigos sobre padrões inteligentes | A conferência deduz se a pessoa ainda está na loja pela hora da nota, em vez de perguntar. |
+| Tecnologia calma pede o **mínimo de atenção** e informa pela **periferia**. | Amber Case, Calm Technology | Avisos como “Peça a notinha” aparecem no fim da lista, sem alerta nem toast. |
+| Toda microinteração tem gatilho, regras, retorno e ciclos/modos. | Dan Saffer, *Microinteractions* | Cada passo da seção 5 foi desenhado com os quatro. |
+| Quanto mais perto da meta, mais a pessoa quer completar. | Efeito do gradiente de meta | A barra “5 de 6” da lista continua. |
+| Andando, a pessoa erra mais o toque; alvos maiores compensam. Ler texto andando continua difícil. | Wobbrock e colegas, impedimentos situacionais | Gatilho grande, linhas de 56 px, preços maiores, textos curtos. |
+| O primeiro Scan & Go do Walmart foi abandonado porque as pessoas não entenderam o app. O que elas gostaram foi de acompanhar o gasto. | Boston Globe, Retailwire | Uma ação principal só: o gatilho. O gasto fica para o carrinho completo (seção 6). |
+| Som curto confirma que algo aconteceu e fecha o ciclo; som de sucesso deve ser estável e discreto, guardando o mais rico para o fim. | Material Design, som | Clique curto na leitura; som mais cheio só no “Tudo certo” e no “Devolveram”. |
+| Atrito bom só onde a ação é irreversível ou de alto risco. | Artigos sobre atrito bom (UXPin, Hackernoon) | Só uma confirmação no módulo: apagar uma compra com diferença ainda não resolvida. |
+
+### A crítica da v2
+
+1. **A câmera ocupava a tela à toa.** No mercado, a pessoa passa muito mais
+   tempo andando do que lendo etiqueta. Câmera aberta o tempo todo gasta
+   bateria, esquenta o celular e disputa atenção com a lista.
+2. **Lia sozinha, sem intenção.** Com leitura automática, qualquer etiqueta
+   que passasse na frente entraria, inclusive a vizinha.
+3. **O “Desfazer” sumia.** Era um botão dentro de uma pílula temporária.
+   Quem não alcançou a tempo perdia o jeito fácil de corrigir.
+4. **A pergunta do cartão tapava a câmera.** Era um cartão no lugar da
+   leitura: interrompia justamente quando a pessoa queria ler a próxima.
+5. **Perguntava o que dava para deduzir.** “Ainda está no Zaffari?” tem
+   resposta na hora da nota.
+6. **“Peça a notinha” dependia de um botão.** Se a pessoa fosse direto ao
+   caixa sem tocar **Fui pro caixa**, nunca via o lembrete.
+7. **Retorno sem tempo definido.** A v2 dizia o que mostrar, mas não quando.
+   Sem prazo, “lendo…” pode durar o que quiser.
+
+### O que muda na v3
+
+| Antes (v2) | Agora (v3) |
+|---|---|
+| Câmera em cima, lista embaixo, sempre | Lista na tela toda; botão **Etiqueta** grande no canto do polegar, no mesmo lugar do “Ler” do app |
+| Leitura automática de qualquer etiqueta | Toque = uma leitura; segurar = várias; só a etiqueta do mirador |
+| Pílula com Desfazer | Pílula só informa; a linha da lista acende e tem **Corrigir** sem prazo |
+| Cartão de pergunta no lugar da câmera | Linha no topo da lista; a linha mostra os dois preços até a resposta |
+| “Ainda está no Zaffari?” | A hora da nota decide o botão principal; a outra opção vira um link |
+| Lembrete da notinha só no botão | Também aparece sozinho no fim da lista, quando faltam 1 ou 2 itens |
+| “Lendo…” sem prazo | Tempos de 0,1 s, 1 s, 4 s e 10 s (seção 5) |
 
 ## 1. O que a pesquisa mostrou
 
@@ -98,27 +154,33 @@ Em Compras, logo abaixo do resumo: **No mercado?** com uma frase e o botão
 num botão só. Nada de notificação nem localização: o gatilho é o gesto que a
 pessoa já faz, abrir a lista.
 
-### E2. No corredor: câmera em cima, lista embaixo
+### E2. No corredor: a lista manda, a câmera vem quando chamada (v3)
 
-- A câmera fica aberta na metade de cima. Lê a etiqueta **sozinha**, com
-  votação de quadros como na validade, sem botão de foto.
-- O que foi lido aparece numa pílula sobre a câmera, com **Desfazer** em vez
-  de “Confirmar”. Confirmar a cada etiqueta seria um toque a mais em todas;
-  desfazer só custa quando erra (padrão da Apple: deixar desfazer em vez de
-  perguntar).
-- A etiqueta casa com um item da lista (“Arroz” vira “Arroz, Camil 5 kg,
-  27,90”) e o item é riscado. A barra de avanço anda.
-- Retorno de cada leitura: realce no preço da foto, a pílula, a linha que
-  acende na lista e um som curto opcional. Não depende de vibração.
-- **Fui pro caixa** e **Digitar** ficam na barra de baixo, ao alcance do
-  polegar.
-- A câmera dorme sozinha depois de uns 20 segundos sem etiqueta, para
-  poupar bateria, e acorda com um toque.
+- A tela é a **lista**, com a barra “2 de 6”. Embaixo, um botão grande,
+  **Etiqueta**, no mesmo lugar do “Ler” do resto do app. É a única ação
+  principal da tela (G1).
+- **Tocar** abre uma prévia pequena da câmera no topo, com um mirador no
+  meio. A etiqueta do centro ganha realce; as vizinhas aparecem apagadas e,
+  se a pessoa tocar numa delas, é ela que vale (G2).
+- **Segurar** lê uma atrás da outra, enquanto o dedo estiver no botão. Serve
+  para um corredor de ofertas. Ao soltar, a prévia some.
+- Lida a etiqueta, a prévia mostra o que entrou por um instante e some. A
+  linha da lista acende, risca o item e completa o nome (“Arroz” vira
+  “Arroz, Camil 5 kg”) (G3).
+- Se a leitura ficou em dúvida (reflexo, número cortado), o app não chuta:
+  mostra **Qual é o preço?** com os dois candidatos e “Nenhum, digitar”
+  (G4), como o “É esta data?” da validade.
+- Errou? Toque na linha: abre **Corrigir**, com a foto, o preço, o item da
+  lista e o tipo (unidade, quilo, leve-mais), e as opções **Ler de novo** e
+  **Tirar** (H1). Não tem prazo.
+- **Digitar** é o ícone pequeno à esquerda; **Fui pro caixa** fica no meio.
 
 ### E3. Cartão do supermercado, por compra
 
-Na **primeira** etiqueta de hoje com preço de cartão, a pergunta aparece no
-lugar da pílula, sem trocar de tela:
+Na **primeira** etiqueta de hoje com preço de cartão, a pergunta aparece
+como uma **linha no topo da lista** (G1), sem tapar a câmera e sem parar a
+leitura. Até a resposta, as linhas mostram os dois preços (“16,90 · sem
+cartão 18,90”):
 
 > **Vai usar o Cartão Zaffari nesta compra?**
 > Vale só para hoje. Na nota eu confiro os dois preços, então nada se perde
@@ -146,7 +208,9 @@ lugar da pílula, sem trocar de tela:
 
 ### F1. Fui pro caixa
 
-Tocar **Fui pro caixa** fecha a câmera e mostra uma coisa só:
+Quando faltam um ou dois itens da lista, o lembrete aparece sozinho no fim
+dela, sem alerta (H2). Tocar **Fui pro caixa** mostra o mesmo lembrete em
+tela cheia:
 
 > **Peça a notinha.** O Zaffari só imprime a nota se você pedir. O QR dela
 > confere os 9 preços que você fotografou.
@@ -160,9 +224,12 @@ nota, dá para achar depois na Nota Fiscal Gaúcha e colar o link.
 
 - O veredito vem primeiro. Pode ser **Tudo certo**, **Provavelmente certo**
   (o desconto do fim cobre a diferença) ou **R$ X cobrados a mais**.
-- Havendo diferença, uma pergunta: **Ainda está no Zaffari?**
-  - **Ainda estou**: o atendimento resolve na hora, sem fila do caixa.
-  - **Já saí**: fica guardado para a próxima ida.
+- Havendo diferença, o app olha a hora da nota em vez de perguntar onde a
+  pessoa está (v3):
+  - nota de até uns 30 minutos: botão principal **Mostrar no atendimento**,
+    e um link “Já saí: guardar para a próxima ida” (H3);
+  - nota mais antiga: botão principal **Guardar para a próxima ida**, e um
+    link “Ainda estou lá” (H4).
 - Depois vêm as dúvidas (“É o mesmo produto?”, uma por item) e, recolhidos,
   os que batem.
 - No fim, **Guardar no armário** leva a nota para o estoque, como hoje.
@@ -204,19 +271,40 @@ O lugar é o gatilho. O valor fica guardado por 30 dias. Ao tocar
 Só os casos 1 e 2 entram no número grande. Diferença de centavos por
 arredondamento de peso não conta.
 
-## 5. Retorno ao usuário (canais)
+## 5. Retorno ao usuário
+
+### No tempo
+
+| Tempo desde o toque | O que a pessoa vê |
+|---|---|
+| até 0,1 s | O botão afunda e a prévia abre. |
+| assim que acha uma etiqueta | Realce em volta da etiqueta do mirador, antes de ler o preço. |
+| até 1 s | O preço lido na prévia; a linha da lista acende e é riscada. |
+| de 1 a 4 s | A causa, se houver: “Reflexo no preço”, “Chegue mais perto”, “Pouca luz” (as mesmas da validade). |
+| 4 s | Oferece **Tirar foto** (foto parada e preço para conferir). |
+| 10 s sem etiqueta | A prévia fecha sozinha. A câmera fica pronta mais uns 20 s. |
+
+### Por canal
 
 | Momento | Visual | Som | Vibração |
 |---|---|---|---|
-| Etiqueta lida | Realce no preço, pílula, linha acende | Clique curto, opcional | Não (o iPhone não deixa) |
-| Item riscado da lista | Círculo enche, barra anda | Nenhum | Não |
-| Pergunta do cartão | No lugar da pílula, sem tapar a câmera | Nenhum | No toque no botão, se o sistema der |
-| Tudo certo | Marca de conferido, fim curto | Um som suave | Não |
+| Toque no gatilho | Botão afunda, prévia abre | Nenhum | No iPhone, o próprio toque pode vibrar se o botão for um interruptor do sistema (iOS 18 ou mais novo) |
+| Etiqueta lida | Realce, pílula que só informa, linha acende | Clique curto | Não (o iPhone não deixa por programa) |
+| Leitura em dúvida | “Qual é o preço?” com os candidatos | Dois tons curtos, diferentes do clique | Não |
+| Item riscado | Círculo enche, barra anda | Nenhum | Não |
+| Lembrete da notinha | Cartão no fim da lista | Nenhum | Não |
+| Tudo certo | Marca de conferido, fim curto | Som mais cheio | Não |
 | Cobrado a mais | Número grande em vermelho, sempre com sinal e rótulo | Nenhum (sem alarme) | Não |
-| Devolveram | Valor recuperado e total | Um som suave | Não |
+| Devolveram | Valor recuperado e total | Som mais cheio | Não |
 
-A cor nunca vem sozinha: “+2,00”, “A mais” e o número têm rótulo. Nada de
-alerta modal.
+Regras gerais:
+
+- A cor nunca vem sozinha: “+2,00”, “A mais” e o número têm rótulo.
+- Nada de alerta modal. Só uma confirmação no módulo inteiro: apagar uma
+  compra com diferença não resolvida, porque apaga a prova.
+- Tudo o que aparece e some também é anunciado ao leitor de tela
+  (`role="status"`), e nenhuma ação vive só dentro de algo que some.
+- O som pode ser desligado no menu. Começa ligado, baixo.
 
 ## 6. Limite de gastos
 
@@ -250,7 +338,10 @@ com cerca de 100 KB.
   riscar a lista são locais. Só a leitura da nota precisa de rede; sem rede,
   a compra fica pendente.
 - **Sem vibração confiável no iPhone.** O retorno é visual e sonoro.
-- **Uma mão.** Nada de importante no topo da tela; a câmera lê sem botão.
+- **Uma mão.** O gatilho fica no canto do polegar e pode trocar de lado
+  para canhotos; nada de importante no topo da tela.
+- **Câmera só quando pedida.** Menos bateria, menos calor e nenhuma
+  etiqueta lida sem querer.
 
 ## 9. Como saber se está funcionando
 
@@ -285,8 +376,8 @@ Na telemetria de uso, sem dados pessoais:
 ## 11. Para decidir
 
 1. O limite sai da v1 e volta com o carrinho completo. Concorda?
-2. **Fui pro caixa** como botão. A outra opção seria o app perceber sozinho,
-   quando a lista termina, mas nem sempre a lista termina.
+2. **Fui pro caixa** continua como botão, e o lembrete também aparece
+   sozinho perto do fim da lista. Bom assim?
 3. Som curto ao ler a etiqueta: ligado ou desligado de início?
 4. **Não resolveram** com caminho até o consumidor.gov.br já na v1, ou depois?
 
@@ -313,3 +404,20 @@ pode tornar o casamento exato.
 - Código interno × GTIN na NFC-e: [Portal SPED](https://portalspedbrasil.com.br/?p=15959).
 - Apple, [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback) e [Playing haptics](https://developer.apple.com/design/human-interface-guidelines/playing-haptics).
 - Lei 10.962/2004, art. 5º; CDC, art. 26, I.
+
+Rodada 3:
+
+- Scandit, [SparkScan](https://docs.scandit.com/sdks/web/sparkscan/intro/) e [scanner ergonômico](https://www.scandit.com/blog/ergonomic-scanner-for-frontline-workers/).
+- Apple, [Capture machine-readable codes and text with VisionKit](https://developer.apple.com/videos/play/wwdc2022/10025/) (WWDC 2022).
+- Nielsen, [tempos de resposta](https://en.wikipedia.org/wiki/Responsiveness).
+- [Laws of UX](https://lawsofux.com/): limiar de Doherty, gradiente de meta, Fitts, Tesler.
+- Desfazer contra confirmação: [UX Planet](https://uxplanet.org/confirmation-dialogs-how-to-design-dialogues-without-irritation-7b4cf2599956), [137foundry](https://dev.to/137foundry/how-to-choose-between-confirmation-dialogs-undo-windows-and-soft-delete-patterns-1opj).
+- Avisos que somem e acessibilidade: [Scott O'Hara](https://scottohara.me/blog/2019/07/08/a-toast-to-a11y-toasts.html), [Adrian Roselli](https://adrianroselli.com/2020/01/defining-toast-messages.html).
+- Janelas no celular: [UX Magazine](https://uxmag.com/articles/modals-on-mobile-how-to-use-them-wisely).
+- Padrões e carga mental: [Shopify](https://www.shopify.com/partners/blog/cognitive-load), [UX Magazine](https://uxmag.com/articles/the-ux-of-default-settings-in-a-product).
+- Amber Case, [princípios da tecnologia calma](https://calmtech.institute/calm-tech-principles).
+- Dan Saffer, *Microinteractions*: [resumo](https://cieden.com/book/sub-atomic/microinteractions/structure-of-microinteractions).
+- Wobbrock e colegas, [interação andando](https://faculty.washington.edu/wobbrock/pubs/mobilehci-08.pdf).
+- Walmart Scan & Go: [Boston Globe](https://www.bostonglobe.com/business/2014/08/12/walmart-try-try-again/GYdH9nGK5AQ0eEpSqSJxrO/story.html), [Retailwire](https://retailwire.com/discussion/walmarts-scan-and-go-is-a-no-go/).
+- Material Design, [som na interface](https://m2.material.io/design/sound/applying-sound-to-ui.html).
+- Atrito bom: [UXPin](https://www.uxpin.com/studio/blog/cognitive-friction-ux-design-good-bad/), [Hackernoon](https://sia.hackernoon.com/good-friction-vs-bad-friction-when-slowing-users-down-creates-better-ux).
