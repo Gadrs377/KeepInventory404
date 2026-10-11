@@ -180,5 +180,62 @@
    "ms": 13056
   },
   "barcodes": []
+ },
+ "zaffari-17.jpg": {
+  "small": {
+   "text": "FARINHA DE\nMANDIOCA FARINHA DE\nMANDIOCA\nrasileirunha Brasileirinha\nBRANCA -BRANCA VARGED\nSC\nPESO LÍOUIDO PESO LIQUIDO\n500g 500g\nipo Grupo\nGrupo Seca\nSeca Classe\nFina Baixa Fina Baixa\nFAR MAND BRASILEIRINHA 500G\n4,69 UN\n7898311670097\nG40F8P1 R$ 9,38 por KG 0909-M0805\nEL FOGONERO\nFARINHA DE\nMANDIOCA\nCRULA",
+   "ms": 7939
+  },
+  "medium": {
+   "text": "FARINHA DE FARINHA DE\nMANDIOCA ha\nMANDIOCA\nrasileirinha Brasileirinha\nBERTOL VARGED\nBRANCA BRANCA\n000\n5-6010\n51.139\n.com.br ntos.com\nPESO LÍQUIDO\n500g 500g\nTipo Grupo Tipo\nGrupo Seca Acidez\nClasse Acidez Classe\nSeca\nFina Baixa Fina Baixa\nFAR MAND BRASILEIRINHA 500G\n4,69 UN\n7898311670097\nG40F8P1 R$ 9,38 por KG 0909-M0805\nEL FOGONERO\nFARINHA DE\nMANDIOCA\nADA CRUA",
+   "ms": 35178
+  },
+  "barcodes": []
+ },
+ "zaffari-18.jpg": {
+  "small": {
+   "text": "GALINM\nCAIPIK\n DR GCLILHA A CAIPIR\nEconomizar\né comprarbem\nDESDE 1935\nNa compra de\n3UN.\npague\nMacarrão Instantâneo\nCup Noodles 3,98\nNissin\n69g cada\n,98\ncada\nNISSIN\nNCODLES\nNACH",
+   "ms": 5897
+  },
+  "medium": {
+   "text": "GALINHA\nCAIPIRA\nSABOR GALINHA CAIPIRA\nEconomizar\né comprarbem\nDESDE 1935\nNa compra de\n3 UN.\nNCODLES pague\nALINH Macarrão Instantâneo\nCAIPIRA Cup Noodles 3.98\nGALINHACAIPIRA Nissin\n69g cada\n,98\ncada\nNISSIN\nNEODLES\nNACHO",
+   "ms": 22813
+  },
+  "barcodes": []
+ },
+ "zaffari-19.jpg": {
+  "small": {
+   "text": "Cafeteira Expresso\nLOV Preta 220V TRES\nTipo de café: Cápsulas\nReservatório de água: 960 ml\nPotência: 1250 Watts\n10 × 42,90\nSem Juros\nNos cartões Zaffari Card e Bourbon Card\nPreço à Vista: Total a Prazo:\nR$ 429,00 R$ 429,00\nConsulte sobre condições para demais cartões.\nZaffari\n7896045111503\n'elgin",
+   "ms": 6350
+  },
+  "medium": {
+   "text": "Cafeteira Expresso\nLOV Preta 220V TRES\nTipo de café: Cápsulas\nReservatório de água: 960 ml\nPotência: 1250 Watts\n10 × 42,90\nSem Juros\nNos cartões Zaffari Card e Bourbon Card\nPreço à Vista: Total a Prazo:\nR$ 429,00 R$ 429,00\nConsulte sobre condições para demais cartões.\nZaffari\n7896045111503\nelgin\nCoffee Break",
+   "ms": 22032
+  },
+  "barcodes": [
+   "ean_13:7896045111503"
+  ]
+ },
+ "zaffari-20.jpg": {
+  "small": {
+   "text": "Economizar\né comprarbem\nDESDE 1935\nCONJUNTO\nCOM 4 CARGAS MACH 3 GILLETTE\n(EXCETO CARBONO)\n34,90",
+   "ms": 4244
+  },
+  "medium": {
+   "text": "Economizar\nécomprarbem\nDESDE 1935\nCONJUNTO\nCOM 4 CARGAS MACH 3 GILLETTE\n(EXCETO CARBONO)\n34,90",
+   "ms": 12929
+  },
+  "barcodes": []
+ },
+ "zaffari-21.jpg": {
+  "small": {
+   "text": "Economizar\né comprarbem\nDESDE 1935\nMACARRÃO\nINSTANTÂNEO CUP NOODLES NISSIN 69g\n4,98\nCADA\nNA COMPRA DE 3Un. PAGUE\n3,98\nCADA",
+   "ms": 4790
+  },
+  "medium": {
+   "text": "am\nEconomizar\nécomprarbem\nDESDE 1935\nMACARRÃO\nINSTANTÂNEO CUP NOODLES NISSIN 69g\n4,98\nCADA\nNA COMPRA DE 3un. PAGUE\n3,98\nCADA",
+   "ms": 15765
+  },
+  "barcodes": []
  }
 }

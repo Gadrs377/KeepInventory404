@@ -388,33 +388,34 @@ pode tornar o casamento exato.
 
 ## 12. Etiquetas reais do Zaffari (11/10/2026)
 
-Foram 16 fotos tiradas no Zaffari, com 15 etiquetas diferentes (a 09 e a 12
-são a mesma). Estão em `tests/real/etiquetas/`, com o gabarito lido a olho
+Foram 21 fotos tiradas no Zaffari, com 20 etiquetas diferentes (a 09 e a 12
+são a mesma). As 16 primeiras vieram juntas; da 17 à 21, numa segunda leva. Estão em `tests/real/etiquetas/`, com o gabarito lido a olho
 (`gabarito.json`) e o que o leitor do app leu (`leitura.json`, gerado por
 `tests/etiquetas-ocr.mjs`). O rosto de uma pessoa ao fundo da foto 16 foi
 borrado.
 
-### Cinco tipos de etiqueta
+### Seis tipos de etiqueta
 
 | Tipo | Fotos | Como é | Código de barras impresso | Preço do cartão | Validade |
 |---|---|---|---|---|---|
-| **Gôndola** | 01, 03, 06, 11, 15 | Branca, mancha amarela no preço. Nome abreviado em maiúsculas (“SH JOHNSONS CHEIRINHO 400ML”), preço com “UN”, preço por KG ou L, e dois códigos da loja (“G16F0P0”, “0810-M0602”) | Sim, com os números | Não | Não |
+| **Gôndola** | 01, 03, 06, 11, 15, 17 | Branca, mancha amarela no preço. Nome abreviado em maiúsculas (“SH JOHNSONS CHEIRINHO 400ML”), preço com “UN”, preço por KG ou L, e dois códigos da loja (“G16F0P0”, “0810-M0602”) | Sim, com os números | Não | Não |
 | **Cartaz digitado** | 02, 09, 12 | “Economizar é comprar bem” no topo. Nome digitado, preço grande, preço por KG ou L pequeno | Sim, com os números | Não | Não |
-| **Oferta com foto** | 05, 08, 14 | Foto do produto, nome por extenso (“Batata Palha Extrafina Yoki 190g”), preço normal e preço da oferta num selo | Não | 08, 14 | Texto pequeno **na vertical**: “Oferta válida de 9 a 20 de Outubro de 2026…” |
+| **Oferta com foto** | 05, 08, 14, 18 | Foto do produto, nome por extenso (“Batata Palha Extrafina Yoki 190g”), preço normal e preço da oferta num selo | Não | 08, 14 | Texto pequeno **na vertical**: “Oferta válida de 9 a 20 de Outubro de 2026…” |
 | **Só nos cartões** | 10, 13 | Faixa verde. Tudo num texto só: nome, preço normal, “CARTÃO ZAFFARI/BOURBON”, preço do cartão | Não | Sim | “V 11/10” |
-| **Pendurado no corredor** | 04, 07, 16 | Categoria em letras grandes (“FAROFA DE MANDIOCA”), detalhe embaixo, preço enorme | Não | 07 | Não |
+| **Pendurado no corredor** | 04, 07, 16, 20, 21 | Categoria em letras grandes (“FAROFA DE MANDIOCA”, ou só “CONJUNTO”), detalhe embaixo, preço enorme | Não | 07 | Não |
+| **Parcelado (eletro)** | 19 | Ficha com características, “10 x 42,90 sem juros” enorme, “Preço à vista” e “Total a prazo” pequenos, logo do Zaffari | Sim, com os números | Parcelas só nos cartões | Não |
 
 ### O que isso muda no design
 
-1. **O código de barras aparece em 7 das 15 etiquetas, e nunca nas
+1. **O código de barras aparece em 9 das 20 etiquetas, e nunca nas
    ofertas.** Justamente onde mais se erra, só há nome e preço. O app
    precisa dos dois caminhos: com código, a identidade é exata; sem código,
    ela vem pelo nome.
-2. **O código impresso é o EAN do produto**, e os 7 têm o dígito verificador
+2. **O código impresso é o EAN do produto**, e os 9 têm o dígito verificador
    certo. Os itens da lista de Compras já são guardados pelo EAN, então
    **etiqueta de gôndola risca o item da lista com certeza**, sem casar
    nomes.
-3. **O preço por quilo ou litro confere o preço.** Em todas as 8 etiquetas
+3. **O preço por quilo ou litro confere o preço.** Em todas as 9 etiquetas
    que o trazem, preço ÷ tamanho = preço por unidade. Exemplo: 43,90 ÷
    0,340 kg = 129,12. Na foto 11, o arame tapa um dígito do “43,80 por KG”
    (o leitor leu “43-30”), e a conta mostra que algo não bate. Com a conta
@@ -424,8 +425,8 @@ borrado.
    A pergunta fica: **“Vai pagar com o Zaffari Card ou o Bourbon Card?”**.
    E é preço de **pagar com o cartão** (os dois são cartões de crédito), o que
    confirma a pergunta por compra: mesmo quem tem pode pagar com outro.
-5. **A oferta de quantidade é “na compra de 2 un., pague 12,90 cada”** (foto
-   05), e não “leve 3, pague 2”. O modelo passa a ser **“a partir de N
+5. **A oferta de quantidade é “na compra de N un., pague X cada”** (2 un. na
+   foto 05, 3 un. nas 18 e 21), e não “leve 3, pague 2”. O modelo passa a ser **“a partir de N
    unidades, cada uma sai X”**, que também cobre o leve-mais.
 6. **A validade vem em dois formatos**: “V 11/10” (o leitor leu) e a frase
    vertical (o leitor não leu em nenhuma das 3 fotos). Não pode ser
@@ -437,7 +438,7 @@ borrado.
    mesmo produto tiverem preços diferentes, o app guarda as duas, e vale a
    menor.
 8. **Exceções no nome.** “Protetor Diário Intimus (Exceto Indicador de
-   Troca/Longo)” e “AA/AAA” mostram que uma oferta pode valer para alguns
+   Troca/Longo)”, “Mach 3 Gillette (Exceto Carbono)” e “AA/AAA” mostram que uma oferta pode valer para alguns
    produtos e não para outros. Na conferência, um item que é exceção não pode
    virar “cobrado a mais”.
 9. **Dois estilos de nome.** Gôndola, cartaz digitado e “só nos cartões” usam
@@ -453,7 +454,21 @@ borrado.
     (gôndola, frente, prateleira); um dia pode ordenar a lista pelo caminho
     no mercado. “0810-M0602” parece a data em que a etiqueta foi impressa
     (mês e dia), seguida de outro código.
-12. **Os mockups estavam errados.** A etiqueta inventada tinha uma caixa
+12. **O maior número nem sempre é o preço.** Na cafeteira (19), o número
+    grande é a parcela (“10 x 42,90”); o preço é o “à vista”, R$ 429,00, em
+    letra pequena. A conta 10 × 42,90 = 429,00 confere, como o preço por
+    quilo. No cartaz pendurado, o número grande é o preço normal, e o do
+    cartão vem num selo (07).
+13. **A mesma oferta em dois formatos.** O Cup Noodles tem cartaz com foto
+    (18) e cartaz pendurado (21), com os mesmos 4,98 e “3 un. por 3,98
+    cada”. Se a pessoa fotografar os dois, é uma etiqueta só. E, se um dia
+    não baterem, vale a menor.
+14. **O nome pode ser só uma categoria.** “CONJUNTO” (20) não diz nada; o
+    produto está na linha de baixo (“com 4 cargas Mach 3 Gillette”).
+15. **Cartaz de dois lados.** No 20, o verso aparece por transparência e
+    deixa sombras de outros números atrás do 34,90. O leitor não se
+    confundiu, mas é um caso a guardar.
+16. **Os mockups estavam errados.** A etiqueta inventada tinha uma caixa
     vermelha “CARTÃO ZAFFARI”, e a de verdade é a faixa verde “Só nos
     cartões”. Isso entra na rodada de aparência.
 
@@ -464,13 +479,13 @@ etiqueta, num computador sem placa de vídeo:
 
 | | Pequeno | Médio |
 |---|---|---|
-| Preço presente no texto lido | 15 de 16 (a farofa saiu “599”, sem vírgula) | 16 de 16 |
-| Preço do cartão | 5 de 5 | 5 de 5 |
-| Preço por KG/L (onde legível) | 8 de 8 | 8 de 8 |
-| Números do código de barras | 5 de 7 (06 perdeu o 7 do começo; 03 não leu) | 6 de 7 (06 de novo) |
+| Preço normal presente no texto lido | 19 de 21 (a farofa saiu “599”; no Cup Noodles com foto sumiu o 4 grande de “4,98”) | 20 de 21 (o mesmo Cup Noodles) |
+| Preço da oferta (cartão ou quantidade) | 8 de 8 | 8 de 8 |
+| Preço por KG/L (onde legível) | 9 de 9 | 9 de 9 |
+| Números do código de barras | 7 de 9 (06 perdeu o 7 do começo; 03 não leu) | 8 de 9 (06 de novo) |
 | Tempo por foto | 4 a 12 s | 13 a 43 s |
 
-O leitor de código de barras (ZXing) decodificou só 3 de 16, os cartazes
+O leitor de código de barras (ZXing) decodificou só 4 de 21, os cartazes
 de código grande. As barras da etiqueta de gôndola são pequenas demais para
 a foto inteira. **Ler os números impressos e conferir o dígito verificador
 funciona melhor que ler as barras.**
@@ -488,11 +503,14 @@ Para isso:
   unidade, “UN”/“cada” é preço normal, “CARTÃO”/“só nos cartões” é preço
   do cartão, “Na compra de N” é quantidade;
 - **juntar centavos pequenos** (“5” + “99” = 5,99) quando a conta do preço
-  por unidade ou o tamanho do produto confirmam.
+  por unidade ou o tamanho do produto confirmam. No cartaz com foto, os
+  centavos vêm pequenos e em cima (“4,⁹⁸”), e o leitor às vezes perde o real
+  inteiro (18): aí o app pede a outra leitura em vez de chutar.
 
 ### O que ainda preciso
 
-1. **A nota fiscal** de uma compra com alguns desses produtos, para testar se
+1. **A nota fiscal** de uma compra com alguns desses produtos (de
+   preferência um da gôndola e uma oferta “só nos cartões”), para testar se
    o nome da gôndola é igual ao da nota.
 2. Um **vídeo curto** passando o celular por uma prateleira com várias
    etiquetas lado a lado, para testar o mirador.

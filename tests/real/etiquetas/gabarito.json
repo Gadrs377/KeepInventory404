@@ -131,6 +131,44 @@
       "nome": "FAROFA DE MANDIOCA CASEIRÍSSIMA YOKI 200g",
       "preco": "5,99",
       "privacidade": "rosto de outra pessoa no fundo, borrado"
+    },
+    "zaffari-17.jpg": {
+      "familia": "gondola",
+      "nome": "FAR MAND BRASILEIRINHA 500G",
+      "ean": "7898311670097",
+      "preco": "4,69",
+      "unidade": "UN",
+      "porUnidade": "9,38/KG",
+      "local": "G40F8P1",
+      "codigo": "0909-M0805"
+    },
+    "zaffari-18.jpg": {
+      "familia": "oferta-foto",
+      "nome": "Macarrão Instantâneo Cup Noodles Nissin 69g",
+      "preco": "4,98",
+      "leveMais": "3 un: 3,98 cada",
+      "mesmaOferta": "zaffari-21.jpg"
+    },
+    "zaffari-19.jpg": {
+      "familia": "parcelado",
+      "nome": "Cafeteira Expresso LOV Preta 220V TRES",
+      "ean": "7896045111503",
+      "preco": "429,00",
+      "parcelas": "10 x 42,90 sem juros nos cartões Zaffari Card e Bourbon Card",
+      "aPrazo": "429,00"
+    },
+    "zaffari-20.jpg": {
+      "familia": "suspenso",
+      "nome": "CONJUNTO COM 4 CARGAS MACH 3 GILLETTE (EXCETO CARBONO)",
+      "preco": "34,90",
+      "dificuldade": "cartaz de dois lados: o verso aparece por transparência"
+    },
+    "zaffari-21.jpg": {
+      "familia": "suspenso",
+      "nome": "MACARRÃO INSTANTÂNEO CUP NOODLES NISSIN 69g",
+      "preco": "4,98",
+      "leveMais": "3 un: 3,98 cada",
+      "mesmaOferta": "zaffari-18.jpg"
     }
   }
 }

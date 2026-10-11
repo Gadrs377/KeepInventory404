@@ -103,7 +103,7 @@ Os testes aqui rodam no Chromium. No Safari/iPhone ainda falta conferir:
 
 ## Etiquetas de preço (Modo Mercado)
 
-`etiquetas/` tem 16 fotos de etiquetas do Zaffari (11/10/2026), reduzidas a
+`etiquetas/` tem 21 fotos de etiquetas do Zaffari (11/10/2026), reduzidas a
 1600 px e sem metadados. O rosto de uma pessoa ao fundo da `zaffari-16.jpg`
 foi borrado. `gabarito.json` é a leitura a olho; `leitura.json` é o que o
 Paddle e o leitor de código de barras leram (`node tests/etiquetas-ocr.mjs`).
