@@ -108,3 +108,9 @@ Os testes aqui rodam no Chromium. No Safari/iPhone ainda falta conferir:
 foi borrado. `gabarito.json` é a leitura a olho; `leitura.json` é o que o
 Paddle e o leitor de código de barras leram (`node tests/etiquetas-ocr.mjs`).
 Análise em `docs/MODO_MERCADO.md`, seção 12.
+
+## Notas fiscais (Modo Mercado)
+
+`notas/` tem os itens de notas reais como o servidor do app os devolve, para
+testar o casamento etiqueta × nota. Ficam sem a chave de acesso, sem o código
+do QR e sem foto, porque são compras de verdade.

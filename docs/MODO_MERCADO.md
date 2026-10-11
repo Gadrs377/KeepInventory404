@@ -516,6 +516,85 @@ Para isso:
    etiquetas lado a lado, para testar o mirador.
 3. Uma etiqueta de **produto por quilo** (frios, padaria, hortifrúti).
 
+## 13. A nota fiscal do Zaffari (10/10/2026)
+
+Nota de Caxias do Sul, 17 itens, R$ 229,21, paga com cartão de crédito
+Mastercard (não o Zaffari Card), sem CPF. O QR foi lido da foto pelo leitor
+do app, e a nota foi buscada pelo mesmo caminho que o app usa. Os itens
+estão em `tests/real/notas/zaffari-2026-10-10.json`. A foto e a chave de
+acesso ficaram de fora do repositório, por serem de uma compra real.
+
+### O que a nota confirma
+
+1. **O código da nota é o código interno da loja, e não o EAN.** No papel ele
+   vem como “0000001125732” e, na consulta, como “000000000001125732”. O
+   número útil tem 7 dígitos (1125732) e não aparece em nenhuma das 20
+   etiquetas. **Etiqueta e nota não têm código em comum.** O EAN da gôndola
+   serve para a lista de Compras, mas não para a nota.
+2. **O nome da nota tem o mesmo jeito do nome da gôndola**: tipo abreviado,
+   marca, variante, tamanho (“SALG FANDANGOS PRESUNTO 160G”, “BISC NESTLE
+   CHOCO WAFFLE 80G”, como “SALG DORITOS QUEIJO NACHO 183G” e “BISC
+   JACOBSENS BEAUTIFUL 340G” nas etiquetas). Reforça a hipótese de que é o
+   mesmo nome do sistema da loja, mas **nenhum produto desta nota foi
+   fotografado**, então ainda não está provado.
+3. **A nota tem sufixos que a etiqueta talvez não tenha**: “L+P-” (pacote
+   leve mais, pague menos), “PROM” (embalagem promocional), “C/6UN”. O
+   casamento precisa ignorar esses sufixos, mas sem esquecer que mudam o
+   produto.
+4. **Granel vem com o peso**: “CEBOLA BRANCA GRANEL 0,228 KG × 8,99 =
+   2,05”. Confirma o desenho: o peso vem da nota e a etiqueta só dá o
+   preço do quilo.
+5. **Desconto zero e pagamento “cartão de crédito”.** Sem o Zaffari Card,
+   não houve preço de cartão, como esperado. A consulta não diz **qual**
+   cartão foi usado (o nome Mastercard só aparece no comprovante do
+   cartão, no fim do papel). **O app não tem como saber se foi o Zaffari
+   Card**, então a pergunta por compra continua necessária.
+6. **A nota fica disponível em 1 segundo** (emitida às 21:53:13, autorizada
+   às 21:53:14). Dá para conferir ainda no caixa.
+7. **Sem CPF, a nota não aparece depois na Nota Fiscal Gaúcha.** Sem o papel
+   e sem CPF, a conferência se perde. O lembrete “Peça a notinha” fica ainda
+   mais importante.
+
+### O alarme falso que a nota mostrou
+
+Comparar as 20 etiquetas com esta nota só pelas palavras do nome junta duas
+coisas diferentes:
+
+| Etiqueta | Nota | Palavras em comum |
+|---|---|---|
+| Batata Palha **Extrafina** Yoki **190g**: 14,90 | BATATA PALHA YOKI **TRAD 195G** PROM: 18,90 | 38% |
+
+Um casador ingênuo diria **“R$ 4,00 cobrados a mais”**, e estaria errado: são
+produtos diferentes. É exatamente o alarme falso que destrói a confiança no
+módulo. Daí três regras novas:
+
+1. **Tamanho diferente nunca é o mesmo produto** (190 g ≠ 195 g).
+2. **Variante em conflito também não** (EXTRAFINA ≠ TRAD).
+3. Na dúvida, **“É o mesmo produto?”** com os dois nomes lado a lado, nunca
+   “cobrado a mais”.
+
+### Como fica o casamento etiqueta × nota
+
+1. **Nome da gôndola igual ao da nota**, ignorando os sufixos: certeza (se a
+   hipótese se confirmar).
+2. **Marca e tamanho iguais e nenhuma variante em conflito**: provável. Entra
+   em “cobrado a mais” só se o preço da nota for maior que o da etiqueta e
+   nenhum outro item da nota servir melhor.
+3. **O resto**: “É o mesmo produto?”, ou some, se não houver candidato.
+4. **Aprendizado**: cada par confirmado guarda **EAN ↔ código interno** daquela
+   rede. Na compra seguinte, o casamento é por código, exato. É um dado do
+   produto, não da pessoa; um dia pode ser compartilhado entre usuários, com
+   a sua aprovação.
+
+### O que ainda falta
+
+- **Uma nota com produto fotografado**, para provar que o nome da gôndola é
+  igual ao da nota.
+- **Uma nota paga com o Zaffari Card** e com uma oferta “só nos cartões”,
+  para ver se o preço do cartão vem no item ou como desconto no fim.
+- **Uma nota com oferta de quantidade** (“na compra de 3 un.”), para ver como
+  o desconto aparece.
+
 ## Fontes
 
 - Dickson e Sawyer (1990), *The Price Knowledge and Search of Supermarket Shoppers*, Journal of Marketing. Réplica e resumo: [Springer](https://link.springer.com/doi/10.1007/BF00993956).

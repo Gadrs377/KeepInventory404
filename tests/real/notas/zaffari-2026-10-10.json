@@ -1,0 +1,147 @@
+{
+ "loja": "Zaffari Caxias do Sul (CNPJ 93.015.006/0040-20)",
+ "emitida": "2026-10-10T21:53:13-03:00",
+ "pagamento": "cartão de crédito (Mastercard, não o Zaffari Card)",
+ "consumidor": "não identificado (sem CPF)",
+ "total": 229.21,
+ "desconto": 0,
+ "nota": "Itens como o app recebe do servidor (parseNfce). Sem a chave de acesso nem o código do QR, de propósito: a nota é de uma compra real.",
+ "itens": [
+  {
+   "name": "MAC NISSIN G.CP 510G C/6UN L+P-",
+   "code": "000000000001125732",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 15.47,
+   "total": 15.47
+  },
+  {
+   "name": "BATATA PALHA YOKI TRAD 195G PROM",
+   "code": "000000000001131472",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 18.9,
+   "total": 18.9
+  },
+  {
+   "name": "CEBOLA BRANCA GRANEL",
+   "code": "000000000001000269",
+   "qty": 0.228,
+   "unit": "KG",
+   "unitPrice": 8.99,
+   "total": 2.05
+  },
+  {
+   "name": "CHOC LACTA AO LEITE 145G",
+   "code": "000000000001119821",
+   "qty": 2,
+   "unit": "UN",
+   "unitPrice": 14.9,
+   "total": 29.8
+  },
+  {
+   "name": "CHOC NEUGEB 1891 LTE C/AVELA 90G",
+   "code": "000000000001132371",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 15.9,
+   "total": 15.9
+  },
+  {
+   "name": "TORRADA BAUDUCCO TRAD 284G L+P-",
+   "code": "000000000001067441",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 11.48,
+   "total": 11.48
+  },
+  {
+   "name": "CHOC ARCOR BLOCK DUBAI PAC 165G",
+   "code": "000000000001136257",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 19.9,
+   "total": 19.9
+  },
+  {
+   "name": "MARSHMALOW FINI FANT T.FRUT 200G",
+   "code": "000000000001140027",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 16.9,
+   "total": 16.9
+  },
+  {
+   "name": "SALG FANDANGOS PRESUNTO 160G",
+   "code": "000000000001115701",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 11.9,
+   "total": 11.9
+  },
+  {
+   "name": "MOLHO SHOYU SAKURA PREM VD150ML",
+   "code": "000000000001014394",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 13.98,
+   "total": 13.98
+  },
+  {
+   "name": "PEPSI COLA TRADICIONAL 2L",
+   "code": "000000000001006806",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 8.89,
+   "total": 8.89
+  },
+  {
+   "name": "LEITE TREVISAN PAST A INT GF1L",
+   "code": "000000000001059215",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 9.58,
+   "total": 9.58
+  },
+  {
+   "name": "ROL SUCRILHOS LEITE 40G",
+   "code": "000000000001138419",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 5.79,
+   "total": 5.79
+  },
+  {
+   "name": "CR CHOC MERCATTO AVELA DUO 350G",
+   "code": "000000000001078581",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 21.9,
+   "total": 21.9
+  },
+  {
+   "name": "PAO CROISS 7 DAYS LACTA LTE 45G",
+   "code": "000000000001138229",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 3.99,
+   "total": 3.99
+  },
+  {
+   "name": "BISC NESTLE CHOCO WAFFLE 80G",
+   "code": "000000000001139723",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 7.98,
+   "total": 7.98
+  },
+  {
+   "name": "TALCO TENYS PE CANFORADO 100G",
+   "code": "000000000001016726",
+   "qty": 1,
+   "unit": "UN",
+   "unitPrice": 14.8,
+   "total": 14.8
+  }
+ ]
+}
