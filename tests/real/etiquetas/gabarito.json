@@ -1,0 +1,136 @@
+{
+  "loja": "Zaffari (Porto Alegre)",
+  "data": "2026-10-11",
+  "nota": "gabarito lido a olho; local e codigo são hipóteses de significado",
+  "etiquetas": {
+    "zaffari-01.jpg": {
+      "familia": "gondola",
+      "nome": "BISC JACOBSENS BEAUTIFUL 340G",
+      "ean": "5776879013285",
+      "preco": "43,90",
+      "unidade": "UN",
+      "porUnidade": "129,12/KG",
+      "local": "G16F0P0",
+      "codigo": "0810-M0602"
+    },
+    "zaffari-02.jpg": {
+      "familia": "cartaz",
+      "nome": "SALG DORITOS QUEIJO NACHO 183G",
+      "ean": "7892840825355",
+      "preco": "15,99",
+      "porUnidade": "87,38/KG",
+      "atras": "etiqueta de gôndola do mesmo produto"
+    },
+    "zaffari-03.jpg": {
+      "familia": "gondola",
+      "nome": "COOKIE S.EDWIGES COL LATA 150G",
+      "ean": "7896064204651",
+      "preco": "27,90",
+      "unidade": "UN",
+      "porUnidade": "186,00/KG",
+      "local": "G18F4P1",
+      "codigo": "0407-M0602"
+    },
+    "zaffari-04.jpg": {
+      "familia": "suspenso",
+      "nome": "LAVA-ROUPAS LÍQUIDO OMO 3 LITROS",
+      "preco": "28,95",
+      "porUnidade": "9,65/L"
+    },
+    "zaffari-05.jpg": {
+      "familia": "oferta-foto",
+      "nome": "Batata Palha Extrafina Yoki 190g",
+      "preco": "14,90",
+      "leveMais": "2 un: 12,90 cada",
+      "validade": "9 a 20/10/2026"
+    },
+    "zaffari-06.jpg": {
+      "familia": "gondola",
+      "nome": "BATATA PALHA TUTTI 140G",
+      "ean": "7896333023136",
+      "preco": "8,99",
+      "unidade": "UN",
+      "porUnidade": "64,21/KG",
+      "local": "G240F6P3",
+      "codigo": "0901-M0406"
+    },
+    "zaffari-07.jpg": {
+      "familia": "suspenso",
+      "nome": "PILHA ALCALINA AA/AAA DURACELL COM 8un",
+      "preco": "49,80",
+      "cartao": "39,90"
+    },
+    "zaffari-08.jpg": {
+      "familia": "oferta-foto",
+      "nome": "Pilha Alcalina AA/AAA Duracell c/ 8 un",
+      "preco": "49,80",
+      "cartao": "39,90",
+      "validade": "24/09 a 12/10/2026",
+      "embaixo": "PILHA AL AAA DURACELL C/4 29,90"
+    },
+    "zaffari-09.jpg": {
+      "familia": "cartaz",
+      "nome": "MOLHO PARA SALADA HELLMANN'S 210ML",
+      "ean": "7891150070905",
+      "preco": "13,98",
+      "porUnidade": "66,57/L"
+    },
+    "zaffari-10.jpg": {
+      "familia": "so-cartoes",
+      "nome": "FRALDA BIGFRAL DERMA PLUS M18/G16",
+      "preco": "59,98",
+      "cartao": "49,90",
+      "validade": "V 11/10",
+      "atras": "FLD BIGFRAL D PLUS M G/16"
+    },
+    "zaffari-11.jpg": {
+      "familia": "gondola",
+      "nome": "CORACAO FGO SEARA CG E.FIN 500G",
+      "ean": "7894904547043",
+      "preco": "21,90",
+      "unidade": "UN",
+      "porUnidade": "43,?0/KG (tapado)",
+      "local": "S36F0P0",
+      "codigo": "1008-P0101",
+      "dificuldade": "porta do freezer: reflexos e arame na frente"
+    },
+    "zaffari-12.jpg": {
+      "familia": "cartaz",
+      "nome": "MOLHO PARA SALADA HELLMANN'S 210ML",
+      "ean": "7891150070905",
+      "preco": "13,98",
+      "porUnidade": "66,57/L",
+      "repetida": "zaffari-09.jpg"
+    },
+    "zaffari-13.jpg": {
+      "familia": "so-cartoes",
+      "nome": "ABSORVENTE PLENITUD NOTURNO ESCAPES S/A C/8UN",
+      "preco": "27,90",
+      "cartao": "24,80",
+      "validade": "V 11/10"
+    },
+    "zaffari-14.jpg": {
+      "familia": "oferta-foto",
+      "nome": "Protetor Diário Intimus (Exceto Indicador de Troca/Longo) c/ 80 un",
+      "preco": "17,90",
+      "cartao": "15,99",
+      "validade": "9 a 20/10/2026"
+    },
+    "zaffari-15.jpg": {
+      "familia": "gondola",
+      "nome": "SH JOHNSONS CHEIRINHO 400ML",
+      "ean": "7891010521448",
+      "preco": "27,95",
+      "unidade": "UN",
+      "porUnidade": "69,88/L",
+      "local": "G36F1P1",
+      "codigo": "0927-M0705"
+    },
+    "zaffari-16.jpg": {
+      "familia": "suspenso",
+      "nome": "FAROFA DE MANDIOCA CASEIRÍSSIMA YOKI 200g",
+      "preco": "5,99",
+      "privacidade": "rosto de outra pessoa no fundo, borrado"
+    }
+  }
+}

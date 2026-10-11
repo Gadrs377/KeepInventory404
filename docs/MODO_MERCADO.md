@@ -386,6 +386,118 @@ com a **nota da mesma compra**: com e sem Cartão Zaffari, de quilo, de
 leve-mais e de oferta com prazo. Elas testam a hipótese do código interno, que
 pode tornar o casamento exato.
 
+## 12. Etiquetas reais do Zaffari (11/10/2026)
+
+Foram 16 fotos tiradas no Zaffari, com 15 etiquetas diferentes (a 09 e a 12
+são a mesma). Estão em `tests/real/etiquetas/`, com o gabarito lido a olho
+(`gabarito.json`) e o que o leitor do app leu (`leitura.json`, gerado por
+`tests/etiquetas-ocr.mjs`). O rosto de uma pessoa ao fundo da foto 16 foi
+borrado.
+
+### Cinco tipos de etiqueta
+
+| Tipo | Fotos | Como é | Código de barras impresso | Preço do cartão | Validade |
+|---|---|---|---|---|---|
+| **Gôndola** | 01, 03, 06, 11, 15 | Branca, mancha amarela no preço. Nome abreviado em maiúsculas (“SH JOHNSONS CHEIRINHO 400ML”), preço com “UN”, preço por KG ou L, e dois códigos da loja (“G16F0P0”, “0810-M0602”) | Sim, com os números | Não | Não |
+| **Cartaz digitado** | 02, 09, 12 | “Economizar é comprar bem” no topo. Nome digitado, preço grande, preço por KG ou L pequeno | Sim, com os números | Não | Não |
+| **Oferta com foto** | 05, 08, 14 | Foto do produto, nome por extenso (“Batata Palha Extrafina Yoki 190g”), preço normal e preço da oferta num selo | Não | 08, 14 | Texto pequeno **na vertical**: “Oferta válida de 9 a 20 de Outubro de 2026…” |
+| **Só nos cartões** | 10, 13 | Faixa verde. Tudo num texto só: nome, preço normal, “CARTÃO ZAFFARI/BOURBON”, preço do cartão | Não | Sim | “V 11/10” |
+| **Pendurado no corredor** | 04, 07, 16 | Categoria em letras grandes (“FAROFA DE MANDIOCA”), detalhe embaixo, preço enorme | Não | 07 | Não |
+
+### O que isso muda no design
+
+1. **O código de barras aparece em 7 das 15 etiquetas, e nunca nas
+   ofertas.** Justamente onde mais se erra, só há nome e preço. O app
+   precisa dos dois caminhos: com código, a identidade é exata; sem código,
+   ela vem pelo nome.
+2. **O código impresso é o EAN do produto**, e os 7 têm o dígito verificador
+   certo. Os itens da lista de Compras já são guardados pelo EAN, então
+   **etiqueta de gôndola risca o item da lista com certeza**, sem casar
+   nomes.
+3. **O preço por quilo ou litro confere o preço.** Em todas as 8 etiquetas
+   que o trazem, preço ÷ tamanho = preço por unidade. Exemplo: 43,90 ÷
+   0,340 kg = 129,12. Na foto 11, o arame tapa um dígito do “43,80 por KG”
+   (o leitor leu “43-30”), e a conta mostra que algo não bate. Com a conta
+   batendo, o app aceita na primeira leitura; sem ela, espera dois quadros
+   iguais, como na validade.
+4. **O cartão é “Zaffari Card e Bourbon Card”**, e não só “Cartão Zaffari”.
+   A pergunta fica: **“Vai pagar com o Zaffari Card ou o Bourbon Card?”**.
+   E é preço de **pagar com o cartão** (os dois são cartões de crédito), o que
+   confirma a pergunta por compra: mesmo quem tem pode pagar com outro.
+5. **A oferta de quantidade é “na compra de 2 un., pague 12,90 cada”** (foto
+   05), e não “leve 3, pague 2”. O modelo passa a ser **“a partir de N
+   unidades, cada uma sai X”**, que também cobre o leve-mais.
+6. **A validade vem em dois formatos**: “V 11/10” (o leitor leu) e a frase
+   vertical (o leitor não leu em nenhuma das 3 fotos). Não pode ser
+   obrigatória. A lei vale enquanto a etiqueta estiver exposta, então a
+   validade só serve para avisar “oferta até hoje”.
+7. **Etiquetas empilhadas.** Nas fotos 02, 05, 08 e 10 há outra etiqueta
+   atrás ou embaixo; às vezes do mesmo produto, às vezes de outro (na 08 é
+   a pilha AAA C/4). O mirador escolhe a da frente. Se duas etiquetas do
+   mesmo produto tiverem preços diferentes, o app guarda as duas, e vale a
+   menor.
+8. **Exceções no nome.** “Protetor Diário Intimus (Exceto Indicador de
+   Troca/Longo)” e “AA/AAA” mostram que uma oferta pode valer para alguns
+   produtos e não para outros. Na conferência, um item que é exceção não pode
+   virar “cobrado a mais”.
+9. **Dois estilos de nome.** Gôndola, cartaz digitado e “só nos cartões” usam
+   o nome abreviado do sistema da loja (“SALG”, “BISC”, “FGO”, “CG E.FIN”,
+   “S/A”). Ele deve ser o mesmo nome da nota fiscal, e aí o casamento fica
+   quase exato. **Hipótese: confirmar com uma nota.** Oferta com foto e
+   cartaz pendurado usam o nome de vitrine, e esses pedem casamento
+   aproximado.
+10. **O cartaz pendurado fica longe do produto.** A foto não mostra o
+    produto, e o nome é uma categoria (“PILHA ALCALINA”). O detalhe (“AA/AAA
+    DURACELL COM 8un.”) é que identifica.
+11. **Códigos da loja (hipóteses).** “G16F0P0” parece o lugar na loja
+    (gôndola, frente, prateleira); um dia pode ordenar a lista pelo caminho
+    no mercado. “0810-M0602” parece a data em que a etiqueta foi impressa
+    (mês e dia), seguida de outro código.
+12. **Os mockups estavam errados.** A etiqueta inventada tinha uma caixa
+    vermelha “CARTÃO ZAFFARI”, e a de verdade é a faixa verde “Só nos
+    cartões”. Isso entra na rodada de aparência.
+
+### O que o leitor do app já consegue
+
+Foi o Paddle que o app já usa, na foto inteira (1600 px), sem recortar a
+etiqueta, num computador sem placa de vídeo:
+
+| | Pequeno | Médio |
+|---|---|---|
+| Preço presente no texto lido | 15 de 16 (a farofa saiu “599”, sem vírgula) | 16 de 16 |
+| Preço do cartão | 5 de 5 | 5 de 5 |
+| Preço por KG/L (onde legível) | 8 de 8 | 8 de 8 |
+| Números do código de barras | 5 de 7 (06 perdeu o 7 do começo; 03 não leu) | 6 de 7 (06 de novo) |
+| Tempo por foto | 4 a 12 s | 13 a 43 s |
+
+O leitor de código de barras (ZXing) decodificou só 3 de 16, os cartazes
+de código grande. As barras da etiqueta de gôndola são pequenas demais para
+a foto inteira. **Ler os números impressos e conferir o dígito verificador
+funciona melhor que ler as barras.**
+
+O que falta não é enxergar, é **entender**. O texto vem misturado com a
+embalagem (fotos 10, 13 e 15 trazem dezenas de linhas do pacote), com o
+slogan “Economizar é comprar bem” e com a ordem trocada (“Extrafina 12,90”).
+Para isso:
+
+- **recortar a etiqueta** antes de ler (o mirador da v3), o que também
+  derruba o tempo;
+- **reconhecer o tipo de etiqueta** pela forma (faixa amarela, faixa verde,
+  slogan) e então ler os campos com as regras de cada tipo;
+- **dar nome a cada número** pela palavra ao lado: “por KG/L” é preço por
+  unidade, “UN”/“cada” é preço normal, “CARTÃO”/“só nos cartões” é preço
+  do cartão, “Na compra de N” é quantidade;
+- **juntar centavos pequenos** (“5” + “99” = 5,99) quando a conta do preço
+  por unidade ou o tamanho do produto confirmam.
+
+### O que ainda preciso
+
+1. **A nota fiscal** de uma compra com alguns desses produtos, para testar se
+   o nome da gôndola é igual ao da nota.
+2. Um **vídeo curto** passando o celular por uma prateleira com várias
+   etiquetas lado a lado, para testar o mirador.
+3. Uma etiqueta de **produto por quilo** (frios, padaria, hortifrúti).
+
 ## Fontes
 
 - Dickson e Sawyer (1990), *The Price Knowledge and Search of Supermarket Shoppers*, Journal of Marketing. Réplica e resumo: [Springer](https://link.springer.com/doi/10.1007/BF00993956).
