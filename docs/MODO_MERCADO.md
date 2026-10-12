@@ -367,7 +367,8 @@ Na telemetria de uso, sem dados pessoais:
 
 ## 10. Roadmap do módulo
 
-**v1:** tudo acima, para o Zaffari (RS, NFC-e com chave 43).
+**v1:** qualquer mercado do RS (NFC-e com chave 43), com o catálogo como
+extra onde existir. O Zaffari é o primeiro caso testado, não o alvo.
 
 **Depois:**
 
@@ -377,7 +378,8 @@ Na telemetria de uso, sem dados pessoais:
    etiqueta → nota daquela rede, no aparelho.
 3. **Outras redes.** Formato da etiqueta, do clube e de onde cai o desconto
    em cada uma (Nacional, Carrefour, Asun, Unidasul…).
-4. **Outros estados.** NFC-e fora do RS.
+4. **Outros estados.** NFC-e fora do RS. É o que mais abre o módulo para
+   outras pessoas; deveria vir cedo.
 5. **Promoções mais complexas.** “2ª unidade 50%”, “a partir de 3”,
    atacarejo.
 6. **Resumo do mês.** Quanto voltou e onde mais apareceu diferença, sem virar
@@ -605,9 +607,37 @@ módulo. Daí três regras novas:
 - **Uma nota com oferta de quantidade** (“na compra de 3 un.”), para ver como
   o desconto aparece.
 
-## 14. Outro ângulo: o catálogo do Zaffari e a conferência sem foto
+## 14. Qualquer mercado primeiro; o catálogo da loja é um extra
 
-### O achado
+**Princípio:** o módulo tem que funcionar em qualquer mercado com NFC-e, sem
+depender de uma rede. O Zaffari é só o primeiro caso de teste, porque é onde
+as fotos e a nota foram tiradas. Tudo o que é específico de uma rede (formato
+de etiqueta, catálogo, nome do clube) entra como **extra opcional**, e o
+básico funciona sem ele.
+
+### O que funciona em qualquer mercado
+
+| | Precisa de quê | Funciona em |
+|---|---|---|
+| Itens repetidos, quantidade diferente da lista, item fora da lista | Só a nota e a lista | Qualquer mercado com NFC-e |
+| Conta errada na linha (quantidade × preço ≠ total), peso estranho no granel | Só a nota | Qualquer um |
+| Mesmo produto, mesma loja, preço bem diferente da última compra sua | A nota e as notas anteriores da própria pessoa (como alerta, não como histórico) | Qualquer um |
+| Etiqueta fotografada × nota | A foto e a nota | Qualquer um. A leitura da etiqueta vai pelo **sentido** (“por KG”, “UN”, “cada”, “cartão”, “clube”, “na compra de”, “leve X pague Y”), não pelo desenho de uma rede |
+| Pergunta do clube | “Usou o cartão ou o clube da loja nesta compra?”, com o nome da loja tirado da nota | Qualquer rede que tenha preço de clube (Zaffari Card, Meu Carrefour, Clube Mais, Meu Assaí…) |
+
+### O extra: catálogo público da loja
+
+O servidor do app já consulta o catálogo público de 28 lojas VTEX
+(`LOOKUP_STORES`) para achar produtos pelo EAN. Onde a rede da nota tem
+catálogo, ele acrescenta preço do site e ofertas. Onde não tem, nada quebra.
+**A ligação “código da nota = produto do site” foi confirmada só no
+Zaffari**; em cada outra rede precisa ser testada com uma nota.
+
+**Pré-requisito para sair do RS:** hoje o app só lê NFC-e do RS (chave 43).
+Cada estado tem a sua página de consulta; ler os outros estados é o primeiro
+passo de verdade para o módulo valer fora daqui.
+
+### O caso do Zaffari (primeiro extra testado)
 
 O site do Zaffari roda em VTEX, e a busca pública do catálogo
 (`/api/catalog_system/pub/products/search`) responde sem login. Testado em
@@ -629,15 +659,16 @@ O site do Zaffari roda em VTEX, e a busca pública do catálogo
 
 ### Por que muda o módulo
 
-O app consegue saber o preço e as ofertas de quase todo produto da nota
-**sem nenhuma foto**. A foto deixa de ser o centro e vira **prova sob
+Onde a loja tem catálogo, o app consegue saber o preço e as ofertas de
+quase todo produto da nota **sem nenhuma foto**. Onde não tem, a camada 0
+continua com as regras gerais acima. A foto deixa de ser o centro e vira **prova sob
 demanda**.
 
 | Camada | O que a pessoa faz | O que o app faz |
 |---|---|---|
 | 0. Automática | Nada além de ler a nota (o que já faz para guardar no armário) | Para cada item: compara o preço da nota com o catálogo; confere se a oferta de quantidade entrou quando levou o mínimo; aponta itens repetidos, quantidade fora da lista e peso estranho |
-| 1. Uma pergunta, só se importar | Responde “Pagou com o Zaffari Card ou o Bourbon Card?” | Só aparece se a nota tiver item com oferta de cartão. Se “sim” e o desconto não entrou, aponta |
-| 2. Foto quando vale | Fotografa a etiqueta | Para uma oferta que não está no site, ou para ter prova quando o app apontou algo e a pessoa ainda está na loja |
+| 1. Uma pergunta, só se importar | Responde “Usou o cartão ou o clube da loja?” (no Zaffari: Zaffari Card ou Bourbon Card) | Só aparece se houver item com preço de clube (pela foto ou pelo catálogo). Se “sim” e o desconto não entrou, aponta |
+| 2. Foto quando vale | Fotografa a etiqueta | Em loja sem catálogo, para as ofertas; em loja com catálogo, para o que não está no site ou como prova quando o app apontou algo |
 
 ### Cuidados
 
