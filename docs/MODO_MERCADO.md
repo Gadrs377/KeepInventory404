@@ -16,7 +16,17 @@ Da v2 continuam valendo a entrada (E1), o atendimento (F3) e a próxima ida
 (F4), em [E](modo-mercado/prancha-E.webp) e [F](modo-mercado/prancha-F.webp).
 Da v1, o valor recuperado ([D](modo-mercado/prancha-D.webp)).
 
-## 0. Rodada 3: interação, fricção e retorno
+## 0. Rodada 4 (comportamento):
+
+- Michie, van Stralen e West (2011), modelo COM-B.
+- Karlsson, Loewenstein e Seppi (2009), [efeito avestruz](https://www.cmu.edu/tepper/faculty-and-research/assets/docs/ppaper-61264983153898-ostrich-effect-1.pdf); réplica com resultado diferente: [efeito suricato](https://openaccess.city.ac.uk/id/eprint/3875/1/The%20meerkat%20effect.pdf).
+- Sunstein, *Sludge* ([resumo](https://www.behavioraleconomics.com/resources/mini-encyclopedia-of-be/sludge/)).
+- Orgulho de pegar oferta: [Schindler, Rutgers](https://camden.rutgers.edu/news/blame-it-genetics); [Rhee, smart shopper feeling](https://iastatedigitalpress.com/itaa/article/2711/galley/2584/view).
+- Kahneman, Knetsch e Thaler (1986), justiça como restrição ao lucro.
+- Lally et al. (2010), formação de hábitos no mundo real.
+- Bandura (1977), autoeficácia.
+
+Rodada 3: interação, fricção e retorno
 
 ### O que a pesquisa mostrou
 
@@ -595,6 +605,119 @@ módulo. Daí três regras novas:
 - **Uma nota com oferta de quantidade** (“na compra de 3 un.”), para ver como
   o desconto aparece.
 
+## 14. Outro ângulo: o catálogo do Zaffari e a conferência sem foto
+
+### O achado
+
+O site do Zaffari roda em VTEX, e a busca pública do catálogo
+(`/api/catalog_system/pub/products/search`) responde sem login. Testado em
+12/10/2026:
+
+1. **O código da nota é o número do produto no site.** 1125732 (MAC NISSIN
+   G.CP 510G) é o produto 1125732 do site, por R$ 15,47, o mesmo preço da
+   nota. Pepsi (8,89) e cebola a granel (8,99/kg) também batem. Dois dos 5
+   códigos testados não existem no site (embalagem PROM e o talco).
+2. **O site liga o código da loja ao EAN.** Buscando pelo EAN das etiquetas
+   de gôndola, vêm o produto e o preço. Os 6 preços testados batem com as
+   etiquetas: Tutti 8,99, Hellmann's 13,98, Johnson's 27,95, Brasileirinha
+   4,69, Doritos 15,99 e cafeteira 429,00.
+3. **As ofertas vêm descritas:**
+   - Intimus: 17,90, com 10,67% de desconto só para dois meios de pagamento
+     (os cartões da loja), o que dá os 15,99 da etiqueta;
+   - Duracell: 49,80, com uma oferta do mesmo tipo;
+   - Cup Noodles: 4,98, com uma oferta de **mínimo 3 unidades**.
+
+### Por que muda o módulo
+
+O app consegue saber o preço e as ofertas de quase todo produto da nota
+**sem nenhuma foto**. A foto deixa de ser o centro e vira **prova sob
+demanda**.
+
+| Camada | O que a pessoa faz | O que o app faz |
+|---|---|---|
+| 0. Automática | Nada além de ler a nota (o que já faz para guardar no armário) | Para cada item: compara o preço da nota com o catálogo; confere se a oferta de quantidade entrou quando levou o mínimo; aponta itens repetidos, quantidade fora da lista e peso estranho |
+| 1. Uma pergunta, só se importar | Responde “Pagou com o Zaffari Card ou o Bourbon Card?” | Só aparece se a nota tiver item com oferta de cartão. Se “sim” e o desconto não entrou, aponta |
+| 2. Foto quando vale | Fotografa a etiqueta | Para uma oferta que não está no site, ou para ter prova quando o app apontou algo e a pessoa ainda está na loja |
+
+### Cuidados
+
+- **O site não é a gôndola.** A lei garante o menor preço **exposto na
+  loja**. Preço do site acima do da nota é indício, não prova. O app diz
+  “o site do Zaffari mostra 13,98; você pagou 15,49. Ainda está na loja?
+  Fotografe a etiqueta”, e não “cobrado a mais”.
+- **Preço por região.** Os preços bateram com uma nota de Caxias e com
+  etiquetas de outra loja, mas o site pode ter preços por região. Medir
+  com mais notas antes de confiar.
+- **API não oficial.** É a busca pública que o próprio site usa. O app vai
+  pelo nosso servidor, com cache e poucas chamadas, e precisa funcionar
+  sem ela (some uma camada, o resto segue).
+- **Nem tudo está no site** (2 de 5 códigos). Para esses, vale a foto.
+
+## 15. Leitura pela psicologia e pela ciência do comportamento
+
+### Diagnóstico (modelo COM-B: capacidade, oportunidade, motivação)
+
+| | O que ajuda | O que atrapalha |
+|---|---|---|
+| **Capacidade** | O app lê a nota e o catálogo | Ninguém lembra preço (Dickson e Sawyer); ler etiqueta é difícil; a lei é pouco conhecida |
+| **Oportunidade** | A nota sai em 1 segundo; o atendimento está a metros | Fila e pressa no caixa; nota sem papel e sem CPF se perde; sinal ruim |
+| **Motivação refletida** | Economizar; senso de justiça | Ganho esperado por compra é pequeno (erro em ~1 de 30 itens) |
+| **Motivação automática** | Orgulho de “comprar bem” (smart-shopper) | Vergonha de reclamar; preguiça; não querer saber (efeito avestruz) |
+
+### O que isso pede
+
+1. **Esforço quase zero, ou o módulo morre.** Com ganho pequeno e raro, cada
+   foto pedida é atrito que não se paga: é *sludge* (Sunstein). A camada 0
+   resolve: não pede nada.
+2. **Pegar carona num hábito que já existe.** Compra no mercado é semanal;
+   hábito novo semanal demora e falha (Lally et al.: em média 66 dias com
+   repetição diária). O gesto que já existe é **ler a nota para guardar no
+   armário**. A conferência vem junto, sem gesto novo (âncora do Fogg).
+3. **Tirar a decisão de olhar.** Quem desconfia de má notícia tende a não
+   olhar (efeito avestruz, Karlsson, Loewenstein e Seppi). Se a conferência
+   é automática, ninguém precisa decidir conferir.
+4. **Usar orgulho, não medo.** Pegar uma boa oferta dá orgulho
+   (sentimento de “comprador esperto”). “Suas 3 ofertas entraram certinho”
+   motiva mais e por mais tempo que “o mercado errou”.
+5. **Chamar de erro, não de golpe.** Injustiça mexe com as pessoas mais do
+   que o valor (Kahneman, Knetsch e Thaler), mas tom de acusação dá reação
+   contrária e azeda a relação com uma loja de que a pessoa gosta. “Uma
+   diferença de R$ 2,00” em vez de “cobrança indevida”.
+6. **Tirar a vergonha.** Frase pronta, atendimento em vez de caixa, “guardar
+   para a próxima ida”. Plano “quando entrar no Zaffari, passo no
+   atendimento” (intenção de implementação).
+7. **Nunca alarme falso.** Indício vira pergunta; só certeza vira
+   “a mais”.
+8. **O primeiro uso tem que dar certo** (autoeficácia, Bandura). Na primeira
+   nota, mesmo sem erro, mostrar o que foi conferido: “17 itens conferidos
+   com o site do Zaffari. 2 ofertas entraram.”
+
+### O que o módulo **não** deve fazer (ética)
+
+- **Não somar “quanto você economizou em ofertas”.** Esse placar premia
+  comprar mais. Só conta o que foi **recuperado** de erro.
+- **Não empurrar o cartão da loja.** Nada de “com o Zaffari Card sairia
+  R$ 12 mais barato”: é cartão de crédito.
+- **Não empurrar o mínimo da oferta.** Nada de “leve mais 1 para ganhar o
+  desconto” no corredor. Na lista, só informar a oferta dos itens que a
+  pessoa **já** ia comprar.
+
+### Ângulos práticos que saem disso
+
+1. **Conferência automática da nota** (camada 0). Usa o catálogo e as regras
+   de repetição, quantidade e peso.
+2. **Oferta na lista de Compras**, só nos itens que já estão nela: “só nos
+   cartões até 20/10”, “a partir de 3 un.”. A lista já guarda o EAN, e o
+   catálogo responde por EAN.
+3. **Foto sob demanda**, como prova, quando o app aponta algo e a pessoa
+   ainda está na loja.
+4. **Desperdício em reais.** O app já sabe o que venceu no armário e, pela
+   nota, quanto custou: “R$ 23 venceram no armário este mês”. A aversão à
+   perda trabalha a favor de algo que o app já faz, que é avisar a validade.
+5. **Ligação EAN ↔ código guardada** (vem do catálogo, não precisa
+   aprender com a pessoa). Serve também para o “Guardar no armário” da
+   nota acertar o produto pelo EAN.
+
 ## Fontes
 
 - Dickson e Sawyer (1990), *The Price Knowledge and Search of Supermarket Shoppers*, Journal of Marketing. Réplica e resumo: [Springer](https://link.springer.com/doi/10.1007/BF00993956).
@@ -613,6 +736,16 @@ módulo. Daí três regras novas:
 - Código interno × GTIN na NFC-e: [Portal SPED](https://portalspedbrasil.com.br/?p=15959).
 - Apple, [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback) e [Playing haptics](https://developer.apple.com/design/human-interface-guidelines/playing-haptics).
 - Lei 10.962/2004, art. 5º; CDC, art. 26, I.
+
+Rodada 4 (comportamento):
+
+- Michie, van Stralen e West (2011), modelo COM-B.
+- Karlsson, Loewenstein e Seppi (2009), [efeito avestruz](https://www.cmu.edu/tepper/faculty-and-research/assets/docs/ppaper-61264983153898-ostrich-effect-1.pdf); réplica com resultado diferente: [efeito suricato](https://openaccess.city.ac.uk/id/eprint/3875/1/The%20meerkat%20effect.pdf).
+- Sunstein, *Sludge* ([resumo](https://www.behavioraleconomics.com/resources/mini-encyclopedia-of-be/sludge/)).
+- Orgulho de pegar oferta: [Schindler, Rutgers](https://camden.rutgers.edu/news/blame-it-genetics); [Rhee, smart shopper feeling](https://iastatedigitalpress.com/itaa/article/2711/galley/2584/view).
+- Kahneman, Knetsch e Thaler (1986), justiça como restrição ao lucro.
+- Lally et al. (2010), formação de hábitos no mundo real.
+- Bandura (1977), autoeficácia.
 
 Rodada 3:
 
