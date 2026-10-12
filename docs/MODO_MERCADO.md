@@ -16,7 +16,17 @@ Da v2 continuam valendo a entrada (E1), o atendimento (F3) e a próxima ida
 (F4), em [E](modo-mercado/prancha-E.webp) e [F](modo-mercado/prancha-F.webp).
 Da v1, o valor recuperado ([D](modo-mercado/prancha-D.webp)).
 
-## 0. Rodada 4 (comportamento):
+## 0. Rodada 5 (qualquer mercado):
+
+- Neogrid e Opinion Box (2025), [fidelidade em supermercados](https://mercadoeconsumo.com.br/09/05/2025/supermercados/sete-em-cada-dez-brasileiros-participam-de-programas-de-fidelidade-de-supermercados/).
+- Idec, [preço da gôndola diferente do caixa](https://idec.org.br/consultas/dicas-e-direitos/supermercados-o-que-fazer-quando-o-preco-da-gondola-e-diferente-do-que-aparece-no-caixa).
+- [Reclame Aqui: oferta só do app não aplicada](https://www.reclameaqui.com.br/supermercados-mundial/falta-de-aplicacao-do-desconto-anunciado-na-etiqueta-e-falta-de-cumprimento-da-lei-do-consumidor_VNDfay2d9jeV5R1H/).
+- [Procon Jundiaí, 2026](https://tribunadejundiai.com.br/economia/procon-jundiai-fiscalizacao-supermercados-direitos-consumidor-2/).
+- [Estado de Minas, 04/08/2026](https://www.em.com.br/emfoco/2026/08/04/sem-foto-da-etiqueta-que-provasse-o-preco-da-gondola-e-com-a-fila-crescendo-no-caixa-paulo-tecnico-de-manutencao-de-45-anos-pagou-a-diferenca-por-3-itens-e-so-no-estacionamento-entendeu-entre-o/).
+- NFC-e pela Sefaz Virtual do RS: [lançamento nacional](https://www.legisweb.com.br/noticia/?id=9719), [Sefaz-CE](https://www.coad.com.br/home/noticias-detalhe/131800/sefaz-ce-esclarece-sobre-a-autorizacao-da-nota-fiscal-de-consumidor-eletronica), [SEF-SC](https://sef.sc.gov.br/api-portal/Documento/Ver/6351).
+- Lei 13.455/2017 (preço diferente por forma de pagamento, com condição visível).
+
+Rodada 4 (comportamento):
 
 - Michie, van Stralen e West (2011), modelo COM-B.
 - Karlsson, Loewenstein e Seppi (2009), [efeito avestruz](https://www.cmu.edu/tepper/faculty-and-research/assets/docs/ppaper-61264983153898-ostrich-effect-1.pdf); réplica com resultado diferente: [efeito suricato](https://openaccess.city.ac.uk/id/eprint/3875/1/The%20meerkat%20effect.pdf).
@@ -749,6 +759,99 @@ demanda**.
    aprender com a pessoa). Serve também para o “Guardar no armário” da
    nota acertar o produto pelo EAN.
 
+## 16. Reanálise: o módulo para qualquer mercado
+
+### O que muda quando não é uma rede só
+
+Cada rede tem etiquetas, clube e catálogo diferentes. O que é igual em
+qualquer mercado do Brasil é pouco, e é nisso que o módulo se apoia:
+
+1. **A NFC-e** (nacional, com QR; muda só a página de consulta de cada
+   estado);
+2. **os dados da própria pessoa** no app: a lista, o armário e as notas
+   anteriores;
+3. **a foto** que ela tira;
+4. **a lei**: menor preço exposto (Lei 10.962/2004, art. 5º) e condição de
+   desconto visível (Lei 13.455/2017).
+
+Tudo o que é de uma rede (formato de etiqueta, catálogo, nome do clube) é
+extra.
+
+### O que a pesquisa geral acrescentou
+
+| Achado | Fonte | O que muda |
+|---|---|---|
+| Cerca de **7 em cada 10** brasileiros participam de programas de fidelidade de supermercado; **60%** deles estão em 2 a 4 programas; **68%** organizam as compras pelas promoções desses programas | Neogrid e Opinion Box, 2025 | O problema geral não é “o cartão do Zaffari”, é o **preço de clube**. E quem está em vários clubes precisa lembrar qual usar em cada loja |
+| Na maioria das redes, o preço de clube depende de **informar o CPF ou usar o app** no caixa. Esconder essa condição é abusivo | Lei 13.455/2017; Idec; reportagens de 2026 | O app consegue **deduzir pela nota**: ela diz se houve CPF (“Consumidor: CPF…” ou “Consumidor não identificado”) |
+| Reclamações de 2026: oferta de cartaz que não entrou no caixa por ser “só do app” | Reclame Aqui; Procon Jundiaí | O erro mais comum hoje é a **oferta condicionada** que não entra |
+| Relato de 2026: sem foto da etiqueta e com fila crescendo, a pessoa pagou a diferença de 3 itens | Estado de Minas | A foto é a prova que falta na hora. Vale **na oferta**, não em tudo |
+| A Sefaz Virtual do RS autoriza a NFC-e de vários outros estados | Sefaz-CE, SEF-SC, notícias do lançamento nacional | Pode ser que uma página de consulta só sirva para vários estados. **Verificar**: é o caminho mais curto para sair do RS |
+
+### Leitura comportamental (COM-B, geral)
+
+| | Ajuda | Atrapalha |
+|---|---|---|
+| **Capacidade** | O app lê a nota; a foto guarda o preço | Ninguém lembra preço; cada rede tem etiqueta e clube diferentes |
+| **Oportunidade** | A nota sai em segundos; o atendimento está perto | Fila; esquecer o CPF no caixa; nota sem papel e sem CPF se perde |
+| **Motivação refletida** | Economizar; justiça | Ganho por compra é pequeno |
+| **Motivação automática** | Orgulho de pegar a oferta | Vergonha de reclamar; não querer saber; cansaço de fim de compra |
+
+O que isso pede, em ordem de efeito:
+
+1. **Conferir sem pedir nada** (a camada 0 da seção 14), pegando carona em
+   ler a nota, que a pessoa já faz para guardar no armário.
+2. **Um gatilho só para a foto: o cartaz de oferta.** “Viu cartaz de oferta,
+   fotografa” é um plano “se X, então Y” com um sinal que salta aos olhos
+   (amarelo, vermelho, “só no clube”). Fotografar tudo é atrito; fotografar
+   oferta é pouco e é onde está a disputa.
+3. **Um lembrete na hora certa: “No caixa: CPF na nota.”** Resolve três
+   coisas de uma vez: o preço de clube entra, a nota pode ser achada depois
+   no programa do estado (Nota Fiscal Gaúcha, Nota Paulista…) e o app sabe,
+   pela nota, se o clube devia ter entrado. Se a pessoa prefere não dar o
+   CPF, “Peça a notinha” continua.
+4. **Perguntar só o que não dá para deduzir.** Se a nota tem CPF, o app
+   assume que o clube valia. Só pergunta “Usou o clube ou o app da loja?”
+   quando houver oferta de clube fotografada e a nota não disser.
+5. **Prova pronta para reclamar.** Quando não resolve na loja, o app monta o
+   pacote: foto da etiqueta com data e hora, o item da nota, a diferença e o
+   artigo da lei, pronto para o consumidor.gov.br ou o Procon de qualquer
+   estado.
+6. **Continua valendo**: erro, não golpe; nunca alarme falso; o primeiro uso
+   mostra o que foi conferido; nada de placar de “economia em ofertas”, nada
+   de empurrar clube, cartão ou quantidade mínima.
+
+### Ângulos práticos, para qualquer mercado
+
+| Ideia | Precisa de | Esforço da pessoa | Esforço de construir |
+|---|---|---|---|
+| Conferência automática da nota (repetidos, quantidade, fora da lista, conta, peso, salto de preço na mesma loja) | Nota + lista + notas anteriores | Nenhum | Baixo |
+| Clube pela nota (CPF presente ou não) + oferta de clube fotografada | Nota + foto | 1 foto por oferta | Médio |
+| “No caixa: CPF na nota” | Lista aberta no mercado | Nenhum | Baixo |
+| Leitura de etiqueta por sentido, sem molde de rede | Foto | — | Médio (o leitor já lê; falta entender) |
+| Pacote de reclamação | Foto + nota | 1 toque | Baixo |
+| Desperdício em reais (validade × preço pago) | Armário + notas | Nenhum | Baixo |
+| Notas de outros estados (começando pelos da Sefaz Virtual do RS) | Servidor | Nenhum | Médio, e é o que mais abre o app |
+| Catálogo da loja como extra (as 28 lojas VTEX que o servidor já consulta) | Servidor | Nenhum | Médio; testar por rede se o código da nota bate |
+
+### O que sai
+
+- Moldes de etiqueta do Zaffari (faixa amarela, faixa verde) como regra: viram
+  só exemplos de teste.
+- Códigos de posição na loja (“G16F0P0”): são do Zaffari.
+- A pergunta fixa do Zaffari Card: vira “Usou o clube ou o app da loja?”, e
+  só quando não dá para deduzir.
+
+### Primeira versão para qualquer mercado
+
+1. Ler a nota (como já existe) mostra a conferência automática.
+2. No mercado, a lista com o botão **Etiqueta**, sugerindo fotografar os
+   cartazes de oferta.
+3. Ao tocar **Fui pro caixa**: “CPF na nota” (ou “Peça a notinha”).
+4. Resultado: tudo certo, dúvida (pergunta) ou diferença, com “Mostrar no
+   atendimento”, “Guardar para a próxima ida” ou “Montar reclamação”.
+5. Primeiro no RS, já com qualquer rede; em seguida, os estados da Sefaz
+   Virtual do RS.
+
 ## Fontes
 
 - Dickson e Sawyer (1990), *The Price Knowledge and Search of Supermarket Shoppers*, Journal of Marketing. Réplica e resumo: [Springer](https://link.springer.com/doi/10.1007/BF00993956).
@@ -767,6 +870,16 @@ demanda**.
 - Código interno × GTIN na NFC-e: [Portal SPED](https://portalspedbrasil.com.br/?p=15959).
 - Apple, [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback) e [Playing haptics](https://developer.apple.com/design/human-interface-guidelines/playing-haptics).
 - Lei 10.962/2004, art. 5º; CDC, art. 26, I.
+
+Rodada 5 (qualquer mercado):
+
+- Neogrid e Opinion Box (2025), [fidelidade em supermercados](https://mercadoeconsumo.com.br/09/05/2025/supermercados/sete-em-cada-dez-brasileiros-participam-de-programas-de-fidelidade-de-supermercados/).
+- Idec, [preço da gôndola diferente do caixa](https://idec.org.br/consultas/dicas-e-direitos/supermercados-o-que-fazer-quando-o-preco-da-gondola-e-diferente-do-que-aparece-no-caixa).
+- [Reclame Aqui: oferta só do app não aplicada](https://www.reclameaqui.com.br/supermercados-mundial/falta-de-aplicacao-do-desconto-anunciado-na-etiqueta-e-falta-de-cumprimento-da-lei-do-consumidor_VNDfay2d9jeV5R1H/).
+- [Procon Jundiaí, 2026](https://tribunadejundiai.com.br/economia/procon-jundiai-fiscalizacao-supermercados-direitos-consumidor-2/).
+- [Estado de Minas, 04/08/2026](https://www.em.com.br/emfoco/2026/08/04/sem-foto-da-etiqueta-que-provasse-o-preco-da-gondola-e-com-a-fila-crescendo-no-caixa-paulo-tecnico-de-manutencao-de-45-anos-pagou-a-diferenca-por-3-itens-e-so-no-estacionamento-entendeu-entre-o/).
+- NFC-e pela Sefaz Virtual do RS: [lançamento nacional](https://www.legisweb.com.br/noticia/?id=9719), [Sefaz-CE](https://www.coad.com.br/home/noticias-detalhe/131800/sefaz-ce-esclarece-sobre-a-autorizacao-da-nota-fiscal-de-consumidor-eletronica), [SEF-SC](https://sef.sc.gov.br/api-portal/Documento/Ver/6351).
+- Lei 13.455/2017 (preço diferente por forma de pagamento, com condição visível).
 
 Rodada 4 (comportamento):
 
