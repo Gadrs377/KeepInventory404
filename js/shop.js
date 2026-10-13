@@ -46,13 +46,17 @@ export async function refreshShopBadge() {
   if (run !== badgeRun || !link.isConnected) return;
   const n = items.filter((i) => !state.checked[i.product.code]).length + state.extra.filter((x) => !x.checked).length;
   let badge = link.querySelector('.tab-badge');
-  if (!n) { if (badge) badge.remove(); return; }
+  // O leitor de tela ouve o nome da aba primeiro: "Compras, 3 itens para comprar".
+  let sr = link.querySelector('.tab-sr');
+  if (!n) { if (badge) badge.remove(); if (sr) sr.remove(); return; }
+  if (!sr) { sr = document.createElement('span'); sr.className = 'sr-only tab-sr'; link.append(sr); }
+  sr.textContent = `, ${n} ${n === 1 ? 'item' : 'itens'} para comprar`;
   if (!badge) {
     badge = document.createElement('span');
     badge.className = 'tab-badge';
     link.querySelector('.tab-icons').append(badge);
   }
-  badge.innerHTML = `<span aria-hidden="true">${n > 99 ? '99+' : n}</span><span class="sr-only">, ${n} ${n === 1 ? 'item' : 'itens'} para comprar</span>`;
+  badge.innerHTML = `<span aria-hidden="true">${n > 99 ? '99+' : n}</span>`;
   // Número mudou: o selo dá um pulo (na primeira vez que aparece, só entra).
   if (badge.dataset.n && badge.dataset.n !== String(n)) {
     badge.classList.remove('is-bump');

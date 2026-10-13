@@ -404,9 +404,15 @@ export default async function mountProduto(root, { code }) {
   lotsHost.addEventListener('click', async (e) => {
     const rm = e.target.closest('[data-remove-lot]');
     if (rm) {
-      const { removeLot } = await import('../store.js');
-      await removeLot(Number(rm.dataset.removeLot));
-      toast('Validade apagada. As unidades continuam no armário.', { duration: 3000 });
+      const { removeLot, restoreLot } = await import('../store.js');
+      const lot = await removeLot(Number(rm.dataset.removeLot));
+      toast('Validade apagada. As unidades continuam no armário.', {
+        action: 'Desfazer',
+        onAction: async () => {
+          await restoreLot(lot);
+          toast('Validade de volta.', { duration: 2500 });
+        },
+      });
       return;
     }
     if (e.target.closest('[data-ics]')) {

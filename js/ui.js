@@ -169,17 +169,20 @@ export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)'
 
 let bar = null;
 function buildTabBar() {
-  bar = document.createElement('div');
+  // A navegação inteira (abas e o botão Ler) é uma região só, para quem
+  // navega por regiões no leitor de tela.
+  bar = document.createElement('nav');
   bar.id = 'tabbar';
   bar.className = 'tabbar-wrap is-hidden';
+  bar.setAttribute('aria-label', 'Seções');
   bar.innerHTML = `
-    <nav class="tabbar glass-regular" aria-label="Seções">
+    <div class="tabbar glass-regular">
       <span class="tab-glide" aria-hidden="true"></span>
       ${TABS.map((t) => `
         <a class="tab-item" href="${t.href}" data-tab="${t.id}" draggable="false">
           <span class="tab-icons">${icon(t.icon, 'tab-off')}${icon(t.active, 'tab-on')}</span><span class="tab-label">${t.label}</span>
         </a>`).join('')}
-    </nav>
+    </div>
     <a class="scan-fab" href="#/entrada" draggable="false" aria-label="Ler um código"><span class="scan-fab-ico">${icon('barcode')}</span><span class="scan-fab-label" aria-hidden="true">Ler</span></a>`;
   document.body.append(bar);
   // Na primeira vez que a barra aparece, uma linha de leitor passa pelo código.
@@ -499,15 +502,12 @@ export function toast(message, { action, onAction, mode = '', duration = 4000 } 
       hideToast();
       onAction && onAction();
     }, { once: true });
-    // Como o Desfazer do Mail: some sozinho, com mais tempo, e espera enquanto
-    // o dedo ou o foco do teclado estiver no aviso.
-    const wait = Math.max(duration, 8000);
-    const arm = () => { clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, wait); };
-    host.onpointerenter = host.onfocusin = () => clearTimeout(toastTimer);
-    host.onpointerleave = host.onfocusout = arm;
-    arm();
+    // Aviso com ação (Desfazer, Adicionar às Compras) não some sozinho: quem lê
+    // devagar ou usa leitor de tela não perde a ação. Sai ao usar, ao arrastar
+    // para o lado, com Esc, com outro aviso ou ao trocar de tela (WCAG 2.2.1).
+    host.onkeydown = (e) => { if (e.key === 'Escape') hideToast(); };
   } else {
-    host.onpointerenter = host.onfocusin = host.onpointerleave = host.onfocusout = null;
+    host.onkeydown = null;
     toastTimer = setTimeout(hideToast, duration);
   }
 }
@@ -562,7 +562,7 @@ function armToastSwipe(host) {
     } else {
       host.animate([from, { translate: '0 0', rotate: '0deg', opacity: 1 }], { duration: 480, easing: SPRING_EASE_SOFT });
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(hideToast, 3000);
+      if (!host.querySelector('.toast-action')) toastTimer = setTimeout(hideToast, 3000);
     }
   };
   host.addEventListener('pointerup', end);

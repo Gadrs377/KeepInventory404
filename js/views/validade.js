@@ -6,9 +6,8 @@
 
 import { mountCamera } from './camera.js';
 import { expirySheet, datesListHtml } from './expiryLots.js';
-import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, onChange, discardStock } from '../store.js';
+import { productsByBarcode, listProducts, listLots, getProduct, lotsFor, addLot, removeLot, restoreLot, undoMovement, onChange, discardStock } from '../store.js';
 import { formatDate, todayIso, relativeDays } from '../dates.js';
-import { addToShopList } from '../shop.js';
 import { beep } from '../sound.js';
 import { tel } from '../telemetry.js';
 import { $, esc, icon, toast, hideToast, plural, openSheet, thumb, subtitle, vibrate } from '../ui.js';
@@ -253,15 +252,26 @@ export default function mountValidade(root) {
         action: med ? 'Separar para descartar' : 'Jogar fora',
         onAction: async () => {
           try {
-            for (const l of expired) await removeLot(l.id);
-            await discardStock(cur.code, n);
+            const gone = [];
+            for (const l of expired) gone.push(await removeLot(l.id));
+            const { movement } = await discardStock(cur.code, n);
             tel('validade-modo', { ...log, resultado: 'jogou fora', qtd: n });
             // Remédio vencido não vai no lixo comum: as farmácias recebem.
+            // Desfazer primeiro (tirou do armário); "Adicionar às Compras" é
+            // de quem já decidiu, e fica num aviso depois.
             toast(`${cur.name}: ${plural(n, 'saiu', 'saíram')} do armário.${med ? ' Leve a caixa a uma farmácia: elas recebem remédio vencido.' : ''}`, {
               mode: 'saida',
-              duration: 6000,
-              action: 'Adicionar às Compras',
-              onAction: () => { addToShopList(cur.name); toast('Adicionado às Compras.', { duration: 2000 }); },
+              action: 'Desfazer',
+              onAction: async () => {
+                try {
+                  await undoMovement(movement.id);
+                  for (const l of gone) await restoreLot(l);
+                  tel('validade-modo', { ...log, resultado: 'desfez jogar fora', qtd: n });
+                  toast(`${cur.name}: de volta ao armário.`, { duration: 2500 });
+                } catch (err) {
+                  toast(err.message, { duration: 4000 });
+                }
+              },
             });
           } catch (err) {
             toast(err.message, { duration: 4000 });

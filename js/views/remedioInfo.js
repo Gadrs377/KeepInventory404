@@ -168,7 +168,7 @@ export function medSheet(ean) {
         const have = home[0];
         body.innerHTML = `
           ${medBoxHtml(med, { size: 'sm' })}
-          ${have ? `<p class="med-have">${icon('package')}No armário: ${have.qty === 1 ? '1 caixa' : `${have.qty} caixas`}. <a href="#/produto/${encodeURIComponent(have.code)}">Ver</a></p>` : ''}
+          ${have ? `<p class="med-have">${icon('package')}No armário: ${have.qty === 1 ? '1 caixa' : `${have.qty} caixas`}. <a href="#/produto/${encodeURIComponent(have.code)}">Ver no armário</a></p>` : ''}
           ${rxCardHtml(med)}
           <div class="group-card med-facts-card">${medFacts(med).replace(/<a class="btn[^>]*>.*?<\/a>/s, '')}</div>
           <div class="sheet-sticky med-bar">

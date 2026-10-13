@@ -240,21 +240,38 @@ export default function mountCompras(root) {
     }
   });
 
+  // Tirar da lista tem Desfazer: o item digitado e os marcados voltam como
+  // estavam (a lista é só esse estado).
+  const undoable = (message, before) => toast(message, {
+    action: 'Desfazer',
+    onAction: () => {
+      state.extra = before.extra;
+      state.checked = before.checked;
+      saveState(state);
+      render();
+    },
+  });
+  const snapshot = () => ({ extra: state.extra.map((x) => ({ ...x })), checked: { ...state.checked } });
+
   lists.addEventListener('click', (e) => {
     const rm = e.target.closest('[data-remove]');
     if (rm) {
+      const before = snapshot();
+      const gone = state.extra.find((x) => String(x.id) === rm.dataset.remove);
       state.extra = state.extra.filter((x) => String(x.id) !== rm.dataset.remove);
       saveState(state);
       render();
+      undoable(gone ? `${gone.name} saiu da lista.` : 'Item removido da lista.', before);
       return;
     }
     if (e.target.closest('[data-clear]')) {
+      const before = snapshot();
       state.checked = {};
       sunk.clear();
       state.extra = state.extra.filter((x) => !x.checked);
       saveState(state);
       render();
-      toast('Itens marcados removidos da lista.', { duration: 2000 });
+      undoable('Itens marcados removidos da lista.', before);
     }
   });
 

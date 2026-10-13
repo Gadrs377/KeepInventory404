@@ -288,6 +288,7 @@ function resize(el, from, to) {
 
 // Número que muda: o novo entra rolando, do lado certo.
 export function roll(el, from) {
+  if (reduced()) return;
   const a = parseFloat(String(from).replace(',', '.'));
   const b = parseFloat(String(el.textContent).replace(',', '.'));
   const up = !(Number.isFinite(a) && Number.isFinite(b)) || b >= a;

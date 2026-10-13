@@ -193,8 +193,17 @@ export async function addLot(code, n, expiresAt) {
   return id;
 }
 
+// Devolve o lote apagado, para o Desfazer poder pôr de volta (restoreLot).
 export async function removeLot(id) {
+  const lot = await get('lots', id);
   await del('lots', id);
+  emit();
+  return lot;
+}
+
+export async function restoreLot(lot) {
+  if (!lot) return;
+  await put('lots', lot);
   emit();
 }
 

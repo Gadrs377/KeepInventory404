@@ -2037,3 +2037,31 @@ O app inteiro no desenho das pranchas. Resumo do que mudou para quem usa:
 - **Conferir atrasado** (30 dias ou mais): o botão acena duas vezes ao abrir
   o Armário.
 - `sw.js` v102.
+
+## Versão 4.7: correções da revisão de interface (v103)
+
+As 13 correções da revisão do app inteiro (claro, escuro, 320 px, letra em
+200%, "Reduzir movimento", teclado e leitor de tela):
+
+- **Nada sai da tela.** A faixa "Voltou do mercado?" e o cartão do uso contínuo
+  quebram linha; o resumo da Revisão usa colunas que encolhem; os botões da
+  barra do leitor e de Validades deixam o ícone subir quando a letra é grande.
+- **Revisão:** a linha de baixo ("O armário diz 3") nunca é cortada.
+- **Desfazer em tudo que apaga:** validade apagada (volta o lote), item digitado
+  e "Limpar marcados" em Compras, e "Jogar fora" pelo aviso de vencido (volta a
+  quantidade e as datas). O "Adicionar às Compras" depois de jogar fora saiu:
+  o aviso tem uma ação só, e o Desfazer vem primeiro.
+- **Aviso com ação não some sozinho.** Sai ao usar, ao arrastar, com Esc, com
+  outro aviso ou ao trocar de tela. Aviso sem ação continua sumindo sozinho.
+- **Seletor Guardar/Tirar:** trilho menos claro (14%), o rótulo não escolhido
+  passa de 4,47:1 para 4,89:1 no claro.
+- **"Reduzir movimento":** o número grande do produto não rola mais (fica só o
+  esmaecimento curto).
+- **Foco do teclado:** contorno de 3 px na busca e no número do seletor − 1 +.
+- **Textos:** "Não deu para copiar agora. O app tenta de novo sozinho." e o
+  link "Ver no armário".
+- **Leitor de tela:** busca, faixa "Pede atenção" e conferência em andamento
+  viram regiões com nome; a barra de abas e o botão Ler ficam dentro da mesma
+  navegação; a aba diz "Compras, 3 itens para comprar".
+- **Nomes longos** quebram por sílaba ("Clonaze-pam"), não no meio da letra.
+- **Token `--on-acabando`** para o texto sobre o amarelo de "acabando".

@@ -56,11 +56,12 @@ export default function mountArmario(root, m = {}) {
     <div class="screen screen-home has-tabbar">
       <header class="home-head">
         <h1 class="page-title">Armário</h1>
+        <p class="sr-only" role="status" data-found></p>
         <div class="head-actions">
           <button type="button" class="head-pill" data-conferir aria-haspopup="menu" hidden>${icon('listChecks')}<span class="head-pill-label">Conferir</span></button>
         </div>
       </header>
-      <div class="home-tools glass-thick" hidden>
+      <div class="home-tools glass-thick" role="region" aria-label="Busca e ambientes" hidden>
         <div class="search" role="search">
           ${icon('search')}
           <input type="search" placeholder="Buscar no armário" aria-label="Buscar no armário" value="${esc(savedQuery)}"
@@ -69,9 +70,8 @@ export default function mountArmario(root, m = {}) {
         </div>
         <div class="tabs" role="group" aria-label="Ambiente"></div>
       </div>
-      <div class="draft-note" hidden></div>
-      <div class="attn-strip" role="group" aria-label="Pede atenção" hidden></div>
-      <p class="sr-only" role="status" data-found></p>
+      <div class="draft-note" role="region" aria-label="Conferência em andamento" hidden></div>
+      <div class="attn-strip" role="region" aria-label="Pede atenção" hidden></div>
       <main class="shelf" aria-busy="true">${skeletonRows(5)}</main>
       ${tabBar('armario')}
     </div>`;

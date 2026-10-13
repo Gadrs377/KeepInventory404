@@ -115,7 +115,7 @@ export default async function mountDados(root) {
       toast('Cópia feita.', { duration: 2000 });
     } catch {
       autoAt.textContent = autoText();
-      toast('Sem internet para copiar agora. Tenta de novo sozinho mais tarde.', { duration: 3500 });
+      toast('Não deu para copiar agora. O app tenta de novo sozinho.', { duration: 3500 });
     }
   });
 
