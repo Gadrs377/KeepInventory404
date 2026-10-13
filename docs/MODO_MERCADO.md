@@ -1,4 +1,12 @@
-# Modo Mercado (proposta v3)
+# Modo Mercado (estudo arquivado)
+
+> **Situação em 13/10/2026: desistimos por enquanto.** O módulo ficou
+> complicado demais para o ganho (erro de preço em ~1 de 30 itens). Este
+> documento fica só como estudo: pesquisa, pranchas, etiquetas e nota reais,
+> e o que aprendemos. Nada disso está no app. Se um dia voltar, o ponto de
+> partida sugerido é a versão mínima: “Foto da etiqueta” ao guardar e, ao ler
+> a nota, uma linha quando um item fotografado veio mais caro.
+
 
 Proposta de fluxo, **ainda não implementada**. A pessoa fotografa a etiqueta
 de preço e, quando sai a nota, o app confere se algo foi cobrado mais caro. O
